@@ -1,0 +1,100 @@
+{
+  "pairs": [
+    {
+      "flow_id": "clock-world-city-chooser",
+      "step": 4,
+      "verdict": "minor_difference",
+      "note": "两侧均显示 World Clock、Edit、Add 和北京时钟；复刻的时间字重与布局仍不同，分时采集跨过整点使显示相差一分钟。"
+    },
+    {
+      "flow_id": "clock-world-city-chooser",
+      "step": 7,
+      "verdict": "minor_difference",
+      "note": "两侧均有 Choose a City、Search、Cancel 与同序城市。复刻的标题位置、搜索框排布、列表行高和右侧字母索引仍不同。"
+    },
+    {
+      "flow_id": "clock-world-city-chooser",
+      "step": 10,
+      "verdict": "minor_difference",
+      "note": "两侧均回到 World Clock、Edit、Add 和北京时钟，时间同为 14:13；复刻时钟字重、标签栏图标及布局细节仍不同。"
+    },
+    {
+      "flow_id": "clock-alarm-unsaved-editor",
+      "step": 4,
+      "verdict": "minor_difference",
+      "note": "两侧均显示 Alarm、Add、Sleep | Wake Up、床图标、No Alarm 与 SET UP 胶囊；复刻的文字起点、分隔线和标签栏图标略有差别。"
+    },
+    {
+      "flow_id": "clock-alarm-unsaved-editor",
+      "step": 7,
+      "verdict": "minor_difference",
+      "note": "两侧均显示 Add Alarm、时间滚轮以及 Repeat、Label、Sound、Snooze。原版与复刻版分开采集跨过一分钟，选中分钟分别为 13 和 14；滚轮背景、标题间距和字形仍有差异。"
+    },
+    {
+      "flow_id": "clock-alarm-unsaved-editor",
+      "step": 10,
+      "verdict": "minor_difference",
+      "note": "取消后两侧回到 Alarm 和 No Alarm；床图标及 SET UP 胶囊保留，文字位置、分隔线和标签栏图标仍有差异。"
+    },
+    {
+      "flow_id": "clock-timer-sound-chooser",
+      "step": 4,
+      "verdict": "minor_difference",
+      "note": "两侧均有相同的 0 小时 15 分钟、Start、Cancel 和 When Timer Ends。复刻的滚轮刻度、圆形按钮边框与颜色略有差异。"
+    },
+    {
+      "flow_id": "clock-timer-sound-chooser",
+      "step": 7,
+      "verdict": "minor_difference",
+      "note": "两侧均有 When Timer Ends、Cancel、Set 及 Radar 默认选中。铃声行距、分隔线和底部可见条目数有差异。"
+    },
+    {
+      "flow_id": "clock-timer-sound-chooser",
+      "step": 10,
+      "verdict": "minor_difference",
+      "note": "取消后两侧都回到 Timer，未提交铃声更改。时长值相同，滚轮和按钮样式仍不同。"
+    },
+    {
+      "flow_id": "clock-stopwatch-start-stop-reset",
+      "step": 4,
+      "verdict": "minor_difference",
+      "note": "两侧均为 00:00.00、Lap 和 Start；复刻的计时字体、按钮填色、分页点及秒表标签图标仍有差异。"
+    },
+    {
+      "flow_id": "clock-stopwatch-start-stop-reset",
+      "step": 7,
+      "verdict": "minor_difference",
+      "note": "两侧均显示对应的计时状态、Lap 1 和相同操作按钮；分开执行导致百分秒相差约 0.06 秒，计时字形、按钮填色和分隔线仍不同。"
+    },
+    {
+      "flow_id": "clock-stopwatch-start-stop-reset",
+      "step": 10,
+      "verdict": "minor_difference",
+      "note": "两侧均显示对应的计时状态、Lap 1 和相同操作按钮；分开执行导致百分秒相差约 0.06 秒，计时字形、按钮填色和分隔线仍不同。"
+    },
+    {
+      "flow_id": "clock-stopwatch-start-stop-reset",
+      "step": 13,
+      "verdict": "minor_difference",
+      "note": "两侧 Reset 后回到 00:00.00、Lap 和 Start，分段行消失；按钮、分页点和标签栏图标仍有轻微差异。"
+    },
+    {
+      "flow_id": "clock-timer-start-cancel",
+      "step": 4,
+      "verdict": "minor_difference",
+      "note": "两侧均是 15 分钟选择、Start、Cancel 和 When Timer Ends。原版快照中的 Start 填色及部分标签栏图标未绘出，但其 UIKit 文本和后续点击均存在；计时滚轮样式和按钮颜色仍有差异。"
+    },
+    {
+      "flow_id": "clock-timer-start-cancel",
+      "step": 7,
+      "verdict": "minor_difference",
+      "note": "两侧均显示 14:56、橙色进度环、结束时刻、Cancel、Pause 和 When Timer Ends；顺序采集使结束时刻相差一分钟，复刻的时间字形、垂直位置及按钮填色略有差异。"
+    },
+    {
+      "flow_id": "clock-timer-start-cancel",
+      "step": 10,
+      "verdict": "minor_difference",
+      "note": "取消后两侧均回到 15 分钟选择、Start 和 When Timer Ends。复刻的滚轮、按钮填色和标签栏图标仍有差异。"
+    }
+  ]
+}

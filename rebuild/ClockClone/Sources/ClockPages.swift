@@ -343,6 +343,18 @@ final class StopwatchController: UIViewController {
 
 final class TimerController: UIViewController, UIPickerViewDataSource, UIPickerViewDelegate {
     private let picker = UIPickerView()
+    private let cancel = UIButton(type: .system)
+    private let start = UIButton(type: .system)
+    private let sound = UIButton(type: .system)
+    private let ring = UIView()
+    private let ringStroke = CAShapeLayer()
+    private let remainingLabel = UILabel()
+    private let endTimeLabel = UILabel()
+    private var fieldLabels: [UILabel] = []
+    private var ticker: Timer?
+    private var endsAt: Date?
+    private var pausedRemaining: TimeInterval?
+    private var totalDuration: TimeInterval = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -363,23 +375,23 @@ final class TimerController: UIViewController, UIPickerViewDataSource, UIPickerV
             label.font = .systemFont(ofSize: 15)
             label.frame = CGRect(x: 62 + index * 110, y: 275, width: 100, height: 25)
             view.addSubview(label)
+            fieldLabels.append(label)
         }
 
-        let cancel = UIButton(type: .system)
         cancel.setTitle("Cancel", for: .normal)
         cancel.isEnabled = false
         cancel.backgroundColor = UIColor(white: 0.11, alpha: 1)
         cancel.layer.cornerRadius = 42
         cancel.layer.borderWidth = 2
         cancel.layer.borderColor = UIColor.darkGray.cgColor
-        let start = UIButton(type: .system)
         start.setTitle("Start", for: .normal)
         start.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.25)
         start.layer.cornerRadius = 42
         start.layer.borderWidth = 2
         start.layer.borderColor = UIColor.systemGreen.withAlphaComponent(0.4).cgColor
         start.setTitleColor(.systemGreen, for: .normal)
-        let sound = UIButton(type: .system)
+        cancel.addTarget(self, action: #selector(cancelCountdown), for: .touchUpInside)
+        start.addTarget(self, action: #selector(startPauseResume), for: .touchUpInside)
         sound.accessibilityLabel = "When Timer Ends"
         sound.backgroundColor = panel
         sound.layer.cornerRadius = 9
@@ -395,16 +407,41 @@ final class TimerController: UIViewController, UIPickerViewDataSource, UIPickerV
         soundDetail.translatesAutoresizingMaskIntoConstraints = false
         sound.addSubview(soundDetail)
         sound.addTarget(self, action: #selector(showSoundPicker), for: .touchUpInside)
+        ring.isHidden = true
+        ring.isUserInteractionEnabled = false
+        ring.layer.addSublayer(ringStroke)
+        ringStroke.fillColor = UIColor.clear.cgColor
+        ringStroke.strokeColor = UIColor.systemOrange.cgColor
+        ringStroke.lineWidth = 8
+        remainingLabel.font = .monospacedDigitSystemFont(ofSize: 72, weight: .ultraLight)
+        remainingLabel.textAlignment = .center
+        remainingLabel.text = "15:00"
+        endTimeLabel.font = .systemFont(ofSize: 17)
+        endTimeLabel.textColor = .secondaryLabel
+        endTimeLabel.textAlignment = .center
+        endTimeLabel.accessibilityLabel = "Alarm"
+        [remainingLabel, endTimeLabel].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            ring.addSubview($0)
+        }
+        NSLayoutConstraint.activate([
+            remainingLabel.centerXAnchor.constraint(equalTo: ring.centerXAnchor),
+            remainingLabel.centerYAnchor.constraint(equalTo: ring.centerYAnchor, constant: -5),
+            endTimeLabel.centerXAnchor.constraint(equalTo: ring.centerXAnchor),
+            endTimeLabel.topAnchor.constraint(equalTo: remainingLabel.bottomAnchor, constant: 2),
+        ])
         [cancel, start, sound].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
+        ring.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(ring)
         NSLayoutConstraint.activate([
             picker.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 4),
             picker.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             picker.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             picker.heightAnchor.constraint(equalToConstant: 285),
-            cancel.topAnchor.constraint(equalTo: picker.bottomAnchor, constant: 28),
+            cancel.topAnchor.constraint(equalTo: view.topAnchor, constant: 414),
             cancel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             cancel.widthAnchor.constraint(equalToConstant: 84),
             cancel.heightAnchor.constraint(equalToConstant: 84),
@@ -419,8 +456,92 @@ final class TimerController: UIViewController, UIPickerViewDataSource, UIPickerV
             soundText.leadingAnchor.constraint(equalTo: sound.leadingAnchor, constant: 18),
             soundText.centerYAnchor.constraint(equalTo: sound.centerYAnchor),
             soundDetail.trailingAnchor.constraint(equalTo: sound.trailingAnchor, constant: -16),
-            soundDetail.centerYAnchor.constraint(equalTo: sound.centerYAnchor)
+            soundDetail.centerYAnchor.constraint(equalTo: sound.centerYAnchor),
+            ring.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            ring.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            ring.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -40),
+            ring.heightAnchor.constraint(equalTo: ring.widthAnchor)
         ])
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        let center = CGPoint(x: ring.bounds.midX, y: ring.bounds.midY)
+        ringStroke.frame = ring.bounds
+        ringStroke.path = UIBezierPath(arcCenter: center, radius: max(0, ring.bounds.width / 2 - 5),
+                                      startAngle: -.pi / 2, endAngle: .pi * 1.5,
+                                      clockwise: true).cgPath
+    }
+
+    deinit { ticker?.invalidate() }
+
+    private func updateCountdown() {
+        let remaining = max(0, endsAt.map { $0.timeIntervalSinceNow } ?? pausedRemaining ?? 0)
+        let seconds = Int(ceil(remaining))
+        remainingLabel.text = seconds >= 3600
+            ? String(format: "%d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60)
+            : String(format: "%02d:%02d", seconds / 60, seconds % 60)
+        ringStroke.strokeEnd = totalDuration > 0 ? CGFloat(remaining / totalDuration) : 0
+        if remaining <= 0 && endsAt != nil { cancelCountdown() }
+    }
+
+    private func setCountdownVisible(_ visible: Bool) {
+        navigationController?.setNavigationBarHidden(visible, animated: false)
+        picker.isHidden = visible
+        fieldLabels.forEach { $0.isHidden = visible }
+        sound.isHidden = false
+        ring.isHidden = !visible
+        cancel.isEnabled = visible
+        cancel.setTitleColor(visible ? .white : .secondaryLabel, for: .normal)
+        start.setTitle(visible ? "Pause" : "Start", for: .normal)
+        start.setTitleColor(visible ? .systemOrange : .systemGreen, for: .normal)
+        start.backgroundColor = (visible ? UIColor.systemOrange : UIColor.systemGreen)
+            .withAlphaComponent(0.25)
+        start.layer.borderColor = (visible ? UIColor.systemOrange : UIColor.systemGreen)
+            .withAlphaComponent(0.4).cgColor
+    }
+
+    @objc private func startPauseResume() {
+        if let end = endsAt {
+            pausedRemaining = max(0, end.timeIntervalSinceNow)
+            endsAt = nil
+            ticker?.invalidate()
+            ticker = nil
+            start.setTitle("Resume", for: .normal)
+            updateCountdown()
+            return
+        }
+        if let paused = pausedRemaining {
+            endsAt = Date().addingTimeInterval(paused)
+            pausedRemaining = nil
+        } else {
+            let seconds = picker.selectedRow(inComponent: 0) * 3600 +
+                picker.selectedRow(inComponent: 1) * 60 + picker.selectedRow(inComponent: 2)
+            totalDuration = TimeInterval(max(1, seconds))
+            endsAt = Date().addingTimeInterval(totalDuration)
+        }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        let bell = NSTextAttachment()
+        bell.image = UIImage(systemName: "bell.fill")?.withTintColor(.secondaryLabel)
+        let endText = NSMutableAttributedString(attachment: bell)
+        endText.append(NSAttributedString(string: "  " + formatter.string(from: endsAt!)))
+        endTimeLabel.attributedText = endText
+        setCountdownVisible(true)
+        updateCountdown()
+        ticker?.invalidate()
+        ticker = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
+            self?.updateCountdown()
+        }
+    }
+
+    @objc private func cancelCountdown() {
+        ticker?.invalidate()
+        ticker = nil
+        endsAt = nil
+        pausedRemaining = nil
+        totalDuration = 0
+        setCountdownVisible(false)
     }
 
     @objc private func showSoundPicker() {
