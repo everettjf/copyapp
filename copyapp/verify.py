@@ -83,6 +83,12 @@ def verify_case(directory: Path) -> bool:
     if (directory / "manifest.json").is_file():
         manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
         ok = verify_survey(directory)
+        if manifest.get("kind") == "copy_workflow":
+            try:
+                from copyapp.copy_workflow import validate_copy_workflow
+                return ok and validate_copy_workflow(directory.resolve(), manifest)
+            except (KeyError, OSError, ValueError, TypeError, json.JSONDecodeError):
+                return False
         if manifest.get("kind") == "decrypted_package":
             try:
                 from copyapp.decrypt_package import validate_decrypt_package_case

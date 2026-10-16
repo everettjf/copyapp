@@ -56,6 +56,7 @@ from copyapp.rebuild_check import rebuild_check
 from copyapp.draft_analysis import draft_analysis
 from copyapp.prepare_analysis import prepare_analysis
 from copyapp.prepare_app import prepare_app
+from copyapp.copy_workflow import copy_app
 from copyapp.prepare_rebuild import prepare_rebuild
 from copyapp.install import install_trollstore_ipa
 from copyapp.report import compose_report
@@ -532,6 +533,38 @@ def main() -> None:
     prepare_app_parser.add_argument("--timeout", type=int, default=240)
     prepare_app_parser.add_argument("--rebuilt-bundle", default="")
     prepare_app_parser.add_argument("--resume", action="store_true")
+    copy_parser = sub.add_parser("copy",
+                                 help="run the source-verified Analyze → Rebuild workflow through a standalone coding-agent CLI")
+    copy_parser.add_argument("--udid", required=True)
+    copy_parser.add_argument("--bundle", required=True)
+    copy_parser.add_argument("--script", required=True, action="append", type=Path)
+    copy_parser.add_argument("--project", required=True, type=Path)
+    copy_parser.add_argument("--rebuilt-bundle", required=True)
+    copy_parser.add_argument("--out", required=True, type=Path)
+    copy_parser.add_argument("--workspace", type=Path)
+    copy_parser.add_argument("--backend", choices=("ios-mcp", "ictrl"), default="ios-mcp")
+    copy_parser.add_argument("--ui-backend", choices=("usb", "ios-mcp"), default="ios-mcp")
+    copy_parser.add_argument("--analysis-provider",
+                             choices=("none", "ghidra-direct", "ghidra", "hopper"),
+                             default="none")
+    copy_parser.add_argument("--agent-provider", choices=("codex", "claude"), default="codex")
+    copy_parser.add_argument("--no-decrypt", action="store_true")
+    copy_parser.add_argument("--no-network", action="store_true")
+    copy_parser.add_argument("--flow", action="append", dest="flow_ids")
+    copy_parser.add_argument("--decrypt-helper", type=Path,
+                             default=Path("../toolchains/ipadecrypt-helper-arm64"))
+    copy_parser.add_argument("--ssh-port", type=int, default=22222)
+    copy_parser.add_argument("--ssh-user", choices=("root", "mobile"), default="mobile")
+    copy_parser.add_argument("--ssh-identity", type=Path,
+                             default=Path("cases/ssh/id_ed25519"))
+    copy_parser.add_argument("--ssh-known-hosts", type=Path,
+                             default=Path("cases/ssh-known-hosts"))
+    copy_parser.add_argument("--ghidra-dir", type=Path)
+    copy_parser.add_argument("--java-home", type=Path)
+    copy_parser.add_argument("--ghidra-disable-analyzer")
+    copy_parser.add_argument("--analysis-timeout", type=int, default=240)
+    copy_parser.add_argument("--agent-timeout-seconds", type=int, default=7200)
+    copy_parser.add_argument("--resume", action="store_true")
     rebuild_plan = sub.add_parser("rebuild-plan",
                                   help="derive paired rebuild playbooks from a verified deep report")
     rebuild_plan.add_argument("--report", required=True, type=Path)
@@ -979,6 +1012,25 @@ def main() -> None:
                 resume=args.resume,
                 disabled_analyzer=args.ghidra_disable_analyzer,
                 network=args.network))
+            print(path)
+            code = 0 if complete else 1
+        elif args.command == "copy":
+            survey_collector = lambda udid, bundle, output, launch: command_survey(
+                udid, bundle, output, launch, args.ui_backend)
+            path, complete = asyncio.run(copy_app(
+                args.udid, args.bundle, args.script, args.project,
+                args.rebuilt_bundle, args.out, survey_collector,
+                workspace=args.workspace, backend=args.backend,
+                ui_backend=args.ui_backend, analysis_provider=args.analysis_provider,
+                agent_provider=args.agent_provider, decrypt=not args.no_decrypt,
+                network=not args.no_network, flow_ids=args.flow_ids,
+                decrypt_helper=args.decrypt_helper, ssh_port=args.ssh_port,
+                ssh_user=args.ssh_user, ssh_identity=args.ssh_identity,
+                ssh_known_hosts=args.ssh_known_hosts,
+                ghidra_dir=args.ghidra_dir, java_home=args.java_home,
+                disabled_analyzer=args.ghidra_disable_analyzer,
+                analysis_timeout=args.analysis_timeout,
+                agent_timeout=args.agent_timeout_seconds, resume=args.resume))
             print(path)
             code = 0 if complete else 1
         elif args.command == "rebuild-plan":

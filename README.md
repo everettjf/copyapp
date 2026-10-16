@@ -7,6 +7,21 @@ REA 不属于正式链路的运行依赖。深入函数分析优先用 Copy APP 
 新生成的直接 Ghidra 案例包含有界 `function-facts.json`（函数签名、静态调用者与被调用者）及对应的 REA MIT 许可副本；[XR 导出分享扩展的真实案例](cases/fixture-share-direct-facts-license-20261015/summary.json)已通过来源校验。静态关系不代表这些调用在某次点击中执行。
 `function-facts.json` v2 又加入有界基本块、指令引用和可识别字符串的短预览；XR 导出分享扩展的[真实 Ghidra 输出](cases/fixture-share-direct-topology-v3-20261015/function-facts.json)与[报告导入](cases/fixture-share-direct-topology-report-20261015/report.md)已验证。旧 v1 证据仍可校验。这些线索是静态分析，不能代替真机分支轨迹。
 
+## 独立终端的一命令入口
+
+当目标 App 的代表性原版 playbook 已确定，并且手机、脱壳 helper、Codex 或 Claude Code CLI 已就绪，可在**独立终端**运行：
+
+```sh
+.venv/bin/copyapp copy \
+  --udid <UDID> --bundle <ORIGINAL_BUNDLE_ID> \
+  --script playbooks/<FLOW_1>.json --script playbooks/<FLOW_2>.json \
+  --script playbooks/<FLOW_3>.json \
+  --project rebuild/<NEW_CLONE> --rebuilt-bundle <NEW_BUNDLE_ID> \
+  --agent-provider codex --out cases/<NEW_WORKFLOW_CASE>
+```
+
+它顺序执行 `prepare-app`、经过交付核验的分析 Agent、`prepare-rebuild`、经过真机交付核验的复刻 Agent；默认整包脱壳、采集网络元数据且不依赖 REA。需要直接 Ghidra 函数证据时，可加 `--analysis-provider ghidra-direct --ghidra-dir <GHIDRA_DIR> --java-home <JDK_HOME>`。`copyapp verify cases/<NEW_WORKFLOW_CASE>` 会重验最终的来源链。成功只表示选定流程具备来源关联的报告、行为断言、逐图审阅和无重大视觉差异；其余页面与服务端行为保留为未验证。若 Agent 阶段失败，案例保存现场，`--resume` 复用已经通过的阶段，但不会自动再次运行可能改动手机状态的失败 Agent；审阅其输出后使用新的案例重试。当前这条总入口已通过模拟 Agent 的完整路径与拒绝测试，尚未从独立终端用真实 Agent CLI 完成端到端实跑。它仍要求先选出代表性脚本，不能仅凭 App 名称自动发现全部功能。
+
 ## iPhone XR 实测（iOS 16.1.1）
 
 - USB 配对、系统与 App 信息、Developer Disk Image 挂载、截图、无障碍读取和 App 包目录索引已通过。`/var/jb` 可列出，包含 Dopamine 与 Procursus 标记。
