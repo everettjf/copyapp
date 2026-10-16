@@ -9,6 +9,7 @@ from typing import Callable, Awaitable, Optional
 
 from copyapp.agent_run import run_agent_task
 from copyapp.discover_check import accepted_playbooks
+from copyapp.discovery_agent import run_discovery_agent
 from copyapp.prepare_app import prepare_app
 from copyapp.prepare_rebuild import prepare_rebuild
 from copyapp.verify import sha256_file, verify_case
@@ -125,7 +126,8 @@ def _rebuild_ready(root: Path, task: Path, provider: str) -> bool:
 
 
 def _save(root: Path, record: dict) -> Path:
-    paths = ("preparation/manifest.json", "analysis-agent/manifest.json",
+    paths = ("discovery-agent/manifest.json", "discovery-agent/discovery/manifest.json",
+             "preparation/manifest.json", "analysis-agent/manifest.json",
              "analysis-agent/analysis-verification.json",
              "analysis-agent/reviewed-report/report-index.json",
              "analysis-agent/analysis-delivery/manifest.json",
@@ -150,6 +152,20 @@ def validate_copy_workflow(root: Path, record: dict) -> bool:
                 not isinstance(record.get("scripts"), list) or
                 not 1 <= len(record["scripts"]) <= 12):
             return False
+        if record.get("auto_discover"):
+            agent = _child(root, "discovery-agent")
+            agent_record = _read(agent / "manifest.json")
+            if (record.get("discovery_agent_manifest_sha256") !=
+                    sha256_file(agent / "manifest.json") or
+                    agent_record.get("status") != "complete" or
+                    agent_record.get("device_udid") != record["device_udid"] or
+                    agent_record.get("bundle_id") != record["bundle_id"] or
+                    agent_record.get("backend") != record["backend"] or
+                    agent_record.get("provider") != record["agent_provider"] or
+                    agent_record.get("scripts") != record["scripts"] or
+                    record.get("discovery_case") != str(agent / "discovery") or
+                    not verify_case(agent)):
+                return False
         if record.get("discovery_case") is not None:
             discovery = Path(record["discovery_case"]).resolve(strict=True)
             if (sha256_file(discovery / "manifest.json") !=
@@ -197,6 +213,7 @@ async def copy_app(udid: str, bundle: str, scripts: list[Path], project: Path,
                    analysis_timeout: int = 240, agent_timeout: int = 7200,
                    agent_executable: Optional[Path] = None,
                    discovery_case: Optional[Path] = None,
+                   auto_discover: bool = False,
                    resume: bool = False) -> tuple[Path, bool]:
     """Run both stages without accepting a CLI exit as proof of a deliverable.
 
@@ -214,17 +231,34 @@ async def copy_app(udid: str, bundle: str, scripts: list[Path], project: Path,
             agent_provider not in ("codex", "claude") or
             backend not in ("ios-mcp", "ictrl") or
             ui_backend not in ("usb", "ios-mcp") or
-            not 1 <= len(scripts) <= 12):
+            (not 1 <= len(scripts) <= 12 and not (auto_discover and not scripts)) or
+            (auto_discover and (scripts or discovery_case is not None))):
         raise ValueError("invalid workflow target, provider or playbook selection")
     if agent_executable is not None:
         agent_executable = agent_executable.resolve(strict=True)
     elif not shutil.which(agent_provider):
         raise FileNotFoundError(f"{agent_provider} CLI is not installed")
+    if auto_discover:
+        agent_root = _child(output, "discovery-agent")
+        if not resume and output.exists() and any(output.iterdir()):
+            raise FileExistsError(f"workflow output is not empty: {output}")
+        output.mkdir(parents=True, exist_ok=True)
+        agent_manifest, ready = run_discovery_agent(
+            udid, bundle, backend, agent_root, workspace=workspace,
+            provider=agent_provider, timeout_seconds=agent_timeout,
+            executable=agent_executable, resume=(agent_root / "manifest.json").is_file())
+        if not ready:
+            return agent_manifest, False
+        discovery_case = agent_root / "discovery"
+        scripts = accepted_playbooks(discovery_case, udid, bundle, backend)
     if discovery_case is not None:
         discovery_case = discovery_case.resolve(strict=True)
+        nested_discovery = (auto_discover and
+                            discovery_case == output / "discovery-agent/discovery")
         if (not discovery_case.is_relative_to(workspace) or
-                output == discovery_case or output in discovery_case.parents or
-                discovery_case in output.parents or
+                (not nested_discovery and
+                 (output == discovery_case or output in discovery_case.parents or
+                  discovery_case in output.parents)) or
                 [path.resolve(strict=True) for path in scripts] !=
                 accepted_playbooks(discovery_case, udid, bundle, backend)):
             raise ValueError("workflow scripts differ from the verified discovery case")
@@ -250,21 +284,25 @@ async def copy_app(udid: str, bundle: str, scripts: list[Path], project: Path,
         "disabled_analyzer": disabled_analyzer,
         "analysis_timeout": analysis_timeout, "agent_timeout": agent_timeout,
         "agent_executable": str(agent_executable.resolve()) if agent_executable else None,
+        "auto_discover": auto_discover,
+        "discovery_agent_manifest_sha256": (
+            sha256_file(output / "discovery-agent/manifest.json") if auto_discover else None),
         "discovery_case": str(discovery_case) if discovery_case else None,
         "discovery_manifest_sha256":
         sha256_file(discovery_case / "manifest.json") if discovery_case else None,
     }
     manifest = output / "manifest.json"
-    if resume:
-        if not manifest.is_file():
-            raise ValueError("resume requires an existing Copy APP workflow")
+    if resume and manifest.is_file():
         record = _read(manifest)
         if any(record.get(key) != value for key, value in source.items()):
             raise ValueError("resume target, playbooks or settings differ")
         if record.get("status") == "complete":
             return manifest, validate_copy_workflow(output, record) and verify_case(output)
     else:
-        if output.exists() and any(output.iterdir()):
+        if resume and not auto_discover:
+            raise ValueError("resume requires an existing Copy APP workflow")
+        if output.exists() and any(output.iterdir()) and not (
+                auto_discover and {item.name for item in output.iterdir()} == {"discovery-agent"}):
             raise FileExistsError(f"workflow output is not empty: {output}")
         output.mkdir(parents=True, exist_ok=True)
         record = dict(source, status="preparing")

@@ -543,6 +543,8 @@ def main() -> None:
     copy_scripts.add_argument("--script", action="append", type=Path)
     copy_scripts.add_argument("--discovery", type=Path,
                               help="verified discover-check case containing three or more replayed flows")
+    copy_scripts.add_argument("--auto-discover", action="store_true",
+                              help="ask the standalone coding agent to discover and replay representative flows")
     copy_parser.add_argument("--project", required=True, type=Path)
     copy_parser.add_argument("--rebuilt-bundle", required=True)
     copy_parser.add_argument("--out", required=True, type=Path)
@@ -1035,7 +1037,7 @@ def main() -> None:
             survey_collector = lambda udid, bundle, output, launch: command_survey(
                 udid, bundle, output, launch, args.ui_backend)
             scripts = (accepted_playbooks(args.discovery, args.udid, args.bundle,
-                                          args.backend) if args.discovery else args.script)
+                                          args.backend) if args.discovery else (args.script or []))
             path, complete = asyncio.run(copy_app(
                 args.udid, args.bundle, scripts, args.project,
                 args.rebuilt_bundle, args.out, survey_collector,
@@ -1050,7 +1052,8 @@ def main() -> None:
                 disabled_analyzer=args.ghidra_disable_analyzer,
                 analysis_timeout=args.analysis_timeout,
                 agent_timeout=args.agent_timeout_seconds,
-                discovery_case=args.discovery, resume=args.resume))
+                discovery_case=args.discovery, auto_discover=args.auto_discover,
+                resume=args.resume))
             print(path)
             code = 0 if complete else 1
         elif args.command == "rebuild-plan":

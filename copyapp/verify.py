@@ -89,6 +89,12 @@ def verify_case(directory: Path) -> bool:
                 return ok and validate_copy_workflow(directory.resolve(), manifest)
             except (KeyError, OSError, ValueError, TypeError, json.JSONDecodeError):
                 return False
+        if manifest.get("kind") == "agent_discovery":
+            try:
+                from copyapp.discovery_agent import validate_discovery_agent
+                return ok and validate_discovery_agent(directory.resolve(), manifest)
+            except (KeyError, OSError, ValueError, TypeError, json.JSONDecodeError):
+                return False
         if manifest.get("kind") == "report_portfolio":
             try:
                 from copyapp.report_portfolio import validate_report_portfolio

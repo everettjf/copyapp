@@ -39,7 +39,8 @@ class CopyWorkflowTest(unittest.TestCase):
         write(output / 'manifest.json', {
             'status': 'needs_semantic_review', 'bundle_id': bundle,
             'device_id_sha256_prefix': hashlib.sha256(udid.encode()).hexdigest()[:16],
-            'scripts': [{'path': str(self.script), 'sha256': sha256_file(self.script)}],
+            'scripts': [{'path': str(path), 'sha256': sha256_file(path)}
+                        for path in scripts],
             'rebuilt_bundle_id': kwargs['rebuilt_bundle_id'],
             'provider': kwargs['provider'], 'ui_backend': kwargs['ui_backend'],
             'investigation_backend': kwargs['backend'], 'decrypt': kwargs['decrypt'],
@@ -190,6 +191,59 @@ class CopyWorkflowTest(unittest.TestCase):
             with patch('copyapp.copy_workflow.verify_case', return_value=True):
                 self.assertFalse(validate_copy_workflow(
                     self.output, json.loads(path.read_text())))
+
+    def test_auto_discovery_precedes_preparation_and_pins_agent_evidence(self):
+        scripts = [self.script]
+        for index in (2, 3):
+            path = self.root / f'playbook-{index}.json'
+            write(path, {'bundle_id': 'com.example.original', 'flow': index})
+            scripts.append(path)
+        discoveries = []
+
+        def discover(udid, bundle, backend, output, **kwargs):
+            discoveries.append(kwargs['resume'])
+            if not kwargs['resume']:
+                write(output / 'discovery/manifest.json', {'status': 'complete'})
+                write(output / 'manifest.json', {
+                    'status': 'complete', 'device_udid': udid,
+                    'bundle_id': bundle, 'backend': backend,
+                    'provider': kwargs['provider'],
+                    'scripts': [{'path': str(path), 'sha256': sha256_file(path)}
+                                for path in scripts],
+                })
+            return output / 'manifest.json', True
+
+        def run(*, resume=False):
+            with patch('copyapp.copy_workflow.run_discovery_agent', side_effect=discover), \
+                 patch('copyapp.copy_workflow.accepted_playbooks', return_value=scripts), \
+                 patch('copyapp.copy_workflow.prepare_app', side_effect=self.prepare), \
+                 patch('copyapp.copy_workflow.run_agent_task', side_effect=self.agent), \
+                 patch('copyapp.copy_workflow.prepare_rebuild', side_effect=self.rebuild), \
+                 patch('copyapp.copy_workflow.verify_case', return_value=True):
+                return asyncio.run(copy_app(
+                    '00008020-1111111111111111', 'com.example.original', [],
+                    self.project, 'com.example.clone', self.output, self.survey,
+                    workspace=self.root, agent_executable=self.executable,
+                    auto_discover=True, resume=resume))
+
+        path, complete = run()
+        self.assertTrue(complete)
+        self.assertEqual(discoveries, [False])
+        self.assertEqual(self.calls, ['prepare', 'analysis-agent',
+                                      'rebuild-preparation', 'rebuild-agent'])
+        record = json.loads(path.read_text())
+        self.assertEqual(record['scripts'][0]['path'], str(self.script))
+        self.assertEqual(len(record['scripts']), 3)
+        path, complete = run(resume=True)
+        self.assertTrue(complete)
+        self.assertEqual(discoveries, [False, True])
+        self.assertEqual(len(self.calls), 4)
+        write(self.output / 'discovery-agent/discovery/manifest.json',
+              {'status': 'changed'})
+        with patch('copyapp.copy_workflow.accepted_playbooks', return_value=scripts), \
+             patch('copyapp.copy_workflow.verify_case', return_value=True):
+            self.assertFalse(validate_copy_workflow(self.output,
+                                                    json.loads(path.read_text())))
 
 
 if __name__ == '__main__':

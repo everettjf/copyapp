@@ -19,18 +19,19 @@ Clock 随后扩展到四个主标签：[四流程分析报告](cases/clock-four-
 
 ## 独立终端的一命令入口
 
-当目标 App 的代表性原版 playbook 已确定，并且手机、脱壳 helper、Codex 或 Claude Code CLI 已就绪，可在**独立终端**运行：
+手机、脱壳 helper、Codex 或 Claude Code CLI 已就绪时，可在**独立终端**让 Agent 先发现并验收代表性流程，再进行分析和复刻：
 
 ```sh
 .venv/bin/copyapp copy \
   --udid <UDID> --bundle <ORIGINAL_BUNDLE_ID> \
-  --script playbooks/<FLOW_1>.json --script playbooks/<FLOW_2>.json \
-  --script playbooks/<FLOW_3>.json \
+  --auto-discover \
   --project rebuild/<NEW_CLONE> --rebuilt-bundle <NEW_BUNDLE_ID> \
   --agent-provider codex --out cases/<NEW_WORKFLOW_CASE>
 ```
 
-它顺序执行 `prepare-app`、经过交付核验的分析 Agent、`prepare-rebuild`、经过真机交付核验的复刻 Agent；默认整包脱壳、采集网络元数据且不依赖 REA。需要直接 Ghidra 函数证据时，可加 `--analysis-provider ghidra-direct --ghidra-dir <GHIDRA_DIR> --java-home <JDK_HOME>`。`copyapp verify cases/<NEW_WORKFLOW_CASE>` 会重验最终的来源链。成功只表示选定流程具备来源关联的报告、行为断言、逐图审阅和无重大视觉差异；其余页面与服务端行为保留为未验证。若 Agent 阶段失败，案例保存现场，`--resume` 复用已经通过的阶段，但不会自动再次运行可能改动手机状态的失败 Agent；审阅其输出后使用新的案例重试。当前这条总入口已通过模拟 Agent 的完整路径与拒绝测试，尚未从独立终端用真实 Agent CLI 完成端到端实跑。它仍要求先选出代表性脚本，不能仅凭 App 名称自动发现全部功能。
+已有脚本时可改用重复的 `--script <PLAYBOOK>`；已有真机验收案例时可用 `--discovery <DISCOVERY_CASE>`。三个选项互斥。自动发现阶段要求 Agent 在指定手机上验收 3–12 条不同的有界流程，并把案例、脚本和哈希固定在父案例中。这不保证覆盖整个 App。
+
+它顺序执行 `prepare-app`、经过交付核验的分析 Agent、`prepare-rebuild`、经过真机交付核验的复刻 Agent；默认整包脱壳、采集网络元数据且不依赖 REA。需要直接 Ghidra 函数证据时，可加 `--analysis-provider ghidra-direct --ghidra-dir <GHIDRA_DIR> --java-home <JDK_HOME>`。`copyapp verify cases/<NEW_WORKFLOW_CASE>` 会重验最终的来源链。成功只表示选定流程具备来源关联的报告、行为断言、逐图审阅和无重大视觉差异；其余页面与服务端行为保留为未验证。若 Agent 阶段失败，案例保存现场，`--resume` 复用已经通过的阶段，但不会自动再次运行可能改动手机状态的失败 Agent；审阅其输出后使用新的案例重试。自动发现加总入口已通过模拟 Agent 的完整路径与拒绝测试，尚未从独立终端用真实 Agent CLI 完成端到端实跑，也尚未证明能自主探索任意 App。
 
 用户只给 App 时，当前 Codex/Claude 可按 [`copyapp-copy` Skill](skills/copyapp-copy/SKILL.md) 观察首页并编写三条代表性脚本。`copyapp discover-check --udid <UDID> --bundle <BUNDLE> --script <FLOW> ... --out cases/<DISCOVERY>` 先检查脚本身份、不同点击路径和有界步骤，再在同一手机上重放每条流程；`copyapp copy` 可用 `--discovery cases/<DISCOVERY>` 直接读取验收后的脚本副本。XR 上三条 DeepSeek 登录页脚本的[实测发现验收](cases/deepseek-three-flow-discovery-check-live-20261015/report.md)和父案例哈希均通过。脚本仍由 Agent 按真实界面编写，自动发现任意 App 全部页面的能力尚未验证。
 
