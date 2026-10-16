@@ -7,6 +7,7 @@ import math
 import re
 import shutil
 import time
+from contextlib import ExitStack
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
@@ -90,13 +91,19 @@ def run_playbook(udid: str, backend: str, script: Path, output: Path,
     try:
         tunnel = (ios_mcp_tunnel(udid) if backend == "ios-mcp" else
                   ictrl_tunnel(udid, ictrl_client)) if port is None else None
-        if tunnel is not None:
-            with tunnel as own_port:
-                _run_steps(udid, bundle, backend, steps, plan, output, own_port,
-                           ictrl_client, record, numbers, trace_observer)
-        else:
-            _run_steps(udid, bundle, backend, steps, plan, output, port,
-                       ictrl_client, record, numbers, trace_observer)
+        with ExitStack() as stack:
+            own_port = stack.enter_context(tunnel) if tunnel is not None else port
+            identity_port = None
+            if backend == "ictrl":
+                try:
+                    identity_port = stack.enter_context(ios_mcp_tunnel(udid))
+                except (OSError, RuntimeError, TimeoutError) as exc:
+                    # iCTRL remains usable without the optional helper.
+                    # Retain the reason when its own foreground cache is stale.
+                    record["identity_tunnel_error"] = f"{type(exc).__name__}: {str(exc)[:200]}"
+            _run_steps(udid, bundle, backend, steps, plan, output, own_port,
+                       ictrl_client, record, numbers, trace_observer,
+                       identity_port=identity_port)
         record["status"] = "complete"
     except Exception as exc:
         record["error"] = {"type": type(exc).__name__, "message": str(exc)[:400],
@@ -117,14 +124,23 @@ def run_playbook(udid: str, backend: str, script: Path, output: Path,
 
 def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
                output: Path, port: int, ictrl_client: Path, record: dict,
-               numbers: Dict[str, int], trace_observer=None) -> None:
-    ui = ExperimentUI(backend, port, ictrl_client)
+               numbers: Dict[str, int], trace_observer=None,
+               identity_port: Optional[int] = None) -> None:
+    ui = ExperimentUI(backend, port, ictrl_client, identity_port=identity_port,
+                      bundle_id=bundle)
+    record["frontmost_backend"] = (
+        "ios-mcp" if identity_port is not None or backend == "ios-mcp" else "ictrl")
     width, height = ui.bounds()
     if not isinstance(width, (int, float)) or not isinstance(height, (int, float)):
         raise RuntimeError("device screen bounds unavailable")
     record["screen"] = {"width": width, "height": height, "coordinate_space": "points"}
     if plan.get("fresh_launch") is True:
         asyncio.run(_fresh_launch(udid, bundle))
+        # DVT can launch a third-party App without refreshing iCTRL's
+        # foreground-app cache. Opening the same App through iCTRL makes its
+        # subsequent identity and accessibility reads target that App.
+        if backend == "ictrl" and ui.frontmost() != bundle:
+            ui.launch(bundle)
         for _ in range(10):
             if ui.frontmost() == bundle:
                 break

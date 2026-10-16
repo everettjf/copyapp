@@ -1,10 +1,38 @@
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from copyapp.experiment import ExperimentUI, _ictrl_label_in_region
+from copyapp.ios_mcp import IOSMCPClient
 
 
 class TapLabelRegionTest(unittest.TestCase):
+    def test_ictrl_uses_device_identity_channel_and_explicit_app_tree(self):
+        ui = object.__new__(ExperimentUI)
+        ui.backend = "ictrl"
+        ui.bundle_id = "dev.copyapp.clockclone"
+        ui.client = Mock()
+        ui.client.call_ui.return_value = {"bundle_id": "dev.copyapp.clockclone",
+                                          "source_channel": "ax", "source": "Clock"}
+        ui.identity_client = Mock()
+        with patch.object(IOSMCPClient, "text_json",
+                          return_value={"bundleId": "dev.copyapp.clockclone"}):
+            self.assertEqual(ui.frontmost(), "dev.copyapp.clockclone")
+        ui.identity_client.call_ui.assert_called_once_with("get_frontmost_app")
+        self.assertEqual(ui.observe()["source"], "Clock")
+        ui.client.call_ui.assert_called_once_with("page_source", {
+            "visible_only": True, "max_children": 50,
+            "bundle_id": "dev.copyapp.clockclone"})
+
+    def test_ictrl_rejects_wrong_app_page_source(self):
+        ui = object.__new__(ExperimentUI)
+        ui.backend = "ictrl"
+        ui.bundle_id = "dev.copyapp.clockclone"
+        ui.client = Mock()
+        ui.client.call_ui.return_value = {"bundle_id": "com.apple.springboard",
+                                          "source_channel": "ax", "source": "Clock"}
+        with self.assertRaisesRegex(RuntimeError, "different App"):
+            ui.observe()
+
     def test_chooses_keypad_zero_with_bounded_region(self):
         ui = object.__new__(ExperimentUI)
         ui.backend = "ios-mcp"

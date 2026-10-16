@@ -57,13 +57,19 @@ def _ictrl_label_in_region(page: dict, label: str, region: List[float], bundle: 
 
 
 class ExperimentUI:
-    def __init__(self, backend: str, port: int, ictrl_client: Path):
+    def __init__(self, backend: str, port: int, ictrl_client: Path,
+                 identity_port: Optional[int] = None, bundle_id: Optional[str] = None):
         self.backend = backend
+        self.bundle_id = bundle_id
+        self.identity_client = None
         if backend == "ios-mcp":
             self.client = IOSMCPClient(port=port)
             self.client.initialize()
         elif backend == "ictrl":
             self.client = ICtrlClient(port=port, client=ictrl_client)
+            if identity_port is not None:
+                self.identity_client = IOSMCPClient(port=identity_port)
+                self.identity_client.initialize()
         else:
             raise ValueError("unsupported experiment UI backend")
 
@@ -75,8 +81,9 @@ class ExperimentUI:
         return info.get("point_width"), info.get("point_height")
 
     def frontmost(self) -> str:
-        if self.backend == "ios-mcp":
-            value = IOSMCPClient.text_json(self.client.call_ui("get_frontmost_app"))
+        identity = self.client if self.backend == "ios-mcp" else getattr(self, "identity_client", None)
+        if identity is not None:
+            value = IOSMCPClient.text_json(identity.call_ui("get_frontmost_app"))
             return str(value.get("bundleId") or value.get("bundle_id") or "")
         info = self.client.call_ui("device_info")
         return str((info.get("system") or {}).get("foreground_app") or "")
@@ -102,7 +109,13 @@ class ExperimentUI:
         if self.backend == "ios-mcp":
             return IOSMCPClient.text_json(self.client.call_ui(
                 "describe_screen", {"include_ocr": False, "include_screenshot": False}))
-        return self.client.call_ui("page_source", {"visible_only": True, "max_children": 50})
+        params = {"visible_only": True, "max_children": 50}
+        if getattr(self, "bundle_id", None):
+            params["bundle_id"] = self.bundle_id
+        value = self.client.call_ui("page_source", params)
+        if self.bundle_id and value.get("bundle_id") != self.bundle_id:
+            raise RuntimeError("iCTRL page source belongs to a different App")
+        return value
 
     def tap_label(self, label: str, region_points: Optional[List[float]] = None,
                   bundle_id: Optional[str] = None) -> Dict[str, Any]:

@@ -3,20 +3,20 @@ import tempfile
 import unittest
 from contextlib import contextmanager
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from copyapp.playbook import _exact_labels, run_playbook
 
 
 @contextmanager
-def fake_tunnel(_udid):
+def fake_tunnel(_udid, *_args):
     yield 22222
 
 
 class FakeUI:
     elements = [{"text": "Stopwatch", "clickable": True}]
 
-    def __init__(self, *_args):
+    def __init__(self, *_args, **_kwargs):
         pass
 
     def bounds(self):
@@ -68,6 +68,42 @@ class PlaybookExactLabelsTest(unittest.TestCase):
         source += "  Button, label: 'Stop'\n"
         self.assertIn("Stop", _exact_labels({"source_channel": "ax", "source": source}, "ictrl"))
         self.assertEqual(_exact_labels({"source_channel": "ocr", "source": source}, "ictrl"), set())
+
+    def test_ictrl_fresh_launch_refreshes_frontmost_cache(self):
+        class CachedUI:
+            opened = []
+
+            def __init__(self, *_args, **_kwargs):
+                self.app = ""
+
+            def bounds(self):
+                return 414, 896
+
+            def frontmost(self):
+                return self.app
+
+            def launch(self, bundle):
+                self.opened.append(bundle)
+                self.app = bundle
+
+            def observe(self):
+                return {"source_channel": "ax", "source": "Button, label: 'Start'"}
+
+        self.script.write_text(json.dumps({
+            "schema_version": 1, "bundle_id": "dev.copyapp.clockclone",
+            "fresh_launch": True,
+            "steps": [{"action": "observe", "exact_labels": ["Start"]}],
+        }))
+        with patch("copyapp.playbook.ExperimentUI", CachedUI), \
+             patch("copyapp.playbook.ios_mcp_tunnel", fake_tunnel), \
+             patch("copyapp.playbook._fresh_launch", new_callable=AsyncMock), \
+             patch("copyapp.playbook.time.sleep"):
+            record_path, complete = run_playbook("device", "ictrl", self.script,
+                                                 self.root / "ictrl-cache", port=22224)
+        record = json.loads(record_path.read_text())
+        self.assertTrue(complete, record.get("error"))
+        self.assertEqual(record["frontmost_backend"], "ios-mcp")
+        self.assertEqual(CachedUI.opened, ["dev.copyapp.clockclone"])
 
 
 if __name__ == "__main__":
