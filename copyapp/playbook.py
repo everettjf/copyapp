@@ -264,7 +264,8 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
                         return sample.read_bytes()
 
                     image, stability = capture_stable(capture, samples=6,
-                                                      interval=0.35, threshold=0.012)
+                                                      interval=0.35, threshold=0.012,
+                                                      minimum_samples=5)
                 finally:
                     sample.unlink(missing_ok=True)
                 path.write_bytes(image)

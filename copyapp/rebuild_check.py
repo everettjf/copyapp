@@ -35,7 +35,8 @@ def _identity(app: dict, bundle: str) -> dict:
     version = app.get("CFBundleShortVersionString")
     build = app.get("CFBundleVersion")
     path = app.get("Path")
-    if not all(isinstance(value, str) and value for value in (version, build, path)):
+    if (version is not None and (not isinstance(version, str) or not version) or
+            not all(isinstance(value, str) and value for value in (build, path))):
         raise ValueError(f"installed app identity is incomplete: {bundle}")
     return {"bundle_id": bundle, "version": version, "build": build, "path": path}
 
@@ -186,6 +187,7 @@ def check_final_view(flow_case: Path, assertion: dict) -> dict:
             class_name = str(node.get("class_name", ""))
             if (node.get("text") != expected["text"] or
                     not (class_name.endswith("UILabel") or
+                         class_name in ("UITableViewLabel", "UITabBarButtonLabel") or
                          (include_button and class_name == "UIButtonLabel"))):
                 continue
             x = y = 0.0

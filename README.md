@@ -6,6 +6,8 @@ REA 不属于正式链路的运行依赖。深入函数分析优先用 Copy APP 
 
 当前最完整的真实 App 示例是 XR 上的 [DeepSeek 综合逆向报告](cases/deepseek-comprehensive-xr-20261015/report.md)：以 `copyapp report-portfolio` 核对同设备、同 App 版本及同一解密主程序，汇合三条登录页的 UI/函数/网络分析和另一次沙盒/SQLite 结构分析。报告保留两轮证据的各自时点；原始数据库和 IPA 仍在忽略的本地 `cases/` 中。登录后功能、从零自动生成完整复刻和 iOS 17/26 仍未验收。
 
+一个新的无账号系统 App 试点也在 XR 上完整经过三条流程发现、无 REA 包与函数分析、正式报告、独立源码、TrollStore 安装和同机对照：[Clock 报告](cases/clock-three-flow-no-rea-reviewed-report-v3-20261015/report.md) → [复刻任务](cases/clock-three-flow-rebuild-preparation-v4-20261015/task/TASK.md) → [Copy Clock 源码](rebuild/ClockClone) → [交付核验](cases/clock-three-flow-agent-delivery-v6-20261015/report.md)。世界时钟城市选择、未保存闹钟编辑和计时器铃声选择的 3/3 条脚本及末端 UIKit 断言通过；9 对截图逐张审阅后，两个流程仍有重大视觉差异，主要是进入页面时的导航栏呈现与原版不一致。该试点没有实现 Clock 的保存、倒计时和后台能力，也没有证明独立终端的一命令 Agent 流程。
+
 新生成的直接 Ghidra 案例包含有界 `function-facts.json`（函数签名、静态调用者与被调用者）及对应的 REA MIT 许可副本；[XR 导出分享扩展的真实案例](cases/fixture-share-direct-facts-license-20261015/summary.json)已通过来源校验。静态关系不代表这些调用在某次点击中执行。
 `function-facts.json` v2 又加入有界基本块、指令引用和可识别字符串的短预览；XR 导出分享扩展的[真实 Ghidra 输出](cases/fixture-share-direct-topology-v3-20261015/function-facts.json)与[报告导入](cases/fixture-share-direct-topology-report-20261015/report.md)已验证。旧 v1 证据仍可校验。这些线索是静态分析，不能代替真机分支轨迹。
 

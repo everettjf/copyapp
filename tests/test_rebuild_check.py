@@ -7,11 +7,38 @@ from unittest.mock import patch
 
 from PIL import Image
 
-from copyapp.rebuild_check import _final_view_check, _preflight, rebuild_check
+from copyapp.rebuild_check import _final_view_check, _identity, _preflight, check_final_view, rebuild_check
 from copyapp.verify import sha256_file, verify_case
 
 
 class RebuildCheckTest(unittest.TestCase):
+    def test_system_app_identity_allows_absent_marketing_version(self):
+        identity = _identity({"CFBundleVersion": "1.0", "Path": "/Applications/Clock.app"},
+                             "com.apple.mobiletimer")
+        self.assertEqual(identity["version"], None)
+        self.assertEqual(identity["build"], "1.0")
+        with self.assertRaisesRegex(ValueError, "identity is incomplete"):
+            _identity({"Path": "/Applications/Clock.app"}, "com.apple.mobiletimer")
+
+    def test_final_view_accepts_visible_table_cell_label(self):
+        with tempfile.TemporaryDirectory() as temp:
+            flow = Path(temp)
+            (flow / "view-tree").mkdir()
+            (flow / "manifest.json").write_text("{}")
+            (flow / "view-tree/view-tree.json").write_text(json.dumps({"nodes": [
+                {"id": 0, "parent": None, "class_name": "UIWindow",
+                 "frame": {"x": 0, "y": 0, "width": 414, "height": 896},
+                 "hidden": False, "alpha": 1},
+                {"id": 1, "parent": 0, "class_name": "UITableViewLabel",
+                 "text": "When Timer Ends",
+                 "frame": {"x": 20, "y": 532, "width": 250, "height": 52},
+                 "hidden": False, "alpha": 1}
+            ]}))
+            result = check_final_view(flow, {"text": "When Timer Ends",
+                "region_points": [0, 0, 414, 896]})
+            self.assertTrue(result["passed"])
+            self.assertEqual(result["matches"][0]["class_name"], "UITableViewLabel")
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

@@ -15,6 +15,15 @@ def png(color):
 
 
 class StableCaptureTest(unittest.TestCase):
+    def test_minimum_samples_skips_static_intermediate_frame(self):
+        frames = iter([png("white"), png("white"), png("white"),
+                       png("black"), png("black")])
+        with patch("copyapp.ui_capture.time.sleep"):
+            result, info = capture_stable(lambda: next(frames), samples=5,
+                                          interval=0.01, minimum_samples=5)
+        self.assertEqual(result, png("black"))
+        self.assertEqual(info["samples"], 5)
+
     def test_waits_until_transition_ends(self):
         frames = iter([png("white"), png("black"), png("black")])
         with patch("copyapp.ui_capture.time.sleep"):
