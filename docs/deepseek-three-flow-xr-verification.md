@@ -2,6 +2,8 @@
 
 设备为越狱 iPhone XR / iOS 16.1.1；原版 `com.deepseek.chat` 为 2.4.4 (3)，独立实现的 `dev.copyapp.deepseekclone` 为 0.1.3 (4)。[原版深度报告 v10](../cases/deepseek-no-rea-three-flow-network-report-v10-20261015/report.md)包含三条已选登录页流程、关键函数证据、包与资源索引，以及有边界的 URLSession 观察；[分析交付](../cases/deepseek-no-rea-three-flow-network-delivery-v10-20261015/report.md)核对三条原版脚本来源。默认流程没有调用 REA。
 
+[综合逆向报告](../cases/deepseek-comprehensive-xr-20261015/report.md)将上述登录流程报告与新一轮 XR 的[沙盒及数据结构补充报告](../cases/deepseek-sandbox-report-live-v2-20261015/report.md)合为一个可阅读、可校验的 709 行文档。两轮分析的设备身份、App 2.4.4 (3) 与解密主程序 SHA-256 相同；综合报告保留各自的证据链接和采集时点，不把不同时间的沙盒文件与点击事件当成同一瞬间。补充报告核对了 161 项沙盒元数据、安装能力键、30 个嵌入 Framework 和一份 FlyVerify SDK SQLite 文件的三张表结构。原始数据库只在忽略的本地案例中，报告没有导出行内容；列名不证明相应数据被实际采集或上传。
+
 [复刻任务](../cases/deepseek-three-flow-rebuild-preparation-v10-20261015/task/TASK.md)从该报告生成，选定密码入口、Sign up 和条款弹窗 Cancel，均停留在条款同意之前。[XR 对照](../cases/deepseek-three-flow-rebuild-check-v10-20261015/report.md)在相同设备和 UI 后端上重放原版与复刻版：三条流程的操作后脚本断言及末端 UIKit 文本断言均通过。Cancel 后两边都回到登录首页，未点击 Agree。
 
 [六对截图的逐张审阅](../cases/deepseek-three-flow-visual-review-v10-20261015/report.md)把三条流程的画面都标为轻微差异：复刻版鲸鱼图形的轮廓与原版不同，字标笔画有差别，顶部系统返回名称不同；登录按钮、条款弹窗位置和文字接近。审阅只覆盖保存的静态画面，不能证明动画或未测页面一致。

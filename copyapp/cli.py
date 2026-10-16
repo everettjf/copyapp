@@ -60,6 +60,7 @@ from copyapp.copy_workflow import copy_app
 from copyapp.prepare_rebuild import prepare_rebuild
 from copyapp.install import install_trollstore_ipa
 from copyapp.report import compose_report
+from copyapp.report_portfolio import create_report_portfolio
 from copyapp.host_ocr import recognize_screenshot
 from copyapp.ocr_file import ocr_file
 from copyapp.ui_capture import capture_stable
@@ -621,6 +622,10 @@ def main() -> None:
     analysis_delivery.add_argument("--report", required=True, type=Path)
     analysis_delivery.add_argument("--run", type=Path)
     analysis_delivery.add_argument("--out", required=True, type=Path)
+    portfolio = sub.add_parser("report-portfolio",
+                               help="combine verified reports for one exact device and App build")
+    portfolio.add_argument("--report", required=True, action="append", type=Path)
+    portfolio.add_argument("--out", required=True, type=Path)
     visual_audit = sub.add_parser("visual-audit",
                                   help="measure every saved rebuild screenshot pair in a declared region")
     visual_audit.add_argument("--check", required=True, type=Path)
@@ -1072,6 +1077,9 @@ def main() -> None:
         elif args.command == "analysis-delivery":
             print(create_analysis_delivery(args.task, args.report, args.out,
                                            args.run))
+            code = 0
+        elif args.command == "report-portfolio":
+            print(create_report_portfolio(args.report, args.out))
             code = 0
         elif args.command == "visual-audit":
             print(create_visual_audit(args.check, args.out, args.roi,

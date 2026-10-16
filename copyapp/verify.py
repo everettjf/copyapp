@@ -89,6 +89,12 @@ def verify_case(directory: Path) -> bool:
                 return ok and validate_copy_workflow(directory.resolve(), manifest)
             except (KeyError, OSError, ValueError, TypeError, json.JSONDecodeError):
                 return False
+        if manifest.get("kind") == "report_portfolio":
+            try:
+                from copyapp.report_portfolio import validate_report_portfolio
+                return ok and validate_report_portfolio(directory.resolve(), manifest)
+            except (KeyError, OSError, ValueError, TypeError, json.JSONDecodeError):
+                return False
         if manifest.get("kind") == "decrypted_package":
             try:
                 from copyapp.decrypt_package import validate_decrypt_package_case
