@@ -203,6 +203,7 @@ final class StopwatchController: UIViewController {
     private let lapLabel = UILabel()
     private let lapTimeLabel = UILabel()
     private let lapDivider = UIView()
+    private let completedLapsStack = UIStackView()
     private var ticker: Timer?
     private var startedAt: Date?
     private var elapsed: TimeInterval = 0
@@ -234,6 +235,8 @@ final class StopwatchController: UIViewController {
         }
         lapTimeLabel.textAlignment = .right
         lapDivider.backgroundColor = UIColor(white: 0.18, alpha: 1)
+        completedLapsStack.axis = .vertical
+        completedLapsStack.spacing = 0
         let bottomDivider = UIView()
         bottomDivider.backgroundColor = UIColor(white: 0.18, alpha: 1)
         let dots = UILabel()
@@ -242,7 +245,7 @@ final class StopwatchController: UIViewController {
         dots.font = .systemFont(ofSize: 12)
         dots.textAlignment = .center
         [timeLabel, leftButton, rightButton, lapLabel, lapTimeLabel,
-         lapDivider, bottomDivider, dots].forEach {
+         lapDivider, completedLapsStack, bottomDivider, dots].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
@@ -273,6 +276,9 @@ final class StopwatchController: UIViewController {
             lapDivider.trailingAnchor.constraint(equalTo: bottomDivider.trailingAnchor),
             lapDivider.topAnchor.constraint(equalTo: lapLabel.bottomAnchor, constant: 12),
             lapDivider.heightAnchor.constraint(equalToConstant: 1),
+            completedLapsStack.leadingAnchor.constraint(equalTo: bottomDivider.leadingAnchor),
+            completedLapsStack.trailingAnchor.constraint(equalTo: bottomDivider.trailingAnchor),
+            completedLapsStack.topAnchor.constraint(equalTo: lapDivider.bottomAnchor),
         ])
         refresh()
     }
@@ -313,6 +319,54 @@ final class StopwatchController: UIViewController {
         lapTimeLabel.text = showLap ? formatted(total - lapStartedAt) : nil
     }
 
+    private func renderCompletedLaps() {
+        completedLapsStack.arrangedSubviews.forEach { row in
+            completedLapsStack.removeArrangedSubview(row)
+            row.removeFromSuperview()
+        }
+        let shortest = laps.min()
+        let longest = laps.max()
+        for index in laps.indices.reversed() {
+            let duration = laps[index]
+            let row = UIView()
+            let name = UILabel()
+            let value = UILabel()
+            let divider = UIView()
+            name.text = "Lap \(index + 1)"
+            value.text = formatted(duration)
+            value.textAlignment = .right
+            let color: UIColor
+            if laps.count > 1, shortest != longest, duration == shortest {
+                color = .systemGreen
+            } else if laps.count > 1, shortest != longest, duration == longest {
+                color = .systemRed
+            } else {
+                color = .white
+            }
+            for label in [name, value] {
+                label.font = .systemFont(ofSize: 16)
+                label.textColor = color
+                label.translatesAutoresizingMaskIntoConstraints = false
+                row.addSubview(label)
+            }
+            divider.backgroundColor = UIColor(white: 0.18, alpha: 1)
+            divider.translatesAutoresizingMaskIntoConstraints = false
+            row.addSubview(divider)
+            NSLayoutConstraint.activate([
+                row.heightAnchor.constraint(equalToConstant: 44),
+                name.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+                name.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+                value.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+                value.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+                divider.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+                divider.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+                divider.bottomAnchor.constraint(equalTo: row.bottomAnchor),
+                divider.heightAnchor.constraint(equalToConstant: 1),
+            ])
+            completedLapsStack.addArrangedSubview(row)
+        }
+    }
+
     @objc private func startOrStop() {
         if let start = startedAt {
             elapsed += Date().timeIntervalSince(start)
@@ -330,13 +384,15 @@ final class StopwatchController: UIViewController {
 
     @objc private func lapOrReset() {
         if startedAt != nil {
-            laps.append(total - lapStartedAt)
-            lapStartedAt = total
+            let currentTotal = total
+            laps.append(currentTotal - lapStartedAt)
+            lapStartedAt = currentTotal
         } else if elapsed > 0 {
             elapsed = 0
             lapStartedAt = 0
             laps.removeAll()
         }
+        renderCompletedLaps()
         refresh()
     }
 }

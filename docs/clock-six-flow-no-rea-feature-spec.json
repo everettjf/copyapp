@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "source_report": "cases/clock-six-flow-no-rea-reviewed-report-v8-20261015/report.md",
+  "target_bundle_id": "com.apple.mobiletimer",
+  "rebuilt_bundle_id": "dev.copyapp.clockclone",
+  "minimum_ios": "16.0",
+  "reference_device": "iPhone XR / iOS 16.1.1",
+  "flows": [
+    {
+      "id": "clock-world-city-chooser",
+      "entry": "从 Clock 的四标签页点按 World Clock，再点按 Add；查看 Choose a City 后 Cancel",
+      "expected": [
+        "World Clock 页显示现有城市和 Add",
+        "Add 后出现 Choose a City、Search、Cancel 与城市列表",
+        "Cancel 不选城市并回到 World Clock 页"
+      ],
+      "evidence": [
+        "app.all",
+        "world.direct"
+      ],
+      "source_script_sha256": "3db287539fc5719aa254c379f19fae5a4a41d4a059c1023cd7503cda3e9c8087",
+      "final_view": {
+        "text": "World Clock",
+        "region_points": [
+          0,
+          90,
+          250,
+          150
+        ]
+      },
+      "verification": "在同一 XR 上独立重放原版和复刻版的进入城市页、取消及返回流程，检查前台归属、每步文字断言与两处截图；审阅布局和差异。"
+    },
+    {
+      "id": "clock-alarm-unsaved-editor",
+      "entry": "点按 Alarm 标签及 Add；查看未保存编辑页后 Cancel",
+      "expected": [
+        "Alarm 页包含 Add，当前设备显示 No Alarm 与 Sleep | Wake Up 区域",
+        "Add Alarm 编辑页包含时间滚轮、Repeat、Label、Sound、Snooze、Save、Cancel",
+        "Cancel 不保存并回到 Alarm 页"
+      ],
+      "evidence": [
+        "app.all",
+        "alarm.direct"
+      ],
+      "source_script_sha256": "c727d388e6130ffd1960255bb48375704c2049a3b86b8d783c06c2876c334354",
+      "final_view": {
+        "text": "No Alarm",
+        "region_points": [
+          0,
+          0,
+          414,
+          896
+        ]
+      },
+      "verification": "在同一 XR 重放原版与复刻版的编辑页及取消动作，核对控件、末端 No Alarm 和逐图差异；不点击 Save。"
+    },
+    {
+      "id": "clock-timer-sound-chooser",
+      "entry": "点按 Timer 标签及 When Timer Ends；查看铃声列表后 Cancel",
+      "expected": [
+        "Timer 页显示 Hours、Minutes、Seconds 与 When Timer Ends",
+        "音调页显示 Radar (Default)、Cancel、Set 和可滚动音调列表",
+        "Cancel 回到 Timer 页，未提交新铃声"
+      ],
+      "evidence": [
+        "app.all",
+        "timer.direct"
+      ],
+      "source_script_sha256": "53b38d2e5db407795b32e7b074c2a0c79753661faf146d1500bded4e69868921",
+      "final_view": {
+        "text": "When Timer Ends",
+        "region_points": [
+          0,
+          0,
+          414,
+          896
+        ]
+      },
+      "verification": "在同一 XR 重放两端的铃声页打开与取消动作，检查前台、列表和返回页文字及截图，不执行 Set 或启动计时器。"
+    },
+    {
+      "id": "clock-stopwatch-start-stop-reset",
+      "entry": "从 Clock 底部进入 Stopwatch，依次 Start、Stop、Reset",
+      "expected": [
+        "初始数字表盘为 00:00.00，显示 Lap 和 Start",
+        "Start 后时间递增、显示 Stop 与 Lap 1",
+        "Stop 后保持时间并显示 Reset 和 Start",
+        "Reset 后回到 00:00.00 和 Start"
+      ],
+      "evidence": [
+        "stopwatch.flow",
+        "stopwatch.direct"
+      ],
+      "source_script_sha256": "5255f97f92eebcedcd00d1a80058d653d917bc41d05ac6ac6eb7dfc853960af4",
+      "final_view": {
+        "text": "00:00.00",
+        "region_points": [
+          0,
+          190,
+          414,
+          325
+        ]
+      },
+      "verification": "在同一 XR 对原版与复刻版依次重放 Start、Stop、Reset，检查按钮、Lap 1、时间变化与归零，逐张审阅四个状态截图；运行时长可能导致数值不完全相同。"
+    },
+    {
+      "id": "clock-timer-start-cancel",
+      "entry": "从 Clock 底部进入 Timer，使用默认 15 分钟，Start 后立即 Cancel",
+      "expected": [
+        "初始显示 0 hours、15 min、0 sec、Start 与 When Timer Ends",
+        "Start 后显示递减时间、进度环、Pause 和 Cancel",
+        "Cancel 后恢复时长选择与 Start，倒计时停止"
+      ],
+      "evidence": [
+        "timer.run.flow",
+        "timer.run.direct"
+      ],
+      "source_script_sha256": "13ba62c599aa34766f17ac0ae9a769cd807ff8752fe0df44f1a782fa9b110eb7",
+      "final_view": {
+        "text": "When Timer Ends",
+        "region_points": [
+          0,
+          500,
+          414,
+          640
+        ]
+      },
+      "verification": "在同一 XR 分别重放原版与复刻版 15 分钟 Start、Cancel，检查两端运行状态和取消后时长选择；独立运行的剩余秒数与结束时刻允许随采样时间变化。"
+    },
+    {
+      "id": "clock-stopwatch-two-laps",
+      "entry": "从 Clock 底部进入 Stopwatch，Start 后连续两次 Lap，再 Stop 和 Reset",
+      "expected": [
+        "初始显示 00:00.00、Lap 和 Start",
+        "第一次 Lap 后显示进行中的 Lap 2 与完成的 Lap 1",
+        "第二次 Lap 后显示进行中的 Lap 3、完成的 Lap 2 与 Lap 1；较快和较慢的已完成分段使用绿/红色",
+        "Stop 后保留时间及分段，Reset 后归零并清空列表"
+      ],
+      "evidence": [
+        "lap.flow",
+        "lap.controller",
+        "lap.table"
+      ],
+      "source_script_sha256": "63827f8b7efad12ba70a126ce40ed575ce756ae3c1c16022356f6e64a36f1c99",
+      "final_view": {
+        "text": "00:00.00",
+        "region_points": [
+          0,
+          150,
+          414,
+          320
+        ]
+      },
+      "verification": "同一 XR 分别重放原版与复刻版的两次 Lap、Stop、Reset；核对每步 Lap 编号、倒序列表、颜色和清空。两次运行的时间值允许不同，截图渲染缺失要单独记录。"
+    }
+  ],
+  "unknowns": [
+    "城市搜索排序、城市上限及保存路径",
+    "闹钟保存、通知调度、重复规则和声音播放",
+    "iOS 17 和 26 的界面及行为兼容性",
+    "Stopwatch 多分段、模拟表盘、后台运行及重启后状态恢复",
+    "Timer 暂停/恢复、后台计时、到期提醒与音调 Set 提交后的变化"
+  ]
+}
