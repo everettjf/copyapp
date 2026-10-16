@@ -44,6 +44,8 @@ The [latest Calculator analysis](cases/calculator-ui-deep-report-20261016/report
 
 Gestures now pass through discovery, replay, bounded Frida/network windows, original/rebuild comparison and the delivery assertion gate. iOS MCP 0.1.4 exposes swipe, long press and double tap on the XR. A Calculator display swipe changed the result from `9` to `0` in an iCTRL accessibility assertion and was visually observed after an iOS MCP replay. Both backends completed bounded long-press and double-tap calls without a verified feature-specific outcome. iCTRL approximates requested swipe duration through velocity tiers and does not accept a caller-selected double-tap interval.
 
+The original Calculator's `98→9` left-swipe deletion and the updated independent clone passed the same [paired XR script](cases/calculator-gesture-swipelive-20261016/ictrl-delete-digit-comparison/report.md). The new clone build 0.1.1 (3) also passed the [three existing arithmetic comparisons](cases/calculator-gesture-swipelive-20261016/clone-0.1.1-regression-check/manifest.json); [three screenshot pairs](cases/calculator-gesture-swipelive-20261016/clone-0.1.1-regression-visual-review/report.md) were reviewed as minor differences. This is selected-state behavior evidence, not a whole-app gesture or Calculator implementation claim.
+
 ## Next engineering gates
 
 1. Exercise an independent terminal run with a real Codex or Claude CLI and record its output and delivery gates.

@@ -1,6 +1,6 @@
 import UIKit
 
-/// A small independent implementation of the three reviewed basic-mode flows.
+/// A small independent implementation of selected basic-mode flows.
 final class CalculatorViewController: UIViewController {
     private struct Key {
         let title: String
@@ -56,6 +56,10 @@ final class CalculatorViewController: UIViewController {
         display.adjustsFontSizeToFitWidth = true
         display.isAccessibilityElement = true
         display.accessibilityLabel = "Result"
+        display.isUserInteractionEnabled = true
+        let deleteSwipe = UISwipeGestureRecognizer(target: self, action: #selector(deleteLastDigit))
+        deleteSwipe.direction = .left
+        display.addGestureRecognizer(deleteSwipe)
         view.addSubview(display)
 
         for (index, key) in keys.enumerated() {
@@ -115,6 +119,7 @@ final class CalculatorViewController: UIViewController {
         clear.setTitle(allClear ? "AC" : "C", for: .normal)
         clear.accessibilityLabel = allClear ? "all clear" : "clear"
         display.text = input
+        display.accessibilityValue = input
     }
 
     private func numericValue() -> Decimal {
@@ -124,6 +129,16 @@ final class CalculatorViewController: UIViewController {
     private func show(_ value: Decimal) {
         let text = NSDecimalNumber(decimal: value).stringValue
         input = text == "-0" ? "0" : text.replacingOccurrences(of: "-", with: "−")
+        updateButtons()
+    }
+
+    @objc private func deleteLastDigit() {
+        guard input != "0" else { return }
+        input = String(input.dropLast())
+        if input.isEmpty || input == "−" {
+            input = "0"
+        }
+        startNewOperand = false
         updateButtons()
     }
 
