@@ -156,10 +156,8 @@ def _capture_with_port(udid: str, bundle: str, output: Path, backend: str,
     ui.screenshot(output / "screenshot.jpg")
 
     record["stage"] = "attach_frida"
-    import frida
-    device = frida.get_usb_device(timeout=5)
-    if device.id != udid:
-        raise RuntimeError("Frida USB device does not match requested UDID")
+    from copyapp.frida_device import get_usb_device
+    device = get_usb_device(udid)
     app = next((item for item in device.enumerate_applications(scope="full")
                 if item.identifier == bundle and item.pid), None)
     if app is None:

@@ -119,12 +119,10 @@ class NetworkObserver:
                        "scope": "URLSession task resume observations in one app process. Only scheme, host, method and an FNV32 path fingerprint are saved; request headers, query, body and raw path are omitted. Other networking APIs may be missed."}
 
     def start(self, udid: str, bundle: str) -> None:
-        import frida
         self.record["device_id_sha256_prefix"] = hashlib.sha256(udid.encode()).hexdigest()[:16]
         self.record["bundle_id"] = bundle
-        device = frida.get_usb_device(timeout=5)
-        if device.id != udid:
-            raise RuntimeError("Frida network device differs from requested UDID")
+        from copyapp.frida_device import get_usb_device
+        device = get_usb_device(udid)
         app = next((item for item in device.enumerate_applications(scope="full")
                     if item.identifier == bundle and item.pid), None)
         if app is None:

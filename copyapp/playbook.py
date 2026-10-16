@@ -74,6 +74,13 @@ def run_playbook(udid: str, backend: str, script: Path, output: Path,
              not re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", scenario_id))) or
             not isinstance(steps, list) or not 1 <= len(steps) <= 64):
         raise ValueError("invalid UI playbook")
+    for index, step in enumerate(steps, 1):
+        if isinstance(step, dict) and "ready_ocr_labels" in step:
+            labels = step["ready_ocr_labels"]
+            if (step.get("action") != "screenshot" or not isinstance(labels, list) or
+                    not labels or any(not isinstance(label, str) or not label.strip()
+                                      for label in labels)):
+                raise ValueError(f"invalid ready_ocr_labels at step {index}")
     if output.exists() and any(output.iterdir()):
         raise FileExistsError(f"output directory is not empty: {output}")
     output.mkdir(parents=True, exist_ok=True)
@@ -360,4 +367,19 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
                     item["ready_found"] = ready_contains in ocr_text
                 if not item["ready_found"]:
                     raise RuntimeError(f"screenshot target content was not ready at step {index}")
+            image_labels = step.get("ready_ocr_labels")
+            if image_labels is not None:
+                ocr_path = output / f"step-{index:02d}-visual-ocr.json"
+                ocr_file(path, ocr_path)
+                _record_file(output, ocr_path, record["evidence"])
+                ocr_record = json.loads(ocr_path.read_text(encoding="utf-8"))
+                painted = {str(entry.get("text") or "").strip() for entry in
+                           ocr_record["result"]["texts"] if isinstance(entry, dict)}
+                missing = [label for label in image_labels if label not in painted]
+                item["ready_ocr_labels"] = image_labels
+                item["ready_ocr_labels_path"] = str(ocr_path.relative_to(output))
+                item["ready_ocr_labels_sha256"] = sha256_file(ocr_path)
+                item["missing_ready_ocr_labels"] = missing
+                if missing:
+                    raise RuntimeError(f"screenshot lacks visible labels at step {index}: {missing}")
         item["duration_ms"] = round((time.monotonic() - step_started) * 1000)

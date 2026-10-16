@@ -121,9 +121,16 @@ def _preflight(spec_path: Path, pairs: List[Tuple[str, Path, Path]]) -> Tuple[di
                 raise ValueError(f"handoff destination differs in {flow_id} step {index}")
             if action == "screenshot":
                 screenshots += 1
+                if first.get("ready_ocr_labels") != second.get("ready_ocr_labels"):
+                    raise ValueError(f"screenshot visual labels differ in {flow_id} step {index}")
                 for step in (first, second):
                     if step.get("stable") is not True or not step.get("ready_contains"):
                         raise ValueError(f"unverified screenshot in {flow_id} step {index}")
+                    labels = step.get("ready_ocr_labels")
+                    if labels is not None and (not isinstance(labels, list) or not labels or
+                                               any(not isinstance(label, str) or not label.strip()
+                                                   for label in labels)):
+                        raise ValueError(f"invalid screenshot visual labels in {flow_id} step {index}")
         if not screenshots:
             raise ValueError(f"paired scripts have no comparable screenshot: {flow_id}")
         records.append({"flow_id": flow_id, "scenario_id": original["scenario_id"],

@@ -78,10 +78,8 @@ def run(udid: str, bundle: str, output: Path) -> Path:
                                                     encoding="utf-8")
             record["before_screenshot_sha256"] = ui.screenshot(output / "before.jpg")
             stage = "attach_frida"
-            import frida
-            device = frida.get_usb_device(timeout=5)
-            if device.id != udid:
-                raise RuntimeError("Frida USB device does not match requested UDID")
+            from copyapp.frida_device import get_usb_device
+            device = get_usb_device(udid)
             app = next((item for item in device.enumerate_applications(scope="full")
                         if item.identifier == bundle), None)
             if app is None or not app.pid:

@@ -135,6 +135,27 @@ def _load_run(root: Path, require_comparable: bool = True) -> Tuple[dict, dict]:
                                      ocr_record["result"]["texts"] if isinstance(entry, dict))
                 if ready not in ocr_text:
                     raise ValueError(f"screenshot OCR content mismatch at {index}: {root}")
+            image_labels = requested.get("ready_ocr_labels")
+            if image_labels is not None:
+                ocr_relative = observed.get("ready_ocr_labels_path")
+                if (not isinstance(image_labels, list) or not image_labels or
+                        any(not isinstance(label, str) or not label.strip()
+                            for label in image_labels) or
+                        observed.get("ready_ocr_labels") != image_labels or
+                        observed.get("missing_ready_ocr_labels") != [] or
+                        not isinstance(ocr_relative, str) or
+                        ocr_relative not in {entry.get("path") for entry in manifest.get("evidence", [])}):
+                    raise ValueError(f"screenshot visual labels evidence is incomplete at {index}: {root}")
+                ocr_path = checked_path(root, ocr_relative)
+                if sha256_file(ocr_path) != observed.get("ready_ocr_labels_sha256"):
+                    raise ValueError(f"screenshot visual labels evidence mismatch at {index}: {root}")
+                ocr_record = _read_json(ocr_path)
+                if not verify_ocr_source(ocr_record, checked_path(root, relative)):
+                    raise ValueError(f"screenshot visual labels source mismatch at {index}: {root}")
+                painted = {str(entry.get("text") or "").strip() for entry in
+                           ocr_record["result"]["texts"] if isinstance(entry, dict)}
+                if any(label not in painted for label in image_labels):
+                    raise ValueError(f"screenshot visual labels do not match image OCR at {index}: {root}")
     return manifest, plan
 
 
@@ -284,6 +305,9 @@ def compare_playbooks(original_root: Path, rebuilt_root: Path, output: Path) -> 
                 first.get("contains", []), first.get("exact_labels", [])) != (
                 second.get("contains", []), second.get("exact_labels", [])):
             raise ValueError(f"observation conditions differ at step {index}")
+        if (first["action"] == "screenshot" and
+                first.get("ready_ocr_labels") != second.get("ready_ocr_labels")):
+            raise ValueError(f"screenshot visual labels differ at step {index}")
     output.mkdir(parents=True, exist_ok=True)
     artifacts: Dict[str, dict] = {}
     for label, root, manifest in (("original", original_root, original),

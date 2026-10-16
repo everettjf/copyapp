@@ -126,10 +126,8 @@ def decrypt_main(udid: str, bundle: str, output: Path, ssh_port: int,
     if struct.unpack_from("<I", disk, cryptid_offset)[0] != encryption["cryptid"]:
         raise ValueError("cryptid load-command offset mismatch")
 
-    import frida
-    device = frida.get_usb_device(timeout=5)
-    if device.id != udid:
-        raise RuntimeError("Frida device does not match requested UDID")
+    from copyapp.frida_device import get_usb_device
+    device = get_usb_device(udid)
     with ios_mcp_tunnel(udid) as port:
         client = IOSMCPClient(port=port)
         client.initialize()

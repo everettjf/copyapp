@@ -299,10 +299,8 @@ def _trace_tap_with_port(udid: str, bundle: str, specs: List[str], x: float, y: 
         record["screenshot_before_sha256"] = ui.screenshot(output / "before.jpg")
 
         stage = "attach_frida"
-        import frida
-        device = frida.get_usb_device(timeout=5)
-        if device.id != udid:
-            raise RuntimeError("Frida device does not match requested UDID")
+        from copyapp.frida_device import get_usb_device
+        device = get_usb_device(udid)
         app = next((item for item in device.enumerate_applications(scope="full")
                     if item.identifier == bundle), None)
         if app is None or not app.pid:

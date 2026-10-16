@@ -214,11 +214,8 @@ def trace_methods(udid: str, bundle: str, specs: List[str], duration: int,
         raise ValueError("provide 1–32 unique methods")
     if output.exists():
         raise FileExistsError(f"refusing to overwrite trace: {output}")
-    import frida
-
-    device = frida.get_usb_device(timeout=5)
-    if device.id != udid:
-        raise RuntimeError("connected Frida USB device does not match requested UDID")
+    from copyapp.frida_device import get_usb_device
+    device = get_usb_device(udid)
     app = next((item for item in device.enumerate_applications(scope="full")
                 if item.identifier == bundle), None)
     if app is None or not app.pid:

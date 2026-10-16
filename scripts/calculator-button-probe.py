@@ -104,10 +104,8 @@ def run(udid: str, binary: Path, output: Path) -> Path:
             record["frontmost_before"] = ui.frontmost()
             record["screenshot_before_sha256"] = ui.screenshot(output / "before.jpg")
             stage = "attach"
-            import frida
-            device = frida.get_usb_device(timeout=5)
-            if device.id != udid:
-                raise RuntimeError("Frida USB device identity mismatch")
+            from copyapp.frida_device import get_usb_device
+            device = get_usb_device(udid)
             app = next((a for a in device.enumerate_applications(scope="full")
                         if a.identifier == BUNDLE and a.pid), None)
             if app is None:

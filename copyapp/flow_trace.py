@@ -93,13 +93,10 @@ class FlowTrace:
                 "The acquired file hash and loaded module path/offset do not prove identical in-memory code bytes.")
 
     def start(self, udid: str, bundle: str) -> None:
-        import frida
-
         self.record["device_id_sha256_prefix"] = hashlib.sha256(udid.encode()).hexdigest()[:16]
         self.record["bundle_id"] = bundle
-        device = frida.get_usb_device(timeout=5)
-        if device.id != udid:
-            raise RuntimeError("Frida device does not match requested UDID")
+        from copyapp.frida_device import get_usb_device
+        device = get_usb_device(udid)
         app = next((item for item in device.enumerate_applications(scope="full")
                     if item.identifier == bundle), None)
         if app is None or not app.pid:

@@ -63,6 +63,12 @@ def inspect_playbook(path: Path, bundle: str) -> dict:
         elif (type(step.get("x")) not in (int, float) or
               type(step.get("y")) not in (int, float)):
             raise ValueError("coordinate tap needs numeric points")
+    for step in steps:
+        if step["action"] == "screenshot" and "ready_ocr_labels" in step:
+            labels = step["ready_ocr_labels"]
+            if (not isinstance(labels, list) or not labels or
+                    any(not isinstance(label, str) or not label.strip() for label in labels)):
+                raise ValueError("screenshot ready_ocr_labels needs visible text labels")
     return {"scenario_id": plan["scenario_id"], "tap_signature": _signature(steps),
             "step_count": len(steps), "tap_count": len(taps),
             "sha256": sha256_file(path)}

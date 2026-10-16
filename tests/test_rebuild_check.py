@@ -132,6 +132,18 @@ class RebuildCheckTest(unittest.TestCase):
                               [("add", *self.scripts)], self.root / "out")
         device.assert_not_called()
 
+    def test_rejects_different_screenshot_visual_labels_before_device_access(self):
+        for path, label in zip(self.scripts, ("Stop", "Start")):
+            plan = json.loads(path.read_text())
+            next(step for step in plan["steps"] if step["action"] == "screenshot")[
+                "ready_ocr_labels"] = [label]
+            path.write_text(json.dumps(plan))
+        with patch("copyapp.rebuild_check._installed_app") as device:
+            with self.assertRaisesRegex(ValueError, "screenshot visual labels differ"):
+                rebuild_check(self.udid, self.spec,
+                              [("add", *self.scripts)], self.root / "out")
+        device.assert_not_called()
+
     def test_rejects_different_label_region_before_device_access(self):
         original = json.loads(self.scripts[0].read_text())
         clone = json.loads(self.scripts[1].read_text())
