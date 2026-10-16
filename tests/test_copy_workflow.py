@@ -245,6 +245,66 @@ class CopyWorkflowTest(unittest.TestCase):
             self.assertFalse(validate_copy_workflow(self.output,
                                                     json.loads(path.read_text())))
 
+    def test_current_agent_handoffs_resume_without_nested_cli(self):
+        def run(*, resume=False):
+            with patch('copyapp.copy_workflow.prepare_app', side_effect=self.prepare), \
+                 patch('copyapp.copy_workflow.prepare_rebuild', side_effect=self.rebuild), \
+                 patch('copyapp.copy_workflow.run_agent_task',
+                       side_effect=AssertionError('must not launch nested agent')), \
+                 patch('copyapp.copy_workflow.verify_case', return_value=True):
+                return asyncio.run(copy_app(
+                    '00008020-1111111111111111', 'com.example.original',
+                    [self.script], self.project, 'com.example.clone', self.output,
+                    self.survey, workspace=self.root, agent_provider='current',
+                    resume=resume))
+
+        path, complete = run()
+        self.assertFalse(complete)
+        self.assertEqual(json.loads(path.read_text())['status'],
+                         'analysis_agent_needs_review')
+        self.assertEqual(self.calls, ['prepare'])
+        self.assertTrue((self.output / 'analysis-agent/TASK.md').is_file())
+        report = self.output / 'analysis-agent/reviewed-report'
+        write(report / 'report-index.json', {'kind': 'report'})
+        write(report / 'feature-spec.json', {
+            'target_bundle_id': 'com.example.original',
+            'rebuilt_bundle_id': 'com.example.clone', 'flows': [{'id': 'one'}],
+        })
+        task = self.output / 'preparation/preparation/draft'
+        write(self.output / 'analysis-agent/analysis-delivery/delivery.json', {
+            'status': 'source_linked_report_ready_for_review',
+            'task_case': str(task), 'report_case': str(report), 'agent_run': None,
+        })
+        write(self.output / 'analysis-agent/analysis-delivery/manifest.json',
+              {'kind': 'analysis_delivery'})
+        path, complete = run(resume=True)
+        self.assertFalse(complete)
+        self.assertEqual(json.loads(path.read_text())['status'],
+                         'rebuild_agent_needs_review')
+        self.assertEqual(self.calls, ['prepare', 'rebuild-preparation'])
+        self.assertTrue((self.output / 'rebuild-agent/TASK.md').is_file())
+        implementation = self.output / 'rebuild-preparation/task'
+        write(self.output / 'rebuild-agent/agent-delivery/delivery.json', {
+            'task_case': str(implementation), 'agent_run_case': None,
+            'visual_review_case': str(self.output / 'rebuild-agent/visual-review'),
+            'asserted_flow_count': 1, 'visual_unreviewed_flow_count': 0,
+            'visual_major_difference_flow_count': 0,
+            'flow_results': [{'script_assertions_status': 'passed'}],
+        })
+        write(self.output / 'rebuild-agent/agent-delivery/manifest.json',
+              {'kind': 'agent_delivery'})
+        path, complete = run(resume=True)
+        self.assertTrue(complete)
+        self.assertEqual(json.loads(path.read_text())['status'], 'complete')
+        self.assertEqual(self.calls, ['prepare', 'rebuild-preparation'])
+
+    def test_current_agent_rejects_recursive_auto_discovery(self):
+        with self.assertRaisesRegex(ValueError, 'invalid workflow'):
+            asyncio.run(copy_app(
+                '00008020-1111111111111111', 'com.example.original', [],
+                self.project, 'com.example.clone', self.output, self.survey,
+                workspace=self.root, agent_provider='current', auto_discover=True))
+
 
 if __name__ == '__main__':
     unittest.main()

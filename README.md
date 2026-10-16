@@ -37,6 +37,10 @@ Clock 随后扩展到四个主标签：[四流程分析报告](cases/clock-four-
 
 `--auto-discover` 的进程与真机交接已用固定脚本替身在 XR 上实测：[Clock 三流程发现案例](cases/clock-auto-discovery-agent-live-20261016/discovery/report.md)与外层 Agent 记录均通过校验；[父流程](cases/clock-auto-copy-live-20261016/manifest.json)还完成了整包采集、原版逐流程调查与分析任务准备，在替身分析 Agent 未提交正式报告时按预期停在 `analysis_agent_needs_review`。这检验了设备、脚本和证据链的连接，尚未检验真实模型自主发现或生成复刻。该实测还暴露了 `cryptid=0` 的 Clock 被旧校验器误拒的问题：现在只有来源 IPA 的全部 Mach-O 头部已无加密标记时才允许零个恢复二进制；真正仍加密的来源不能借此通过。
 
+在已经打开的 Codex/Claude Code 会话里，使用已验收的 `--discovery <CASE>` 或 `--script`，并指定 `--agent-provider current`。父流程完成准备后会给出 `<OUT>/analysis-agent/TASK.md` 并暂停；当前 Agent 直接完成正式报告和 `analysis-delivery`，再以原参数加 `--resume` 进入复刻任务。复刻完成安装、真机对照、逐图审阅和不带 `--run` 的 `agent-delivery` 后再次续跑。这个模式不会启动嵌套的 Agent CLI；它只在实际交付案例通过来源和选定流程验证后标记完成。`--auto-discover` 的外部 Agent 前置阶段不适用于 `current` 模式；当前 Agent 可按 Skill 自行发现并先运行 `discover-check`。
+
+上述 `current` 模式已在 XR 上完成一次真实三流程父案例：[Clock 正式报告](cases/clock-current-workflow-live-20261016/analysis-agent/reviewed-report/report.md) → [复刻任务](cases/clock-current-workflow-live-20261016/rebuild-preparation/task/TASK.md) → [Copy Clock Probe 源码](rebuild/ClockCurrentProbe) → [真机交付](cases/clock-current-workflow-live-20261016/rebuild-agent/agent-delivery/report.md)。父案例与交付均通过来源重验；世界时钟城市选择、未保存闹钟编辑和秒表启停重置 3/3 行为及末端视图断言通过，10 对截图逐张审阅为轻微差异，无重大差异。复刻工程沿用了本项目先前独立编写的 ClockClone 源码并针对本次对照修正了北京相对日期与城市弹窗；这是对现有独立实现的再交付，并非外部模型从零生成。城市列表字母索引、未选页面与跨系统行为仍是缺口。
+
 ## iPhone XR 实测（iOS 16.1.1）
 
 - USB 配对、系统与 App 信息、Developer Disk Image 挂载、截图、无障碍读取和 App 包目录索引已通过。`/var/jb` 可列出，包含 Dopamine 与 Procursus 标记。

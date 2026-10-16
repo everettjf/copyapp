@@ -75,6 +75,15 @@ def _handoff_ready(root: Path, source: dict, report: Path) -> bool:
 def _analysis_ready(root: Path, task: Path, provider: str) -> bool:
     run = _child(root, "analysis-agent")
     try:
+        if provider == "current":
+            report = _child(run, "reviewed-report")
+            delivery = _child(run, "analysis-delivery")
+            delivered = _read(delivery / "delivery.json")
+            return (delivered.get("status") == "source_linked_report_ready_for_review" and
+                    delivered.get("task_case") == str(task) and
+                    delivered.get("report_case") == str(report) and
+                    delivered.get("agent_run") is None and
+                    verify_case(report) and verify_case(delivery))
         verification = _read(run / "analysis-verification.json")
         record = _read(run / "run.json")
         delivery = _child(run, "analysis-delivery")
@@ -95,6 +104,22 @@ def _analysis_ready(root: Path, task: Path, provider: str) -> bool:
 def _rebuild_ready(root: Path, task: Path, provider: str) -> bool:
     run = _child(root, "rebuild-agent")
     try:
+        if provider == "current":
+            delivery = _child(run, "agent-delivery")
+            delivered = _read(delivery / "delivery.json")
+            selected = _read(task / "task.json")["flows"]
+            results = delivered.get("flow_results")
+            return (delivered.get("task_case") == str(task) and
+                    delivered.get("agent_run_case") is None and
+                    delivered.get("visual_review_case") is not None and
+                    delivered.get("asserted_flow_count") == len(selected) and
+                    delivered.get("visual_unreviewed_flow_count") == 0 and
+                    delivered.get("visual_major_difference_flow_count") == 0 and
+                    isinstance(results, list) and len(results) == len(selected) and
+                    all(isinstance(item, dict) and
+                        (item.get("script_assertions_status") == "passed" or
+                         item.get("final_view_status") == "passed")
+                        for item in results) and verify_case(delivery))
         verification = _read(run / "rebuild-verification.json")
         record = _read(run / "run.json")
         delivery = _child(run, "agent-delivery")
@@ -128,6 +153,7 @@ def _rebuild_ready(root: Path, task: Path, provider: str) -> bool:
 def _save(root: Path, record: dict) -> Path:
     paths = ("discovery-agent/manifest.json", "discovery-agent/discovery/manifest.json",
              "preparation/manifest.json", "analysis-agent/manifest.json",
+             "analysis-agent/TASK.md", "rebuild-agent/TASK.md",
              "analysis-agent/analysis-verification.json",
              "analysis-agent/reviewed-report/report-index.json",
              "analysis-agent/analysis-delivery/manifest.json",
@@ -228,16 +254,19 @@ async def copy_app(udid: str, bundle: str, scripts: list[Path], project: Path,
             project == output or project in output.parents or output in project.parents):
         raise ValueError("workflow output and independent project must be separate workspace paths")
     if (not udid or not bundle or not rebuilt_bundle or bundle == rebuilt_bundle or
-            agent_provider not in ("codex", "claude") or
+            agent_provider not in ("codex", "claude", "current") or
             backend not in ("ios-mcp", "ictrl") or
             ui_backend not in ("usb", "ios-mcp") or
             (not 1 <= len(scripts) <= 12 and not (auto_discover and not scripts)) or
-            (auto_discover and (scripts or discovery_case is not None))):
+            (auto_discover and (scripts or discovery_case is not None or
+                                agent_provider == "current"))):
         raise ValueError("invalid workflow target, provider or playbook selection")
     if agent_executable is not None:
         agent_executable = agent_executable.resolve(strict=True)
-    elif not shutil.which(agent_provider):
+    elif agent_provider != "current" and not shutil.which(agent_provider):
         raise FileNotFoundError(f"{agent_provider} CLI is not installed")
+    if agent_provider == "current" and agent_executable is not None:
+        raise ValueError("current-agent mode does not launch an executable")
     if auto_discover:
         agent_root = _child(output, "discovery-agent")
         if not resume and output.exists() and any(output.iterdir()):
@@ -327,6 +356,20 @@ async def copy_app(udid: str, bundle: str, scripts: list[Path], project: Path,
                 return _save(output, record), False
         task = preparation / "preparation" / "draft"
         if not _analysis_ready(output, task, agent_provider):
+            if agent_provider == "current":
+                analysis_run.mkdir(parents=True, exist_ok=True)
+                brief = analysis_run / "TASK.md"
+                if not brief.exists():
+                    brief.write_text(
+                        "# Current-agent analysis handoff\n\n"
+                        f"Review [{task / 'TASK.md'}]({task / 'TASK.md'}) and its evidence. "
+                        f"Save a formal report at `{analysis_run / 'reviewed-report'}`, "
+                        "then run `copyapp analysis-delivery` with this draft task and "
+                        f"that report into `{analysis_run / 'analysis-delivery'}`. "
+                        "Resume the same `copyapp copy` case after both verify.\n",
+                        encoding="utf-8")
+                record["status"] = "analysis_agent_needs_review"
+                return _save(output, record), False
             if analysis_run.exists() and any(analysis_run.iterdir()):
                 record["status"] = "analysis_agent_needs_review"
                 return _save(output, record), False
@@ -349,6 +392,23 @@ async def copy_app(udid: str, bundle: str, scripts: list[Path], project: Path,
                 return _save(output, record), False
         implementation_task = rebuild / "task"
         if not _rebuild_ready(output, implementation_task, agent_provider):
+            if agent_provider == "current":
+                rebuild_run.mkdir(parents=True, exist_ok=True)
+                brief = rebuild_run / "TASK.md"
+                if not brief.exists():
+                    brief.write_text(
+                        "# Current-agent rebuild handoff\n\n"
+                        f"Implement [{implementation_task / 'TASK.md'}]"
+                        f"({implementation_task / 'TASK.md'}) in `{project}`. "
+                        "Install and compare the selected flows on the pinned device. "
+                        f"Save installation at `{rebuild_run / 'install'}`, "
+                        f"comparison at `{rebuild_run / 'rebuild-check'}`, "
+                        f"visual review at `{rebuild_run / 'visual-review'}`, and "
+                        f"`copyapp agent-delivery` at `{rebuild_run / 'agent-delivery'}` "
+                        "without `--run`. Resume the same `copyapp copy` case after "
+                        "all evidence verifies.\n", encoding="utf-8")
+                record["status"] = "rebuild_agent_needs_review"
+                return _save(output, record), False
             if rebuild_run.exists() and any(rebuild_run.iterdir()):
                 record["status"] = "rebuild_agent_needs_review"
                 return _save(output, record), False

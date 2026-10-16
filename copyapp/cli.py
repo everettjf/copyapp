@@ -536,7 +536,7 @@ def main() -> None:
     prepare_app_parser.add_argument("--rebuilt-bundle", default="")
     prepare_app_parser.add_argument("--resume", action="store_true")
     copy_parser = sub.add_parser("copy",
-                                 help="run the source-verified Analyze → Rebuild workflow through a standalone coding-agent CLI")
+                                 help="run the source-verified Analyze → Rebuild workflow with an external CLI or the current coding agent")
     copy_parser.add_argument("--udid", required=True)
     copy_parser.add_argument("--bundle", required=True)
     copy_scripts = copy_parser.add_mutually_exclusive_group(required=True)
@@ -554,7 +554,9 @@ def main() -> None:
     copy_parser.add_argument("--analysis-provider",
                              choices=("none", "ghidra-direct", "ghidra", "hopper"),
                              default="none")
-    copy_parser.add_argument("--agent-provider", choices=("codex", "claude"), default="codex")
+    copy_parser.add_argument("--agent-provider", choices=("codex", "claude", "current"),
+                             default="codex",
+                             help="current pauses for this coding-agent session to complete each task")
     copy_parser.add_argument("--no-decrypt", action="store_true")
     copy_parser.add_argument("--no-network", action="store_true")
     copy_parser.add_argument("--flow", action="append", dest="flow_ids")
