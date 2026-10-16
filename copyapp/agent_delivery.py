@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Optional
 
 from copyapp.agent_run import _source_files, _source_tree_hash
+from copyapp.gestures import GESTURE_ACTIONS
 from copyapp.verify import checked_path, sha256_file, verify_case
 
 
@@ -27,7 +28,7 @@ def _write(path: Path, value: dict) -> None:
 
 
 def _post_action_script_assertions(script: Path) -> list[str]:
-    """Return explicit checks performed after a state-changing or navigation tap."""
+    """Return explicit checks performed after a state-changing UI action."""
     steps = _read(script).get("steps")
     if steps is None:
         return []
@@ -39,7 +40,7 @@ def _post_action_script_assertions(script: Path) -> list[str]:
         if not isinstance(step, dict):
             raise ValueError("implementation playbook has an invalid step")
         action = step.get("action")
-        if action in ("tap", "tap_label"):
+        if action in ("tap", "tap_label", *GESTURE_ACTIONS):
             after_action = True
         elif after_action and action == "observe":
             compare = step.get("compare_number")

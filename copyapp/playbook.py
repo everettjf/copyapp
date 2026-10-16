@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 from copyapp.experiment import ExperimentUI
+from copyapp.gestures import GESTURE_ACTIONS, gesture_params
 from copyapp.ictrl import DEFAULT_CLIENT
 from copyapp.ocr_file import ocr_file
 from copyapp.usb_tunnel import ictrl_tunnel, ios_mcp_tunnel
@@ -141,6 +142,10 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
     if not isinstance(width, (int, float)) or not isinstance(height, (int, float)):
         raise RuntimeError("device screen bounds unavailable")
     record["screen"] = {"width": width, "height": height, "coordinate_space": "points"}
+    # Reject malformed gestures before launching or touching the App.
+    for step in steps:
+        if isinstance(step, dict) and step.get("action") in GESTURE_ACTIONS:
+            gesture_params(step, width, height)
     if plan.get("fresh_launch") is True:
         asyncio.run(_fresh_launch(udid, bundle))
         # DVT can launch a third-party App without refreshing iCTRL's
@@ -164,7 +169,8 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
     for index, step in enumerate(steps, 1):
         step_started = time.monotonic()
         if not isinstance(step, dict) or step.get("action") not in (
-                "observe", "tap", "tap_label", "screenshot", "expect_foreground"):
+                "observe", "tap", "tap_label", "screenshot", "expect_foreground",
+                *GESTURE_ACTIONS):
             raise ValueError(f"invalid playbook step {index}")
         wait_ms = step.get("wait_ms", 0)
         if type(wait_ms) is not int or not 0 <= wait_ms <= 5000:
@@ -307,6 +313,26 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
                 trace_observer.begin_step(index, action)
             try:
                 item["result"] = ui.tap(x, y)
+            finally:
+                if trace_observer is not None:
+                    trace_observer.end_step()
+        elif action in GESTURE_ACTIONS:
+            gesture = gesture_params(step, width, height)
+            item["gesture"] = gesture
+            if trace_observer is not None:
+                trace_observer.begin_step(index, action)
+            try:
+                if action == "swipe":
+                    item["result"] = ui.swipe(
+                        gesture["from_x"], gesture["from_y"],
+                        gesture["to_x"], gesture["to_y"],
+                        gesture["duration_ms"], gesture["steps"])
+                elif action == "long_press":
+                    item["result"] = ui.long_press(
+                        gesture["x"], gesture["y"], gesture["duration_ms"])
+                else:
+                    item["result"] = ui.double_tap(
+                        gesture["x"], gesture["y"], gesture["interval_ms"])
             finally:
                 if trace_observer is not None:
                     trace_observer.end_step()

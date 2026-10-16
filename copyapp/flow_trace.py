@@ -1,4 +1,4 @@
-"""Record bounded Frida method hits during named UI playbook tap steps."""
+"""Record bounded Frida method hits during named UI playbook action steps."""
 
 import hashlib
 import json
@@ -70,7 +70,7 @@ class FlowTrace:
         self.record = {"schema_version": 1, "kind": "ui_flow_method_trace",
                        "status": "failed", "requested_methods": specs,
                        "started_at": _now(), "steps": self.steps,
-                       "note": "Tap-step hits are temporal observations, not proof of causal or exclusive dispatch. Raw argument 2 is saved only for explicitly selected methods; its meaning and type require separate evidence."}
+                       "note": "Action-step hits are temporal observations, not proof of causal or exclusive dispatch. Raw argument 2 is saved only for explicitly selected methods; its meaning and type require separate evidence."}
         if requested_args:
             self.record["arg2_u32_methods"] = requested_args
         if branches:

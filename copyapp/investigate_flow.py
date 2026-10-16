@@ -90,6 +90,11 @@ def write_review_brief(output: Path, plan: dict) -> Path:
         detail = action.get("label") if item["action"] == "tap_label" else None
         if detail is None and item["action"] == "tap":
             detail = f"({action.get('x')}, {action.get('y')})"
+        if detail is None and item["action"] == "swipe":
+            detail = (f"({action.get('from_x')}, {action.get('from_y')})"
+                      f"→({action.get('to_x')}, {action.get('to_y')})")
+        if detail is None and item["action"] in ("long_press", "double_tap"):
+            detail = f"({action.get('x')}, {action.get('y')})"
         description = (item["action"] + " " + str(detail or "")).replace("|", "\\|").replace("\n", " ")
         current = ", ".join(f"`{method}` {count}" for method, count in
                             zip(methods, item["call_counts"]))

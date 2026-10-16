@@ -105,6 +105,37 @@ class ExperimentUI:
                                      {"x": x, "y": y})
         return IOSMCPClient.text_json(result) if self.backend == "ios-mcp" else result
 
+    def swipe(self, from_x: float, from_y: float, to_x: float, to_y: float,
+              duration_ms: int, steps: int) -> Dict[str, Any]:
+        if self.backend == "ios-mcp":
+            result = self.client.call_ui("swipe_screen", {
+                "fromX": from_x, "fromY": from_y, "toX": to_x, "toY": to_y,
+                "duration": duration_ms, "steps": steps})
+            return IOSMCPClient.text_json(result)
+        delta_x, delta_y = to_x - from_x, to_y - from_y
+        direction = ("right" if delta_x > 0 else "left") if delta_x else (
+            "down" if delta_y > 0 else "up")
+        velocity = ("fast" if duration_ms <= 125 else
+                    "slow" if duration_ms > 375 else "normal")
+        return self.client.call_ui("swipe", {
+            "x": from_x, "y": from_y, "direction": direction,
+            "distance": abs(delta_x or delta_y), "velocity": velocity})
+
+    def long_press(self, x: float, y: float, duration_ms: int) -> Dict[str, Any]:
+        if self.backend == "ios-mcp":
+            result = self.client.call_ui("long_press", {
+                "x": x, "y": y, "duration": duration_ms})
+            return IOSMCPClient.text_json(result)
+        return self.client.call_ui("long_press", {
+            "x": x, "y": y, "duration": duration_ms / 1000})
+
+    def double_tap(self, x: float, y: float, interval_ms: int) -> Dict[str, Any]:
+        if self.backend == "ios-mcp":
+            result = self.client.call_ui("double_tap", {
+                "x": x, "y": y, "interval": interval_ms})
+            return IOSMCPClient.text_json(result)
+        return self.client.call_ui("double_tap", {"x": x, "y": y})
+
     def observe(self) -> Dict[str, Any]:
         if self.backend == "ios-mcp":
             return IOSMCPClient.text_json(self.client.call_ui(

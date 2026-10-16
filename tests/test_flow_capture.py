@@ -88,17 +88,17 @@ class FlowCaptureTest(unittest.TestCase):
                           {item["path"] for item in parent["evidence"]})
             validate.assert_called_once()
 
-    def test_trace_counts_follow_tap_steps_and_reject_wrong_static_binary(self):
+    def test_trace_counts_follow_action_steps_and_reject_wrong_static_binary(self):
         play = {"steps": [{"index": 1, "action": "observe"},
                           {"index": 2, "action": "tap"},
-                          {"index": 3, "action": "tap_label"}]}
+                          {"index": 3, "action": "swipe"}]}
         with tempfile.TemporaryDirectory() as directory, patch("copyapp.flow_trace.time.sleep"):
             recorder = FlowTrace(Path(directory) / "trace", ["Demo::pressed:"])
             recorder.record.update({"bundle_id": "com.example.app",
                                     "device_id_sha256_prefix": "device", "attached_at": "now",
                                     "methods": [{"class": "Demo", "selector": "pressed:",
                                                  "status": "hooked"}]})
-            for index, action in ((2, "tap"), (3, "tap_label")):
+            for index, action in ((2, "tap"), (3, "swipe")):
                 recorder.begin_step(index, action)
                 recorder._on_message({"payload": {"type": "method_hit", "index": 0}}, None)
                 recorder._on_message({"payload": {"type": "static_hit", "index": 0}}, None)
@@ -108,7 +108,7 @@ class FlowCaptureTest(unittest.TestCase):
             self.assertEqual([step["call_counts"] for step in trace["steps"]], [[1], [1]])
             validate_flow_trace_pair(play, trace, "com.example.app", "device")
             trace["steps"][1]["index"] = 4
-            with self.assertRaisesRegex(ValueError, "tap steps"):
+            with self.assertRaisesRegex(ValueError, "action steps"):
                 validate_flow_trace_pair(play, trace, "com.example.app", "device")
             trace["steps"][1]["index"] = 3
             trace["static_binary_sha256"] = "f" * 64

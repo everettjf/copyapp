@@ -5,11 +5,25 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from copyapp.network_flow import NetworkObserver, _event, network_hook_source
+from copyapp.network_flow import (NetworkObserver, _event, network_hook_source,
+                                  validate_network_trace_pair)
 from copyapp.verify import sha256_file, verify_case
 
 
 class NetworkFlowTest(unittest.TestCase):
+    def test_gesture_window_is_validated_as_action(self):
+        play = {"status": "complete", "bundle_id": "com.example.app",
+                "device_id_sha256_prefix": "device",
+                "steps": [{"index": 1, "action": "swipe"}]}
+        trace = {"status": "complete", "kind": "ui_network_flow_trace",
+                 "bundle_id": "com.example.app", "device_id_sha256_prefix": "device",
+                 "hook_count": 1, "dropped_events": 0, "events": [],
+                 "steps": [{"index": 1, "action": "swipe", "event_count": 0}]}
+        validate_network_trace_pair(play, trace, "com.example.app", "device")
+        trace["steps"][0]["action"] = "tap"
+        with self.assertRaisesRegex(ValueError, "playbook actions"):
+            validate_network_trace_pair(play, trace, "com.example.app", "device")
+
     def test_observer_attributes_only_valid_metadata_to_active_tap(self):
         with tempfile.TemporaryDirectory() as directory, patch("copyapp.network_flow.time.sleep"):
             observer = NetworkObserver(Path(directory))

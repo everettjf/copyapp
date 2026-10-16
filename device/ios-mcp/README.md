@@ -1,5 +1,7 @@
 # Copy APP device UI service
 
+**Language:** English | [简体中文](README.zh-CN.md)
+
 This directory contains selected MIT-licensed sources from
 [`witchan/ios-mcp`](https://github.com/witchan/ios-mcp) at commit
 `62c4464f688c8f269419924b1a19c996de75f175`. The upstream `LICENSE`
@@ -39,3 +41,10 @@ service recovered. Version 0.1.3 now removes direct OCR from its exposed UI
 tools and rejects OCR requests inside `describe_screen`; these guards passed
 live XR checks. The screenshot-to-Mac OCR route passed on Compass. See
 `docs/xr-ocr-validation.md`. Other device/OS combinations remain untested.
+
+Version 0.1.4 exposes `swipe_screen`, `long_press`, and `double_tap` to the
+restricted UI tool list. Its inspected rootless package was transferred over
+the already paired USB SSH channel with matching SHA-256, installed by the
+existing root bridge, and activated with `sbreload` on the XR. The live health
+response reported 0.1.4 and all three tools appeared in `tools/list`. Both
+gesture backends and their limits are documented in the [gesture guide](../../docs/ui-gesture-playbooks.md).

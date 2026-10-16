@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Optional
 
 from copyapp.playbook import run_playbook
+from copyapp.gestures import GESTURE_ACTIONS, gesture_params
 from copyapp.verify import sha256_file, verify_case
 
 
@@ -27,9 +28,16 @@ def _verified(path: Path) -> bool:
 
 
 def _signature(steps: list) -> list:
-    return [[step["action"], step.get("label") if step["action"] == "tap_label"
-             else [step.get("x"), step.get("y")]]
-            for step in steps if step["action"] in ("tap", "tap_label")]
+    signature = []
+    for step in steps:
+        action = step["action"]
+        if action == "tap_label":
+            signature.append([action, step.get("label")])
+        elif action == "tap":
+            signature.append([action, [step.get("x"), step.get("y")]])
+        elif action in GESTURE_ACTIONS:
+            signature.append([action, gesture_params(step)])
+    return signature
 
 
 def inspect_playbook(path: Path, bundle: str) -> dict:
@@ -42,11 +50,13 @@ def inspect_playbook(path: Path, bundle: str) -> dict:
             not SCENARIO.fullmatch(plan["scenario_id"]) or
             not isinstance(steps, list) or not 3 <= len(steps) <= 32 or
             any(not isinstance(step, dict) or step.get("action") not in
-                ("observe", "tap", "tap_label", "screenshot", "expect_foreground")
+                ("observe", "tap", "tap_label", "screenshot", "expect_foreground",
+                 *GESTURE_ACTIONS)
                 for step in steps)):
         raise ValueError("discovery playbook has invalid identity or structure")
-    taps = [step for step in steps if step["action"] in ("tap", "tap_label")]
-    if (not 1 <= len(taps) <= 8 or steps[0]["action"] != "observe" or
+    actions = [step for step in steps if step["action"] in
+               ("tap", "tap_label", *GESTURE_ACTIONS)]
+    if (not 1 <= len(actions) <= 8 or steps[0]["action"] != "observe" or
             not isinstance(steps[0].get("contains"), list) or
             not steps[0]["contains"] or
             any(not isinstance(value, str) or not value
@@ -56,10 +66,12 @@ def inspect_playbook(path: Path, bundle: str) -> dict:
             not isinstance(steps[-1].get("ready_contains"), str) or
             not steps[-1]["ready_contains"]):
         raise ValueError("discovery flow needs an observed entry, bounded action and ready final screenshot")
-    for step in taps:
+    for step in actions:
         if step["action"] == "tap_label":
             if not isinstance(step.get("label"), str) or not step["label"]:
                 raise ValueError("tap_label needs a visible label")
+        elif step["action"] in GESTURE_ACTIONS:
+            gesture_params(step)
         elif (type(step.get("x")) not in (int, float) or
               type(step.get("y")) not in (int, float)):
             raise ValueError("coordinate tap needs numeric points")
@@ -70,7 +82,7 @@ def inspect_playbook(path: Path, bundle: str) -> dict:
                     any(not isinstance(label, str) or not label.strip() for label in labels)):
                 raise ValueError("screenshot ready_ocr_labels needs visible text labels")
     return {"scenario_id": plan["scenario_id"], "tap_signature": _signature(steps),
-            "step_count": len(steps), "tap_count": len(taps),
+            "step_count": len(steps), "tap_count": len(actions),
             "sha256": sha256_file(path)}
 
 

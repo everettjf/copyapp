@@ -15,6 +15,8 @@ Copy APP treats “analyze” and “rebuild” as one resumable, evidence-gated
 
 The initial command writes `discovery-agent/TASK.md` and pauses before touching the phone. The current agent observes the actual app, creates 3–12 distinct bounded playbooks under `discovery-agent/candidates/`, and submits them to `copyapp discover-check` using the exact device, Bundle ID and UI backend. That command statically checks identity and action bounds before replay, then saves a verified case at `discovery-agent/discovery/`. Keep failed attempts for diagnosis; inspect phone state before a new attempt. The accepted case pins script bytes, device identity and replay evidence. It establishes only the observed paths, not whole-app coverage.
 
+Each playbook may use bounded taps, swipes, long presses and double taps. Include a post-action state assertion when available; a successful gesture call does not prove the intended UI effect. See the [gesture guide](ui-gesture-playbooks.md) ([中文](ui-gesture-playbooks.zh-CN.md)) for parameters and backend differences.
+
 If a verified discovery case already exists, use `--discovery <CASE>` instead; if scripts were chosen explicitly, use repeated `--script <FILE>`. The three inputs are mutually exclusive.
 
 ## 2. Prepare and interpret

@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional
 
 ICTRL_UI_METHODS = frozenset({
     "logs", "device_info", "page_source", "screen_text", "find_element",
-    "tap", "swipe", "type", "launch_app", "home", "screenshot",
+    "tap", "swipe", "long_press", "double_tap", "type", "launch_app", "home", "screenshot",
 })
 DEFAULT_CLIENT = Path(__file__).resolve().parents[2] / "toolchains" / "ictrl-macos"
 

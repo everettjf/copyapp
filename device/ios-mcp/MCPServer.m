@@ -32,7 +32,7 @@
 #define MCP_PROTOCOL_VERSION_LATEST @"2025-11-25"
 #define MCP_PROTOCOL_VERSION_LEGACY @"2025-03-26"
 #define MCP_SERVER_NAME             @"copyapp-ios-mcp"
-#define MCP_SERVER_VERSION          @"0.1.3"
+#define MCP_SERVER_VERSION          @"0.1.4"
 #define HTTP_BUF_SIZE        (256 * 1024)
 #define MCP_MAX_CHUNK_LINE   (8 * 1024)
 #define MCP_UPLOAD_DIR       @"/var/mobile/Library/Caches/ios-mcp-uploads"
@@ -2596,7 +2596,7 @@ static NSString *MCPLogId(id reqId) {
     NSSet *allowed = [NSSet setWithArray:@[
         @"get_frontmost_app", @"get_screen_info", @"get_ui_elements",
         @"describe_screen", @"screenshot",
-        @"tap_screen", @"tap_element", @"swipe_screen",
+        @"tap_screen", @"tap_element", @"swipe_screen", @"long_press", @"double_tap",
         @"input_text", @"type_text", @"launch_app",
         @"press_home", @"wake_and_home"
     ]];
@@ -2638,7 +2638,7 @@ static NSString *MCPLogId(id reqId) {
     NSSet *allowed = [NSSet setWithArray:@[
         @"get_frontmost_app", @"get_screen_info", @"get_ui_elements",
         @"describe_screen", @"screenshot",
-        @"tap_screen", @"tap_element", @"swipe_screen",
+        @"tap_screen", @"tap_element", @"swipe_screen", @"long_press", @"double_tap",
         @"input_text", @"type_text", @"launch_app",
         @"press_home", @"wake_and_home"
     ]];

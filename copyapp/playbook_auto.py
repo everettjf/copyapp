@@ -5,6 +5,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from copyapp.gestures import GESTURE_ACTIONS
 from copyapp.ictrl import DEFAULT_CLIENT
 from copyapp.playbook import run_playbook
 from copyapp.verify import sha256_file, verify_case
@@ -37,7 +38,8 @@ def run_playbook_auto(udid: str, primary: str, fallback: str, script: Path,
                 record.get("ui_backend") != backend or
                 record.get("status") != ("complete" if complete else "failed")):
             raise ValueError("playbook attempt identity or script changed")
-        touched = any(step.get("action") in ("tap", "tap_label") for step in record["steps"])
+        touched = any(step.get("action") in ("tap", "tap_label", *GESTURE_ACTIONS)
+                      for step in record["steps"])
         attempts.append({"backend": backend, "status": record["status"],
                          "touch_attempted": touched,
                          "manifest": str(manifest.relative_to(output)),

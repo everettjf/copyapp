@@ -121,6 +121,18 @@ class RebuildCheckTest(unittest.TestCase):
                               [("add", *self.scripts)], self.root / "out")
         device.assert_not_called()
 
+    def test_rejects_different_swipe_before_device_access(self):
+        for path, end_x in zip(self.scripts, (100, 120)):
+            plan = json.loads(path.read_text())
+            plan["steps"][1] = {"action": "swipe", "from_x": 300,
+                                 "from_y": 280, "to_x": end_x, "to_y": 280}
+            path.write_text(json.dumps(plan))
+        with patch("copyapp.rebuild_check._installed_app") as device:
+            with self.assertRaisesRegex(ValueError, "gesture parameters differ"):
+                rebuild_check(self.udid, self.spec,
+                              [("add", *self.scripts)], self.root / "out")
+        device.assert_not_called()
+
     def test_rejects_different_exact_observation_labels_before_device_access(self):
         for path, label in zip(self.scripts, ("Stop", "Start")):
             plan = json.loads(path.read_text())

@@ -15,6 +15,8 @@ Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组
 
 首次调用生成 `discovery-agent/TASK.md` 并暂停，不会先操作手机。当前 Agent 观察真实 App，在 `discovery-agent/candidates/` 编写 3–12 条不同且有界的 UI 脚本，再以同一设备、Bundle ID 和 UI 后端运行 `copyapp discover-check`，将通过的案例保存到 `discovery-agent/discovery/`。失败案例保留诊断，检查手机状态后再试。验收绑定脚本内容、设备身份和真机重放证据；它只证明选定路径，不代表覆盖整个 App。
 
+每条脚本可包含有界点击、滑动、长按和双击。界面可观察时应加入操作后状态断言；后端接受手势调用不代表预期界面效果已发生。参数与后端差异见[中文手势指南](ui-gesture-playbooks.zh-CN.md)（[English](ui-gesture-playbooks.md)）。
+
 已有验收案例可用 `--discovery <案例>`；已有脚本可重复使用 `--script <文件>`。这三种输入互斥。
 
 ## 2. 采集与解释

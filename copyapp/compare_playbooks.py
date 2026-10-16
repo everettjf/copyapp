@@ -13,6 +13,7 @@ from PIL import Image, ImageChops, ImageStat
 from copyapp.ocr_file import verify_ocr_source
 from copyapp.playbook import _exact_labels
 from copyapp.verify import checked_path, sha256_file, verify_case
+from copyapp.gestures import GESTURE_ACTIONS, gesture_params
 
 
 def _read_json(path: Path) -> dict:
@@ -51,6 +52,11 @@ def _load_run(root: Path, require_comparable: bool = True) -> Tuple[dict, dict]:
                 (requested.get("action") == "expect_foreground" and
                  observed.get("expected_frontmost") != expected_frontmost)):
             raise ValueError(f"playbook step identity mismatch at {index}: {root}")
+        if requested.get("action") in GESTURE_ACTIONS:
+            screen = manifest.get("screen") or {}
+            gesture = gesture_params(requested, screen.get("width"), screen.get("height"))
+            if observed.get("gesture") != gesture or not isinstance(observed.get("result"), dict):
+                raise ValueError(f"gesture evidence mismatch at {index}: {root}")
         region = requested.get("region_points") if requested.get("action") == "tap_label" else None
         if region is not None:
             match = (observed.get("result") or {}).get("match")
@@ -298,6 +304,10 @@ def compare_playbooks(original_root: Path, rebuilt_root: Path, output: Path) -> 
         if first["action"] == "tap" and (first.get("x"), first.get("y")) != (
                 second.get("x"), second.get("y")):
             raise ValueError(f"tap coordinates differ at step {index}")
+        if first["action"] in GESTURE_ACTIONS and (
+                gesture_params(first) != gesture_params(second) or
+                first.get("wait_ms", 0) != second.get("wait_ms", 0)):
+            raise ValueError(f"gesture parameters differ at step {index}")
         if (first["action"] == "expect_foreground" and
                 first.get("bundle_id") != second.get("bundle_id")):
             raise ValueError(f"expected handoff app differs at step {index}")

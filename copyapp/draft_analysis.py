@@ -62,6 +62,11 @@ def _entry(plan: dict) -> str:
             actions.append("点按 " + _safe_label(step.get("label", "")))
         elif step["action"] == "tap":
             actions.append(f"点按坐标 ({step.get('x')}, {step.get('y')})")
+        elif step["action"] == "swipe":
+            actions.append(f"滑动 ({step.get('from_x')}, {step.get('from_y')})"
+                           f"→({step.get('to_x')}, {step.get('to_y')})")
+        elif step["action"] in ("long_press", "double_tap"):
+            actions.append(f"{step['action']} ({step.get('x')}, {step.get('y')})")
     return "；".join(actions) or "启动并观察"
 
 

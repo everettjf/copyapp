@@ -6,6 +6,16 @@ from copyapp.ios_mcp import IOSMCPClient
 
 
 class TapLabelRegionTest(unittest.TestCase):
+    def test_ictrl_swipe_maps_exact_start_direction_and_distance(self):
+        ui = object.__new__(ExperimentUI)
+        ui.backend = "ictrl"
+        ui.client = Mock()
+        ui.client.call_ui.return_value = {"message": "Swiped"}
+        ui.swipe(346, 280, 132, 280, 350, 20)
+        ui.client.call_ui.assert_called_once_with("swipe", {
+            "x": 346, "y": 280, "direction": "left",
+            "distance": 214, "velocity": "normal"})
+
     def test_ictrl_uses_device_identity_channel_and_explicit_app_tree(self):
         ui = object.__new__(ExperimentUI)
         ui.backend = "ictrl"

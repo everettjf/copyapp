@@ -16,6 +16,7 @@ from copyapp.playbook import run_playbook
 from copyapp.trace import parse_method
 from copyapp.usb_tunnel import ictrl_tunnel
 from copyapp.verify import sha256_file, verify_case
+from copyapp.gestures import GESTURE_ACTIONS
 from copyapp.view_tree import capture_view_tree
 
 
@@ -38,7 +39,7 @@ def _child_files(output: Path) -> list:
 
 
 class ObserverGroup:
-    """Keep independent Frida observers aligned to one playbook tap timeline."""
+    """Keep independent Frida observers aligned to one playbook action timeline."""
 
     def __init__(self, observers: list):
         self.observers = observers
@@ -53,7 +54,7 @@ class ObserverGroup:
 
     def end_step(self) -> None:
         # Each observer has its own bounded Frida-message drain. Run those
-        # drains together so one tap does not get different end windows.
+        # drains together so one action does not get different end windows.
         with ThreadPoolExecutor(max_workers=len(self.observers)) as pool:
             futures = [pool.submit(observer.end_step) for observer in self.observers]
             errors = []
@@ -98,19 +99,20 @@ def validate_flow_pair(playbook: dict, views: dict, bundle: str,
 
 def validate_flow_trace_pair(playbook: dict, trace: dict, bundle: str,
                              device_prefix: str, binary_hashes: Optional[set] = None) -> None:
-    taps = [(item["index"], item["action"]) for item in playbook.get("steps", [])
-            if item.get("action") in ("tap", "tap_label")]
+    actions = [(item["index"], item["action"]) for item in playbook.get("steps", [])
+               if item.get("action") in ("tap", "tap_label", *GESTURE_ACTIONS)]
     steps = trace.get("steps")
     methods = trace.get("requested_methods")
     if (trace.get("status") != "complete" or trace.get("bundle_id") != bundle or
             trace.get("device_id_sha256_prefix") != device_prefix or
             not isinstance(steps, list) or not isinstance(methods, list) or not methods or
             [(item.get("index"), item.get("action")) for item in steps
-             if isinstance(item, dict)] != taps or
-            len(steps) != len(taps) or
+             if isinstance(item, dict)] != actions or
+            len(steps) != len(actions) or
             any(not isinstance(item, dict) or item.get("incomplete") or
-                item.get("action") not in ("tap", "tap_label") for item in steps)):
-        raise ValueError("trace/playbook identity or tap steps differ")
+                item.get("action") not in ("tap", "tap_label", *GESTURE_ACTIONS)
+                for item in steps)):
+        raise ValueError("trace/playbook identity or action steps differ")
     width = len(methods)
     observed_methods = trace.get("methods")
     if (not isinstance(observed_methods, list) or len(observed_methods) != width or

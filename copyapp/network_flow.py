@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from copyapp.experiment import _bounded_cleanup
+from copyapp.gestures import GESTURE_ACTIONS
 from copyapp.ictrl import DEFAULT_CLIENT
 from copyapp.playbook import run_playbook
 from copyapp.usb_tunnel import ictrl_tunnel
@@ -243,15 +244,16 @@ def validate_network_trace_pair(play: dict, trace: dict, bundle: str, prefix: st
             type(trace.get("dropped_events")) is not int or
             trace["dropped_events"] < 0):
         raise ValueError("network trace identity or capture status differs")
-    taps = [(item.get("index"), item.get("action")) for item in play.get("steps", [])
-            if isinstance(item, dict) and item.get("action") in ("tap", "tap_label")]
+    actions = [(item.get("index"), item.get("action")) for item in play.get("steps", [])
+               if isinstance(item, dict) and item.get("action") in
+               ("tap", "tap_label", *GESTURE_ACTIONS)]
     steps = trace.get("steps", [])
     if (not isinstance(steps, list) or
             [(item.get("index"), item.get("action")) for item in steps
-             if isinstance(item, dict)] != taps or len(steps) != len(taps) or
+             if isinstance(item, dict)] != actions or len(steps) != len(actions) or
             any(not isinstance(item, dict) or item.get("incomplete") for item in steps)):
-        raise ValueError("network observation steps differ from playbook taps")
-    tap_indexes = {index for index, _ in taps}
+        raise ValueError("network observation steps differ from playbook actions")
+    action_indexes = {index for index, _ in actions}
     for item in trace["events"]:
         if not isinstance(item, dict) or set(item) != {
                 "scheme", "host", "method", "path_fingerprint", "path_depth",
@@ -259,7 +261,7 @@ def validate_network_trace_pair(play: dict, trace: dict, bundle: str, prefix: st
             raise ValueError("network trace includes unsanitized or unknown event fields")
         if _event(item) != {key: item[key] for key in (
                 "scheme", "host", "method", "path_fingerprint", "path_depth")} or \
-                (item["step_index"] is not None and item["step_index"] not in tap_indexes):
+                (item["step_index"] is not None and item["step_index"] not in action_indexes):
             raise ValueError("network trace event differs from playbook steps")
         try:
             datetime.fromisoformat(item["observed_at"])

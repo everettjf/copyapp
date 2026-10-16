@@ -14,7 +14,8 @@ from typing import Any, Dict, Optional
 UI_TOOLS = frozenset({
     "get_frontmost_app", "get_screen_info", "get_ui_elements",
     "describe_screen", "screenshot",
-    "tap_screen", "tap_element", "swipe_screen", "input_text", "type_text",
+    "tap_screen", "tap_element", "swipe_screen", "long_press", "double_tap",
+    "input_text", "type_text",
     "launch_app", "press_home", "wake_and_home",
 })
 
