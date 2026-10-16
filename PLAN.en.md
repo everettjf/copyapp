@@ -31,17 +31,18 @@ REA is optional. The default path uses Copy APP's own bounded analysis and devic
 | M2 Evidence acquisition | Package and encrypted Mach-O status, sandbox/runtime evidence with source checks | XR Kimi and DeepSeek full-package recovery, several app pilots and known-source fixture verified; broader protection strategies pending |
 | M3 Analysis report | Major selected-flow claims linked to UI, code and data evidence or marked unknown | Reviewed XR reports and direct Ghidra path available; arbitrary-app semantic interpretation remains Agent work |
 | M4 Real-app pilot | Reviewable deep report and executable feature specification | XR Compass, Calculator, DeepSeek and Clock selected-flow pilots exist; coverage varies by app |
-| M5 Rebuild loop | Independent app on real phone, paired behavior and screenshot review | XR Clock current-agent three-flow parent complete; 3/3 assertions and 10 reviewed image pairs with minor differences |
-| M6 Product entry | Reliable one-request flow, recovery and reuse on a second stack | Current-agent discovery through selected-flow delivery now completes on XR; autonomous external-Agent zero-shot creation and whole-app generality remain unverified |
+| M5 Rebuild loop | Independent app on real phone, paired behavior and screenshot review | XR Clock and fresh Calculator current-agent parents complete; Calculator 3/3 assertions and 3 reviewed image pairs with minor differences |
+| M6 Product entry | Reliable one-request flow, recovery and reuse on a second stack | Current-agent discovery through selected-flow delivery now completes on XR for Clock and Calculator; external CLI autonomy and whole-app generality remain unverified |
 
 The real XR `--auto-discover --agent-provider current` trial at [its parent case](cases/clock-current-auto-workflow-20261016/manifest.json) replayed three previously authored Clock flows, produced a source-linked report, built and installed a distinct clone, and passed 3/3 selected behavior and final-view assertions. Ten screenshot pairs were reviewed with minor differences and no major difference; 517 parent evidence files verified. The clone adapted previously authored independent source. A separate [completed Clock parent](cases/clock-current-workflow-live-20261016/manifest.json) also verifies the downstream handoffs. Neither case establishes model-authored discovery or zero-shot cloning.
 
+The [Calculator parent](cases/calculator-current-auto-workflow-20261016/manifest.json) closes that narrow evidence gap: the active agent authored three scripts from the XR's current UI and implemented [new UIKit source](rebuild/CalculatorFreshProbe) without reusing an earlier clone. A failed ambiguous clear-label replay and a later visual-layout repair are retained in the local case. The [formal report](cases/calculator-current-auto-workflow-20261016/analysis-agent/reviewed-report/report.md) combines current package/UI/Frida evidence with matching-hash direct Ghidra function cases, with the earlier collection times disclosed. On the same XR, 3/3 paired behavior and terminal view assertions passed; [three image pairs](cases/calculator-current-auto-workflow-20261016/rebuild-agent/visual-review-v2/report.md) show minor differences, none major. The [delivery](cases/calculator-current-auto-workflow-20261016/rebuild-agent/agent-delivery/report.md) and parent verify. The implementation covers only decimal addition, negative addition and percent, so it is not a complete Calculator clone.
+
 ## Next engineering gates
 
-1. Have the active agent author discovery scripts from a new app's real UI, without relying on previously saved scripts; retain failed attempts and verify safe resumption.
-2. Produce a formal report and independent source from a fresh target under the single parent workflow, then compare and repair selected flows on XR.
-3. Exercise an independent terminal run with a real Codex or Claude CLI and record its output and delivery gates.
-4. Extend app coverage across different UI technologies and protection states; quantify discovery coverage and failures.
-5. When the user resumes those devices, test iOS 17 and 26 independently. Do not extrapolate from XR.
+1. Exercise an independent terminal run with a real Codex or Claude CLI and record its output and delivery gates.
+2. Extend fresh discovery and implementation to an unfamiliar app and different UI stack or protection state; quantify coverage and failures.
+3. Expand selected-flow implementations into more of each app's behavior, including persistence and backend boundaries, with new paired checks.
+4. When the user resumes those devices, test iOS 17 and 26 independently. Do not extrapolate from XR.
 
 Keep credentials, IPA snapshots, screenshots and raw sandbox data in ignored local `cases/`. A hash proves consistency of saved bytes, not the correctness of an interpretation.

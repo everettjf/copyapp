@@ -45,6 +45,8 @@ Clock 随后扩展到四个主标签：[四流程分析报告](cases/clock-four-
 
 新的 [`--auto-discover --agent-provider current` XR 案例](cases/clock-current-auto-workflow-20261016/manifest.json)先生成发现任务，用三条先前编写的 Clock 脚本在 XR 上重放并通过 `discover-check`，随后完成[正式报告](cases/clock-current-auto-workflow-20261016/analysis-agent/reviewed-report/report.md)、[独立复刻源码](rebuild/ClockCurrentAutoProbe)、安装、三流程同机对照及[交付](cases/clock-current-auto-workflow-20261016/rebuild-agent/agent-delivery/report.md)。3/3 行为与末端视图断言通过，10 对截图逐张审阅为轻微差异，无重大差异；父案例 517 项证据文件通过校验。脚本取自先前场景，源码沿用并改造既有独立实现，因此证明当前会话编排闭环，不证明陌生 App 自主发现或从零生成。默认英文的[实施计划](PLAN.en.md)与[流程指南](docs/copy-workflow.md)均可从对应中文版切换。
 
+新的 [Calculator 当前 Agent 自动发现父案例](cases/calculator-current-auto-workflow-20261016/manifest.json)补上新写脚本和新写源码的单目标实证：当前 Agent 先观察 XR 的真实 Calculator 界面，编写小数加法、负数加法、百分比三条脚本，保存失败的发现尝试并完成真机验收；随后生成[来源关联的正式报告](cases/calculator-current-auto-workflow-20261016/analysis-agent/reviewed-report/report.md)，从空工程独立编写 [UIKit 复刻版](rebuild/CalculatorFreshProbe)。同一 XR 上安装后，三条原版/复刻版行为与末端 UIKit 断言均通过，结果分别为 `0.3`、`−7`、`0.5`；[三对截图](cases/calculator-current-auto-workflow-20261016/rebuild-agent/visual-review-v2/report.md)逐张审阅均为轻微差异、无重大差异。[交付](cases/calculator-current-auto-workflow-20261016/rebuild-agent/agent-delivery/report.md)和父案例通过 `copyapp verify`。这证明当前会话内的选定流程闭环，尚未证明陌生 App 的普适探索、外部 Agent CLI 自主运行或完整 Calculator 功能。
+
 ## iPhone XR 实测（iOS 16.1.1）
 
 - USB 配对、系统与 App 信息、Developer Disk Image 挂载、截图、无障碍读取和 App 包目录索引已通过。`/var/jb` 可列出，包含 Dopamine 与 Procursus 标记。
