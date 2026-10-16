@@ -1,6 +1,6 @@
 # Copy APP
 
-**语言：** [English](README.md) · 简体中文 · [全部 20 种语言](README.md#languages)
+[English](README.md) · 简体中文 · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
 在已越狱的 iPhone XR（iOS 16.1.1）上，[Translate 完整案例](docs/translate-xr-workflow.zh-CN.md)（[English](docs/translate-xr-workflow.md)）已经从新写的发现脚本走通到[审阅报告](cases/translate-current-workflow-20261016/analysis-agent/reviewed-report/report.md)、[独立 UIKit 工程](rebuild/TranslateFreshProbe)、真机安装与三组原版/复刻版对照。六张截图逐张审阅，均有轻微图标或间距差异。范围限于文字输入但不提交翻译、Favorites 空状态和 Conversation 待机导航；翻译结果、语音和相机能力仍未实现或验证。
 
@@ -57,10 +57,6 @@ flowchart LR
 ## 如何贡献
 
 欢迎提交聚焦的 issue 或 PR：可复现的设备/后端问题、限定范围的分析适配器、已验证的界面脚本、安装文档和翻译都很有价值。设备问题请写明 iOS、越狱、工具版本、完整命令、预期结果及去敏日志；不要提交 IPA、密钥、账号数据或原始沙盒。代码改动运行 `PYTHONPYCACHEPREFIX=/tmp/copyapp-pycache .venv/bin/python -m unittest discover -s tests`，生成的案例运行 `copyapp verify`；设备通道改动还应注明真机证据及未测系统版本。详细约定见[贡献指南](CONTRIBUTING.zh-CN.md)。
-
-## 文档语言
-
-README 的语言列表参考 [REA 官方仓库](https://github.com/morluto/rea)。英文和简体中文提供完整安装说明，其余语言页面提供本地化概览并指向详细英文指南；文档语言不改变 CLI 和报告的语言。全部入口见 [Languages](README.md#languages)。
 
 ## 新用户：安装与第一次运行
 

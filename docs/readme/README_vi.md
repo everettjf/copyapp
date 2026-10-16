@@ -1,6 +1,6 @@
 # Copy APP
 
-**Ngôn ngữ:** Tiếng Việt · [Tất cả ngôn ngữ](../../README.md#languages) · [English](../../README.md)
+[English](../../README.md) · [简体中文](../../README.zh-CN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · Tiếng Việt · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [العربية](README_ar.md) · [فارسی](README_fa.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md)
 
 Copy APP thu thập bằng chứng về gói ứng dụng, giao diện, sandbox và hành vi khi chạy của một ứng dụng đã cài trên iPhone jailbreak. Công cụ tạo báo cáo phân tích có dẫn nguồn, rồi hỗ trợ xây dựng một ứng dụng iOS độc lập để tái hiện và so sánh các chức năng đã chọn trên thiết bị thật.
 

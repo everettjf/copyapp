@@ -1,6 +1,6 @@
 # Copy APP
 
-**語言：** 繁體中文 · [所有語言](../../README.md#languages) · [English](../../README.md)
+[English](../../README.md) · [简体中文](../../README.zh-CN.md) · 繁體中文 · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [العربية](README_ar.md) · [فارسی](README_fa.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md)
 
 Copy APP 在越獄 iPhone 上蒐集已安裝 App 的套件、介面、沙盒及執行時證據，產生附有來源的分析報告，並協助建立獨立、可執行的 iOS App 來重現選定功能。
 

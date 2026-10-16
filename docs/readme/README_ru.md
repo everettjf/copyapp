@@ -1,6 +1,6 @@
 # Copy APP
 
-**Язык:** Русский · [Все языки](../../README.md#languages) · [English](../../README.md)
+[English](../../README.md) · [简体中文](../../README.zh-CN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · Русский · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [العربية](README_ar.md) · [فارسی](README_fa.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md)
 
 Copy APP собирает сведения о пакете, интерфейсе, песочнице и поведении установленного приложения на iPhone с джейлбрейком. На их основе создаётся аналитический отчёт со ссылками на источники, а выбранные функции реализуются в отдельном работающем iOS-приложении и сравниваются на настоящем устройстве.
 

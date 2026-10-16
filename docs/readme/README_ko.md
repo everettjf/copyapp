@@ -1,6 +1,6 @@
 # Copy APP
 
-**언어:** 한국어 · [모든 언어](../../README.md#languages) · [English](../../README.md)
+[English](../../README.md) · [简体中文](../../README.zh-CN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · 한국어 · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [العربية](README_ar.md) · [فارسی](README_fa.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md)
 
 Copy APP은 탈옥한 iPhone에 설치된 앱의 패키지, UI, 샌드박스 및 실행 중 동작의 증거를 수집합니다. 출처가 연결된 분석 보고서를 만들고, 선택한 기능을 독립적인 iOS 앱으로 구현해 실제 기기에서 비교하도록 돕습니다.
 

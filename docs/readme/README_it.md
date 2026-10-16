@@ -1,6 +1,6 @@
 # Copy APP
 
-**Lingua:** Italiano · [Tutte le lingue](../../README.md#languages) · [English](../../README.md)
+[English](../../README.md) · [简体中文](../../README.zh-CN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [العربية](README_ar.md) · [فارسی](README_fa.md) · [Bahasa Indonesia](README_id.md) · Italiano · [Ελληνικά](README_el.md)
 
 Copy APP raccoglie prove relative al pacchetto, all'interfaccia, alla sandbox e al comportamento di un'app installata su un iPhone con jailbreak. Produce un rapporto di analisi collegato alle fonti e aiuta a creare un'app iOS indipendente che riproduca funzioni selezionate per confrontarle sul dispositivo reale.
 

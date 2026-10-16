@@ -1,6 +1,6 @@
 # Copy APP
 
-**Language:** English · [简体中文](README.zh-CN.md) · [All 20 languages](#languages)
+English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
 Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app on a jailbroken iPhone and rebuilding selected behavior as an independent, runnable iOS app. It acquires package and sandbox evidence, inspects native code, captures UI and runtime behavior, produces a cited report and feature specification, then builds and compares a clone on the same device.
 
@@ -57,12 +57,6 @@ flowchart LR
 ## How to contribute
 
 Start with an issue or a focused pull request. Useful contributions include a reproducible device/backend bug, a bounded analysis adapter, a verified UI playbook, clearer setup instructions, and translations. Include the iOS version, jailbreak, tool versions, exact command, expected result and sanitized logs when reporting a device issue. Keep IPAs, credentials, account data and raw sandbox exports out of commits. Run `PYTHONPYCACHEPREFIX=/tmp/copyapp-pycache .venv/bin/python -m unittest discover -s tests` for code changes; verify any generated case with `copyapp verify`. For changes to a device path, describe the real-device evidence and remaining versions to test. The [contribution guide](CONTRIBUTING.md) has the checklist and repository map.
-
-## Languages
-
-Copy APP's README language choices follow the [REA README language list](https://github.com/morluto/rea). English and Simplified Chinese contain the full setup guide; the other pages provide localized project overviews and link to the detailed English guide. Documentation language does not change the CLI or generated report language.
-
-[English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
 ## Install and run your first survey
 

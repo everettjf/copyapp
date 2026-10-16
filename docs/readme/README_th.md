@@ -1,6 +1,6 @@
 # Copy APP
 
-**ภาษา:** ไทย · [ทุกภาษา](../../README.md#languages) · [English](../../README.md)
+[English](../../README.md) · [简体中文](../../README.zh-CN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · ไทย · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [العربية](README_ar.md) · [فارسی](README_fa.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md)
 
 Copy APP รวบรวมหลักฐานจากแพ็กเกจ หน้าจอ แซนด์บ็อกซ์ และพฤติกรรมขณะทำงานของแอปที่ติดตั้งบน iPhone ที่เจลเบรกแล้ว จากนั้นสร้างรายงานวิเคราะห์ที่อ้างอิงแหล่งข้อมูล และช่วยสร้างแอป iOS อิสระเพื่อทำซ้ำฟังก์ชันที่เลือกและเปรียบเทียบบนอุปกรณ์จริง
 

@@ -1,6 +1,6 @@
 # Copy APP
 
-**Dil:** Türkçe · [Tüm diller](../../README.md#languages) · [English](../../README.md)
+[English](../../README.md) · [简体中文](../../README.zh-CN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · Türkçe · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [العربية](README_ar.md) · [فارسی](README_fa.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md)
 
 Copy APP, jailbreak uygulanmış bir iPhone'daki kurulu uygulamanın paket, arayüz, sandbox ve çalışma zamanı kanıtlarını toplar. Kaynaklara bağlı bir analiz raporu üretir ve seçilen davranışları bağımsız, çalıştırılabilir bir iOS uygulamasında yeniden oluşturup gerçek cihazda karşılaştırmaya yardımcı olur.
 
