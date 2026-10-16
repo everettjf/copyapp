@@ -1,0 +1,16 @@
+{
+  "pairs": [
+    {
+      "flow_id": "calculator-basic-addition",
+      "step": 3,
+      "verdict": "minor_difference",
+      "note": "清零后的数字 0、按键布局和颜色接近；正负号字形、数字笔画与顶部返回文字可见差异。"
+    },
+    {
+      "flow_id": "calculator-basic-addition",
+      "step": 9,
+      "verdict": "minor_difference",
+      "note": "两边均显示 15 和 C，结果区位置接近；数字笔画、正负号字形与顶部返回文字不同。"
+    }
+  ]
+}

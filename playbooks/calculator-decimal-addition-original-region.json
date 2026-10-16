@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "scenario_id": "calculator-decimal-addition",
+  "bundle_id": "com.apple.calculator",
+  "fresh_launch": true,
+  "steps": [
+    {
+      "action": "observe",
+      "contains": [
+        "all clear",
+        "equals"
+      ]
+    },
+    {
+      "action": "tap",
+      "x": 58.5,
+      "y": 383.5
+    },
+    {
+      "action": "tap",
+      "x": 58.5,
+      "y": 383.5
+    },
+    {
+      "action": "screenshot",
+      "stable": true,
+      "ready_contains": "all clear"
+    },
+    {
+      "action": "tap_label",
+      "label": "0",
+      "region_points": [
+        0,
+        700,
+        210,
+        830
+      ]
+    },
+    {
+      "action": "tap_label",
+      "label": "decimal"
+    },
+    {
+      "action": "tap_label",
+      "label": "1"
+    },
+    {
+      "action": "tap_label",
+      "label": "add"
+    },
+    {
+      "action": "tap_label",
+      "label": "0",
+      "region_points": [
+        0,
+        700,
+        210,
+        830
+      ]
+    },
+    {
+      "action": "tap_label",
+      "label": "decimal"
+    },
+    {
+      "action": "tap_label",
+      "label": "2"
+    },
+    {
+      "action": "tap_label",
+      "label": "equals"
+    },
+    {
+      "action": "observe"
+    },
+    {
+      "action": "screenshot",
+      "stable": true,
+      "ready_contains": "equals"
+    }
+  ]
+}

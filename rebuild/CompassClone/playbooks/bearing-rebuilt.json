@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "scenario_id": "compass-bearing-lock",
+  "bundle_id": "dev.copyapp.compass",
+  "fresh_launch": true,
+  "visual_checks": [
+    {"id": "red-bearing-marker", "kind": "color_pulse", "channel": "red",
+     "roi": [130, 140, 285, 270], "steps": [2, 5, 8],
+     "minimum_channel": 25, "dominance_ratio": 1.5,
+     "min_rise": 15, "max_return_delta": 10}
+  ],
+  "steps": [
+    {"action": "observe", "contains": "°"},
+    {"action": "screenshot", "stable": true, "ready_contains": "°"},
+    {"action": "tap", "x": 207, "y": 325},
+    {"action": "observe", "wait_ms": 300, "contains": "°"},
+    {"action": "screenshot", "stable": true, "ready_contains": "°"},
+    {"action": "tap", "x": 207, "y": 325},
+    {"action": "observe", "wait_ms": 300, "contains": "°"},
+    {"action": "screenshot", "stable": true, "ready_contains": "°"}
+  ]
+}

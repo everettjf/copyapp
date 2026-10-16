@@ -1,0 +1,16 @@
+{
+  "pairs": [
+    {
+      "flow_id": "calculator-basic-addition",
+      "step": 3,
+      "verdict": "minor_difference",
+      "note": "清零画面的数字、按键布局和配色接近；顶部返回文字分别是 DeepSeek 与 Calculator，正负号字形和零的笔画略有差异。"
+    },
+    {
+      "flow_id": "calculator-basic-addition",
+      "step": 9,
+      "verdict": "minor_difference",
+      "note": "两侧均显示 15，C 键与键盘布局一致；顶部返回文字不同，结果数字的字形与正负号图形仍有轻微差异。"
+    }
+  ]
+}

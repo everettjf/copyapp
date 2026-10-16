@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "target_bundle_id": "dev.copyapp.fixture",
+  "title": "FixtureShare：独立 Ghidra 函数拓扑与引用验证",
+  "sections": [
+    {
+      "title": "分享扩展函数",
+      "findings": [
+        {
+          "claim": "FixtureShare 的 viewDidLoad 静态函数调用视图添加和约束激活方法",
+          "confidence": "inferred",
+          "evidence": [
+            "ghidra.share"
+          ],
+          "explanation": "Copy APP 直连 Ghidra 的函数资料列出 addSubview:、activateConstraints: 和其他 UIKit 调用；伪代码显示 UILabel 与中心约束初始化。",
+          "limitation": "这是静态分析，未在这次案例中运行分享扩展。"
+        },
+        {
+          "claim": "分享扩展 viewDidLoad 的静态函数包含有界基本块与指令引用，引用线索出现 viewDidLoad 字符串",
+          "confidence": "inferred",
+          "evidence": [
+            "ghidra.share"
+          ],
+          "explanation": "Copy APP 直连 Ghidra 在精确哈希函数中输出 11 个基本块、73 条指令引用；其中一条指向 viewDidLoad 字符串。它说明静态函数结构与引用，不能单独证明某条 UI 操作执行了这些分支。",
+          "limitation": "这次案例未运行分享扩展；字符串引用由 Ghidra 静态数据识别，仍需结合运行时追踪。"
+        }
+      ]
+    }
+  ]
+}

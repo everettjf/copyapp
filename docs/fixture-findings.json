@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "target_bundle_id": "dev.copyapp.fixture",
+  "title": "Copy APP Fixture：XR 上三条功能的可追溯分析",
+  "sections": [
+    {
+      "title": "身份、包结构与技术栈",
+      "findings": [
+        {
+          "claim": "目标是 XR 上运行的 dev.copyapp.fixture 0.1.0",
+          "confidence": "observed",
+          "evidence": [
+            "case.survey",
+            "case.screenshot"
+          ],
+          "explanation": "USB 安装记录与 iOS MCP 前台识别一致，设备为 iPhone11,8、iOS 16.1.1。"
+        },
+        {
+          "claim": "包内有一个主程序、一个 FixtureCore Framework 和一个分享扩展",
+          "confidence": "observed",
+          "evidence": [
+            "case.static",
+            "case.objc"
+          ],
+          "explanation": "静态索引分别记录这三个 Mach-O 的路径与哈希。它们是本地构建，cryptid=0 不代表本案例执行过砸壳。"
+        }
+      ]
+    },
+    {
+      "title": "流程一：SwiftUI 计数器与偏好设置",
+      "findings": [
+        {
+          "claim": "Counter 页面由 SwiftUI UIHostingView 承载，可见计数文字来自无障碍树而非 UIKit UILabel 子节点",
+          "confidence": "observed",
+          "evidence": [
+            "ui.counter_view_tree"
+          ],
+          "explanation": "XR 运行时视图树含 _UIHostingView<CounterView> 与绘制子视图；同次采集的无障碍树含 Counter: 4、Increment counter 和 Reset counter，而 UIKit UILabel 子节点仅覆盖导航标题。",
+          "limitation": "数字 4 是这次重复试验后的状态，不代表首次安装默认值；SwiftUI 内部语义树没有由 UIKit 子视图扫描完整展开。"
+        },
+        {
+          "claim": "同一条 XR 自动调查记录了进入 Counter 页时 showCounter 入口命中一次，以及 Increment 点击后 4 变为 5",
+          "confidence": "observed",
+          "evidence": [
+            "inv.counter",
+            "app.all"
+          ],
+          "explanation": "脚本先在首页点击 Counter · UserDefaults，再在 Counter 页点击 Increment counter；Frida 同时记录当前 IMP 与主程序静态入口在第一处各一次、第二处各零次。同期保存截图、无障碍视图树、候选地址 0x1000056ec 及该地址的 Ghidra 结果。",
+          "limitation": "零命中只说明被选中的 showCounter 入口没有在 Increment 点击窗口执行，不能证明计数器按钮没有其他原生实现；计数 4 是重复试验后的起始状态。"
+        },
+        {
+          "claim": "点击 Counter 后可见值从 0 变为 1",
+          "confidence": "observed",
+          "evidence": [
+            "ui.counter_before",
+            "ui.counter_after"
+          ],
+          "explanation": "两张 XR 屏幕截图记录了同一页面在点击前后的文本变化。"
+        },
+        {
+          "claim": "计数器按钮闭包读取并写入 SwiftUI AppStorage",
+          "confidence": "inferred",
+          "evidence": [
+            "rea.counter",
+            "ui.counter_before",
+            "ui.counter_after",
+            "data.prefs"
+          ],
+          "explanation": "XR 导出主程序的 REA/Ghidra 函数体显示 AppStorage.wrappedValue 读取、加一和写回；手机导出的偏好设置中 fixture.counter=1。已知源码只用于校准，不作为二进制判断的唯一依据。",
+          "limitation": "此 Swift 闭包尚未直接做运行时调用计数。"
+        }
+      ]
+    },
+    {
+      "title": "流程二：UIKit 笔记与 SQLite",
+      "findings": [
+        {
+          "claim": "点击 Add sample note 后 Saved notes 从 0 变为 1",
+          "confidence": "observed",
+          "evidence": [
+            "ui.notes_before",
+            "ui.notes_after",
+            "exp.notes"
+          ],
+          "explanation": "XR 截图记录 UI 状态变化；同一次点击的 Frida 实验记录 FixtureNotesViewController::addNote 一次。"
+        },
+        {
+          "claim": "一条 XR 自动调查把进入 Notes 和新增笔记两个点击分别关联到 showNotes 与 addNote，页面计数从 5 变为 6",
+          "confidence": "observed",
+          "evidence": [
+            "inv.notes",
+            "app.all"
+          ],
+          "explanation": "相同脚本的步骤 2 仅使 showNotes 的当前 IMP 与主程序入口各命中一次，步骤 5 仅使 addNote 的两处入口各命中一次；同期无障碍观察记录 Saved notes: 5 和 Saved notes: 6。队列分别保存 0x1000057b4、0x1000061fc 的 Ghidra 函数证据。",
+          "limitation": "调用计数与点击窗口的对应是时间关联；这次自动调查没有再次导出 SQLite 正文，不能由计数单独推断新增行的字节。"
+        },
+        {
+          "claim": "笔记流程打开 SQLite 数据库、建表并执行参数化 INSERT",
+          "confidence": "inferred",
+          "evidence": [
+            "rea.add_note",
+            "rea.note_body",
+            "rea.note_store",
+            "rea.sqlite_insert",
+            "exp.notes",
+            "data.sqlite"
+          ],
+          "explanation": "REA 函数链从 Objective-C 入口到 Swift NoteStore；函数体包含 sqlite3_open、CREATE TABLE、INSERT INTO notes (text) VALUES (?)、bind、step、finalize。手机导出的数据库含 notes 表和一条 Sample note 记录。",
+          "limitation": "Frida 只直接计数 Objective-C 入口；Swift 内部边的执行由静态调用关系与输出结果共同支持。"
+        }
+      ]
+    },
+    {
+      "title": "流程三：UIKit 目录与动态 Framework",
+      "findings": [
+        {
+          "claim": "Catalog 页面显示 Alpha 和 Beta 两条本地目录项",
+          "confidence": "observed",
+          "evidence": [
+            "ui.catalog",
+            "exp.catalog"
+          ],
+          "explanation": "XR 页面截图显示 Alpha / Local sample A 与 Beta / Local sample B；点击入口时控制器初始化方法调用一次。"
+        },
+        {
+          "claim": "Catalog 流程在 XR 上自动把入口点击关联到 showCatalog，页面出现两条本地目录项",
+          "confidence": "observed",
+          "evidence": [
+            "inv.catalog",
+            "app.all"
+          ],
+          "explanation": "点击 Catalog · Framework 的窗口中，showCatalog 当前 IMP 和主程序静态入口各命中一次；同一流程的无障碍观察含 Alpha、Local sample A、Beta、Local sample B。Ghidra 对主程序入口 0x1000057c0 保存函数证据。",
+          "limitation": "调用命中与点击时间相关，目录内容来自本次页面观察；Framework 内部函数没有在该自动调查中另作运行时计数。"
+        },
+        {
+          "claim": "目录控制器调用 FixtureCore.FixtureCatalog.mockResponse 获取本地样例",
+          "confidence": "inferred",
+          "evidence": [
+            "rea.catalog",
+            "case.static",
+            "ui.catalog"
+          ],
+          "explanation": "XR 主程序控制器初始化函数的反编译结果调用 FixtureCore 符号，包内同时存在独立 FixtureCore.framework；界面内容与样例相符。",
+          "limitation": "未对 Framework 内部函数做独立 Frida 调用计数。"
+        }
+      ]
+    },
+    {
+      "title": "沙盒、网络与范围",
+      "findings": [
+        {
+          "claim": "分享扩展的 viewDidLoad 静态实现设置系统背景色、创建 UILabel 并用水平及垂直居中约束放入页面",
+          "confidence": "inferred",
+          "evidence": [
+            "rea.share_hopper",
+            "case.static"
+          ],
+          "explanation": "对 XR 导出的 FixtureShare 可执行文件按精确 SHA-256 使用 REA/Hopper 分析；函数伪代码出现 systemBackgroundColor、UILabel、addSubview、centerXAnchor、centerYAnchor 和 activateConstraints。该结果与源码已知夹具相符，但不等于手机上实际打开过分享扩展。",
+          "limitation": "Hopper 伪代码是反编译结果，字符串内容和运行时布局仍需独立观察。"
+        },
+        {
+          "claim": "偏好设置和 SQLite 文件内容已在手机生成并导出",
+          "confidence": "observed",
+          "evidence": [
+            "data.prefs",
+            "data.sqlite",
+            "case.sandbox"
+          ],
+          "explanation": "偏好设置含 fixture.counter=1；数据库有一条 notes 记录。基础沙盒清单只记录元数据，文件内容来自单独的定向导出。"
+        },
+        {
+          "claim": "后续一次新增笔记时，SQLite 文件的修改时间发生变化",
+          "confidence": "observed",
+          "evidence": [
+            "data.sandbox_diff"
+          ],
+          "explanation": "同一 XR 和同一 App 数据容器中，笔记 UI 脚本在两次只读沙盒快照之间完成，Saved notes 从 4 增至 5。Documents/fixture-notes.sqlite 与 Documents 目录的修改时间随后不同；案例保留脚本、两份快照和逐文件哈希。",
+          "limitation": "元数据不能证明数据库内容或具体写入字节，目录修改时间也可能仅因子项变化；该次操作没有同步导出数据库正文。"
+        },
+        {
+          "claim": "分享扩展 UI、网络行为和 iOS 17/26 兼容性未在本案例验证",
+          "confidence": "unknown",
+          "evidence": [],
+          "explanation": "包内存在分享扩展只证明安装内容，不能推断其交互运行；三条功能在 XR 上的结果不能代替另外两台设备。"
+        }
+      ]
+    }
+  ]
+}

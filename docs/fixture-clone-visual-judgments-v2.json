@@ -1,0 +1,9 @@
+{
+  "pairs": [
+    {"flow_id": "counter-persistence", "step": 4, "verdict": "major_difference", "note": "原版显示 Counter: 10，复刻版显示 Counter: 2；键位接近，但历史计数不同。"},
+    {"flow_id": "counter-persistence", "step": 7, "verdict": "major_difference", "note": "点击后原版为 11、复刻版为 3，两边各增加一；已有数据基线仍不同。"},
+    {"flow_id": "sqlite-note", "step": 4, "verdict": "major_difference", "note": "原版显示 Saved notes: 10，复刻版显示 2；已有数据库记录数不同。"},
+    {"flow_id": "sqlite-note", "step": 7, "verdict": "major_difference", "note": "点击后原版为 11、复刻版为 3，两边各增加一；数字仍有明显差异。"},
+    {"flow_id": "framework-catalog", "step": 4, "verdict": "minor_difference", "note": "目录两行的文字和位置接近；顶部返回上一 App 的系统文字不同。"}
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "pairs": [
+    {
+      "flow_id": "deepseek-password-entry-gate",
+      "step": 2,
+      "verdict": "minor_difference",
+      "note": "首页布局、按钮图标与底部条款接近；复刻鲸鱼是简化轮廓，deepseek 字标偏窄，系统返回提示的 App 名称不同。"
+    },
+    {
+      "flow_id": "deepseek-password-entry-gate",
+      "step": 5,
+      "verdict": "minor_difference",
+      "note": "两边的条款弹窗标题、正文三行、Cancel/Agree 和位置接近；背景标志与系统返回提示仍不同。"
+    },
+    {
+      "flow_id": "deepseek-signup-gate",
+      "step": 2,
+      "verdict": "minor_difference",
+      "note": "注册入口操作前的首页布局和图标接近；鲸鱼轮廓、字标宽度与系统返回提示仍不同。"
+    },
+    {
+      "flow_id": "deepseek-signup-gate",
+      "step": 5,
+      "verdict": "minor_difference",
+      "note": "注册入口也弹出位置和文字接近的条款框；背景标志及系统返回提示仍有可见差异。"
+    },
+    {
+      "flow_id": "deepseek-privacy-cancel",
+      "step": 4,
+      "verdict": "minor_difference",
+      "note": "取消操作前两边均显示同一条款弹窗，尺寸和文字接近；鲸鱼轮廓、字标宽度和系统返回提示不同。"
+    },
+    {
+      "flow_id": "deepseek-privacy-cancel",
+      "step": 7,
+      "verdict": "minor_difference",
+      "note": "取消后两边弹窗均消失并露出登录首页；字标和鲸鱼图形仍有差别，系统返回提示显示的 App 名称不同。"
+    }
+  ]
+}

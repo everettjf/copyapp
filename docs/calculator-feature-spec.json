@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "source_report": "cases/calculator-xr-analysis-20261015/analysis.md",
+  "target_bundle_id": "com.apple.calculator",
+  "rebuilt_bundle_id": "dev.copyapp.calculator",
+  "minimum_ios": "16.0",
+  "reference_device": "iPhone XR / iOS 16.1.1",
+  "flows": [
+    {
+      "id": "calculator-initial",
+      "entry": "launch in portrait and tap AC",
+      "expected": ["black background", "right-aligned 0", "four-column keypad with wide 0 key", "gray number keys and orange operator keys"],
+      "evidence": ["case.screenshot", "case.ui", "ui.initial", "ui.view_tree", "rea.root_ui", "rea.keypad_layout"],
+      "verification": "On XR, capture the cleared portrait screen and compare element frames and visible text with the reference."
+    },
+    {
+      "id": "calculator-basic-addition",
+      "entry": "clear, then tap 7, +, 8, =",
+      "expected": ["display becomes 15", "clear key changes from AC to C"],
+      "evidence": ["ui.addition", "ui.result", "ui.result_ocr", "probe.button_path", "rea.button_dispatch_ghidra", "rea.calculate_bridge"],
+      "final_view": {"text": "15", "region_points": [0, 150, 414, 341]},
+      "verification": "Replay the exact four taps on the same device, confirm foreground Calculator and compare stable result screenshots and OCR."
+    },
+    {
+      "id": "calculator-relative-percent",
+      "entry": "clear, then tap 100 + 10 % =",
+      "expected": ["after percent, display 10", "after equals, display 110"],
+      "evidence": ["ui.percent", "ui.percent_intermediate", "ui.percent_result", "ui.percent_intermediate_ocr", "ui.percent_result_ocr"],
+      "final_view": {"text": "110", "region_points": [0, 150, 414, 341]},
+      "verification": "Replay the same taps on the XR; compare stable screenshots at percent and equals and inspect the display-only OCR evidence."
+    },
+    {
+      "id": "calculator-repeat-equals",
+      "entry": "clear, then tap 5 + 2 = =",
+      "expected": ["first equals shows 7", "second equals shows 9"],
+      "evidence": ["ui.repeat", "ui.repeat_first", "ui.repeat_second"],
+      "final_view": {"text": "9", "region_points": [0, 150, 414, 341]},
+      "verification": "Replay both equals taps on the XR; compare the two stable result screenshots and inspect DisplayView UILabel.text in the following view scan."
+    }
+  ],
+  "unknowns": ["scientific landscape mode", "other arithmetic and edge cases", "percent with other operators", "repeated equals with other operators", "C versus AC semantics across all states", "number formatting and precision", "Calculate.framework internal algorithm", "persistence and network behavior"]
+}

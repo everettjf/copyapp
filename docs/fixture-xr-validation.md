@@ -1,0 +1,37 @@
+# 已知源码夹具在 iPhone XR 上的闭环验证
+
+2026-10-15，目标为 `dev.copyapp.fixture` 0.1.0 (1)，设备为 iPhone XR (`iPhone11,8`)、iOS 16.1.1、Dopamine rootless。Mac 用 Xcode 27 编译最低 iOS 16 的测试 App，经已配对的 USB SSH 传输、TrollStore helper 安装；安装命令和退出码保存在 `cases/fixture-trollstore-scene-update-20261015/`。首次安装后出现黑屏，原因是生成的 `UIApplicationSceneManifest` 没有 scene delegate，运行时有一个 `UIWindowScene` 但零个窗口。显式配置 `CopyAppFixture.SceneDelegate` 后，XR 正常显示首页和三个入口。此问题已在 `fixture/CopyAppFixture/project.yml` 修复。
+
+后续在 SwiftUI Counter 页运行 `copyapp view-tree --no-launch`：UIKit 层级有 `_UIHostingView<CounterView>` 与绘制视图，共 40 个节点；计数文本没有对应的 UIKit `UILabel` 子节点，同次 iOS MCP 无障碍树则给出 `Counter: 4`、`Increment counter` 和 `Reset counter`。完整证据在 `cases/fixture-swiftui-counter-view-tree-v2-20261015/`，已加入[夹具深度报告 v12](../cases/fixture-xr-deep-report-v12-20261015/report.md)并通过校验。这说明 SwiftUI 页面需要把视图容器结构与无障碍语义合看；数值 4 是重复试验后的当前状态。
+
+## 采集身份与范围
+
+完整基础案例：`cases/fixture-xr-analysis-20261015/`。`copyapp verify` 校验所有已登记原始文件的哈希通过。XR 导出的主可执行文件 SHA-256 为 `40362fbdfd2b1e13f12bc9a9a5c1eb9bf59d846a866c65212f7493a5b29f1aba`；后续 REA/Ghidra 结果都绑定这个哈希，而非先前的本地构建文件。安装快照含主程序、一个 `FixtureCore.framework` 和一个 `FixtureShare.appex`；三者的 `cryptid=0` 只说明此本地构建没有 FairPlay 加密，不是一次砸壳成功的证据。主程序的 Objective-C 索引有 6 类、27 方法，链接 SwiftUI、UIKit、Foundation、SQLite 和 `FixtureCore`。沙盒路径索引为元数据；下方两个夹具自有文件另作内容核对。
+
+## 三条功能证据链
+
+| 功能 | XR 的 UI 与状态 | 二进制实现证据 | 数据或输出证据 | 判断 |
+| --- | --- | --- | --- | --- |
+| SwiftUI 计数器 | 首页进入 Counter；点击一次后无障碍文案 `Counter: 0 → Counter: 1`，截图在 `cases/fixture-xr-ui-20261015/counter-before.jpg` 与 `counter-after.jpg` | XR 主程序 `CounterView` 的按钮闭包 `0x100004ea4` 读取 `SwiftUI.AppStorage.wrappedValue`，加 1，再写回；REA `ev_834e819e21d6519807348ff81056bbabcba073a3f564f037fa0f190f615f22e5`，证据在 `cases/fixture-xr-rea-counter-increment-20261015/` | 手机生成的 `Library/Preferences/dev.copyapp.fixture.plist` 中 `fixture.counter = 1`，本地副本 `cases/fixture-xr-ui-20261015/prefs-after-counter.plist` | UI 和偏好设置为直接观察；闭包与该按钮的对应由符号和已知源码佐证，未对 Swift 闭包做调用计数 |
+| UIKit/SQLite 笔记 | Notes 页点击 `Add sample note` 后 `Saved notes: 0 → 1`；截图在 `notes-before.jpg` 与 `notes-after.jpg` | 真机 Frida 实验 `cases/fixture-xr-notes-trace-20261015/experiment.json` 显示 `FixtureNotesViewController::addNote` 在该点击时调用 1 次；REA 从 `0x1000061fc` 的 ObjC 桥接，追到 Swift body `0x100005f70`、`NoteStore.addSampleNote` `0x100006074` 及闭包 `0x1000067a8`。后两者分别包含 `sqlite3_open`、`CREATE TABLE`，以及 `INSERT INTO notes (text) VALUES (?)`、`sqlite3_bind_text`、`sqlite3_step`、`sqlite3_finalize` | `Documents/fixture-notes.sqlite` 的本地副本有一条 `Sample note …` 记录，`cases/fixture-xr-ui-20261015/fixture-notes.sqlite` | UI、调用计数、数据库行和导出二进制函数组成已验证链路 |
+| UIKit/Framework 目录 | Catalog 页显示 `Alpha / Local sample A` 与 `Beta / Local sample B`；截图 `catalog.jpg` | 点击入口时 `FixtureCatalogViewController::initWithStyle:` 调用 1 次，见 `cases/fixture-xr-catalog-trace-20261015/experiment.json`；XR 主程序该初始化函数 `0x100004560` 调用 `FixtureCore.FixtureCatalog.mockResponse()`，REA `ev_d489bcccd27532df45ee07df0f6ccf644f6ef7dabc80345c020ca04db4d1d4e6`。导出 Framework 的符号表含此函数及 `FixtureCard`，字符串含 Alpha/Beta 两条本地样例 | 页面文本与 Framework 常量对应；无网络或沙盒写入需求 | 已验证本地模拟目录的控制器到框架调用；并未证明框架函数在其他场景也只返回这两条 |
+
+笔记链的 REA Evidence ID 依次是 `ev_78901f0cf7e765d3f582ee2d771615adcfe8a6b606b57af7ae806be0d40326b3`（ObjC 入口）、`ev_26f2a03f4784fd64655d8d371a7cdbc064d5340151990260f08201d336e1a762`（Swift body）、`ev_7e188ff8926c317229d3bd158c3c00990a8597e2bda6d50584016a73de2fdbbb`（打开与建表）、`ev_40113eee6c012ea105672e81916a4a5927cfcef45fbde37f7eff438a704664d7`（INSERT 闭包）。各自的完整 JSON、伪代码和 provider 信息保存在 `cases/fixture-xr-rea-*-20261015/`。伪代码是 Ghidra 12.1.4 的重建文本，不是作者源码；`fixture/CopyAppFixture/` 的源码只用来校准我们的判断。
+
+## 对产品流程的结论
+
+XR 上已证明 **Xcode 27 构建 iOS 16 部署目标 → USB 传输 → TrollStore 安装 → iOS MCP 观察与点击 → 沙盒内容核对 → Frida 定向轨迹 → 导出二进制的 REA/Ghidra 函数分析** 能连成一条无需手机输入命令的路径。REA/Hopper 也已对 XR 导出的分享扩展完成函数反编译。`copyapp report` 将这些证据和 agent 审阅的结论组装为 [可验证的深入报告](../cases/fixture-xr-deep-report-v6-20261015/report.md)，附函数伪代码、动态实验和复刻规格；原始案例仍在本地 Git 忽略的 `cases/`。基础 `copyapp analyze` 仍只自动输出采集与静态索引，功能解释由 agent 撰写。iCTRL 已在 XR 上完成配对、加密 UI 调用和 Compass 点击验证；iOS 17 和 iOS 26 两台设备尚未连接验证。夹具验证不能替代对第三方 App 的盲测，也不能说明已具备自动完整复刻能力。
+
+新 `sandbox-diff` 在 XR 上围绕 Notes 的一次 iOS MCP playbook 实测：页面 `Saved notes: 4 → 5`，同一 App 数据容器的 `Documents/fixture-notes.sqlite` 与 `Documents` 目录修改时间在操作后变化。两份只读索引、完整 UI 脚本和差异均保存在 [沙盒对照案例](../cases/fixture-sandbox-diff-with-action-20261015/report.md)，并通过 `copyapp verify`；报告 v6 也导入并重新核算了这一差异。元数据不证明 SQLite 内容的具体变化；先前导出的四行数据库副本属于另一时间点。
+
+同一份 `fixture/CopyAppFixture/playbooks/counter.json` 后来通过 `copyapp playbook` 在 XR 上分别由 iCTRL 和 iOS MCP 重放。它用 USB DVT fresh launch 回到首页，断言三个入口可见，按标签进入 Counter，读取原计数，点击 Increment，再断言计数恰好加 1，保存前后 UI 与截图。iCTRL 案例 `cases/fixture-counter-playbook-ictrl-20261015/` 得到 `1 → 2`；iOS MCP 案例 `cases/fixture-counter-playbook-ios-mcp-retry-20261015/` 得到 `2 → 3`。两份 `manifest.json` 的 `status=complete`，`copyapp verify` 均通过。第一次 iOS MCP 运行 `cases/fixture-counter-playbook-ios-mcp-20261015/` 在启动动画期间过早观察，失败记录保留；播放器现对缺失预期文字的观察进行最多五次短间隔重试。
+
+随后同一播放器还在 XR 上分别执行了 `playbooks/notes.json` 和 `playbooks/catalog.json`：Notes 的 iCTRL 案例 `cases/fixture-notes-playbook-ictrl-20261015/` 为 `Saved notes: 2 → 3`，iOS MCP 案例 `cases/fixture-notes-playbook-ios-mcp-20261015/` 为 `3 → 4`；独立经配对 USB SSH 复制的 `fixture-notes.sqlite` 有 4 行，快照和哈希记录在 `cases/fixture-notes-storage-after-dual-20261015/`。Catalog 的两份案例 `cases/fixture-catalog-playbook-{ictrl,ios-mcp}-20261015/` 都在界面中找到 Alpha、Local sample A、Beta、Local sample B。六份播放案例均为 `status=complete` 且 `copyapp verify` 通过。UI 数值和数据库行一致支持这次写入判断；Catalog 仍是本地模拟数据，不代表远端接口。此验收只覆盖 XR/iOS 16.1.1，不能外推到另两台手机。
+
+`copyapp investigate-flow` 又在同一 XR 上按夹具 Counter playbook 执行了完整调查：[证据目录](../cases/fixture-counter-one-command-investigation-v2-20261015/manifest.json)保存方法候选、两次点击窗口的 Frida 计数、截图、无障碍/视图树、静态候选和 Ghidra 函数。首页进入 Counter 时 `FixtureHomeViewController::showCounter` 的当前 IMP 与主程序入口各命中一次；Increment 点击窗口二者为零，而可见数值从 4 到 5。这只排除了所选入口在第二个窗口执行，不排除其他 SwiftUI/Swift 函数。第一次候选自动选择因多个低分入口而停在触屏前；显式指定 `showCounter` 后完成，候选阶段一次格式兼容错误经 `--resume` 复用已完成手机采集修复。新证据已进入[夹具深度报告 v12](../cases/fixture-xr-deep-report-v12-20261015/report.md)，两份案例均通过哈希校验。
+
+自动方法选择又在同机重跑 Counter，首个点击标签唯一匹配 `showCounter`，无手动 `--method`；[案例](../cases/fixture-counter-autoselect-investigation-20261015/manifest.json)记录步骤 2 两个入口各一次、步骤 5 各零次。随后 Notes playbook 自动选择 `showNotes` 与 `addNote` 两个方法：[完整调查](../cases/fixture-notes-autoselect-investigation-20261015/manifest.json)在进入页面的步骤 2 仅记录前者两处入口各一次，在新增笔记的步骤 5 仅记录后者两处入口各一次；无障碍文字从 `Saved notes: 5` 到 `Saved notes: 6`。两个静态入口的 Ghidra 证据与 UI/Frida 原始文件一起进入[夹具深度报告 v12](../cases/fixture-xr-deep-report-v12-20261015/report.md)。这次自动调查没有同步导出 SQLite 正文，不能由计数单独证明具体写入字节。
+
+第三条 Catalog 脚本也由可见入口文案自动匹配 `FixtureHomeViewController::showCatalog`；XR 点击窗口的当前 IMP 与静态入口各命中一次，随后无障碍树同时出现 Alpha、Local sample A、Beta、Local sample B。[Catalog 调查](../cases/fixture-catalog-autoselect-investigation-20261015/manifest.json)的 Ghidra 入口地址为 `0x1000057c0`，整案与汇总三条流程的[夹具深度报告 v12](../cases/fixture-xr-deep-report-v12-20261015/report.md)均通过校验。Framework 内部执行仍由另一个静态函数链佐证，本次自动流程只直接计数 `showCatalog`。
+
+最后用一条 `copyapp investigate-app` 命令顺序重跑 Counter、Notes、Catalog 三份脚本，产出[父任务清单](../cases/fixture-app-investigation-20261015/manifest.json)。三个子调查均为 `complete`，分别自动选择 `showCounter`、`showNotes`/`addNote`、`showCatalog`；父案例保留 193 个已哈希登记文件。报告器重新核对各子案例的设备、App、脚本哈希、方法、Frida/候选/REA 来源，再把整案作为 `app.all` 导入[夹具深度报告 v12](../cases/fixture-xr-deep-report-v12-20261015/report.md)。两份案例均通过校验；本次总任务没有自动撰写功能语义或生成新 App。

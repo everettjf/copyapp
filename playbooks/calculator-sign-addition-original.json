@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "scenario_id": "calculator-sign-addition",
+  "bundle_id": "com.apple.calculator",
+  "fresh_launch": true,
+  "steps": [
+    {
+      "action": "observe",
+      "contains": [
+        "all clear",
+        "equals"
+      ]
+    },
+    {
+      "action": "tap",
+      "x": 58.5,
+      "y": 383.5
+    },
+    {
+      "action": "tap",
+      "x": 58.5,
+      "y": 383.5
+    },
+    {
+      "action": "screenshot",
+      "stable": true,
+      "ready_contains": "all clear"
+    },
+    {
+      "action": "tap_label",
+      "label": "5"
+    },
+    {
+      "action": "tap_label",
+      "label": "plus, minus"
+    },
+    {
+      "action": "screenshot",
+      "stable": true,
+      "ready_contains": "clear"
+    },
+    {
+      "action": "tap_label",
+      "label": "add"
+    },
+    {
+      "action": "tap_label",
+      "label": "8"
+    },
+    {
+      "action": "tap_label",
+      "label": "equals"
+    },
+    {
+      "action": "observe"
+    },
+    {
+      "action": "screenshot",
+      "stable": true,
+      "ready_contains": "equals"
+    }
+  ]
+}

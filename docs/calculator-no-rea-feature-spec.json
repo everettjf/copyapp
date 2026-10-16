@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "source_report": "cases/calculator-no-rea-reviewed-report-20261015/report.md",
+  "target_bundle_id": "com.apple.calculator",
+  "rebuilt_bundle_id": "dev.copyapp.calculator",
+  "minimum_ios": "16.0",
+  "reference_device": "iPhone XR / iOS 16.1.1",
+  "flows": [
+    {
+      "id": "calculator-basic-addition",
+      "entry": "在竖屏前台打开 Calculator，点按 all clear、7、add、8、equals",
+      "expected": [
+        "按 all clear 后显示 0 且键盘含 7、8、add、equals",
+        "完成 7 + 8 = 后显示区文本为 15",
+        "末端清除键显示 C"
+      ],
+      "evidence": ["app.all", "branch.buttons"],
+      "source_script_sha256": "69cef9af652c0d17b8da579cf0f27f22c8dd1ca60241af1b8070c635c5d2fa52",
+      "final_view": {
+        "text": "15",
+        "region_points": [0, 150, 414, 341],
+        "also": [{"text": "C", "region_points": [0, 341, 110, 430]}]
+      },
+      "verification": "在同一 XR 上对原版和复刻版分别清除后执行相同按钮序列；核对前台 App、每次点击成功、末端 UIKit UILabel 文本 15 与 C，并保存截图。"
+    }
+  ],
+  "unknowns": [
+    "横屏和科学模式",
+    "其他算符、百分比、正负号及小数边界",
+    "重复等号和 C/AC 的完整状态转换",
+    "持久化和生命周期恢复",
+    "Calculate.framework 的内部算法及所有精度规则"
+  ]
+}

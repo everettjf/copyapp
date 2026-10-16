@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "scenario_id": "calculator-100-plus-10-percent",
+  "bundle_id": "dev.copyapp.calculator",
+  "fresh_launch": true,
+  "steps": [
+    {"action": "observe", "contains": ["7", "add", "percent", "equals"]},
+    {"action": "tap", "x": 58.5, "y": 383.5},
+    {"action": "tap_label", "label": "1"},
+    {"action": "tap_label", "label": "0"},
+    {"action": "tap_label", "label": "0"},
+    {"action": "tap_label", "label": "add"},
+    {"action": "tap_label", "label": "1"},
+    {"action": "tap_label", "label": "0"},
+    {"action": "tap_label", "label": "percent"},
+    {"action": "screenshot", "stable": true, "ready_contains": "clear"},
+    {"action": "tap_label", "label": "equals"},
+    {"action": "screenshot", "stable": true, "ready_contains": "clear"}
+  ]
+}

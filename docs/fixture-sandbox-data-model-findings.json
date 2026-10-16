@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "target_bundle_id": "dev.copyapp.fixture",
+  "title": "Fixture 数据容器模型：XR 实机结构证据",
+  "sections": [
+    {
+      "title": "持久化数据结构",
+      "findings": [
+        {
+          "claim": "数据容器中的 notes 数据库定义 notes(id, text) 表",
+          "confidence": "observed",
+          "evidence": [
+            "case.sandbox",
+            "db.schema"
+          ],
+          "explanation": "数据容器文件由精确设备及容器身份绑定的只读采集取得；SQLite 结构分析列出了 notes 表的两个字段。",
+          "limitation": "未将表记录纳入报告；表结构不能单独证明 App 的读写时机。"
+        },
+        {
+          "claim": "偏好设置文件含 fixture.counter 整数键",
+          "confidence": "observed",
+          "evidence": [
+            "case.sandbox",
+            "prefs.schema"
+          ],
+          "explanation": "从同一已验证分析案例定位并采集 App 偏好文件；plist 结构输出只记录 /fixture.counter 的数据类型为 integer。",
+          "limitation": "未导出该键的值，也未据此断定 UI 当前显示的计数。"
+        }
+      ]
+    }
+  ]
+}

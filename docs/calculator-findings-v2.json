@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "target_bundle_id": "com.apple.calculator",
+  "title": "Calculator：iPhone XR / iOS 16.1.1 逆向与实机分析",
+  "sections": [
+    {
+      "title": "身份、采集和二进制",
+      "findings": [
+        {
+          "claim": "本案例对应 XR 上的系统 Calculator 1.0.0",
+          "confidence": "observed",
+          "evidence": [
+            "case.survey",
+            "case.screenshot",
+            "case.ui"
+          ],
+          "explanation": "USB 安装服务给出 com.apple.calculator、版本 1.0.0、iPhone11,8 和 iOS 16.1.1；iOS MCP 在初始截图前后确认目标 App 位于前台。",
+          "limitation": "安装服务列出的 entitlement 键不等于完整签名权限审计。"
+        },
+        {
+          "claim": "分析快照有 11 个路径、1 个 Mach-O，主程序本地定义 16 个类和 112 个 Objective-C 方法",
+          "confidence": "observed",
+          "evidence": [
+            "case.static",
+            "case.objc"
+          ],
+          "explanation": "快照来自已安装 .app 的只读复制；主程序没有 LC_ENCRYPTION_INFO 加载命令，本次没有执行脱壳。类元数据列出 CalculatorModel、CalculatorController、DisplayViewController、KeypadViewController 和 CalculatorKeypadView 等。",
+          "limitation": "类索引不包含 Swift 非 Objective-C 方法全集，也不代表这些类在本次交互中全部执行。"
+        },
+        {
+          "claim": "主程序链接 30 个动态库，其中包含私有 Calculate.framework",
+          "confidence": "observed",
+          "evidence": [
+            "case.static"
+          ],
+          "explanation": "Mach-O 加载命令还列出 UIKit、CoreGraphics、QuartzCore、AudioToolbox、AppSupport 和 SoftLinking。",
+          "limitation": "链接关系本身不能证明具体函数在运行时被调用。"
+        }
+      ]
+    },
+    {
+      "title": "界面与可见状态",
+      "findings": [
+        {
+          "claim": "XR 竖屏首页是深色数字显示区与五排按钮键盘",
+          "confidence": "observed",
+          "evidence": [
+            "case.screenshot",
+            "case.ui"
+          ],
+          "explanation": "414×896 截图显示右对齐大数字、灰色数字键、橙色运算键和底部横跨两列的 0 键；无障碍树给出各键文本及矩形。这里只记录这一次竖屏状态。"
+        },
+        {
+          "claim": "运行时视图层级有独立的 DisplayView、CalculatorKeypadView 和自定义按钮；结果数字存于显示区子 UILabel",
+          "confidence": "observed",
+          "evidence": [
+            "ui.view_tree",
+            "case.screenshot"
+          ],
+          "explanation": "XR 的受控 UIKit 视图扫描保存 1 个窗口、47 个节点，没有触发 500 节点上限。DisplayView 的 frame 为 (0,48,414,293)，其 UILabel 记录结果文本；下方 CalculatorKeypadView 包含 CalculatorKeypadButton 与按钮文字 UILabel。",
+          "limitation": "这是一时刻的运行时子视图树，不能覆盖离屏页面、所有 SwiftUI 语义或构建这些视图的原始源码。"
+        },
+        {
+          "claim": "主视图由显示控制器和键盘控制器的视图组合，键盘按自身布局方法调整按钮 frame",
+          "confidence": "inferred",
+          "evidence": [
+            "case.objc",
+            "rea.root_ui",
+            "rea.keypad_layout",
+            "case.screenshot",
+            "ui.view_tree"
+          ],
+          "explanation": "CalculatorController 的 loadView Swift 函数体把 displayController 与 keypadController 的 view 加到根视图；CalculatorKeypadView 的 layoutSubviews 函数体读取 buttons、alternateButtons、keypadType，并向按钮发送 setFrame:。",
+          "limitation": "Hopper 的长函数伪代码无法可靠还原每个几何数值；本案例未测横屏、辅助功能字体或动态尺寸。"
+        },
+        {
+          "claim": "完成一次运算后清除键的可见状态从 AC 变为 C",
+          "confidence": "observed",
+          "evidence": [
+            "ui.addition",
+            "ui.initial",
+            "ui.result"
+          ],
+          "explanation": "起始截图与无障碍树显示 all clear/AC；7+8= 后的屏幕显示 C，后续无障碍树给出 clear。",
+          "limitation": "未测试 C 与 AC 在所有中间状态下的区别。"
+        }
+      ]
+    },
+    {
+      "title": "7 + 8 = 15 的交互与实现链",
+      "findings": [
+        {
+          "claim": "XR 上执行 7、加号、8、等号后屏幕显示 15",
+          "confidence": "observed",
+          "evidence": [
+            "ui.addition",
+            "ui.result",
+            "ui.result_ocr",
+            "probe.button_path"
+          ],
+          "explanation": "iOS MCP 按标签逐步点击四个键，脚本成功完成且前台保持 Calculator；结果截图为 15，对同一截图的 macOS Vision OCR 也以 1.0 置信度识别到 15。单独的 Frida 探针再次执行同一算式。",
+          "limitation": "本次仅验证这个整数加法例子；OCR 不是计算正确性的通用证明。"
+        },
+        {
+          "claim": "运行时可访问性替换层先接收按钮事件，然后进入 Calculator 主程序的原始 buttonPressed: 函数",
+          "confidence": "observed",
+          "evidence": [
+            "exp.ax_button",
+            "probe.unmatched_candidate",
+            "probe.button_path",
+            "rea.button_entry"
+          ],
+          "explanation": "常规按类名追踪的 IMP 位于 Calculator.axbundle，偏移与主程序静态 0xeb0c 不符，候选匹配器将其排除。随后探针同时挂载可访问性 IMP 和主程序模块 base+0xeb0c，四个受控按键均按此顺序各命中一次；输入 ID 分别为 18、8、19、9。",
+          "limitation": "模块路径和偏移一致未逐字节证明手机加载的代码与采集快照相同；探针只覆盖四次按键。"
+        },
+        {
+          "claim": "buttonPressed: 是 Swift 桥接入口，内部按按钮 ID 分派到数字、运算符和等号分支",
+          "confidence": "inferred",
+          "evidence": [
+            "rea.button_entry",
+            "rea.button_dispatch_hopper",
+            "rea.button_dispatch_ghidra",
+            "probe.button_path",
+            "bridge.button_dispatch"
+          ],
+          "explanation": "主程序 0x10000eb0c 的 Objective-C 入口转入 0x10000e9b8。REA/Ghidra 的 switch 显示 ID 18、19 进入 0x10000eb5c，ID 8 进入 0x10001136c，ID 9 进入 0x10001266c；动态探针记录同一组按键 ID。 新的自动桥接追踪从已核验的入口队列唯一跟到 0x10000e9b8，并在此记录 10 个可继续审阅的本地分支；该步骤没有自动给这些分支赋予业务语义。",
+          "limitation": "分支解释来自反编译文本而非 Apple 源码；其他按钮的 ID/语义未逐一验证。"
+        },
+        {
+          "claim": "数字分支维护显示字符串与位数状态，运算符分支维护待执行状态和操作数栈",
+          "confidence": "inferred",
+          "evidence": [
+            "rea.digit",
+            "rea.operator",
+            "probe.button_path"
+          ],
+          "explanation": "数字函数读写 displayValue、enteringDecimal、integerDigitCount、maximumDigitCount，并通过 calculatorModel:didUpdateDisplayValue:shouldFlashDisplay: 通知显示层；运算符函数涉及 lastOperator、hasActiveOperator、stack、backupStack。真机探针把 7/8 与加号 ID 对应到这些分支。",
+          "limitation": "Hopper 对长 Swift 函数的局部变量与控制流恢复有限；本报告只实测了百分比和重复等号的两个具体输入，未穷尽精度与状态规则。"
+        },
+        {
+          "claim": "等号路径把表达式交给私有 Calculate.framework 的 CalculatePerformExpression",
+          "confidence": "observed",
+          "evidence": [
+            "rea.equals",
+            "rea.evaluate",
+            "rea.calculate_bridge",
+            "probe.button_path",
+            "ui.result"
+          ],
+          "explanation": "等号分支在主程序内走表达式求值辅助函数；该辅助函数进入 0x100001dd0，静态代码用 dlsym 查找 CalculatePerformExpression。XR 真机对这次等号调用记录到传入表达式 (7)+(8)、输出 15、返回值 1，执行模块位于 /System/Library/PrivateFrameworks/Calculate.framework/Calculate。",
+          "limitation": "未反编译 Calculate.framework 内部算法；该系统私有 API 不应直接作为独立复刻 App 的依赖。"
+        }
+      ]
+    },
+    {
+      "title": "百分比与连续等号的受控输入",
+      "findings": [
+        {
+          "claim": "XR 上输入 100 + 10% 时先显示 10，按等号后显示 110",
+          "confidence": "observed",
+          "evidence": [
+            "ui.percent",
+            "ui.percent_intermediate",
+            "ui.percent_result",
+            "ui.percent_intermediate_ocr",
+            "ui.percent_result_ocr"
+          ],
+          "explanation": "同一已完成的 iOS MCP 脚本按 AC、1、0、0、加号、1、0、百分比、等号顺序操作，屏幕在百分比后显示 10、等号后显示 110；两个截图裁剪到数字显示区的 macOS Vision OCR 分别读到 10 和 110。",
+          "limitation": "这只说明 100 + 10% 的可见结果；其他运算符和嵌套表达式的百分比规则尚未验证。"
+        },
+        {
+          "claim": "XR 上输入 5 + 2 后连续两次按等号，显示值从 7 变为 9",
+          "confidence": "observed",
+          "evidence": [
+            "ui.repeat",
+            "ui.repeat_first",
+            "ui.repeat_second"
+          ],
+          "explanation": "一条完成的 flow-capture 在首次等号和再次按等号后各保存稳定截图，数字显示区先为 7，后为 9；随后无需重新启动 App 的运行时视图扫描读到 DisplayView 内 UILabel.text 为 9。",
+          "limitation": "Vision 对细线字体的 9 未给出文本；视图扫描紧随脚本完成，仍依赖 App 在这短暂间隔保持同一显示状态。这里只验证加 2 的一次重复，不推断所有运算的重复规则。"
+        }
+      ]
+    },
+    {
+      "title": "沙盒与未覆盖范围",
+      "findings": [
+        {
+          "claim": "Calculator 数据容器本次只记录到 11 个路径的元数据",
+          "confidence": "observed",
+          "evidence": [
+            "case.sandbox"
+          ],
+          "explanation": "包含 Documents、Library/Preferences、Library/Saved Application State 和 KnownSceneSessions/data.data；采集器没有读取文件正文。",
+          "limitation": "不能从目录存在推断算式历史、设置或持久化格式。"
+        },
+        {
+          "claim": "科学模式、横屏布局、其他运算和异常输入仍待验证",
+          "confidence": "unknown",
+          "evidence": [],
+          "explanation": "当前实验覆盖 XR 竖屏的两次整数加法、一个百分比输入与首页可见状态；减乘除、除零、精度边界、横屏和科学模式尚未验证。"
+        }
+      ]
+    },
+    {
+      "title": "三条代表性流程的统一调查复核",
+      "findings": [
+        {
+          "claim": "XR 上三条 Calculator 流程在同一调查任务中均完成，并分别留下末端 UILabel 文本 15、110、9",
+          "confidence": "observed",
+          "evidence": [
+            "app.all"
+          ],
+          "explanation": "加法、100 + 10% 和重复等号三份原版脚本按顺序完成；各子案例保存脚本、稳定截图、无重启视图树、方法计数及 Ghidra 队列。末端视图树的上部数字标签依次为 15、110、9。",
+          "limitation": "这三个文本是相应操作后的可见状态；本条不扩展到其他算式或长时间稳定性。"
+        },
+        {
+          "claim": "三条流程的点击窗口均命中 CalculatorModel::buttonPressed: 的主程序静态入口，且同一哈希二进制上的入口地址有 Ghidra 函数证据",
+          "confidence": "observed",
+          "evidence": [
+            "app.all",
+            "rea.button_dispatch_ghidra"
+          ],
+          "explanation": "三条调查均选中同一 Objective-C 方法，主程序入口位于 0x10000eb0c；各流程的点击窗口保存非零静态入口计数，并对该地址完成 Ghidra 分析。",
+          "limitation": "计数是时间窗口内的调用观察；此队列只证明入口，不自动解释后续所有分支。"
+        }
+      ]
+    }
+  ]
+}

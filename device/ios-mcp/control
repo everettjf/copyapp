@@ -1,0 +1,8 @@
+Package: com.copyapp.mcp
+Name: Copy APP Device Control
+Version: 0.1.3
+Architecture: iphoneos-arm64
+Depends: mobilesubstrate
+Description: USB-only UI observation and control for Copy APP
+Maintainer: Copy APP
+Section: Tweaks

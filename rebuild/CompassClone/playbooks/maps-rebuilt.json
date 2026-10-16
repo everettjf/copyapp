@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "scenario_id": "compass-location-maps",
+  "bundle_id": "dev.copyapp.compass",
+  "fresh_launch": true,
+  "steps": [
+    {"action": "observe", "contains": "°"},
+    {"action": "screenshot", "stable": true, "ready_contains": "°"},
+    {"action": "tap", "x": 207, "y": 712},
+    {"action": "expect_foreground", "bundle_id": "com.apple.Maps", "wait_ms": 300}
+  ]
+}

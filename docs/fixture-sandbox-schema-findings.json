@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "target_bundle_id": "dev.copyapp.fixture",
+  "title": "Fixture 数据容器与 SQLite 结构：XR 实机来源案例",
+  "sections": [
+    {
+      "title": "沙盒与数据模型",
+      "findings": [
+        {
+          "claim": "XR 上的 Fixture 数据容器包含 notes 表，其列为 id 与 text",
+          "confidence": "observed",
+          "evidence": [
+            "case.sandbox",
+            "db.schema"
+          ],
+          "explanation": "先用已验证的分析案例固定设备、Bundle ID、容器和文件路径，随后经 USB SSH 只读复制 Documents/fixture-notes.sqlite；本地 SQLite 结构检查给出 notes(id, text)。",
+          "limitation": "表记录内容未进入本报告；文件为顺序复制，不能证明与同时变化的 WAL 属于同一瞬间，也不能单凭表结构推断 App 的读写路径。"
+        }
+      ]
+    }
+  ]
+}

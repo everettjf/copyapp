@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "scenario_id": "counter-persistence",
+  "bundle_id": "dev.copyapp.fixture",
+  "fresh_launch": true,
+  "steps": [
+    {"action": "observe", "contains": ["Counter · UserDefaults", "Notes · SQLite", "Catalog · Framework"]},
+    {"action": "tap_label", "label": "Counter · UserDefaults"},
+    {"action": "observe", "wait_ms": 300, "contains": "Increment counter", "capture_number": {"name": "counter_before", "pattern": "Counter: ([0-9]+)"}},
+    {"action": "screenshot", "stable": true, "ready_contains": "Increment counter"},
+    {"action": "tap_label", "label": "Increment counter"},
+    {"action": "observe", "wait_ms": 300, "contains": "Reset counter", "compare_number": {"to": "counter_before", "pattern": "Counter: ([0-9]+)", "delta": 1}},
+    {"action": "screenshot", "stable": true, "ready_contains": "Reset counter"}
+  ]
+}

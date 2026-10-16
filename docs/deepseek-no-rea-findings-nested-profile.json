@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "target_bundle_id": "com.deepseek.chat",
+  "title": "DeepSeek 2.4.4：XR 密码入口与两级运行时间接回调",
+  "sections": [
+    {
+      "title": "设备、包与整包恢复",
+      "findings": [
+        {
+          "claim": "目标是 iPhone XR / iOS 16.1.1 上已安装的 com.deepseek.chat 2.4.4 (3)",
+          "confidence": "observed",
+          "evidence": [
+            "case.survey",
+            "case.decryption"
+          ],
+          "explanation": "USB 安装信息、越狱机采集和整包恢复记录绑定同一设备身份摘要与 App 版本。",
+          "limitation": "此版本和设备之外的兼容性未在本次试验验证。"
+        },
+        {
+          "claim": "无 REA 的自动恢复检查了 32 个 Mach-O，并恢复主程序及分享扩展两份加密代码",
+          "confidence": "observed",
+          "evidence": [
+            "case.decryption",
+            "case.decrypted_static"
+          ],
+          "explanation": "整包恢复记录保存原包和分析 IPA 哈希；两份可执行文件的变化均限定于加密区和 cryptid 字段，最终所有 Mach-O 加密头检查通过。主程序解密后 SHA-256 为 402f5178d668e8b031fb26a89fa7df720df3824a90b22af30093c3817866438a。",
+          "limitation": "这是供分析的 IPA，修改后的签名不支持据此宣称可安装。"
+        },
+        {
+          "claim": "解密主程序的本地 Objective-C 索引列出 1,212 个类和 13,099 个方法",
+          "confidence": "observed",
+          "evidence": [
+            "case.decrypted_objc"
+          ],
+          "explanation": "类和方法计数来自已验证解密 IPA 的主程序元数据。",
+          "limitation": "该索引不等于全部 Swift 类型、动态加载代码或方法体语义。"
+        }
+      ]
+    },
+    {
+      "title": "密码入口的可见行为",
+      "findings": [
+        {
+          "claim": "登录首页显示 Continue with Password 与 Sign up，点按密码入口后出现条款确认弹窗",
+          "confidence": "observed",
+          "evidence": [
+            "app.all",
+            "flow.dsbutton"
+          ],
+          "explanation": "受控脚本在目标 App 前台观察两个入口，点按 Continue with Password 后的 UIKit 视图树包含 Terms of Use and Privacy Policy、Cancel 和 Agree；保存了前后截图。流程停在弹窗，没有点击 Agree。",
+          "limitation": "这里没有观察同意或取消后的行为，也没有输入凭据。"
+        },
+        {
+          "claim": "被点击的按钮运行时视图类是 DeepSeek_Chat.DSButton",
+          "confidence": "observed",
+          "evidence": [
+            "flow.dsbutton"
+          ],
+          "explanation": "末端保留的登录页面 UIKit 树中，带 Continue with Password 可访问性标签的按钮节点类为 DSButton，文字 UILabel 位于其子树。",
+          "limitation": "视图树仅是该时刻已加载窗口，不能给出按钮回调闭包源码。"
+        }
+      ]
+    },
+    {
+      "title": "按钮入口与静态调用边",
+      "findings": [
+        {
+          "claim": "密码入口点击窗口命中 DSButton::objcOnTap 的当前 IMP 和主程序静态入口各一次",
+          "confidence": "observed",
+          "evidence": [
+            "flow.dsbutton"
+          ],
+          "explanation": "独立重放期间 Frida 对 _TtC13DeepSeek_Chat8DSButton::objcOnTap 记录两种入口均命中一次；静态地址是解密主程序的 0x100821558。",
+          "limitation": "时间窗口计数不独自证明它生成了弹窗，手机加载代码与采集文件没有逐字节比对。"
+        },
+        {
+          "claim": "本机 ARM64 汇编从 DSButton 的入口直接调用 0x100820cec，随后出现按条件分支及间接回调",
+          "confidence": "inferred",
+          "evidence": [
+            "flow.dsbutton"
+          ],
+          "explanation": "入口 0x100821558 的完整函数窗口含 bl 0x100820cec。后者读取对象字段、比较布尔值，末段读取函数指针并通过 blr x19 调用；有界原生队列在多个本地目标和间接调用处停止自动跟随。",
+          "limitation": "此条汇编仅定位间接调用指令；回调目标见下列实机与 Ghidra 联合证据，弹窗完整因果链仍未确定。"
+        },
+        {
+          "claim": "在关闭 Objective-C Message Analyzer 的明确配置下，Copy APP 直连 Ghidra 完成自动分析并反编译 DSButton::objcOnTap",
+          "confidence": "observed",
+          "evidence": [
+            "ghidra.deepseek",
+            "flow.dsbutton"
+          ],
+          "explanation": "20.8 MB 解密主程序的精确 SHA-256 和运行时静态候选地址 0x100821558 一致；Ghidra 日志记录该分析器已关闭、自动分析成功、函数伪代码写出。伪代码中的入口调用 FUN_100820cec，与本机 ARM64 的直接 bl 目标一致。",
+          "limitation": "伪代码是分析器解释而非原始源码；关闭该分析器可能改变符号与引用结果。更深的回调地址见下列证据，弹窗因果链仍未确定。"
+        },
+        {
+          "claim": "一次密码入口点击窗口内，DSButton 的静态入口与 0x100820dac 的 blr x19 均命中，x19 指向 App 内函数起点 0x1002ff218",
+          "confidence": "observed",
+          "evidence": [
+            "ghidra.indirect"
+          ],
+          "explanation": "Copy APP 将运行时寄存器记录同原生汇编的 blr x19 指令、Mach-O 函数起点和精确二进制哈希绑定；同一步的静态入口与分支各命中一次。",
+          "limitation": "时间窗口内共同执行不独自证明这条回调造成条款弹窗；采集的文件与设备内存代码未逐字节核对。"
+        },
+        {
+          "claim": "Ghidra 将 0x1002ff218 解释为薄回调层，它把 0x1002f908c 作为函数指针交给 0x1002fc930",
+          "confidence": "inferred",
+          "evidence": [
+            "ghidra.indirect"
+          ],
+          "explanation": "同一 Ghidra 导入分别保存 DSButton 入口、0x100820cec 和 0x1002ff218 的伪代码。最后一个函数的伪代码含 FUN_1002fc930(..., FUN_1002f908c)；两个下游地址在同一 Mach-O 中是函数起点，且另有原生汇编。",
+          "limitation": "静态伪代码中的函数指针已由下列两次真机实验进一步核对；该地址与弹窗的完整因果关系仍未证明。"
+        },
+        {
+          "claim": "密码入口点击窗口内，0x1002fc97c 的 blr x19 命中一次，寄存器目标是同一 App 的 0x1002f908c 函数入口",
+          "confidence": "observed",
+          "evidence": [
+            "flow.nested",
+            "native.nested"
+          ],
+          "explanation": "XR 重放与静态入口同步计数：步骤 3 的 DSButton 静态入口和内层分支各命中一次；x19 被解析为 App 镜像偏移 0x2f908c。原 Mach-O 的 0x1002fc97c 为 blr x19，0x1002f908c 是函数起点。",
+          "limitation": "同一步观测不单独证明每条调用边都由该次点击唯一触发，也未逐字节核对内存代码与采集副本。"
+        },
+        {
+          "claim": "另一轮 XR 密码入口点击直接命中 0x1002f908c 的运行时入口一次",
+          "confidence": "observed",
+          "evidence": [
+            "flow.callback_entry"
+          ],
+          "explanation": "直接挂钩 App 镜像偏移 0x2f908c；步骤 3 的 DSButton 静态入口和该回调入口各记录一次，前后 UI 仍保存条款弹窗。",
+          "limitation": "这是独立重放的时间窗口证据，不能证明该回调自身构造弹窗。"
+        },
+        {
+          "claim": "Ghidra 把 0x1002f908c 解释为含条款检查辅助调用和条件导航的闭包",
+          "confidence": "inferred",
+          "evidence": [
+            "ghidra.nested",
+            "flow.callback_entry"
+          ],
+          "explanation": "同一精确哈希主程序的伪代码调用 FUN_1002f91c4，并在条件路径中引用 pushViewController:animated:；回调入口在 XR 点击窗口实际命中。",
+          "limitation": "Swift 闭包控制流和局部值由 Ghidra 近似恢复；当前不能据此确定条件真假、条款弹窗由哪个函数创建，或同意后的真实导航行为。"
+        }
+      ]
+    },
+    {
+      "title": "范围与未知项",
+      "findings": [
+        {
+          "claim": "登录后页面、条款持久化、认证与服务端行为仍未知",
+          "confidence": "unknown",
+          "evidence": [],
+          "explanation": "本流程在条款弹窗停止；没有点击同意、输入账号或采集认证请求。"
+        }
+      ]
+    }
+  ]
+}

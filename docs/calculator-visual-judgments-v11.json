@@ -1,0 +1,22 @@
+{
+  "pairs": [
+    {"flow_id": "calculator-initial", "step": 3, "verdict": "minor_difference", "note": "首页 0、键位和颜色对齐；± 字形及顶部返回文字不同。"},
+    {"flow_id": "calculator-basic-addition", "step": 3, "verdict": "minor_difference", "note": "初始 0 与键盘布局对齐；± 字形及顶部返回文字不同。"},
+    {"flow_id": "calculator-basic-addition", "step": 9, "verdict": "minor_difference", "note": "结果 15 位置和尺寸接近；数字笔画、± 字形及顶部文字不同。"},
+    {"flow_id": "calculator-relative-percent", "step": 10, "verdict": "minor_difference", "note": "中间结果 1 与 C 状态一致；± 字形及顶部返回文字不同。"},
+    {"flow_id": "calculator-relative-percent", "step": 12, "verdict": "minor_difference", "note": "结果 110 与 C 状态一致；数字笔画、± 字形及顶部文字不同。"},
+    {"flow_id": "calculator-repeat-equals", "step": 7, "verdict": "minor_difference", "note": "第一次等号后显示 7，布局一致；± 字形及顶部文字不同。"},
+    {"flow_id": "calculator-repeat-equals", "step": 9, "verdict": "minor_difference", "note": "重复等号后显示 9，布局一致；数字笔画、± 及顶部文字不同。"},
+    {"flow_id": "calculator-clear-repeat", "step": 9, "verdict": "minor_difference", "note": "清除后显示 0，AC 状态一致；± 字形及顶部文字不同。"},
+    {"flow_id": "calculator-clear-repeat", "step": 11, "verdict": "minor_difference", "note": "后续显示 8，AC 状态一致；数字笔画、± 及顶部文字不同。"},
+    {"flow_id": "calculator-division-zero", "step": 4, "verdict": "minor_difference", "note": "初始 0 与键盘布局对齐；± 字形及顶部返回文字不同。"},
+    {"flow_id": "calculator-division-zero", "step": 10, "verdict": "minor_difference", "note": "除零均显示 Error，无截断；文字笔画、± 及顶部时钟不同。"},
+    {"flow_id": "calculator-decimal-addition", "step": 4, "verdict": "minor_difference", "note": "初始 0 与键盘布局对齐；± 字形及顶部返回文字不同。"},
+    {"flow_id": "calculator-decimal-addition", "step": 14, "verdict": "minor_difference", "note": "结果 0.3 位置和尺寸接近；数字笔画、± 及顶部文字不同。"},
+    {"flow_id": "calculator-sign-addition", "step": 4, "verdict": "minor_difference", "note": "初始 0 与键盘布局对齐；± 字形及顶部返回文字不同。"},
+    {"flow_id": "calculator-sign-addition", "step": 7, "verdict": "minor_difference", "note": "中间结果 -5 位置接近；数字笔画、± 及顶部文字不同。"},
+    {"flow_id": "calculator-sign-addition", "step": 12, "verdict": "minor_difference", "note": "末端结果 3 布局一致；数字笔画、± 及顶部文字不同。"},
+    {"flow_id": "calculator-multiplication", "step": 4, "verdict": "minor_difference", "note": "初始 0 与键盘布局对齐；± 字形及顶部返回文字不同。"},
+    {"flow_id": "calculator-multiplication", "step": 10, "verdict": "minor_difference", "note": "结果 63 位置接近且无截断；数字笔画、± 及顶部文字不同。"}
+  ]
+}

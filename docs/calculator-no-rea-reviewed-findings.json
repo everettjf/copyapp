@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "target_bundle_id": "com.apple.calculator",
+  "title": "Calculator：无 REA 的 iPhone XR 真机逆向报告",
+  "sections": [
+    {
+      "title": "身份、采集与依赖",
+      "findings": [
+        {
+          "claim": "本次目标是 iPhone XR / iOS 16.1.1 上的 com.apple.calculator 1.0.0",
+          "confidence": "observed",
+          "evidence": ["case.survey", "app.all"],
+          "explanation": "USB 调查及单流程采集的设备、包名和前台 App 身份一致。",
+          "limitation": "这里只确认此次设备与目标 App，不代表其他 iOS 版本。"
+        },
+        {
+          "claim": "采集快照包含 11 个包内路径、1 个 Mach-O 和 16 个本地 Objective-C 类",
+          "confidence": "observed",
+          "evidence": ["case.static", "case.objc"],
+          "explanation": "静态索引由安装的 .app 只读副本生成；主程序哈希为 8d4e059834d4c3df36f2b5ba473863b55230cb21c7eeeee7919cafdb0dc7ff3c，索引包括 CalculatorModel、CalculatorController、DisplayViewController 和 KeypadViewController。主程序没有 LC_ENCRYPTION_INFO 加载命令，因此此目标未触发脱壳。",
+          "limitation": "Objective-C 元数据不是完整 Swift 类型图，也不提供原始源码。"
+        },
+        {
+          "claim": "主程序静态链接 UIKit、AudioToolbox 和私有 Calculate.framework 等系统库",
+          "confidence": "observed",
+          "evidence": ["case.static"],
+          "explanation": "Mach-O 加载命令的依赖列表包含这些库；本报告没有用 REA 或 Hopper 分析这些库的内部实现。",
+          "limitation": "静态链接记录不能单独证明某个函数在本次算式中被调用。"
+        }
+      ]
+    },
+    {
+      "title": "沙盒与界面",
+      "findings": [
+        {
+          "claim": "本次只读沙盒枚举记录了 18 个路径条目",
+          "confidence": "observed",
+          "evidence": ["case.sandbox"],
+          "explanation": "采集深度上限为 8，保存的是文件和目录元数据。",
+          "limitation": "没有读取文件正文，不能推断历史算式或偏好设置的内容。"
+        },
+        {
+          "claim": "竖屏 Calculator 有显示区和按钮键盘，7 + 8 = 的末端显示为 15，清除键显示 C",
+          "confidence": "observed",
+          "evidence": ["app.all"],
+          "explanation": "已保存九步脚本、两次截图和运行时 UIKit 视图树；末端显示区子 UILabel 的文字为 15，按钮树中的清除键文字为 C。",
+          "limitation": "这是一次成功重放，未覆盖横屏、科学模式或其他算式。"
+        }
+      ]
+    },
+    {
+      "title": "按钮到原生分支的证据链",
+      "findings": [
+        {
+          "claim": "五次受控点击都进入 CalculatorModel::buttonPressed: 的主程序入口",
+          "confidence": "observed",
+          "evidence": ["app.all", "branch.buttons"],
+          "explanation": "all clear、7、add、8、equals 的每个点击窗口均记录当前 IMP 与主程序静态入口 0x10000eb0c 各一次命中；其原始参数依次为 51、18、8、19、9。",
+          "limitation": "点击窗口中的计数是时间相关证据，不是完整调用栈。"
+        },
+        {
+          "claim": "主程序入口把按钮原始值传给 0x10000e9b8；该函数通过跳转表分派",
+          "confidence": "inferred",
+          "evidence": ["app.all"],
+          "explanation": "0x10000eb0c 的有界 ARM64 汇编将 x2 保存后作为 x0 调用 0x10000e9b8；后者对输入减一，检查范围，读取 32 位相对跳转偏移并以 br x16 分派。队列在这一动态跳转处停止自动跟随，保存了十个本地分支候选。",
+          "limitation": "汇编是机器码解释，不是原始 Swift 源码；跳转表条目与按钮 ID 的完整对应关系没有逐项证明。"
+        },
+        {
+          "claim": "本次点击窗口分别命中全清除、数字、加号与等号的不同原生入口",
+          "confidence": "observed",
+          "evidence": ["branch.buttons"],
+          "explanation": "在同时监测十个候选入口的五个点击窗口里，51 对应 0x14840、18 与 19 对应 0xeb5c、8 对应 0x1136c、9 对应 0x1266c；每个窗口只出现相应入口的一次命中。",
+          "limitation": "映射只覆盖这五次点击，不能单靠计数断言所有输入的业务语义。"
+        },
+        {
+          "claim": "四个已命中的分支均可在采集主程序中独立取得完整函数边界内的 ARM64 汇编",
+          "confidence": "observed",
+          "evidence": ["native.clear", "native.digit", "native.add", "native.equals"],
+          "explanation": "脱离 REA，使用本机 llvm-objdump 和 Mach-O 函数起始表确定边界；四个窗口均未达到截断上限，且绑定同一二进制 SHA-256。清除入口有直达 0x100012db8 的尾分支及到 0x100012cac 的调用；其他入口含更多本地调用与状态操作，需继续语义审阅。",
+          "limitation": "完整函数汇编仍不能自动还原全部 Swift 字段名、数值规则或 Calculate.framework 的内部算法。"
+        }
+      ]
+    },
+    {
+      "title": "可复刻范围与未知项",
+      "findings": [
+        {
+          "claim": "当前证据可以形成竖屏首页及 7 + 8 = 15 的可执行复刻规格",
+          "confidence": "inferred",
+          "evidence": ["app.all", "branch.buttons"],
+          "explanation": "按钮顺序、初始可见标签、结果显示和清除键状态都有 XR 实测记录；实现可以采用独立的本地算术状态机，不依赖私有 Calculate.framework。",
+          "limitation": "未验证复刻 App 与原版在更多输入、精度、无障碍和生命周期事件上的一致性。"
+        },
+        {
+          "claim": "完整算术状态机、科学模式、持久化与系统私有库内部算法尚未由这组非 REA 证据确定",
+          "confidence": "unknown",
+          "evidence": [],
+          "explanation": "当前只深挖了一条竖屏加法流程；这些部分应通过后续定向真机实验或额外授权的分析补齐。"
+        }
+      ]
+    }
+  ]
+}

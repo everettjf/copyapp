@@ -1,0 +1,70 @@
+name: CopyAppFixture
+options:
+  bundleIdPrefix: dev.copyapp
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    SUPPORTS_MACCATALYST: NO
+    CODE_SIGNING_ALLOWED: NO
+targets:
+  FixtureCore:
+    type: framework
+    platform: iOS
+    sources: [Core]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.copyapp.fixture.core
+        GENERATE_INFOPLIST_FILE: YES
+  FixtureShare:
+    type: app-extension
+    platform: iOS
+    sources: [ShareExtension]
+    info:
+      path: ShareExtension/Info.plist
+      properties:
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).ShareViewController"
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsText: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.copyapp.fixture.share
+  CopyAppFixture:
+    type: application
+    platform: iOS
+    sources: [Sources]
+    info:
+      path: Sources/Info.plist
+      properties:
+        CFBundleDisplayName: Copy APP Fixture
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        UIRequiresFullScreen: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Default
+                UISceneDelegateClassName: "$(PRODUCT_MODULE_NAME).SceneDelegate"
+    dependencies:
+      - target: FixtureCore
+      - target: FixtureShare
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.copyapp.fixture
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UIRequiresFullScreen: YES

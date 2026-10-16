@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "source_report": "cases/deepseek-no-rea-assets-report-v6-20261015/report.md",
+  "target_bundle_id": "com.deepseek.chat",
+  "rebuilt_bundle_id": "dev.copyapp.deepseekclone",
+  "minimum_ios": "16.0",
+  "reference_device": "iPhone XR / iOS 16.1.1",
+  "flows": [
+    {
+      "id": "deepseek-password-entry-gate",
+      "entry": "从未确认条款的登录首页点按 Continue with Password",
+      "expected": [
+        "操作前可见 Continue with Password 与 Sign up",
+        "点按后目标 App 保持前台",
+        "出现包含 Terms of Use and Privacy Policy、Cancel、Agree 的条款弹窗",
+        "本流程在弹窗停下，不自动接受条款"
+      ],
+      "evidence": [
+        "app.all",
+        "flow.dsbutton",
+        "ghidra.indirect",
+        "flow.nested",
+        "flow.callback_entry",
+        "ghidra.nested",
+        "native.nested",
+        "ghidra.gate",
+        "flow.privacy",
+        "native.alert",
+        "flow.dispatch",
+        "native.dispatch_target",
+        "flow.factory",
+        "native.factory",
+        "ghidra.alert",
+        "ghidra.factory",
+        "assets.catalog"
+      ],
+      "source_script_sha256": "10b3fbe202c4189e236f7cc0dcfcaf73f0a59752abba12385ee535c86f0f2933",
+      "final_view": {
+        "text": "Terms of Use and Privacy Policy",
+        "region_points": [
+          0,
+          300,
+          414,
+          600
+        ],
+        "also": [
+          {
+            "text": "Cancel",
+            "region_points": [
+              0,
+              480,
+              210,
+              550
+            ]
+          },
+          {
+            "text": "Agree",
+            "region_points": [
+              210,
+              480,
+              414,
+              550
+            ]
+          }
+        ]
+      },
+      "verification": "在 XR 上重放来源脚本；初始和末端的可见文字就绪条件都须通过，再核对目标前台、末端 UIKit 文本与两张稳定截图。"
+    }
+  ],
+  "unknowns": [
+    "Cancel 和 Agree 的后续操作、条款记录与持久化",
+    "密码表单、账号认证、网络请求和服务端逻辑",
+    "其他登录方式以及登录后的页面和功能",
+    "iOS 17 与 iOS 26 上的兼容性",
+    "弹窗按钮回调、条款接受后的行为以及 AlertManager 中每个子函数的职责"
+  ]
+}

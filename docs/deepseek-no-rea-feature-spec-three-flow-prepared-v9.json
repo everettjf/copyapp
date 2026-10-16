@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "source_report": "cases/deepseek-no-rea-three-flow-prepared-report-v9-20261015/report.md",
+  "target_bundle_id": "com.deepseek.chat",
+  "rebuilt_bundle_id": "dev.copyapp.deepseekclone",
+  "minimum_ios": "16.0",
+  "reference_device": "iPhone XR / iOS 16.1.1",
+  "flows": [
+    {
+      "id": "deepseek-password-entry-gate",
+      "entry": "从未确认条款的登录首页点按 Continue with Password",
+      "expected": [
+        "操作前可见 Continue with Password 与 Sign up",
+        "点按后目标 App 保持前台",
+        "出现包含 Terms of Use and Privacy Policy、Cancel、Agree 的条款弹窗",
+        "本流程在弹窗停下，不自动接受条款"
+      ],
+      "evidence": [
+        "app.previous",
+        "flow.dsbutton",
+        "ghidra.indirect",
+        "flow.nested",
+        "flow.callback_entry",
+        "ghidra.nested",
+        "native.nested",
+        "ghidra.gate",
+        "flow.privacy",
+        "native.alert",
+        "flow.dispatch",
+        "native.dispatch_target",
+        "flow.factory",
+        "native.factory",
+        "ghidra.alert",
+        "ghidra.factory",
+        "assets.catalog",
+        "app.all"
+      ],
+      "source_script_sha256": "10b3fbe202c4189e236f7cc0dcfcaf73f0a59752abba12385ee535c86f0f2933",
+      "final_view": {
+        "text": "Terms of Use and Privacy Policy",
+        "region_points": [
+          0,
+          300,
+          414,
+          600
+        ],
+        "also": [
+          {
+            "text": "Cancel",
+            "region_points": [
+              0,
+              480,
+              210,
+              550
+            ]
+          },
+          {
+            "text": "Agree",
+            "region_points": [
+              210,
+              480,
+              414,
+              550
+            ]
+          }
+        ]
+      },
+      "verification": "在 XR 上重放来源脚本；初始和末端的可见文字就绪条件都须通过，再核对目标前台、末端 UIKit 文本与两张稳定截图。"
+    },
+    {
+      "id": "deepseek-signup-gate",
+      "entry": "从未确认条款的登录首页点按 Sign up",
+      "expected": [
+        "操作前可见 Continue with Password 与 Sign up",
+        "点按 Sign up 后目标 App 保持前台",
+        "出现包含 Terms of Use and Privacy Policy、Cancel、Agree 的条款弹窗",
+        "本流程在弹窗停下，不自动接受条款"
+      ],
+      "evidence": [
+        "flow.signup",
+        "ghidra.gate",
+        "ghidra.factory",
+        "assets.catalog",
+        "app.all"
+      ],
+      "source_script_sha256": "7758253e48590a3a9511720413e0465da4b82542913800f977d5e689ac878bad",
+      "final_view": {
+        "text": "Terms of Use and Privacy Policy",
+        "region_points": [
+          0,
+          300,
+          414,
+          600
+        ],
+        "also": [
+          {
+            "text": "Cancel",
+            "region_points": [
+              0,
+              480,
+              210,
+              550
+            ]
+          },
+          {
+            "text": "Agree",
+            "region_points": [
+              210,
+              480,
+              414,
+              550
+            ]
+          }
+        ]
+      },
+      "verification": "在 XR 上重放注册入口，检查原版与复刻版的条款弹窗、目标前台和最终 UIKit 文本；不点击 Agree。"
+    },
+    {
+      "id": "deepseek-privacy-cancel",
+      "entry": "从未确认条款的登录首页点按密码入口，再点按条款弹窗的 Cancel",
+      "expected": [
+        "先出现 Terms of Use and Privacy Policy 弹窗",
+        "点按 Cancel 后弹窗消失",
+        "继续显示 Continue with Password 与 Sign up，仍处于目标 App 前台"
+      ],
+      "evidence": [
+        "flow.cancel",
+        "flow.dsbutton",
+        "ghidra.factory",
+        "app.all"
+      ],
+      "source_script_sha256": "4225763cc03b1b0da718808fad7fb8fb395f612c66fb49c6580c0818f2b02c11",
+      "final_view": {
+        "text": "Contact us",
+        "region_points": [
+          300,
+          40,
+          414,
+          110
+        ],
+        "also": [
+          {
+            "text": "Continue with Password",
+            "region_points": [
+              30,
+              670,
+              382,
+              730
+            ]
+          },
+          {
+            "text": "Sign up",
+            "region_points": [
+              30,
+              740,
+              382,
+              800
+            ]
+          }
+        ],
+        "absent": [
+          {
+            "text": "Cancel",
+            "region_points": [
+              0,
+              480,
+              210,
+              550
+            ]
+          },
+          {
+            "text": "Agree",
+            "region_points": [
+              210,
+              480,
+              414,
+              550
+            ]
+          }
+        ]
+      },
+      "verification": "在 XR 上重放密码入口与 Cancel，核对末端 UIKit 仍有首页入口、弹窗 Cancel/Agree 已不可见，并审阅操作前后截图。"
+    }
+  ],
+  "unknowns": [
+    "密码表单、账号认证、网络请求和服务端逻辑",
+    "其他登录方式以及登录后的页面和功能",
+    "iOS 17 与 iOS 26 上的兼容性",
+    "弹窗按钮回调、条款接受后的行为以及 AlertManager 中每个子函数的职责",
+    "Agree 后的条款记录、认证入口与持久化行为"
+  ]
+}

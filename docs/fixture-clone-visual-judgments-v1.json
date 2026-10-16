@@ -1,0 +1,9 @@
+{
+  "pairs": [
+    {"flow_id": "counter-persistence", "step": 4, "verdict": "major_difference", "note": "原版计数为 9，复刻版为 0；按钮和布局接近，但不同的已有数据不能算视觉一致。"},
+    {"flow_id": "counter-persistence", "step": 7, "verdict": "major_difference", "note": "点击后分别为 10 和 1，两边各增加一；已有数据基线不同，截图数字明显不同。"},
+    {"flow_id": "sqlite-note", "step": 4, "verdict": "major_difference", "note": "原版保存数为 9，复刻版为 0；标签位置接近，已有数据库记录数不同。"},
+    {"flow_id": "sqlite-note", "step": 7, "verdict": "major_difference", "note": "点击后分别为 10 和 1，两边各增加一；数据库基线差异仍显示在页面。"},
+    {"flow_id": "framework-catalog", "step": 4, "verdict": "minor_difference", "note": "Alpha/Beta 文本和两行布局接近；顶部返回上一 App 的系统文字不同。"}
+  ]
+}

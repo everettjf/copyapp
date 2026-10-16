@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "scenario_id": "framework-catalog",
+  "bundle_id": "dev.copyapp.fixture",
+  "fresh_launch": true,
+  "steps": [
+    {"action": "observe", "contains": ["Counter · UserDefaults", "Notes · SQLite", "Catalog · Framework"]},
+    {"action": "tap_label", "label": "Catalog · Framework"},
+    {"action": "observe", "wait_ms": 300, "contains": ["Alpha", "Local sample A", "Beta", "Local sample B"]},
+    {"action": "screenshot", "stable": true, "ready_contains": "Alpha"}
+  ]
+}

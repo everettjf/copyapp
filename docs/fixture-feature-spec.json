@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "target_bundle_id": "dev.copyapp.fixture",
+  "rebuilt_bundle_id": "dev.copyapp.fixtureclone",
+  "minimum_ios": "16.0",
+  "reference_device": "iPhone XR / iOS 16.1.1",
+  "flows": [
+    {
+      "id": "counter-persistence",
+      "entry": "Home → Counter → tap increment once",
+      "expected": ["Counter changes from 0 to 1", "fixture.counter persists as 1 in UserDefaults"],
+      "evidence": ["ui.counter_before", "ui.counter_after", "ui.counter_view_tree", "rea.counter", "data.prefs", "flow.counter"],
+      "verification": "Compare UI before/after and read the app preference file."
+    },
+    {
+      "id": "sqlite-note",
+      "entry": "Home → Notes → Add sample note",
+      "expected": ["Saved notes changes from 0 to 1", "notes table has one inserted text row"],
+      "evidence": ["ui.notes_before", "ui.notes_after", "exp.notes", "rea.sqlite_insert", "data.sqlite", "data.sandbox_diff", "flow.notes"],
+      "verification": "Compare UI, count addNote, and inspect the exported SQLite row."
+    },
+    {
+      "id": "framework-catalog",
+      "entry": "Home → Catalog",
+      "expected": ["Alpha / Local sample A", "Beta / Local sample B"],
+      "evidence": ["ui.catalog", "exp.catalog", "rea.catalog", "flow.catalog"],
+      "verification": "Capture Catalog UI and verify FixtureCore call relationship in the acquired binary."
+    }
+  ],
+  "unknowns": ["share extension interaction", "network behavior", "iOS 17/26 compatibility"]
+}

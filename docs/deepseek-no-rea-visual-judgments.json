@@ -1,0 +1,16 @@
+{
+  "pairs": [
+    {
+      "flow_id": "deepseek-password-entry-gate",
+      "step": 2,
+      "verdict": "major_difference",
+      "note": "登录按钮数量、位置和主文字接近；复刻版缺少原版鲸鱼图形及 Google、Apple、密码图标，底部条款文字样式和位置也不同。"
+    },
+    {
+      "flow_id": "deepseek-password-entry-gate",
+      "step": 5,
+      "verdict": "major_difference",
+      "note": "两边条款弹窗的位置、标题和 Cancel/Agree 接近；复刻版正文换行不同，背景仍缺原版图形和按钮图标，底部条款文字样式不同。"
+    }
+  ]
+}

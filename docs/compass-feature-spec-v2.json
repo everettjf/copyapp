@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "source_report": "cases/compass-xr-deep-report-v16-20261015/report.md",
+  "target_bundle_id": "com.apple.compass",
+  "rebuilt_bundle_id": "dev.copyapp.compass",
+  "minimum_ios": "16.0",
+  "reference_device": "iPhone XR / iOS 16.1.1",
+  "flows": [
+    {
+      "id": "live-heading",
+      "entry": "launch",
+      "expected": [
+        "dark compass face",
+        "degree heading and cardinal direction",
+        "updates as device rotates"
+      ],
+      "evidence": [
+        "case.screenshot",
+        "rea.update_display",
+        "rea.start_motion",
+        "probe.north",
+        "flow.live"
+      ],
+      "verification": "Observe two stable device headings after rotation and compare dial direction with the reference."
+    },
+    {
+      "id": "bearing-lock",
+      "entry": "tap compass face",
+      "expected": [
+        "first tap stores a target bearing",
+        "difference from current heading is visualized",
+        "second tap clears target"
+      ],
+      "evidence": [
+        "rea.tap_bearing",
+        "rea.set_bearing",
+        "rea.unset_bearing",
+        "rea.update_layer",
+        "exp.bearing_set",
+        "exp.bearing_unset",
+        "probe.bearing_offset",
+        "ui.bearing_original"
+      ],
+      "verification": "Capture before, after first tap, and after second tap; verify the state transition and angle change."
+    },
+    {
+      "id": "location-maps",
+      "entry": "grant When-In-Use location, tap coordinates",
+      "expected": [
+        "coordinates and elevation shown when authorized",
+        "place label may be shown",
+        "tap requests Maps handoff"
+      ],
+      "evidence": [
+        "rea.start_location",
+        "rea.coordinate_label",
+        "rea.auth_change",
+        "rea.open_maps",
+        "probe.maps_url",
+        "probe.maps_screen",
+        "ui.location_denied_original",
+        "ui.maps_original"
+      ],
+      "verification": "Check authorized and denied states, then verify Maps opens at the current position."
+    }
+  ],
+  "unknowns": [
+    "exact animation timing",
+    "pixel-level assets",
+    "other location error states",
+    "network activity",
+    "iOS 17/26 compatibility"
+  ]
+}

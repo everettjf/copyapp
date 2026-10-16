@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "copyapp"
+version = "0.1.0"
+description = "Evidence-first iOS app survey on a connected device"
+requires-python = ">=3.9"
+dependencies = ["pymobiledevice3>=11.31,<12", "Pillow>=11,<12"]
+
+[project.optional-dependencies]
+trace = ["frida>=17,<18"]
+
+[project.scripts]
+copyapp = "copyapp.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["copyapp*"]
+
+[tool.setuptools.package-data]
+copyapp = ["ghidra_scripts/*.java", "ghidra_scripts/REA-LICENSE.txt"]

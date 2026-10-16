@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "target_bundle_id": "com.apple.calculator",
+  "rebuilt_bundle_id": "dev.copyapp.calculator",
+  "minimum_ios": "16.0",
+  "reference_device": "iPhone XR / iOS 16.1.1",
+  "flows": [
+    {
+      "id": "calculator-basic-addition",
+      "entry": "清零后依次点击 7、加号、8、等号",
+      "expected": ["末端显示 15"],
+      "evidence": ["app.all", "code.direct_chain"],
+      "final_view": {
+        "text": "15",
+        "region_points": [0, 150, 414, 341]
+      },
+      "verification": "在同一 XR 上运行原版和复刻版的同一步骤，核对末端 UIKit 标签并逐张审阅截图。"
+    }
+  ],
+  "unknowns": [
+    "0x10000e9b8 的各分支对应哪些按键仍未逐一验证",
+    "其他计算操作、横屏模式、精度和边界输入未由本规格覆盖"
+  ]
+}

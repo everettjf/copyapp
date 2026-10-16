@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "scenario_id": "deepseek-privacy-cancel",
+  "bundle_id": "com.deepseek.chat",
+  "fresh_launch": true,
+  "steps": [
+    {"action": "observe", "contains": ["Continue with Password", "Sign up"]},
+    {"action": "tap_label", "label": "Continue with Password"},
+    {"action": "observe", "wait_ms": 300,
+     "contains": ["Terms of Use and Privacy Policy", "Cancel", "Agree"]},
+    {"action": "screenshot", "stable": true,
+     "ready_contains": "Terms of Use and Privacy Policy"},
+    {"action": "tap_label", "label": "Cancel",
+     "region_points": [0, 480, 210, 550]},
+    {"action": "observe", "wait_ms": 300,
+     "contains": ["Continue with Password", "Sign up"]},
+    {"action": "screenshot", "stable": true,
+     "ready_contains": "Continue with Password"}
+  ]
+}

@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "source_report": "cases/calculator-xr-deep-report-v19-20261015/report.md",
+  "target_bundle_id": "com.apple.calculator",
+  "rebuilt_bundle_id": "dev.copyapp.calculator",
+  "minimum_ios": "16.0",
+  "reference_device": "iPhone XR / iOS 16.1.1",
+  "flows": [
+    {
+      "id": "calculator-initial",
+      "entry": "launch in portrait and tap AC",
+      "expected": [
+        "black background",
+        "right-aligned 0",
+        "four-column keypad with wide 0 key",
+        "gray number keys and orange operator keys"
+      ],
+      "evidence": [
+        "case.screenshot",
+        "case.ui",
+        "ui.initial",
+        "ui.view_tree",
+        "rea.root_ui",
+        "rea.keypad_layout",
+        "flow.initial"
+      ],
+      "verification": "On XR, capture the cleared portrait screen and compare element frames and visible text with the reference.",
+      "final_view": {
+        "text": "0",
+        "region_points": [
+          0,
+          150,
+          414,
+          341
+        ],
+        "also": [
+          {
+            "text": "AC",
+            "region_points": [
+              0,
+              341,
+              110,
+              430
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "calculator-basic-addition",
+      "entry": "clear, then tap 7, +, 8, =",
+      "expected": [
+        "display becomes 15",
+        "clear key changes from AC to C"
+      ],
+      "evidence": [
+        "ui.addition",
+        "ui.result",
+        "ui.result_ocr",
+        "probe.button_path",
+        "rea.button_dispatch_ghidra",
+        "rea.calculate_bridge",
+        "app.all",
+        "flow.branch_addition"
+      ],
+      "final_view": {
+        "text": "15",
+        "region_points": [
+          0,
+          150,
+          414,
+          341
+        ],
+        "also": [
+          {
+            "text": "C",
+            "region_points": [
+              0,
+              341,
+              110,
+              430
+            ]
+          }
+        ]
+      },
+      "verification": "Replay the exact four taps on the same device, confirm foreground Calculator and compare stable result screenshots and OCR."
+    },
+    {
+      "id": "calculator-relative-percent",
+      "entry": "clear, then tap 100 + 10 % =",
+      "expected": [
+        "after percent, display 10",
+        "after equals, display 110"
+      ],
+      "evidence": [
+        "ui.percent",
+        "ui.percent_intermediate",
+        "ui.percent_result",
+        "ui.percent_intermediate_ocr",
+        "ui.percent_result_ocr",
+        "app.all",
+        "flow.branch_percent",
+        "rea.percent"
+      ],
+      "final_view": {
+        "text": "110",
+        "region_points": [
+          0,
+          150,
+          414,
+          341
+        ],
+        "also": [
+          {
+            "text": "C",
+            "region_points": [
+              0,
+              341,
+              110,
+              430
+            ]
+          }
+        ]
+      },
+      "verification": "Replay the same taps on the XR; compare stable screenshots at percent and equals and inspect the display-only OCR evidence."
+    },
+    {
+      "id": "calculator-repeat-equals",
+      "entry": "clear, then tap 5 + 2 = =",
+      "expected": [
+        "first equals shows 7",
+        "second equals shows 9"
+      ],
+      "evidence": [
+        "ui.repeat",
+        "ui.repeat_first",
+        "ui.repeat_second",
+        "app.all",
+        "flow.branch_repeat"
+      ],
+      "final_view": {
+        "text": "9",
+        "region_points": [
+          0,
+          150,
+          414,
+          341
+        ],
+        "also": [
+          {
+            "text": "C",
+            "region_points": [
+              0,
+              341,
+              110,
+              430
+            ]
+          }
+        ]
+      },
+      "verification": "Replay both equals taps on the XR; compare the two stable result screenshots and inspect DisplayView UILabel.text in the following view scan."
+    },
+    {
+      "id": "calculator-clear-repeat",
+      "entry": "clear, then tap 7, +, 8, =, C, =",
+      "expected": [
+        "after first equals display 15 and show C",
+        "after C display 0 and show AC",
+        "after another equals display 8"
+      ],
+      "evidence": [
+        "flow.clear_states",
+        "flow.clear_repeat",
+        "rea.clear",
+        "rea.clear_active",
+        "rea.all_clear",
+        "rea.equals"
+      ],
+      "final_view": {
+        "text": "8",
+        "region_points": [
+          0,
+          150,
+          414,
+          341
+        ],
+        "also": [
+          {
+            "text": "AC",
+            "region_points": [
+              0,
+              341,
+              110,
+              430
+            ]
+          }
+        ]
+      },
+      "verification": "Replay both apps on the XR, inspect the C intermediate screenshot and verify the final DisplayView UILabel equals 8."
+    },
+    {
+      "id": "calculator-division-zero",
+      "entry": "8 ÷ 0 =",
+      "expected": [
+        "final display Error"
+      ],
+      "evidence": [
+        "cases/calculator-division-zero-comparison-20261015/report.md",
+        "cases/calculator-division-zero-comparison-20261015/original",
+        "cases/calculator-division-zero-comparison-20261015/rebuilt"
+      ],
+      "source_script_sha256": "be188b0c7d6c19f1ea3bf321c0bad7716b272942b2cb099fc954a01e9fba5fca",
+      "final_view": {
+        "text": "Error",
+        "region_points": [
+          0,
+          150,
+          414,
+          341
+        ]
+      },
+      "verification": "Replay paired scripts on the iPhone XR; require exact visible UIKit result text in the display region for original and clone, and inspect saved screenshot pairs."
+    },
+    {
+      "id": "calculator-decimal-addition",
+      "entry": "0.1 + 0.2 =",
+      "expected": [
+        "final display 0.3"
+      ],
+      "evidence": [
+        "cases/calculator-decimal-addition-comparison-v2-20261015/report.md",
+        "cases/calculator-decimal-addition-comparison-v2-20261015/original",
+        "cases/calculator-decimal-addition-comparison-v2-20261015/rebuilt"
+      ],
+      "source_script_sha256": "9f35b0c93afb7068203eb2acc064a09bdfc44a668b6b56289b8d7f23d28d3863",
+      "final_view": {
+        "text": "0.3",
+        "region_points": [
+          0,
+          150,
+          414,
+          341
+        ]
+      },
+      "verification": "Replay paired scripts on the iPhone XR using the zero key bounded by [0,700,210,830]; require exact final UIKit display text and inspect saved screenshot pairs."
+    },
+    {
+      "id": "calculator-sign-addition",
+      "entry": "negate 5, then + 8 =",
+      "expected": [
+        "final display 3"
+      ],
+      "evidence": [
+        "cases/calculator-sign-addition-comparison-20261015/report.md",
+        "cases/calculator-sign-addition-comparison-20261015/original",
+        "cases/calculator-sign-addition-comparison-20261015/rebuilt"
+      ],
+      "source_script_sha256": "c59ca36a4d4432986ab463a2247fb3cfc621ff5f331806a84f9f94921b5aa569",
+      "final_view": {
+        "text": "3",
+        "region_points": [
+          0,
+          150,
+          414,
+          341
+        ]
+      },
+      "verification": "Replay paired scripts on the iPhone XR; require exact visible UIKit result text in the display region for original and clone, and inspect saved screenshot pairs."
+    },
+    {
+      "id": "calculator-multiplication",
+      "entry": "9 × 7 =",
+      "expected": [
+        "final display 63"
+      ],
+      "evidence": [
+        "cases/calculator-multiplication-comparison-20261015/report.md",
+        "cases/calculator-multiplication-comparison-20261015/original",
+        "cases/calculator-multiplication-comparison-20261015/rebuilt"
+      ],
+      "source_script_sha256": "3bebab2f78c3d17839541f20fcdb52d3e0b87f2714ebd7ccc96c63e2e4fc7609",
+      "final_view": {
+        "text": "63",
+        "region_points": [
+          0,
+          150,
+          414,
+          341
+        ]
+      },
+      "verification": "Replay paired scripts on the iPhone XR; require exact visible UIKit result text in the display region for original and clone, and inspect saved screenshot pairs."
+    }
+  ],
+  "unknowns": [
+    "scientific landscape mode",
+    "percent with other operators",
+    "repeated equals with other operators",
+    "C versus AC semantics across untested intermediate states",
+    "Calculate.framework internal algorithm",
+    "persistence and network behavior",
+    "remaining arithmetic and edge cases",
+    "number formatting and precision beyond 0.1 + 0.2"
+  ],
+  "scope": "Supplemental XR behavior check for four observed Calculator arithmetic flows; not a whole-app equivalence claim.",
+  "supplemental_evidence_root": "cases/calculator-*-comparison-20261015 and cases/calculator-decimal-addition-comparison-v2-20261015"
+}
