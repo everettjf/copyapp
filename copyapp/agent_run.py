@@ -61,6 +61,31 @@ def _source_tree_hash(project: Path) -> Optional[str]:
     return digest.hexdigest()
 
 
+def _archive_unbound_delivery(delivery_case: Path, task_case: Path,
+                              install_record: Path, check_case: Path,
+                              visual_case: Path) -> None:
+    """Keep an agent-authored draft before creating the run-bound delivery."""
+    if not delivery_case.exists() and not delivery_case.is_symlink():
+        return
+    if delivery_case.is_symlink() or not delivery_case.is_dir():
+        raise ValueError("agent-authored delivery is not a verified directory")
+    if not any(delivery_case.iterdir()):
+        return
+    if not verify_case(delivery_case):
+        raise ValueError("agent-authored delivery is not a verified directory")
+    draft = json.loads((delivery_case / "delivery.json").read_text(encoding="utf-8"))
+    if (draft.get("agent_run_case") is not None or
+            draft.get("task_case") != str(task_case) or
+            draft.get("installation_record") != str(install_record) or
+            draft.get("rebuild_check_case") != str(check_case) or
+            draft.get("visual_review_case") != str(visual_case)):
+        raise ValueError("agent-authored delivery does not match this run")
+    archive = delivery_case.with_name("agent-delivery-agent-draft")
+    if archive.exists():
+        raise FileExistsError(f"agent delivery draft archive already exists: {archive}")
+    delivery_case.rename(archive)
+
+
 def _session_from_log(path: Path, provider: str) -> Optional[str]:
     if not path.is_file():
         return None
@@ -82,8 +107,10 @@ def _session_from_log(path: Path, provider: str) -> Optional[str]:
 def _command(provider: str, executable: str, workspace: Path,
              prompt: str) -> tuple[list[str], Optional[str]]:
     if provider == "codex":
-        return ([executable, "exec", "--json", "-s", "workspace-write",
-                 "--approve-for-me", "-C", str(workspace), "-"], prompt)
+        # Current Codex CLI selects workspace-write as part of --approve-for-me;
+        # passing --sandbox alongside it is rejected before the task starts.
+        return ([executable, "exec", "--json", "--approve-for-me",
+                 "-C", str(workspace), "-"], prompt)
     if provider == "claude":
         return ([executable, "-p", "--output-format", "stream-json",
                  "--permission-mode", "auto", "--permission-prompts", "none",
@@ -167,6 +194,7 @@ def run_agent_task(task_case: Path, output: Path, provider: str = "codex",
                        f"--check {check_case} --judgments <JSON> --reviewer <NAME> "
                        f"--out {visual_case}. The caller will independently verify the installed "
                        "IPA, source tree, selected behavior, comparison and complete visual review. "
+                       "Do not create agent-delivery; the caller binds it to this CLI run. "
                        "Fix failing behavior and major visual differences before stopping.")
     elif task_kind == "agent_semantic_review_task":
         analysis_case = task.get("analysis_case")
@@ -318,6 +346,8 @@ def run_agent_task(task_case: Path, output: Path, provider: str = "codex",
             return record_path, False
         try:
             from copyapp.agent_delivery import create_agent_delivery
+            _archive_unbound_delivery(delivery_case, task_case, install_record,
+                                      check_case, visual_case)
             create_agent_delivery(task_case, install_record, check_case, delivery_case,
                                   output, visual_case)
             if not verify_case(delivery_case):

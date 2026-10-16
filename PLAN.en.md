@@ -4,7 +4,7 @@
 
 The [Chinese plan](PLAN.md) contains the original full architecture, acceptance criteria and chronological experiment log. This English plan describes the current product contract and remaining work. For exact commands and handoffs, read the [workflow guide](docs/copy-workflow.md).
 
-**Latest XR milestone:** The [Translate workflow](docs/translate-xr-workflow.md) completed the current-agent analyze → rebuild chain without REA on iOS 16.1.1. Three selected flows passed on the original and new clone; six image pairs were reviewed with minor differences. This second app exercised visible text input, two app methods linked to UI actions, bounded native assembly and a schema-only SQLite read. Translation submission, speech and camera remain outside the tested scope.
+**Latest XR milestone:** An [independent Codex CLI trial](docs/external-codex-xr-trial.md) completed the Calculator analyze → rebuild chain on iOS 16.1.1. Three selected behavior assertions passed and three screenshot pairs were reviewed with minor differences. Previously verified discovery scripts and an earlier independent clone were reused, so autonomous discovery and unfamiliar-app implementation remain open. The [Translate workflow](docs/translate-xr-workflow.md) separately exercises a second UI stack.
 
 ## Product contract
 
@@ -19,10 +19,10 @@ A passing case proves only the selected, observed flows. It cannot recover the o
 
 - **Device:** Jailbroken iPhone with a bounded UI service, package/sandbox acquisition helper, Frida runtime connection and an interchangeable package recovery path.
 - **Mac:** Versioned `copyapp` CLI for device selection, iOS MCP/iCTRL routing, evidence cases, Mach-O/Objective-C indexing, direct Ghidra or Hopper analysis when selected, reporting, Xcode builds and paired real-device checks.
-- **Agent:** Codex or Claude Code follows repository skills. In an active session, `--agent-provider current` writes tasks and pauses without launching a nested Agent. In an independent terminal, `codex` or `claude` can be launched by the workflow, but that autonomous end-to-end path is not yet validated.
+- **Agent:** Codex or Claude Code follows repository skills. In an active session, `--agent-provider current` writes tasks and pauses without launching a nested Agent. A standalone Codex CLI has completed the selected Calculator report, build, installation and comparison gates on the XR; the equivalent Claude CLI run remains untested.
 - **Evidence:** Every case records the exact device, app, version when available, script bytes, timestamps, raw observations and source hashes. Reports label direct observations, interpretations and unknowns separately.
 
-The REA command and provider bridge has been removed. Copy APP uses its own bounded analysis and device tools; `ghidra-direct` uses an external Ghidra installation and JDK; `hopper-direct` uses an external, licensed Hopper GUI installation in a normal macOS session. An integrated XR fixture investigation and report import have been verified; the full `copy` analysis-to-rebuild device workflow remains untested. Archived REA evidence remains readable for historical case verification.
+The REA command and provider bridge has been removed. Copy APP uses its own bounded analysis and device tools; `ghidra-direct` uses an external Ghidra installation and JDK; `hopper-direct` uses an external, licensed Hopper GUI installation in a normal macOS session. The selected-flow `copy` analysis-to-rebuild device workflow has been verified on the XR. Archived REA evidence remains readable for historical case verification.
 
 ## Milestones and current evidence
 
@@ -34,7 +34,7 @@ The REA command and provider bridge has been removed. Copy APP uses its own boun
 | M3 Analysis report | Major selected-flow claims linked to UI, code and data evidence or marked unknown | Reviewed XR reports and direct Ghidra path available; arbitrary-app semantic interpretation remains Agent work |
 | M4 Real-app pilot | Reviewable deep report and executable feature specification | XR Compass, Calculator, DeepSeek and Clock selected-flow pilots exist; coverage varies by app |
 | M5 Rebuild loop | Independent app on real phone, paired behavior and screenshot review | XR Clock and fresh Calculator current-agent parents complete; Calculator 3/3 assertions and 3 reviewed image pairs with minor differences |
-| M6 Product entry | Reliable one-request flow, recovery and reuse on a second stack | Current-agent discovery through selected-flow delivery now completes on XR for Clock and Calculator; external CLI autonomy and whole-app generality remain unverified |
+| M6 Product entry | Reliable one-request flow, recovery and reuse on a second stack | Guided onboarding and a standalone Codex CLI selected-flow XR run verified; unfamiliar-app autonomy and whole-app generality remain unverified |
 
 The real XR `--auto-discover --agent-provider current` trial at [its parent case](cases/clock-current-auto-workflow-20261016/manifest.json) replayed three previously authored Clock flows, produced a source-linked report, built and installed a distinct clone, and passed 3/3 selected behavior and final-view assertions. Ten screenshot pairs were reviewed with minor differences and no major difference; 517 parent evidence files verified. The clone adapted previously authored independent source. A separate [completed Clock parent](cases/clock-current-workflow-live-20261016/manifest.json) also verifies the downstream handoffs. Neither case establishes model-authored discovery or zero-shot cloning.
 
@@ -48,11 +48,11 @@ Gestures now pass through discovery, replay, bounded Frida/network windows, orig
 
 The original Calculator's `98→9` left-swipe deletion and the updated independent clone passed the same [paired XR script](cases/calculator-gesture-swipelive-20261016/ictrl-delete-digit-comparison/report.md). The new clone build 0.1.1 (3) also passed the [three existing arithmetic comparisons](cases/calculator-gesture-swipelive-20261016/clone-0.1.1-regression-check/manifest.json); [three screenshot pairs](cases/calculator-gesture-swipelive-20261016/clone-0.1.1-regression-visual-review/report.md) were reviewed as minor differences. This is selected-state behavior evidence, not a whole-app gesture or Calculator implementation claim.
 
-The XR [Translate discovery case](cases/translate-xr-discovery-20261016/manifest.json) adds an unfamiliar app and a text-entry action: synthetic `hello` input, Favorites empty state and Conversation idle view all passed bounded iCTRL replay. The same iOS MCP text-input request reported dispatch but failed the visible-text assertion on Translate, so that path is not validated on this device. The [text guide](docs/ui-text-playbooks.md) records the backend evidence and limits. Analysis, report and independent rebuild for Translate remain to be completed.
+The XR [Translate discovery case](cases/translate-xr-discovery-20261016/manifest.json) adds an unfamiliar app and a text-entry action: synthetic `hello` input, Favorites empty state and Conversation idle view all passed bounded iCTRL replay. The same iOS MCP text-input request reported dispatch but failed the visible-text assertion on Translate, so that path is not validated on this device. The [text guide](docs/ui-text-playbooks.md) records the backend evidence and limits. The later [Translate workflow](docs/translate-xr-workflow.md) completed a report and independent rebuild for these selected flows; actual translation submission remains untested.
 
 ## Next engineering gates
 
-1. Exercise an independent terminal run with a real Codex or Claude CLI and record its output and delivery gates.
+1. Exercise independent CLI discovery and implementation on an unfamiliar app without reusing prior scripts or clone source; optionally repeat with Claude CLI.
 2. Extend fresh discovery and implementation to an unfamiliar app and different UI stack or protection state; quantify coverage and failures.
 3. Expand selected-flow implementations into more of each app's behavior, including persistence and backend boundaries, with new paired checks.
 4. When the user resumes those devices, test iOS 17 and 26 independently. Do not extrapolate from XR.

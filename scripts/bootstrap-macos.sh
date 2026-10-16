@@ -64,9 +64,8 @@ fi
 "$root/.venv/bin/copyapp" --help >/dev/null
 
 printf '\nCopy APP Mac CLI is ready. Next:\n'
-printf '  .venv/bin/copyapp devices\n'
-printf '  .venv/bin/copyapp apps --udid <UDID> --all\n'
-printf '  .venv/bin/copyapp survey --udid <UDID> --bundle <BUNDLE_ID> --ui-backend usb --out cases/first-survey\n'
+printf '  .venv/bin/copyapp onboard\n'
+printf '  If several devices are connected, rerun with --udid <UDID>.\n'
 if [ "$trace" -eq 0 ]; then
     printf '\nFor runtime tracing later: sh scripts/bootstrap-macos.sh --trace\n'
 fi

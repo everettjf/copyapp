@@ -6,6 +6,8 @@
 
 第一版正在实现“分析 → 复刻 → 真机对照”流程。Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 只读导出包和索引数据沙盒；本地解析 Mach-O。iOS MCP 的截图、前台识别、App 启动和点击已在 iPhone XR 上验收。原版 Compass 的关键交互已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展也已在 XR 上自动恢复为完整可分析 IPA。按用户当前安排，iOS 17/26 两台设备暂不验收；一键生成完整复刻仍在开发。
 
+[独立 Codex CLI 的 XR 实测](docs/external-codex-xr-trial.zh-CN.md)已完成 Calculator 的有来源报告、新 App 构建与安装、三条原版/复刻版行为对照。此次沿用已验证的发现脚本和既有复刻源码，具体范围见实测记录。
+
 ## 新用户：安装与第一次运行
 
 Copy APP 由 **Mac 命令行程序和越狱 iPhone 上的服务**组成。先安装 Mac 命令行并完成一次 USB 初步采集；这一步不需要手机端 Copy APP tweak、SSH、Frida、iCTRL 或反编译器。深入分析和复刻时再逐项添加。下方脚本自动准备 Python 环境与 Mac 命令行；USB 信任、手机权限和越狱软件包仍需在手机上配置。完整 Xcode 用于设备开发服务和复刻版编译。`cases/` 保存手机证据并被 Git 忽略，因此下文指向旧 `cases/` 的实测链接不会出现在全新克隆中。
@@ -26,18 +28,23 @@ cd copyapp
 sh scripts/bootstrap-macos.sh
 ```
 
-脚本创建或复用 `.venv/`，安装 Copy APP，并打印接下来的三条命令。要求 macOS 和 Python 3.9 或更新版本。开始运行时追踪或加密 App 恢复时，再运行 `sh scripts/bootstrap-macos.sh --trace` 安装 Mac 端 Frida 17.x。需要 Xcode 设备服务或复刻版编译时，用 `xcode-select -p` 检查开发者目录指向**完整 Xcode**，不能只有 Command Line Tools。`.venv/` 与 `cases/` 都不提交到 Git。
+脚本创建或复用 `.venv/`，安装 Copy APP，并打印引导式设置命令。要求 macOS 和 Python 3.9 或更新版本。开始运行时追踪或加密 App 恢复时，再运行 `sh scripts/bootstrap-macos.sh --trace` 安装 Mac 端 Frida 17.x。需要 Xcode 设备服务或复刻版编译时，用 `xcode-select -p` 检查开发者目录指向**完整 Xcode**，不能只有 Command Line Tools。`.venv/` 与 `cases/` 都不提交到 Git。
 
-### 2. 连接并选定手机
+### 2. 连接并检查手机
 
-在手机上激活兼容的越狱，解锁后通过 USB 连接 Mac，点“信任此电脑”。先列出准确的 USB 设备和已安装 App：
+在手机上激活兼容的越狱，解锁后通过 USB 连接 Mac，点“信任此电脑”。先运行引导检查：
 
 ```sh
-.venv/bin/copyapp devices
+.venv/bin/copyapp onboard
+```
+
+它自动选唯一的 USB 设备，在缺少专用 Mac SSH 密钥时创建密钥，检查 Mac 和手机通道，并把具体修复步骤写入 `cases/onboard-.../report.md`。检查时会临时打开 SSH USB 转发，无须先开另一个终端；它不会在手机上装包，也不会自动信任未经核对的 SSH 主机公钥。默认 `--stage survey` 只显示首次采集的修复项；完整分析或复刻时分别加 `--stage analyze`、`--stage rebuild`。若同时连接多台设备，命令会列出 ID 并要求加 `--udid <UDID>`。报告显示首次 USB 采集已就绪后，列出 App：
+
+```sh
 .venv/bin/copyapp apps --udid <UDID> --all
 ```
 
-用 `devices` 返回的设备 ID 替换 `<UDID>`；不要用手机显示名称当选择器。`apps` 默认只列用户安装的 App，加 `--all` 才含系统 App。采集前先确认目标的准确 Bundle ID。如果没有列出手机，先检查线缆、解锁和 USB 信任，安装手机端 tweak 不能修复 USB 未识别。iOS 16 若截图或 Instruments 需要开发者服务，启用开发者模式，再运行 `.venv/bin/pymobiledevice3 mounter auto-mount --udid <UDID>`；首次采集可以先记录哪些内容不可用。
+用 `onboard` 返回的准确设备 ID 替换 `<UDID>`；不要用手机显示名称当选择器。`apps` 默认只列用户安装的 App，加 `--all` 才含系统 App。采集前确认准确 Bundle ID。若没有列出手机，先检查线缆、解锁和 USB 信任。iOS 16 若截图或 Instruments 需要开发者服务，启用开发者模式，再运行 `.venv/bin/pymobiledevice3 mounter auto-mount --udid <UDID>`。
 
 ### 3. 先做纯 USB 冒烟测试
 
@@ -68,13 +75,13 @@ sh scripts/bootstrap-macos.sh
 
 iOS MCP tweak 编译需要完整 Xcode、Theos、iPhoneOS 16.5 SDK 和 `ldid`；本仓库**不提供** Theos 与 SDK。安装好后，在仓库根目录运行 `THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules make -C device/ios-mcp package`，再用手机包管理器或 Filza 安装 `device/ios-mcp/packages/` 生成的 `.deb`，重新载入 SpringBoard。该包只在 XR/iOS 16 验证，不能由此推断 iOS 17/26 兼容性。可选的 iCTRL 源码及 Apache 2.0 许可、NOTICE 已固定在 [`vendor/ictrl`](vendor/ictrl/UPSTREAM.md)；生成的签名文件、大型构建依赖及配对密钥只保存在本地。
 
-Mac 端预期专用 SSH 私钥位于 `cases/ssh/id_ed25519`，已核对的设备主机公钥位于 `cases/ssh-known-hosts`，端口 `22222` 从 Mac 转发到手机的 SSH 端口 `22`。另开一个终端并让转发保持运行：
+Mac 端专用 SSH 私钥位于 `cases/ssh/id_ed25519`（`onboard` 在缺少时创建），已核对的设备主机公钥位于 `cases/ssh-known-hosts`，端口 `22222` 从 Mac 转发到手机 SSH 端口 `22`。另开一个终端，用一条命令同时保持 SSH 与 iOS MCP 转发：
 
 ```sh
-.venv/bin/python -m pymobiledevice3 usbmux forward 22222 22 --serial <UDID>
+.venv/bin/copyapp tunnel --udid <UDID>
 ```
 
-在仓库终端创建专用密钥并读取手机的主机公钥：
+若尚未安装 iOS MCP tweak，也可先加 `--ssh-only`。在仓库终端读取手机的主机公钥；仅在使用 `onboard --no-keygen` 时才需执行下面的 `ssh-keygen`：
 
 ```sh
 mkdir -p cases/ssh
@@ -120,11 +127,7 @@ Copy APP 的 iCTRL 默认使用按签名团队区分的 ID：可选设置 App �
 .venv/bin/copyapp verify cases/first-doctor
 ```
 
-查看 `cases/first-doctor/report.md`：正式分析前，`usb_lockdown`、`ssh_mobile`、`frida_usb`、`ios_mcp` 应为 `available`；尚未运行 `setup ictrl` 时该项可以是 `not_configured`。`doctor` 即使只有 USB 正常也可能返回成功，因此要逐项看状态。运行 `doctor`、`analyze` 和完整工作流时都要保留 SSH 转发。`doctor` 和 playbook 会自行建立短时 iOS MCP 转发，但 `survey`/`analyze` 选 `--ui-backend ios-mcp` 时固定连接 Mac 端口 `22223`。在第三个终端再启动并保持以下转发，供这些命令和完整 `copy` 工作流使用：
-
-```sh
-.venv/bin/python -m pymobiledevice3 usbmux forward 22223 8090 --serial <UDID>
-```
+查看 `cases/first-doctor/report.md`：正式分析前，`usb_lockdown`、`ssh_mobile`、`frida_usb`、`ios_mcp` 应为 `available`；不用 iCTRL 时它可以未配置。`doctor` 即使只有 USB 正常也可能返回成功，因此要逐项看状态和有序的 **Next steps**。没有常驻 SSH 转发时，`doctor` 会临时打开一条；上面的单个 `copyapp tunnel` 终端则为 `analyze` 和完整 `copy` 工作流同时提供两个固定端口。每完成一项手机端配置，可重新运行 `onboard --udid <UDID> --stage analyze`，获取新的检查报告。
 
 ### 5. 进行首次分析
 
@@ -244,7 +247,7 @@ Clock 随后扩展到四个主标签：[四流程分析报告](cases/clock-four-
 - Compass 的[深入报告 v18](cases/compass-xr-deep-report-v18-20261015/report.md)引用三条原版 UI 流程，[自动复刻交接 v3](cases/compass-rebuild-plan-v3-20261015/runbook.md)由此生成全部三对脚本；复刻版 0.1.3 (4) 在 XR 上完成[三流程真机对照](cases/compass-three-flow-rebuild-check-v4-20261015/report.md)并通过证据哈希校验。iOS MCP 连续截图后偶发空无障碍文本，采集器会以绑定原图哈希的 Mac Vision OCR 作为回退。锁定角度标签的叠字已修正；动态画面差异仍需人工审阅，三条流程的自动视觉判定均为 `unreviewed`。
 - 本地 IPA 索引器已用 [Dopamine 3.0.11 官方发布包](https://github.com/opa334/Dopamine/releases/tag/3.0.11)验证：解析 147 个包文件、9 个 Framework 和 15 个 Mach-O，主程序的动态库清单及 `cryptid=0` 与 `otool` 一致。该包来自公开发布页，不能充当手机已安装 App 的原始证据；手机上的 Dopamine Bundle ID 另带签名后缀。
 
-已确认前台归属的一次式案例保存在本地 `cases/compass-xr-mcp-onepass-20261015/`；原版与复刻版的交互截图也保存在 `cases/`。这些目录默认不进入 Git。`copyapp verify` 可检查初步采集、完整 `analyze` 案例、深入报告或 App 包获取目录里记录的文件哈希；这属于本地一致性检查，不提供防篡改签名。
+已确认前台归属的一次式案例保存在本地 `cases/compass-xr-mcp-onepass-20261015/`；原版与复刻版的交互截图也保存在 `cases/`。这些目录默认不进入 Git。`copyapp verify` 可检查初步采集、完整 `analyze` 案例、深入报告或 App 包获取目录里记录的文件哈希；对只有 `install.json` 的安装目录，它还能重验本地 IPA 的哈希、Bundle ID 与版本，但不能证明手机现在仍装着该 App。这些都是本地一致性检查，不提供防篡改签名。
 
 ## 使用
 

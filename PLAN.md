@@ -2,7 +2,7 @@
 
 **语言：** [English](PLAN.en.md) | 简体中文
 
-**最新 XR 进展：** [Translate 完整流程](docs/translate-xr-workflow.zh-CN.md)已在 iOS 16.1.1 上不依赖 REA 地完成“分析 → 复刻”闭环。三条选定流程在原版与新工程均通过；六组成对截图审阅为轻微差异。此次还验证了可见文字输入、两处方法与 UI 操作的运行时关联、有界汇编及 SQLite 只读结构分析。提交翻译、语音和相机功能仍不在验收范围。
+**最新 XR 进展：** [独立 Codex CLI 实测](docs/external-codex-xr-trial.zh-CN.md)已在 iOS 16.1.1 上完成 Calculator 的分析、复刻、安装和三条真机对照流程，三条行为断言通过，三对截图为轻微差异。此次沿用已验证的发现脚本及既有独立复刻源码，因此陌生 App 的自主发现和从零实现仍是下一阶段目标。[Translate 完整流程](docs/translate-xr-workflow.zh-CN.md)另行覆盖第二种界面技术栈。
 
 状态：已进入实施。本文确定产品范围、架构、验收标准和实施顺序；当前可运行原型与实机结果见 `README.md` 和本地 `cases/`。
 

@@ -69,6 +69,8 @@ from copyapp.playbook_auto import run_playbook_auto
 from copyapp.discover_check import check_discovered_flows, accepted_playbooks
 from copyapp.compare_playbooks import compare_playbooks
 from copyapp.doctor import run_doctor
+from copyapp.onboarding import run_onboarding
+from copyapp.tunnels import run_tunnels
 from copyapp.candidates import build_candidates
 from copyapp.view_tree import capture_view_tree
 from copyapp.flow_capture import capture_flow
@@ -384,6 +386,23 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Copy APP USB survey (v0.1)")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("devices", help="list connected USB devices")
+    onboard = sub.add_parser("onboard", help="identify one phone and print exact setup repairs")
+    onboard.add_argument("--udid", help="required when more than one USB device is connected")
+    onboard.add_argument("--out", type=Path, help="new setup case; defaults to a dated cases/ directory")
+    onboard.add_argument("--stage", choices=("survey", "analyze", "rebuild"),
+                         default="survey", help="show repairs for the chosen setup milestone")
+    onboard.add_argument("--ssh-port", type=int, default=22222)
+    onboard.add_argument("--ssh-identity", type=Path, default=Path("cases/ssh/id_ed25519"))
+    onboard.add_argument("--ssh-known-hosts", type=Path, default=Path("cases/ssh-known-hosts"))
+    onboard.add_argument("--no-keygen", action="store_true",
+                         help="leave local SSH key creation to the user")
+    tunnel = sub.add_parser("tunnel", help="keep SSH and iOS MCP USB forwards in one terminal")
+    tunnel.add_argument("--udid", required=True)
+    tunnel.add_argument("--ssh-port", type=int, default=22222)
+    tunnel.add_argument("--mcp-port", type=int, default=22223)
+    modes = tunnel.add_mutually_exclusive_group()
+    modes.add_argument("--ssh-only", action="store_true")
+    modes.add_argument("--mcp-only", action="store_true")
     setup = sub.add_parser("setup", help="build, install and pair optional device tooling")
     setup.add_argument("component", choices=("ictrl",))
     setup.add_argument("--udid", required=True)
@@ -954,6 +973,14 @@ def main() -> None:
     try:
         if args.command == "devices":
             code = asyncio.run(command_devices())
+        elif args.command == "onboard":
+            _, ready = run_onboarding(args.udid, args.out, args.ssh_identity,
+                                      args.ssh_known_hosts, args.ssh_port,
+                                      not args.no_keygen, args.stage)
+            code = 0 if ready else 1
+        elif args.command == "tunnel":
+            code = run_tunnels(args.udid, args.ssh_port, args.mcp_port,
+                               args.ssh_only, args.mcp_only)
         elif args.command == "setup":
             path, ready = setup_ictrl(args.udid, args.out, args.ssh_port,
                                       args.ssh_identity, args.ssh_known_hosts,

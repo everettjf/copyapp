@@ -4,6 +4,8 @@
 
 Copy APP treats “analyze” and “rebuild” as one resumable, evidence-gated job for selected behavior on a specified jailbroken iPhone. Its current-device mode is intended for a Codex or Claude Code session already working in this repository. The standalone mode can launch a separate coding-agent CLI; it has not yet completed a real autonomous end-to-end run.
 
+For a new Mac and phone, run `sh scripts/bootstrap-macos.sh`, then `.venv/bin/copyapp onboard --stage rebuild` (add `--udid` when several devices are connected). It saves a device and Mac capability report with ordered repairs. Once the required phone services are installed, keep `.venv/bin/copyapp tunnel --udid <UDID>` open in one terminal for the SSH and iOS MCP ports used by the full workflow. SSH host-key fingerprint comparison and phone pairing prompts remain explicit one-time steps.
+
 ## 1. Discover representative behavior
 
 ```sh

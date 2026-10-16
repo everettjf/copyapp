@@ -6,6 +6,8 @@ Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app 
 
 The workflow verifies evidence identity and selected UI flows. It does **not** claim complete equivalence to an arbitrary app. The iPhone XR running iOS 16.1.1 is the tested device; iOS 17 and 26 testing is deferred at the user's request.
 
+A [standalone Codex CLI trial on the XR](docs/external-codex-xr-trial.md) completed a source-linked Calculator report, independent build and installation, and three paired behavior checks. It reused verified discovery scripts and earlier clone source; see the trial note for the exact scope.
+
 ## Install and run your first survey
 
 Copy APP is a **Mac command-line project plus services on your own jailbroken iPhone**. Start with the Mac CLI and one USB survey; that first result needs no phone-side Copy APP tweak, SSH, Frida, iCTRL or decompiler. Add those components only for deep analysis and rebuilding. The Mac bootstrap script below handles Python and CLI installation, but USB trust, phone permissions and jailbreak packages still need setup on the device. A full Xcode installation is needed for device developer services and building a rebuilt app. The files under `cases/` contain local device evidence and are Git-ignored, so the example case links later in this README exist only in the original test workspace.
@@ -26,18 +28,23 @@ cd copyapp
 sh scripts/bootstrap-macos.sh
 ```
 
-The script creates or reuses `.venv/`, installs Copy APP and prints the next three commands. It requires macOS and Python 3.9 or newer. When you reach runtime tracing or encrypted App recovery, rerun `sh scripts/bootstrap-macos.sh --trace` to install host Frida 17.x. Check `xcode-select -p` if you plan to use Xcode device services or build a clone; select a **full Xcode**, rather than only Command Line Tools. Keep `.venv/` and `cases/` on the Mac; neither is committed.
+The script creates or reuses `.venv/`, installs Copy APP and prints the guided setup command. It requires macOS and Python 3.9 or newer. When you reach runtime tracing or encrypted App recovery, rerun `sh scripts/bootstrap-macos.sh --trace` to install host Frida 17.x. Check `xcode-select -p` if you plan to use Xcode device services or build a clone; select a **full Xcode**, rather than only Command Line Tools. Keep `.venv/` and `cases/` on the Mac; neither is committed.
 
-### 2. Connect and identify one phone
+### 2. Connect and check one phone
 
-On the phone, activate its compatible jailbreak, unlock it, connect it by USB, and accept **Trust This Computer**. Start by listing the exact USB device and its apps:
+On the phone, activate its compatible jailbreak, unlock it, connect it by USB, and accept **Trust This Computer**. Run the guided check:
 
 ```sh
-.venv/bin/copyapp devices
+.venv/bin/copyapp onboard
+```
+
+It selects the only USB device, creates a dedicated local SSH key if needed, checks Mac and phone channels, and saves an actionable report under `cases/onboard-.../report.md`. It opens a temporary USB SSH forward for its check, so no tunnel terminal is needed yet. It never installs phone packages or trusts an unverified SSH host key. The default `--stage survey` shows only first-survey repairs; rerun with `--stage analyze` or `--stage rebuild` for those goals. If several devices are connected, it prints their IDs and requires `--udid <UDID>`. Once the report says the first survey is ready, list Apps:
+
+```sh
 .venv/bin/copyapp apps --udid <UDID> --all
 ```
 
-Replace `<UDID>` with the USB device ID from `devices`; never use a displayed phone name as the selector. `apps` lists user apps by default, while `--all` includes system apps. Resolve the target's exact Bundle ID before collecting anything. If `devices` is empty, fix USB trust, unlocking and the cable first; the phone service installation cannot fix an absent USB device. On iOS 16, if screenshots or Instruments need developer services, enable Developer Mode and run `.venv/bin/pymobiledevice3 mounter auto-mount --udid <UDID>`; the first survey can report which observations were unavailable.
+Replace `<UDID>` with the exact ID printed by `onboard`; never use a displayed phone name as the selector. `apps` lists user apps by default, while `--all` includes system apps. Resolve the target's exact Bundle ID before collecting anything. If no device appears, fix USB trust, unlocking and the cable first. On iOS 16, if screenshots or Instruments need developer services, enable Developer Mode and run `.venv/bin/pymobiledevice3 mounter auto-mount --udid <UDID>`; the report identifies unavailable observations.
 
 ### 3. Make a first USB-only case
 
@@ -68,13 +75,13 @@ The full pipeline needs the following channels on the **same UDID**:
 
 For the tweak, the source build requires a complete Xcode, Theos, the iPhoneOS 16.5 SDK and `ldid`; the SDK and Theos are **not** vendored here. From the repository root, after installing those tools, run `THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules make -C device/ios-mcp package`. Install the resulting `.deb` from `device/ios-mcp/packages/` with the phone's package manager or Filza, then reload SpringBoard. The XR/iOS 16 package is tested; do not assume that build works unchanged on iOS 17 or 26. The optional iCTRL source is pinned in [`vendor/ictrl`](vendor/ictrl/UPSTREAM.md) with its Apache 2.0 license and NOTICE; generated signing files, large build dependencies and pairing keys stay local.
 
-Copy APP expects a dedicated `mobile` SSH key at `cases/ssh/id_ed25519`, a pinned host-key file at `cases/ssh-known-hosts`, and an SSH USB forward from Mac port `22222` to phone port `22`. In a separate terminal, keep this forward running:
+Copy APP expects a dedicated `mobile` SSH key at `cases/ssh/id_ed25519` (created by `onboard` if absent), a pinned host-key file at `cases/ssh-known-hosts`, and an SSH USB forward from Mac port `22222` to phone port `22`. In a separate terminal, one Copy APP command keeps both the SSH and iOS MCP forwards running:
 
 ```sh
-.venv/bin/python -m pymobiledevice3 usbmux forward 22222 22 --serial <UDID>
+.venv/bin/copyapp tunnel --udid <UDID>
 ```
 
-In the repository terminal, create the key and collect the phone's host key:
+Use `--ssh-only` before installing the iOS MCP tweak if preferred. In the repository terminal, collect the phone's host key; run `ssh-keygen` only if you used `onboard --no-keygen`:
 
 ```sh
 mkdir -p cases/ssh
@@ -121,11 +128,7 @@ Then record a capability baseline:
 .venv/bin/copyapp verify cases/first-doctor
 ```
 
-Read `cases/first-doctor/report.md`. Before a full analysis, `usb_lockdown`, `ssh_mobile`, `frida_usb` and `ios_mcp` should be `available`. `ictrl` may be `not_configured` until `setup ictrl` is run. `doctor` can exit successfully when USB works even if another probe is unavailable; **inspect the individual rows**. The SSH forward must remain running for `doctor`, `analyze` and the full workflow. `doctor` and playbook replay open their own short-lived iOS MCP forwards, but `survey`/`analyze` use the fixed Mac port `22223` when `--ui-backend ios-mcp` is selected. Start another forward in a third terminal and keep it running for those commands and the full `copy` workflow:
-
-```sh
-.venv/bin/python -m pymobiledevice3 usbmux forward 22223 8090 --serial <UDID>
-```
+Read `cases/first-doctor/report.md`. Before a full analysis, `usb_lockdown`, `ssh_mobile`, `frida_usb` and `ios_mcp` should be `available`. `ictrl` is optional until selected as a backend. `doctor` can exit successfully when USB works even if another probe is unavailable; inspect its individual rows and ordered **Next steps**. `doctor` opens a temporary SSH forward when port `22222` is not running. The single `copyapp tunnel` terminal above supplies both fixed ports for `analyze` and the full `copy` workflow; playbook replay opens its own short-lived UI tunnel. Rerun `onboard --udid <UDID> --stage analyze` into a new dated case after each setup stage.
 
 ### 5. Run analysis, then choose decompilation and rebuild
 
@@ -207,7 +210,7 @@ Playbooks also support bounded [text entry](docs/ui-text-playbooks.md) ([中文]
 
 Formal reports now render a bounded Assets.car name list and a metadata-only sandbox summary when those indexes exist. A [deeper Calculator report](cases/calculator-ui-deep-report-20261016/report.md) and its [source-linked analysis delivery](cases/calculator-ui-deep-analysis-delivery-20261016/report.md) verify these appendices and add direct Ghidra evidence for the root view, keypad frame layout and result-view gesture setup. Resource names and storage-looking filenames are investigation leads, not evidence of runtime use; the three arithmetic flows did not exercise the display gestures.
 
-`copyapp verify` checks recorded source links and file hashes. A matching hash does not prove that a decompiler interpretation is correct or that an app is functionally equivalent. Store raw IPA files, screenshots, sandbox snapshots, traces and credentials only in ignored local `cases/`. Reports should distinguish direct observations, inferences and unknown behavior.
+`copyapp verify` checks recorded source links and file hashes. For a standalone `install.json` directory, it also rechecks the saved IPA hash, Bundle ID and version; that does not prove the App is still installed now. A matching hash does not prove that a decompiler interpretation is correct or that an app is functionally equivalent. Store raw IPA files, screenshots, sandbox snapshots, traces and credentials only in ignored local `cases/`. Reports should distinguish direct observations, inferences and unknown behavior.
 
 The current gaps are general discovery and independent implementation across unfamiliar apps, a real external Codex/Claude CLI end-to-end run, broader app behavior and backend semantics, full sandbox and network interpretation, and cross-version validation. iOS 17 and 26 devices have not been run through this workflow.
 

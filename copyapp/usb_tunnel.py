@@ -15,6 +15,43 @@ from copyapp.ios_mcp import IOSMCPClient
 from copyapp.ictrl import ICtrlClient, DEFAULT_CLIENT
 
 
+@contextmanager
+def ssh_tunnel(udid: str, port: int = 22222) -> Iterator[int]:
+    """Forward SSH for one exact USB device while a probe is running."""
+    if not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", udid):
+        raise ValueError("invalid device UDID")
+    if not 1 <= port <= 65535:
+        raise ValueError("invalid SSH host port")
+    with socket.socket() as reserved:
+        reserved.bind(("127.0.0.1", port))
+    command = [sys.executable, "-m", "pymobiledevice3", "usbmux", "forward",
+               str(port), "22", "--serial", udid]
+    process = subprocess.Popen(command, stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL)
+    try:
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            if process.poll() is not None:
+                raise RuntimeError("USB SSH forward exited before it was ready")
+            try:
+                with socket.create_connection(("127.0.0.1", port), timeout=0.3):
+                    pass
+                break
+            except (ConnectionRefusedError, TimeoutError, OSError):
+                time.sleep(0.1)
+        else:
+            raise TimeoutError("USB SSH forward did not become reachable")
+        yield port
+    finally:
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=2)
+
+
 def configured_ictrl_runner_bundle(udid: str) -> Optional[str]:
     """Read the Bundle ID installed by setup for this exact device."""
     config = Path(__file__).resolve().parents[1] / "toolchains" / "ictrl-runners.json"

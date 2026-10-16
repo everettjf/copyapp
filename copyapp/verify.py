@@ -4,6 +4,7 @@ import hashlib
 import io
 import json
 import posixpath
+import re
 import sqlite3
 import tarfile
 from contextlib import redirect_stdout
@@ -58,6 +59,34 @@ def verify_acquisition(directory: Path) -> bool:
                 "sha256": item["sha256"]} for item in manifest["files"]]
     records.append({"path": "bundle-snapshot.ipa", "sha256": manifest["snapshot_sha256"]})
     return compare(directory, records)
+
+
+def verify_install(directory: Path) -> bool:
+    """Recheck saved IPA identity; this cannot prove the phone still has it installed."""
+    try:
+        from copyapp.ipa import analyze_ipa
+        record = json.loads((directory / "install.json").read_text(encoding="utf-8"))
+        ipa_name = record.get("ipa")
+        if (record.get("schema_version") != 1 or record.get("status") != "installed" or
+                record.get("helper_exit_code") != 0 or
+                record.get("staged_sha256") != record.get("ipa_sha256") or
+                not isinstance(record.get("device_id"), str) or
+                not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", record["device_id"]) or
+                not isinstance(ipa_name, str) or not ipa_name):
+            return False
+        ipa = Path(ipa_name)
+        if (not ipa.is_file() or ipa.is_symlink() or
+                sha256_file(ipa) != record["ipa_sha256"]):
+            return False
+        package = analyze_ipa(ipa)
+        ok = (package.get("bundle_id") == record.get("bundle_id") and
+              package.get("version") == record.get("version") and
+              package.get("build") == record.get("build"))
+        print(f"{'OK' if ok else 'MISMATCH'} install.json / IPA")
+        return ok
+    except (OSError, ValueError, TypeError, KeyError, BadZipFile,
+            json.JSONDecodeError):
+        return False
 
 
 def _verify_silent(directory: Path) -> bool:
@@ -671,4 +700,6 @@ def verify_case(directory: Path) -> bool:
         return ok
     if (directory / "acquisition.json").is_file():
         return verify_acquisition(directory)
+    if (directory / "install.json").is_file():
+        return verify_install(directory)
     raise FileNotFoundError("no analysis, survey or acquisition manifest")

@@ -4,10 +4,37 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from copyapp.agent_run import run_agent_task
+from copyapp.agent_run import _archive_unbound_delivery, _command, run_agent_task
 
 
 class AgentRunTest(unittest.TestCase):
+    def test_agent_authored_delivery_is_preserved_before_run_binding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            delivery = root / "agent-delivery"
+            delivery.mkdir()
+            task = root / "task"
+            install = root / "install/install.json"
+            check = root / "rebuild-check"
+            visual = root / "visual-review"
+            (delivery / "delivery.json").write_text(json.dumps({
+                "agent_run_case": None, "task_case": str(task),
+                "installation_record": str(install),
+                "rebuild_check_case": str(check),
+                "visual_review_case": str(visual),
+            }))
+            with patch("copyapp.agent_run.verify_case", return_value=True):
+                _archive_unbound_delivery(delivery, task, install, check, visual)
+            self.assertFalse(delivery.exists())
+            self.assertTrue((root / "agent-delivery-agent-draft/delivery.json").is_file())
+
+    def test_codex_command_uses_compatible_auto_review_flags(self):
+        argv, prompt = _command("codex", "codex", Path("/tmp/workspace"), "do work")
+        self.assertEqual(prompt, "do work")
+        self.assertIn("--approve-for-me", argv)
+        self.assertNotIn("--sandbox", argv)
+        self.assertNotIn("-s", argv)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

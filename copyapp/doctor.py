@@ -3,7 +3,11 @@
 import asyncio
 import hashlib
 import json
+import os
+import shutil
+import socket
 import subprocess
+from contextlib import nullcontext
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Tuple
@@ -16,7 +20,7 @@ from pymobiledevice3.services.screenshot import ScreenshotService
 from copyapp.ictrl import ICtrlClient, DEFAULT_CLIENT
 from copyapp.ios_mcp import IOSMCPClient
 from copyapp.ssh_acquire import _ssh_argv
-from copyapp.usb_tunnel import ictrl_tunnel, ios_mcp_tunnel
+from copyapp.usb_tunnel import ictrl_tunnel, ios_mcp_tunnel, ssh_tunnel
 
 
 def _error(exc: Exception) -> Dict[str, str]:
@@ -129,6 +133,98 @@ def _ictrl_probe(udid: str, client: Path) -> Dict[str, Any]:
         return _error(exc)
 
 
+def _host_probes() -> Dict[str, Any]:
+    result = {}
+    for name, executable in (("xcodegen", "xcodegen"), ("ldid", "ldid"),
+                             ("codex_cli", "codex"), ("claude_cli", "claude")):
+        path = shutil.which(executable)
+        result[name] = {"status": "available" if path else "not_configured",
+                        "path": path}
+    try:
+        version = subprocess.run(["xcodebuild", "-version"], capture_output=True,
+                                 text=True, timeout=8, check=False)
+        result["xcode"] = {"status": "available" if version.returncode == 0
+                           else "unavailable", "version": version.stdout.strip()[:100],
+                           "reason": version.stderr.strip()[:150] if version.returncode else ""}
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        result["xcode"] = _error(exc)
+    theos = Path(os.environ["THEOS"]).expanduser() if os.environ.get("THEOS") else (
+        Path(__file__).resolve().parents[1] / "toolchains" / "theos")
+    result["theos"] = {"status": "available" if theos.is_dir() else "not_configured",
+                       "path": str(theos) if theos.is_dir() else None}
+    return result
+
+
+def _next_steps(udid: str, probes: Dict[str, Any], host: Dict[str, Any],
+                identity: Path, known_hosts: Path,
+                ssh_port: int = 22222) -> list[Dict[str, str]]:
+    """Return ordered, concrete repairs without treating optional tools as blockers."""
+    steps = []
+    if probes["usb_lockdown"]["status"] != "available":
+        return [{"for": "usb_lockdown", "action":
+                 "Unlock the iPhone, accept Trust This Computer, reconnect its USB cable, "
+                 "then run .venv/bin/copyapp onboard again with the exact UDID."}]
+    if probes.get("usb_screenshot", {}).get("status") != "available":
+        steps.append({"for": "usb_screenshot", "action":
+                      "Enable Developer Mode on the phone, select full Xcode with "
+                      "xcode-select, and mount the matching Developer Disk Image."})
+    if host["xcode"]["status"] != "available":
+        steps.append({"for": "xcode", "action":
+                      "Install and select full Xcode; check xcodebuild -version."})
+    if probes["ssh_mobile"]["status"] == "identity_mismatch":
+        steps.append({"for": "ssh_mobile", "action":
+                      f"Stop the SSH forward on host port {ssh_port}; it reaches a different "
+                      f"phone. Restart with .venv/bin/copyapp tunnel --udid {udid} --ssh-port {ssh_port}."})
+    elif probes["ssh_mobile"]["status"] != "available":
+        if not identity.is_file():
+            steps.append({"for": "ssh_mobile", "action":
+                          f"Create a dedicated key: ssh-keygen -t ed25519 -f {identity} -C copyapp"})
+        if not known_hosts.is_file():
+            steps.append({"for": "ssh_mobile", "action":
+                          f"Run .venv/bin/copyapp tunnel --udid {udid} --ssh-port {ssh_port} in another terminal. "
+                          f"Then run ssh-keyscan -p {ssh_port} 127.0.0.1 > {known_hosts} and "
+                          f"ssh-keygen -lf {known_hosts}. Compare that fingerprint with the phone "
+                          "before trusting it. Then add the Mac public key to mobile's authorized_keys "
+                          "as shown in README.md."})
+        else:
+            steps.append({"for": "ssh_mobile", "action":
+                          "Install/start rootless OpenSSH on the phone; check mobile key login "
+                          f"and the pinned host key with ssh -p {ssh_port} -i {identity} "
+                          f"-o UserKnownHostsFile={known_hosts} -o StrictHostKeyChecking=yes "
+                          "mobile@127.0.0.1 'deviceinfo uniqueid'. See README.md for the "
+                          "one-time authorized_keys step."})
+    if probes["frida_usb"]["status"] != "available":
+        steps.append({"for": "frida_usb", "action":
+                      "Run sh scripts/bootstrap-macos.sh --trace, then install/start a compatible "
+                      "root-capable Frida server on the phone."})
+    if probes["ios_mcp"]["status"] != "available":
+        steps.append({"for": "ios_mcp", "action":
+                      "Build and install device/ios-mcp with Theos on this jailbreak, then "
+                      "reload SpringBoard. See device/ios-mcp/README.md."})
+    if probes["ictrl"]["status"] != "available":
+        steps.append({"for": "ictrl_optional", "action":
+                      f"Optional: run .venv/bin/copyapp setup ictrl --udid {udid} --out "
+                      "cases/ictrl-setup, then approve the matching pairing fingerprint."})
+    if host["xcodegen"]["status"] != "available":
+        steps.append({"for": "xcodegen_rebuild", "action":
+                      "For a runnable clone, install XcodeGen (brew install xcodegen)."})
+    if host["ldid"]["status"] != "available":
+        steps.append({"for": "ldid_rebuild", "action":
+                      "For the tested TrollStore install path, install ldid."})
+    if (host.get("codex_cli", {}).get("status") != "available" and
+            host.get("claude_cli", {}).get("status") != "available"):
+        steps.append({"for": "agent_cli_optional", "action":
+                      "For an independent-terminal run, install and sign in to Codex CLI or "
+                      "Claude Code. An already active coding-agent session can use "
+                      "--agent-provider current instead."})
+    if (probes["ios_mcp"]["status"] != "available" and
+            host["theos"]["status"] != "available"):
+        steps.append({"for": "theos_tweak", "action":
+                      "For building the optional iOS MCP tweak, install Theos and the matching "
+                      "iPhoneOS SDK; set THEOS when building."})
+    return steps
+
+
 def run_doctor(udid: str, output: Path, ssh_port: int = 22222,
                ssh_identity: Path = Path("cases/ssh/id_ed25519"),
                ssh_known_hosts: Path = Path("cases/ssh-known-hosts"),
@@ -144,29 +240,53 @@ def run_doctor(udid: str, output: Path, ssh_port: int = 22222,
         probes["usb_lockdown"] = _error(exc)
         device_info = {"UniqueDeviceID": udid}
     if probes["usb_lockdown"]["status"] == "available":
-        probes["ssh_mobile"] = _ssh_probe(udid, ssh_port, ssh_identity, ssh_known_hosts)
+        try:
+            with socket.create_connection(("127.0.0.1", ssh_port), timeout=0.3):
+                pass
+            tunnel = nullcontext(ssh_port)
+        except OSError:
+            tunnel = ssh_tunnel(udid, ssh_port)
+        try:
+            with tunnel as active_port:
+                probes["ssh_mobile"] = _ssh_probe(udid, active_port,
+                                                   ssh_identity, ssh_known_hosts)
+        except Exception as exc:
+            probes["ssh_mobile"] = _error(exc)
         probes["frida_usb"] = _frida_probe(udid)
         probes["ios_mcp"] = _ios_mcp_probe(udid)
         probes["ictrl"] = _ictrl_probe(udid, ictrl_client)
     else:
         for key in ("ssh_mobile", "frida_usb", "ios_mcp", "ictrl"):
             probes[key] = {"status": "not_probed", "reason": "exact USB lockdown device unavailable"}
-    device_data = (json.dumps({"device": device_info, "probes": probes},
+    host = _host_probes()
+    next_steps = _next_steps(udid, probes, host, ssh_identity, ssh_known_hosts,
+                             ssh_port)
+    device_data = (json.dumps({"device": device_info, "probes": probes,
+                               "host": host, "next_steps": next_steps},
                               ensure_ascii=False, indent=2, default=str) + "\n").encode()
     evidence.append(_record(output, "device.json", device_data, "json"))
-    lines = ["# Copy APP 设备能力基线", "",
-             f"- 设备：`{device_info.get('ProductType', 'unknown')}` / iOS {device_info.get('ProductVersion', 'unknown')}",
-             f"- UDID：`{udid}`", "",
-             "| 能力 | 状态 | 说明 |", "| --- | --- | --- |"]
+    lines = ["# Copy APP device setup", "",
+             f"- Device: `{device_info.get('ProductType', 'unknown')}` / iOS {device_info.get('ProductVersion', 'unknown')}",
+             f"- UDID: `{udid}`", "",
+             "| Capability | Status | Detail |", "| --- | --- | --- |"]
     for name, item in probes.items():
         detail = item.get("reason") or item.get("error_type") or ""
         lines.append(f"| `{name}` | {item['status']} | {str(detail).replace('|', '/')} |")
-    lines += ["", "状态只证明本次探测结果；rootless 文件标记不单独证明越狱或工具兼容性。", ""]
+    lines += ["", "## Mac tools", "", "| Tool | Status |", "| --- | --- |"]
+    for name, item in host.items():
+        lines.append(f"| `{name}` | {item['status']} |")
+    lines += ["", "## Next steps", ""]
+    lines.extend(f"{index}. **{item['for']}**: {item['action']}"
+                 for index, item in enumerate(next_steps, 1))
+    if not next_steps:
+        lines.append("The probed channels are ready. Choose an App with `copyapp apps --udid <UDID> --all`.")
+    lines += ["", "A green probe covers only this run; rootless file markers alone do not prove tool compatibility.", ""]
     evidence.append(_record(output, "report.md", "\n".join(lines).encode(), "text"))
     manifest = {"schema_version": 1,
                 "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                 "kind": "device_doctor", "device_id_sha256_prefix": hashlib.sha256(udid.encode()).hexdigest()[:16],
-                "device": device_info, "probes": probes, "evidence": evidence}
+                "device": device_info, "probes": probes, "host": host,
+                "next_steps": next_steps, "evidence": evidence}
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2,
                                                      default=str) + "\n")
     return output / "report.md", probes["usb_lockdown"]["status"] == "available"

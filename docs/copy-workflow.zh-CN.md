@@ -4,6 +4,8 @@
 
 Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组织为可续跑、按证据验收的流程。`current` 模式供已经打开的 Codex 或 Claude Code 会话执行；独立终端也可选择外部 Agent CLI，但真实模型从头到尾自主完成的路径尚未验收。
 
+新 Mac 和手机先运行 `sh scripts/bootstrap-macos.sh`，再运行 `.venv/bin/copyapp onboard --stage rebuild`；同时连着多台设备时加 `--udid`。它保存 Mac 与手机能力报告及有序修复步骤。手机端服务就绪后，在一个终端持续运行 `.venv/bin/copyapp tunnel --udid <UDID>`，同时提供完整流程所需的 SSH 与 iOS MCP 转发。首次 SSH 主机指纹核对和手机配对弹窗仍需明确完成。
+
 [Translate XR 完整案例](translate-xr-workflow.zh-CN.md)（[English](translate-xr-workflow.md)）展示了不依赖 REA 的三流程实测：iCTRL 文字输入、审阅报告、独立 UIKit 复刻、原版/复刻版真机对照以及逐张截图审阅。案例明确标出已经覆盖的行为和剩余差异。
 
 ## 1. 发现代表性流程

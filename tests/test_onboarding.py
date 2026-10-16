@@ -1,0 +1,112 @@
+import tempfile
+import unittest
+import os
+import json
+from contextlib import redirect_stdout
+from io import StringIO
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+from copyapp.doctor import _next_steps
+from copyapp.onboarding import _choose_device, _prepare_ssh_key, run_onboarding
+from copyapp.tunnels import run_tunnels
+
+
+UDID = "00008020-000D650434B8003A"
+OTHER = "00008122-001461960A8A801C"
+
+
+class OnboardingTest(unittest.TestCase):
+    def test_multiple_devices_require_an_exact_udid(self):
+        devices = [SimpleNamespace(serial=UDID, connection_type="USB"),
+                   SimpleNamespace(serial=OTHER, connection_type="USB")]
+        with self.assertRaisesRegex(ValueError, "multiple USB devices"):
+            _choose_device(devices, None)
+        self.assertEqual(_choose_device(devices, UDID), UDID)
+        with self.assertRaisesRegex(ValueError, "not connected"):
+            _choose_device(devices, "wrong")
+
+    def test_key_creation_never_overwrites_an_existing_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "ssh" / "id_ed25519"
+            self.assertTrue(_prepare_ssh_key(path))
+            original = path.read_bytes()
+            self.assertTrue((path.parent / "id_ed25519.pub").is_file())
+            self.assertFalse(_prepare_ssh_key(path))
+            self.assertEqual(path.read_bytes(), original)
+            existing_parent = Path(directory) / "existing"
+            existing_parent.mkdir(mode=0o755)
+            before = os.stat(existing_parent).st_mode & 0o777
+            _prepare_ssh_key(existing_parent / "id")
+            self.assertEqual(os.stat(existing_parent).st_mode & 0o777, before)
+
+    def test_doctor_steps_are_ordered_and_do_not_require_optional_tweak_build(self):
+        probes = {name: {"status": "available"} for name in
+                  ("usb_lockdown", "usb_screenshot", "ssh_mobile", "frida_usb",
+                   "ios_mcp", "ictrl")}
+        host = {name: {"status": "available"} for name in
+                ("xcode", "xcodegen", "ldid", "codex_cli")}
+        host["theos"] = {"status": "not_configured"}
+        with tempfile.TemporaryDirectory() as directory:
+            identity = Path(directory) / "id"
+            known_hosts = Path(directory) / "known_hosts"
+            self.assertEqual(_next_steps(UDID, probes, host, identity, known_hosts), [])
+            probes["ssh_mobile"] = {"status": "not_configured"}
+            steps = _next_steps(UDID, probes, host, identity, known_hosts)
+            self.assertEqual([step["for"] for step in steps],
+                             ["ssh_mobile", "ssh_mobile"])
+            self.assertIn("fingerprint", steps[1]["action"])
+            probes["ssh_mobile"] = {"status": "identity_mismatch"}
+            steps = _next_steps(UDID, probes, host, identity, known_hosts)
+            self.assertEqual(len(steps), 1)
+            self.assertIn("different phone", steps[0]["action"])
+
+    def test_tunnel_rejects_colliding_ports_before_spawning(self):
+        with self.assertRaisesRegex(ValueError, "must differ"):
+            run_tunnels(UDID, 22222, 22222)
+
+    def test_tunnel_refuses_a_missing_exact_device(self):
+        with patch("pymobiledevice3.usbmux.list_devices",
+                   new=AsyncMock(return_value=[])), \
+             patch("copyapp.tunnels._check_port"), \
+             self.assertRaisesRegex(ValueError, "not connected over USB"):
+            run_tunnels(UDID, 33551, 33552)
+
+    def test_onboard_prints_only_the_selected_stage_repairs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            def fake_doctor(udid, output, *args):
+                output.mkdir()
+                (output / "report.md").write_text("report")
+                (output / "device.json").write_text(json.dumps({
+                    "probes": {"usb_screenshot": {"status": "available"},
+                               "ssh_mobile": {"status": "not_configured"},
+                               "frida_usb": {"status": "not_configured"},
+                               "ios_mcp": {"status": "not_configured"}},
+                    "host": {"xcode": {"status": "available"},
+                             "xcodegen": {"status": "available"},
+                             "ldid": {"status": "available"}},
+                    "next_steps": [{"for": "ssh_mobile", "action": "configure SSH"}],
+                }))
+                return output / "report.md", True
+            display = StringIO()
+            device = SimpleNamespace(serial=UDID, connection_type="USB")
+            with patch("copyapp.onboarding.list_devices", new=AsyncMock(return_value=[device])), \
+                 patch("copyapp.onboarding.run_doctor", side_effect=fake_doctor), \
+                 redirect_stdout(display):
+                _, ready = run_onboarding(output=root / "survey", prepare_ssh=False)
+            self.assertTrue(ready)
+            self.assertNotIn("configure SSH", display.getvalue())
+            display = StringIO()
+            with patch("copyapp.onboarding.list_devices", new=AsyncMock(return_value=[device])), \
+                 patch("copyapp.onboarding.run_doctor", side_effect=fake_doctor), \
+                 redirect_stdout(display):
+                _, ready = run_onboarding(output=root / "analyze", prepare_ssh=False,
+                                          stage="analyze")
+            self.assertFalse(ready)
+            self.assertIn("configure SSH", display.getvalue())
+
+
+if __name__ == "__main__":
+    unittest.main()
