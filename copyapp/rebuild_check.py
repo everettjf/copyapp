@@ -112,6 +112,8 @@ def _preflight(spec_path: Path, pairs: List[Tuple[str, Path, Path]]) -> Tuple[di
                 raise ValueError(f"invalid tap label region in {flow_id} step {index}")
             if action == "observe" and first.get("contains", []) != second.get("contains", []):
                 raise ValueError(f"observation conditions differ in {flow_id} step {index}")
+            if action == "observe" and first.get("exact_labels", []) != second.get("exact_labels", []):
+                raise ValueError(f"exact observation labels differ in {flow_id} step {index}")
             if action == "tap" and (first.get("x"), first.get("y")) != (
                     second.get("x"), second.get("y")):
                 raise ValueError(f"tap coordinates differ in {flow_id} step {index}")

@@ -11,6 +11,7 @@ from typing import Dict, Tuple
 from PIL import Image, ImageChops, ImageStat
 
 from copyapp.ocr_file import verify_ocr_source
+from copyapp.playbook import _exact_labels
 from copyapp.verify import checked_path, sha256_file, verify_case
 
 
@@ -86,6 +87,21 @@ def _load_run(root: Path, require_comparable: bool = True) -> Tuple[dict, dict]:
             if (not isinstance(expected, list) or
                     any(not isinstance(value, str) or value not in ocr_text for value in expected)):
                 raise ValueError(f"observation OCR content mismatch at {index}: {root}")
+        if observed["action"] == "observe" and requested.get("exact_labels"):
+            labels = requested["exact_labels"]
+            if isinstance(labels, str):
+                labels = [labels]
+            relative = observed.get("evidence_path")
+            listed = {entry.get("path") for entry in manifest.get("evidence", [])}
+            if (not isinstance(labels, list) or any(not isinstance(label, str) or not label
+                    for label in labels) or not isinstance(relative, str) or relative not in listed or
+                    observed.get("exact_label_source") != "accessibility" or
+                    observed.get("missing_exact_labels") != []):
+                raise ValueError(f"exact observation evidence is incomplete at {index}: {root}")
+            observation = _read_json(checked_path(root, relative))
+            if any(label not in _exact_labels(observation, manifest["ui_backend"])
+                   for label in labels):
+                raise ValueError(f"exact observation labels do not match evidence at {index}: {root}")
         if observed["action"] == "screenshot":
             stability = observed.get("stability")
             ready = requested.get("ready_contains")
@@ -264,6 +280,10 @@ def compare_playbooks(original_root: Path, rebuilt_root: Path, output: Path) -> 
         if (first["action"] == "expect_foreground" and
                 first.get("bundle_id") != second.get("bundle_id")):
             raise ValueError(f"expected handoff app differs at step {index}")
+        if first["action"] == "observe" and (
+                first.get("contains", []), first.get("exact_labels", [])) != (
+                second.get("contains", []), second.get("exact_labels", [])):
+            raise ValueError(f"observation conditions differ at step {index}")
     output.mkdir(parents=True, exist_ok=True)
     artifacts: Dict[str, dict] = {}
     for label, root, manifest in (("original", original_root, original),

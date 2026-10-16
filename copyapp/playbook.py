@@ -43,6 +43,17 @@ def _text(observation: Dict[str, Any], backend: str) -> str:
                      if isinstance(item, dict))
 
 
+def _exact_labels(observation: Dict[str, Any], backend: str) -> set:
+    """Return visible accessibility labels without substring or OCR matching."""
+    if backend == "ictrl":
+        if observation.get("source_channel") != "ax":
+            return set()
+        labels = re.findall(r"\blabel: '((?:\\.|[^'\\])*)'", str(observation.get("source") or ""))
+        return {label.replace("\\'", "'").replace("\\\\", "\\") for label in labels}
+    return {item["text"] for item in observation.get("elements", [])
+            if isinstance(item, dict) and isinstance(item.get("text"), str) and item["text"]}
+
+
 def _record_file(output: Path, path: Path, evidence: list) -> None:
     evidence.append({"path": str(path.relative_to(output)), "sha256": sha256_file(path)})
 
@@ -166,11 +177,18 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
                 expected = [expected]
             if not isinstance(expected, list) or any(not isinstance(s, str) for s in expected):
                 raise ValueError(f"invalid contains at step {index}")
+            exact_labels = step.get("exact_labels", [])
+            if isinstance(exact_labels, str):
+                exact_labels = [exact_labels]
+            if (not isinstance(exact_labels, list) or
+                    any(not isinstance(s, str) or not s for s in exact_labels)):
+                raise ValueError(f"invalid exact_labels at step {index}")
             for attempt in range(1, 6):
                 value = ui.observe()
                 visible = _text(value, backend)
                 missing = [s for s in expected if s not in visible]
-                if not missing or attempt == 5:
+                missing_exact = [s for s in exact_labels if s not in _exact_labels(value, backend)]
+                if (not missing and not missing_exact) or attempt == 5:
                     break
                 time.sleep(0.3)
             path = output / f"step-{index:02d}-observe.json"
@@ -200,9 +218,14 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
             item["element_count"] = value.get("element_count", value.get("total_returned"))
             item["visible_text"] = visible[:2000]
             item["missing"] = missing
+            item["missing_exact_labels"] = missing_exact
+            if exact_labels:
+                item["exact_label_source"] = "accessibility"
             item["evidence_path"] = str(path.relative_to(output))
             if missing:
                 raise RuntimeError(f"missing visible text at step {index}: {missing}")
+            if missing_exact:
+                raise RuntimeError(f"missing exact accessibility labels at step {index}: {missing_exact}")
             extract = step.get("capture_number")
             if extract:
                 name, pattern = extract.get("name"), extract.get("pattern")

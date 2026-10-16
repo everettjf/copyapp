@@ -48,6 +48,42 @@ class ComparePlaybooksTest(unittest.TestCase):
         (root / "manifest.json").write_text(json.dumps(manifest))
         return root
 
+    def _add_exact_observation(self, root, label):
+        plan_path = root / "playbook.json"
+        plan = json.loads(plan_path.read_text())
+        plan["steps"].append({"action": "observe", "exact_labels": [label]})
+        plan_path.write_text(json.dumps(plan))
+        observation = root / "step-04-observe.json"
+        observation.write_text(json.dumps({"elements": [{"text": label}]}))
+        manifest_path = root / "manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        manifest["steps"].append({"index": 4, "action": "observe",
+            "frontmost": manifest["bundle_id"], "observation_source": "accessibility",
+            "exact_label_source": "accessibility", "missing_exact_labels": [],
+            "evidence_path": observation.name})
+        manifest["evidence"][0]["sha256"] = sha256_file(plan_path)
+        manifest["evidence"].append({"path": observation.name,
+                                      "sha256": sha256_file(observation)})
+        manifest_path.write_text(json.dumps(manifest))
+
+    def test_rejects_asymmetric_exact_observation_labels(self):
+        self._add_exact_observation(self.original, "Stop")
+        self._add_exact_observation(self.rebuilt, "Start")
+        with self.assertRaisesRegex(ValueError, "observation conditions differ"):
+            compare_playbooks(self.original, self.rebuilt, self.root / "comparison")
+
+    def test_rechecks_exact_labels_against_saved_accessibility_evidence(self):
+        self._add_exact_observation(self.original, "Stop")
+        self._add_exact_observation(self.rebuilt, "Stop")
+        observation = self.rebuilt / "step-04-observe.json"
+        observation.write_text(json.dumps({"elements": [{"text": "Stopwatch"}]}))
+        manifest_path = self.rebuilt / "manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        manifest["evidence"][-1]["sha256"] = sha256_file(observation)
+        manifest_path.write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, "exact observation labels do not match evidence"):
+            compare_playbooks(self.original, self.rebuilt, self.root / "comparison")
+
     def test_creates_verifiable_visual_and_behavior_record(self):
         output = self.root / "comparison"
         report = compare_playbooks(self.original, self.rebuilt, output)
