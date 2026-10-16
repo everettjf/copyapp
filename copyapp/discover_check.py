@@ -12,6 +12,7 @@ from typing import Optional
 
 from copyapp.playbook import run_playbook
 from copyapp.gestures import GESTURE_ACTIONS, gesture_params
+from copyapp.text_actions import TYPE_ACTION, type_params
 from copyapp.verify import sha256_file, verify_case
 
 
@@ -37,6 +38,8 @@ def _signature(steps: list) -> list:
             signature.append([action, [step.get("x"), step.get("y")]])
         elif action in GESTURE_ACTIONS:
             signature.append([action, gesture_params(step)])
+        elif action == TYPE_ACTION:
+            signature.append([action, type_params(step)])
     return signature
 
 
@@ -51,11 +54,11 @@ def inspect_playbook(path: Path, bundle: str) -> dict:
             not isinstance(steps, list) or not 3 <= len(steps) <= 32 or
             any(not isinstance(step, dict) or step.get("action") not in
                 ("observe", "tap", "tap_label", "screenshot", "expect_foreground",
-                 *GESTURE_ACTIONS)
+                 *GESTURE_ACTIONS, TYPE_ACTION)
                 for step in steps)):
         raise ValueError("discovery playbook has invalid identity or structure")
     actions = [step for step in steps if step["action"] in
-               ("tap", "tap_label", *GESTURE_ACTIONS)]
+               ("tap", "tap_label", *GESTURE_ACTIONS, TYPE_ACTION)]
     if (not 1 <= len(actions) <= 8 or steps[0]["action"] != "observe" or
             not isinstance(steps[0].get("contains"), list) or
             not steps[0]["contains"] or
@@ -72,6 +75,8 @@ def inspect_playbook(path: Path, bundle: str) -> dict:
                 raise ValueError("tap_label needs a visible label")
         elif step["action"] in GESTURE_ACTIONS:
             gesture_params(step)
+        elif step["action"] == TYPE_ACTION:
+            type_params(step)
         elif (type(step.get("x")) not in (int, float) or
               type(step.get("y")) not in (int, float)):
             raise ValueError("coordinate tap needs numeric points")

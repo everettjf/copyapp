@@ -5,6 +5,7 @@ import json
 import re
 import threading
 import time
+from contextlib import ExitStack
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
@@ -122,11 +123,16 @@ def capture_view_tree(udid: str, bundle: str, output: Path,
     try:
         tunnel = (ios_mcp_tunnel(udid) if backend == "ios-mcp" else
                   ictrl_tunnel(udid, ictrl_client)) if port is None else None
-        if tunnel is None:
-            _capture_with_port(udid, bundle, output, backend, port, ictrl_client, record, launch)
-        else:
-            with tunnel as own_port:
-                _capture_with_port(udid, bundle, output, backend, own_port, ictrl_client, record, launch)
+        with ExitStack() as stack:
+            own_port = stack.enter_context(tunnel) if tunnel is not None else port
+            identity_port = None
+            if backend == "ictrl":
+                try:
+                    identity_port = stack.enter_context(ios_mcp_tunnel(udid))
+                except (OSError, RuntimeError, TimeoutError) as exc:
+                    record["identity_tunnel_error"] = f"{type(exc).__name__}: {str(exc)[:200]}"
+            _capture_with_port(udid, bundle, output, backend, own_port,
+                               ictrl_client, record, launch, identity_port)
     except Exception as exc:
         record["error"] = {"stage": record.get("stage", stage), "type": type(exc).__name__,
                            "message": str(exc)[:400]}
@@ -142,9 +148,12 @@ def capture_view_tree(udid: str, bundle: str, output: Path,
 
 
 def _capture_with_port(udid: str, bundle: str, output: Path, backend: str,
-                       port: int, ictrl_client: Path, record: dict, launch: bool) -> None:
+                       port: int, ictrl_client: Path, record: dict, launch: bool,
+                       identity_port: Optional[int] = None) -> None:
     record["stage"] = "connect_ui"
-    ui = ExperimentUI(backend, port, ictrl_client)
+    ui = ExperimentUI(backend, port, ictrl_client,
+                      identity_port=identity_port, bundle_id=bundle)
+    record["frontmost_backend"] = "ios-mcp" if identity_port is not None or backend == "ios-mcp" else "ictrl"
     if launch:
         ui.launch(bundle)
         time.sleep(0.5)

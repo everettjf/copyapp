@@ -13,6 +13,7 @@ from typing import Optional
 
 from copyapp.agent_run import _source_files, _source_tree_hash
 from copyapp.gestures import GESTURE_ACTIONS
+from copyapp.text_actions import TYPE_ACTION
 from copyapp.verify import checked_path, sha256_file, verify_case
 
 
@@ -40,7 +41,7 @@ def _post_action_script_assertions(script: Path) -> list[str]:
         if not isinstance(step, dict):
             raise ValueError("implementation playbook has an invalid step")
         action = step.get("action")
-        if action in ("tap", "tap_label", *GESTURE_ACTIONS):
+        if action in ("tap", "tap_label", *GESTURE_ACTIONS, TYPE_ACTION):
             after_action = True
         elif after_action and action == "observe":
             compare = step.get("compare_number")

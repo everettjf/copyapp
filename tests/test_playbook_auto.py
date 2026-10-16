@@ -84,6 +84,22 @@ class PlaybookAutoTest(unittest.TestCase):
         self.assertTrue(json.loads((output / "manifest.json").read_text())[
             "fallback_skipped_after_touch"])
 
+    def test_stops_after_text_input_attempt_even_if_backend_errors(self):
+        output = self.root / "text-auto"
+
+        def touched(udid, backend, script, root, ictrl_client=None):
+            path, _ = self.fake_run(udid, backend, script, root, ictrl_client)
+            record = json.loads(path.read_text())
+            record["steps"] = [{"action": "type_text"}]
+            path.write_text(json.dumps(record))
+            return path, False
+
+        with patch("copyapp.playbook_auto.run_playbook", side_effect=touched) as mocked:
+            _, complete = run_playbook_auto("device-1", "ictrl", "ios-mcp",
+                                            self.script, output)
+        self.assertFalse(complete)
+        self.assertEqual(mocked.call_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

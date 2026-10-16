@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from contextlib import contextmanager
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from copyapp.playbook import _exact_labels, run_playbook
 
@@ -72,9 +72,12 @@ class PlaybookExactLabelsTest(unittest.TestCase):
     def test_ictrl_fresh_launch_refreshes_frontmost_cache(self):
         class CachedUI:
             opened = []
+            terminated = []
 
             def __init__(self, *_args, **_kwargs):
                 self.app = ""
+                self.client = Mock()
+                self.client.call_ui.side_effect = lambda method, params: self.terminated.append((method, params))
 
             def bounds(self):
                 return 414, 896
@@ -104,6 +107,8 @@ class PlaybookExactLabelsTest(unittest.TestCase):
         self.assertTrue(complete, record.get("error"))
         self.assertEqual(record["frontmost_backend"], "ios-mcp")
         self.assertEqual(CachedUI.opened, ["dev.copyapp.clockclone"])
+        self.assertEqual(CachedUI.terminated, [
+            ("terminate_app", {"bundle_id": "dev.copyapp.clockclone"})])
 
 
 if __name__ == "__main__":

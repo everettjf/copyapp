@@ -8,6 +8,8 @@
 
 UI 脚本现可通过 iOS MCP 和 iCTRL 执行有界滑动、长按与双击；语法、后端差异及 XR 实测见[中文手势指南](docs/ui-gesture-playbooks.zh-CN.md)（[English](docs/ui-gesture-playbooks.md)）。XR 已安装 iOS MCP 0.1.4 并列出三种操作。Calculator 显示区输入 `98` 后左滑变成 `9` 的行为也在独立复刻版上通过；新版复刻版重新通过原先三条运算流程。长按和双击仅验证调用可用，未断定具体 App 功能结果。
 
+UI 脚本还支持有界[文本输入](docs/ui-text-playbooks.zh-CN.md)（[English](docs/ui-text-playbooks.md)）。XR 上的 [Translate 三流程发现案例](cases/translate-xr-discovery-20261016/manifest.json)通过 iCTRL 验收，其中包含合成词 `hello` 的输入。iOS MCP 在该 App 报告字符已派发，但界面未显示，因此这台设备已验证的文本流程使用 iCTRL 并检查可见结果。
+
 正式报告现在会把 `Assets.car` 的资源名称及沙盒的只读文件元数据摘要直接写入人可读附录，完整索引仍保留证据链接。进一步的 [Calculator 深入报告](cases/calculator-ui-deep-report-20261016/report.md)和[来源关联的分析交付](cases/calculator-ui-deep-analysis-delivery-20261016/report.md)已通过核验，还加入 Copy APP 直连 Ghidra 对根视图组装、键盘按钮 frame 布局和结果视图手势装配的同二进制函数证据。资源名或数据库/偏好文件名只提供调查线索，不能单独证明某个功能实际读取它们；本次三条运算流程也未测试显示区手势。
 
 REA 不属于正式链路的运行依赖。深入函数分析优先用 Copy APP 直连 Ghidra；旧 REA 入口保留作可选兼容。代码借鉴、许可及尚未移植的能力见[独立运行边界](docs/rea-independence.md)。

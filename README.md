@@ -55,6 +55,8 @@ Other local XR pilots include [Compass](docs/compass-xr-analysis.md), [Calculato
 
 Playbooks now support bounded swipes, long presses and double taps through both iOS MCP and iCTRL. The [gesture guide](docs/ui-gesture-playbooks.md) ([中文](docs/ui-gesture-playbooks.zh-CN.md)) gives the syntax, backend differences and XR evidence. iOS MCP 0.1.4 is installed on the XR and advertises all three actions. Calculator's observed `98→9` display swipe now passes on the independent clone too; the three earlier arithmetic flows passed again on the updated clone. Long press and double tap were verified as callable without claiming a specific app response.
 
+Playbooks also support bounded [text entry](docs/ui-text-playbooks.md) ([中文](docs/ui-text-playbooks.zh-CN.md)). The XR [Translate discovery case](cases/translate-xr-discovery-20261016/manifest.json) accepted three iCTRL flows, including synthetic `hello` input. iOS MCP reported text events but Translate did not display them, so this device's verified text flow uses iCTRL and checks the visible result.
+
 Formal reports now render a bounded Assets.car name list and a metadata-only sandbox summary when those indexes exist. A [deeper Calculator report](cases/calculator-ui-deep-report-20261016/report.md) and its [source-linked analysis delivery](cases/calculator-ui-deep-analysis-delivery-20261016/report.md) verify these appendices and add direct Ghidra evidence for the root view, keypad frame layout and result-view gesture setup. Resource names and storage-looking filenames are investigation leads, not evidence of runtime use; the three arithmetic flows did not exercise the display gestures.
 
 `copyapp verify` checks recorded source links and file hashes. A matching hash does not prove that a decompiler interpretation is correct or that an app is functionally equivalent. Store raw IPA files, screenshots, sandbox snapshots, traces and credentials only in ignored local `cases/`. Reports should distinguish direct observations, inferences and unknown behavior.
@@ -65,6 +67,7 @@ The current gaps are general discovery and independent implementation across unf
 
 - [End-to-end workflow](docs/copy-workflow.md) · [中文](docs/copy-workflow.zh-CN.md)
 - [UI gesture playbooks](docs/ui-gesture-playbooks.md) · [中文](docs/ui-gesture-playbooks.zh-CN.md)
+- [UI text entry](docs/ui-text-playbooks.md) · [中文](docs/ui-text-playbooks.zh-CN.md)
 - [Implementation plan](PLAN.en.md) · [中文及详细试验记录](PLAN.md)
 - [REA independence](docs/rea-independence.md)
 - [Copy APP agent skill](skills/copyapp-copy/SKILL.md)

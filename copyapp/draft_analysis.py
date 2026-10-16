@@ -67,6 +67,8 @@ def _entry(plan: dict) -> str:
                            f"→({step.get('to_x')}, {step.get('to_y')})")
         elif step["action"] in ("long_press", "double_tap"):
             actions.append(f"{step['action']} ({step.get('x')}, {step.get('y')})")
+        elif step["action"] == "type_text":
+            actions.append(f"输入 {len(step.get('text', ''))} 个字符")
     return "；".join(actions) or "启动并观察"
 
 

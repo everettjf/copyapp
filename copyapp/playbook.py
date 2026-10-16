@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from copyapp.experiment import ExperimentUI
 from copyapp.gestures import GESTURE_ACTIONS, gesture_params
+from copyapp.text_actions import TYPE_ACTION, type_params
 from copyapp.ictrl import DEFAULT_CLIENT
 from copyapp.ocr_file import ocr_file
 from copyapp.usb_tunnel import ictrl_tunnel, ios_mcp_tunnel
@@ -146,13 +147,16 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
     for step in steps:
         if isinstance(step, dict) and step.get("action") in GESTURE_ACTIONS:
             gesture_params(step, width, height)
+        elif isinstance(step, dict) and step.get("action") == TYPE_ACTION:
+            type_params(step)
     if plan.get("fresh_launch") is True:
-        asyncio.run(_fresh_launch(udid, bundle))
-        # DVT can launch a third-party App without refreshing iCTRL's
-        # foreground-app cache. Opening the same App through iCTRL makes its
-        # subsequent identity and accessibility reads target that App.
-        if backend == "ictrl" and ui.frontmost() != bundle:
+        if backend == "ictrl":
+            # XCTest can terminate and relaunch its target without an
+            # Instruments connection, which may be unavailable on this XR.
+            ui.client.call_ui("terminate_app", {"bundle_id": bundle})
             ui.launch(bundle)
+        else:
+            asyncio.run(_fresh_launch(udid, bundle))
         for _ in range(10):
             if ui.frontmost() == bundle:
                 break
@@ -170,7 +174,7 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
         step_started = time.monotonic()
         if not isinstance(step, dict) or step.get("action") not in (
                 "observe", "tap", "tap_label", "screenshot", "expect_foreground",
-                *GESTURE_ACTIONS):
+                *GESTURE_ACTIONS, TYPE_ACTION):
             raise ValueError(f"invalid playbook step {index}")
         wait_ms = step.get("wait_ms", 0)
         if type(wait_ms) is not int or not 0 <= wait_ms <= 5000:
@@ -333,6 +337,15 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
                 else:
                     item["result"] = ui.double_tap(
                         gesture["x"], gesture["y"], gesture["interval_ms"])
+            finally:
+                if trace_observer is not None:
+                    trace_observer.end_step()
+        elif action == TYPE_ACTION:
+            item["typed_text"] = type_params(step)
+            if trace_observer is not None:
+                trace_observer.begin_step(index, action)
+            try:
+                item["result"] = ui.type_text(step["text"])
             finally:
                 if trace_observer is not None:
                     trace_observer.end_step()

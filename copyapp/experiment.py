@@ -136,6 +136,12 @@ class ExperimentUI:
             return IOSMCPClient.text_json(result)
         return self.client.call_ui("double_tap", {"x": x, "y": y})
 
+    def type_text(self, value: str) -> Dict[str, Any]:
+        if self.backend == "ios-mcp":
+            result = self.client.call_ui("type_text", {"text": value})
+            return IOSMCPClient.text_json(result)
+        return self.client.call_ui("type", {"text": value})
+
     def observe(self) -> Dict[str, Any]:
         if self.backend == "ios-mcp":
             return IOSMCPClient.text_json(self.client.call_ui(

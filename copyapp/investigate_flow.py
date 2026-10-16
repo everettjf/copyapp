@@ -95,6 +95,8 @@ def write_review_brief(output: Path, plan: dict) -> Path:
                       f"→({action.get('to_x')}, {action.get('to_y')})")
         if detail is None and item["action"] in ("long_press", "double_tap"):
             detail = f"({action.get('x')}, {action.get('y')})"
+        if detail is None and item["action"] == "type_text":
+            detail = f"({len(action.get('text', ''))} characters)"
         description = (item["action"] + " " + str(detail or "")).replace("|", "\\|").replace("\n", " ")
         current = ", ".join(f"`{method}` {count}" for method, count in
                             zip(methods, item["call_counts"]))

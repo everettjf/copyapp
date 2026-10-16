@@ -14,6 +14,7 @@ from copyapp.ocr_file import verify_ocr_source
 from copyapp.playbook import _exact_labels
 from copyapp.verify import checked_path, sha256_file, verify_case
 from copyapp.gestures import GESTURE_ACTIONS, gesture_params
+from copyapp.text_actions import TYPE_ACTION, type_params
 
 
 def _read_json(path: Path) -> dict:
@@ -57,6 +58,10 @@ def _load_run(root: Path, require_comparable: bool = True) -> Tuple[dict, dict]:
             gesture = gesture_params(requested, screen.get("width"), screen.get("height"))
             if observed.get("gesture") != gesture or not isinstance(observed.get("result"), dict):
                 raise ValueError(f"gesture evidence mismatch at {index}: {root}")
+        if requested.get("action") == TYPE_ACTION:
+            if (observed.get("typed_text") != type_params(requested) or
+                    not isinstance(observed.get("result"), dict)):
+                raise ValueError(f"text evidence mismatch at {index}: {root}")
         region = requested.get("region_points") if requested.get("action") == "tap_label" else None
         if region is not None:
             match = (observed.get("result") or {}).get("match")
@@ -308,6 +313,10 @@ def compare_playbooks(original_root: Path, rebuilt_root: Path, output: Path) -> 
                 gesture_params(first) != gesture_params(second) or
                 first.get("wait_ms", 0) != second.get("wait_ms", 0)):
             raise ValueError(f"gesture parameters differ at step {index}")
+        if first["action"] == TYPE_ACTION and (
+                type_params(first) != type_params(second) or
+                first.get("wait_ms", 0) != second.get("wait_ms", 0)):
+            raise ValueError(f"typed text differs at step {index}")
         if (first["action"] == "expect_foreground" and
                 first.get("bundle_id") != second.get("bundle_id")):
             raise ValueError(f"expected handoff app differs at step {index}")

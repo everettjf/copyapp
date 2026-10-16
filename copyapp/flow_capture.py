@@ -17,6 +17,7 @@ from copyapp.trace import parse_method
 from copyapp.usb_tunnel import ictrl_tunnel
 from copyapp.verify import sha256_file, verify_case
 from copyapp.gestures import GESTURE_ACTIONS
+from copyapp.text_actions import TYPE_ACTION
 from copyapp.view_tree import capture_view_tree
 
 
@@ -100,7 +101,8 @@ def validate_flow_pair(playbook: dict, views: dict, bundle: str,
 def validate_flow_trace_pair(playbook: dict, trace: dict, bundle: str,
                              device_prefix: str, binary_hashes: Optional[set] = None) -> None:
     actions = [(item["index"], item["action"]) for item in playbook.get("steps", [])
-               if item.get("action") in ("tap", "tap_label", *GESTURE_ACTIONS)]
+               if item.get("action") in ("tap", "tap_label", *GESTURE_ACTIONS,
+                                          TYPE_ACTION)]
     steps = trace.get("steps")
     methods = trace.get("requested_methods")
     if (trace.get("status") != "complete" or trace.get("bundle_id") != bundle or
@@ -110,7 +112,8 @@ def validate_flow_trace_pair(playbook: dict, trace: dict, bundle: str,
              if isinstance(item, dict)] != actions or
             len(steps) != len(actions) or
             any(not isinstance(item, dict) or item.get("incomplete") or
-                item.get("action") not in ("tap", "tap_label", *GESTURE_ACTIONS)
+                item.get("action") not in ("tap", "tap_label", *GESTURE_ACTIONS,
+                                           TYPE_ACTION)
                 for item in steps)):
         raise ValueError("trace/playbook identity or action steps differ")
     width = len(methods)

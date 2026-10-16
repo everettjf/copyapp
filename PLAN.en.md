@@ -46,6 +46,8 @@ Gestures now pass through discovery, replay, bounded Frida/network windows, orig
 
 The original Calculator's `98→9` left-swipe deletion and the updated independent clone passed the same [paired XR script](cases/calculator-gesture-swipelive-20261016/ictrl-delete-digit-comparison/report.md). The new clone build 0.1.1 (3) also passed the [three existing arithmetic comparisons](cases/calculator-gesture-swipelive-20261016/clone-0.1.1-regression-check/manifest.json); [three screenshot pairs](cases/calculator-gesture-swipelive-20261016/clone-0.1.1-regression-visual-review/report.md) were reviewed as minor differences. This is selected-state behavior evidence, not a whole-app gesture or Calculator implementation claim.
 
+The XR [Translate discovery case](cases/translate-xr-discovery-20261016/manifest.json) adds an unfamiliar app and a text-entry action: synthetic `hello` input, Favorites empty state and Conversation idle view all passed bounded iCTRL replay. The same iOS MCP text-input request reported dispatch but failed the visible-text assertion on Translate, so that path is not validated on this device. The [text guide](docs/ui-text-playbooks.md) records the backend evidence and limits. Analysis, report and independent rebuild for Translate remain to be completed.
+
 ## Next engineering gates
 
 1. Exercise an independent terminal run with a real Codex or Claude CLI and record its output and delivery gates.

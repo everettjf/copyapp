@@ -1,6 +1,7 @@
 """Own a short-lived USB mux port forward for one named iOS device."""
 
 import asyncio
+import json
 import re
 import socket
 import subprocess
@@ -37,7 +38,6 @@ def ictrl_tunnel(udid: str, client: Path = DEFAULT_CLIENT) -> Iterator[int]:
         raise ValueError("invalid device UDID")
     if not client.is_file():
         raise FileNotFoundError(f"iCTRL client not found: {client}")
-    asyncio.run(_launch_ictrl_runner(udid))
     with socket.socket() as reserved:
         reserved.bind(("127.0.0.1", 0))
         port = reserved.getsockname()[1]
@@ -46,15 +46,37 @@ def ictrl_tunnel(udid: str, client: Path = DEFAULT_CLIENT) -> Iterator[int]:
     process = subprocess.Popen(command, stdout=subprocess.DEVNULL,
                                stderr=subprocess.DEVNULL)
     try:
-        deadline = time.monotonic() + 15
-        while time.monotonic() < deadline:
+        rpc = ICtrlClient(port=port, client=client)
+
+        def runner_ready() -> bool:
             if process.poll() is not None:
                 raise RuntimeError("USB mux forward exited before iCTRL was reachable")
             try:
-                ICtrlClient(port=port, client=client).call_ui("logs", {"max_elements": 1})
-                break
+                rpc._run("call", "logs", json.dumps({"max_elements": 1}), timeout=2)
+                return True
             except Exception:
-                time.sleep(0.3)
+                return False
+
+        # A prior capture may have left the runner active. Avoid an Instruments
+        # relaunch in that case: it can block indefinitely on this device.
+        ready = False
+        probe_deadline = time.monotonic() + 3
+        while time.monotonic() < probe_deadline:
+            if runner_ready():
+                ready = True
+                break
+            time.sleep(0.2)
+        if not ready:
+            try:
+                subprocess.run([sys.executable, "-m", "copyapp.ictrl_runner_launch", udid],
+                               capture_output=True, text=True, check=True, timeout=30)
+            except subprocess.TimeoutExpired as exc:
+                raise TimeoutError("launching the iCTRL runner timed out") from exc
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline:
+            if runner_ready():
+                break
+            time.sleep(0.3)
         else:
             raise TimeoutError("paired iCTRL runner did not become reachable on the named USB device")
         yield port

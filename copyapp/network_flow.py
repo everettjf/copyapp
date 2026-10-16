@@ -12,6 +12,7 @@ from pathlib import Path
 
 from copyapp.experiment import _bounded_cleanup
 from copyapp.gestures import GESTURE_ACTIONS
+from copyapp.text_actions import TYPE_ACTION
 from copyapp.ictrl import DEFAULT_CLIENT
 from copyapp.playbook import run_playbook
 from copyapp.usb_tunnel import ictrl_tunnel
@@ -246,7 +247,7 @@ def validate_network_trace_pair(play: dict, trace: dict, bundle: str, prefix: st
         raise ValueError("network trace identity or capture status differs")
     actions = [(item.get("index"), item.get("action")) for item in play.get("steps", [])
                if isinstance(item, dict) and item.get("action") in
-               ("tap", "tap_label", *GESTURE_ACTIONS)]
+               ("tap", "tap_label", *GESTURE_ACTIONS, TYPE_ACTION)]
     steps = trace.get("steps", [])
     if (not isinstance(steps, list) or
             [(item.get("index"), item.get("action")) for item in steps

@@ -17,6 +17,8 @@ Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组
 
 每条脚本可包含有界点击、滑动、长按和双击。界面可观察时应加入操作后状态断言；后端接受手势调用不代表预期界面效果已发生。参数与后端差异见[中文手势指南](ui-gesture-playbooks.zh-CN.md)（[English](ui-gesture-playbooks.md)）。
 
+涉及输入框的 App 可在聚焦空字段后使用[有界文本输入](ui-text-playbooks.zh-CN.md)（[English](ui-text-playbooks.md)）。须检查后续界面：输入 RPC 成功不代表文字已显示在 App 中。
+
 已有验收案例可用 `--discovery <案例>`；已有脚本可重复使用 `--script <文件>`。这三种输入互斥。
 
 ## 2. 采集与解释

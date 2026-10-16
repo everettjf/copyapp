@@ -16,6 +16,7 @@ from copyapp.compare_playbooks import _load_run, compare_playbooks
 from copyapp.flow_capture import capture_flow, validate_flow_pair
 from copyapp.install import _installed_app
 from copyapp.gestures import GESTURE_ACTIONS, gesture_params
+from copyapp.text_actions import TYPE_ACTION, type_params
 from copyapp.investigate_flow import _files
 from copyapp.playbook import run_playbook
 from copyapp.verify import sha256_file, verify_case
@@ -122,6 +123,10 @@ def _preflight(spec_path: Path, pairs: List[Tuple[str, Path, Path]]) -> Tuple[di
                     gesture_params(first) != gesture_params(second) or
                     first.get("wait_ms", 0) != second.get("wait_ms", 0)):
                 raise ValueError(f"gesture parameters differ in {flow_id} step {index}")
+            if action == TYPE_ACTION and (
+                    type_params(first) != type_params(second) or
+                    first.get("wait_ms", 0) != second.get("wait_ms", 0)):
+                raise ValueError(f"typed text differs in {flow_id} step {index}")
             if action == "expect_foreground" and first.get("bundle_id") != second.get("bundle_id"):
                 raise ValueError(f"handoff destination differs in {flow_id} step {index}")
             if action == "screenshot":

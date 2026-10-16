@@ -17,6 +17,8 @@ The initial command writes `discovery-agent/TASK.md` and pauses before touching 
 
 Each playbook may use bounded taps, swipes, long presses and double taps. Include a post-action state assertion when available; a successful gesture call does not prove the intended UI effect. See the [gesture guide](ui-gesture-playbooks.md) ([中文](ui-gesture-playbooks.zh-CN.md)) for parameters and backend differences.
 
+For input-heavy apps, use [bounded text entry](ui-text-playbooks.md) ([中文](ui-text-playbooks.zh-CN.md)) after focusing an empty field. Check the resulting UI: an input RPC can succeed without visible text reaching the app.
+
 If a verified discovery case already exists, use `--discovery <CASE>` instead; if scripts were chosen explicitly, use repeated `--script <FILE>`. The three inputs are mutually exclusive.
 
 ## 2. Prepare and interpret
