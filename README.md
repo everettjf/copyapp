@@ -24,6 +24,8 @@ REA 不属于正式链路的运行依赖。深入函数分析优先用 Copy APP 
 
 它顺序执行 `prepare-app`、经过交付核验的分析 Agent、`prepare-rebuild`、经过真机交付核验的复刻 Agent；默认整包脱壳、采集网络元数据且不依赖 REA。需要直接 Ghidra 函数证据时，可加 `--analysis-provider ghidra-direct --ghidra-dir <GHIDRA_DIR> --java-home <JDK_HOME>`。`copyapp verify cases/<NEW_WORKFLOW_CASE>` 会重验最终的来源链。成功只表示选定流程具备来源关联的报告、行为断言、逐图审阅和无重大视觉差异；其余页面与服务端行为保留为未验证。若 Agent 阶段失败，案例保存现场，`--resume` 复用已经通过的阶段，但不会自动再次运行可能改动手机状态的失败 Agent；审阅其输出后使用新的案例重试。当前这条总入口已通过模拟 Agent 的完整路径与拒绝测试，尚未从独立终端用真实 Agent CLI 完成端到端实跑。它仍要求先选出代表性脚本，不能仅凭 App 名称自动发现全部功能。
 
+用户只给 App 时，当前 Codex/Claude 可按 [`copyapp-copy` Skill](skills/copyapp-copy/SKILL.md) 观察首页并编写三条代表性脚本。`copyapp discover-check --udid <UDID> --bundle <BUNDLE> --script <FLOW> ... --out cases/<DISCOVERY>` 先检查脚本身份、不同点击路径和有界步骤，再在同一手机上重放每条流程；`copyapp copy` 可用 `--discovery cases/<DISCOVERY>` 直接读取验收后的脚本副本。XR 上三条 DeepSeek 登录页脚本的[实测发现验收](cases/deepseek-three-flow-discovery-check-live-20261015/report.md)和父案例哈希均通过。脚本仍由 Agent 按真实界面编写，自动发现任意 App 全部页面的能力尚未验证。
+
 ## iPhone XR 实测（iOS 16.1.1）
 
 - USB 配对、系统与 App 信息、Developer Disk Image 挂载、截图、无障碍读取和 App 包目录索引已通过。`/var/jb` 可列出，包含 Dopamine 与 Procursus 标记。

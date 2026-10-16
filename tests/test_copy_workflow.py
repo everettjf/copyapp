@@ -112,7 +112,7 @@ class CopyWorkflowTest(unittest.TestCase):
                                           'flows': [{'id': 'one'}]})
         return output / 'manifest.json', True
 
-    def run_workflow(self, *, resume=False):
+    def run_workflow(self, *, resume=False, discovery_case=None):
         with patch('copyapp.copy_workflow.prepare_app', side_effect=self.prepare), \
              patch('copyapp.copy_workflow.run_agent_task', side_effect=self.agent), \
              patch('copyapp.copy_workflow.prepare_rebuild', side_effect=self.rebuild), \
@@ -121,6 +121,7 @@ class CopyWorkflowTest(unittest.TestCase):
                 '00008020-1111111111111111', 'com.example.original',
                 [self.script], self.project, 'com.example.clone', self.output,
                 self.survey, workspace=self.root, agent_executable=self.executable,
+                discovery_case=discovery_case,
                 resume=resume))
 
     def test_full_handoff_and_resume_reuse_verified_stages(self):
@@ -176,6 +177,19 @@ class CopyWorkflowTest(unittest.TestCase):
         path, complete = self.run_workflow(resume=True)
         self.assertFalse(complete)
         self.assertEqual(len(self.calls), 4)
+
+    def test_discovery_source_is_pinned_across_the_full_workflow(self):
+        discovery = self.root / 'cases/discovery'
+        write(discovery / 'manifest.json', {'status': 'complete'})
+        with patch('copyapp.copy_workflow.accepted_playbooks',
+                   return_value=[self.script.resolve()]):
+            path, complete = self.run_workflow(discovery_case=discovery)
+            self.assertTrue(complete)
+            self.assertEqual(json.loads(path.read_text())['discovery_case'], str(discovery))
+            write(discovery / 'manifest.json', {'status': 'changed'})
+            with patch('copyapp.copy_workflow.verify_case', return_value=True):
+                self.assertFalse(validate_copy_workflow(
+                    self.output, json.loads(path.read_text())))
 
 
 if __name__ == '__main__':

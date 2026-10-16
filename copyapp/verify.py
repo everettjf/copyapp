@@ -95,6 +95,12 @@ def verify_case(directory: Path) -> bool:
                 return ok and validate_report_portfolio(directory.resolve(), manifest)
             except (KeyError, OSError, ValueError, TypeError, json.JSONDecodeError):
                 return False
+        if manifest.get("kind") == "discovery_check":
+            try:
+                from copyapp.discover_check import validate_discovery_check
+                return ok and validate_discovery_check(directory.resolve(), manifest)
+            except (KeyError, OSError, ValueError, TypeError, json.JSONDecodeError):
+                return False
         if manifest.get("kind") == "decrypted_package":
             try:
                 from copyapp.decrypt_package import validate_decrypt_package_case

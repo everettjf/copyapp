@@ -66,6 +66,7 @@ from copyapp.ocr_file import ocr_file
 from copyapp.ui_capture import capture_stable
 from copyapp.playbook import run_playbook
 from copyapp.playbook_auto import run_playbook_auto
+from copyapp.discover_check import check_discovered_flows, accepted_playbooks
 from copyapp.compare_playbooks import compare_playbooks
 from copyapp.doctor import run_doctor
 from copyapp.candidates import build_candidates
@@ -538,7 +539,10 @@ def main() -> None:
                                  help="run the source-verified Analyze → Rebuild workflow through a standalone coding-agent CLI")
     copy_parser.add_argument("--udid", required=True)
     copy_parser.add_argument("--bundle", required=True)
-    copy_parser.add_argument("--script", required=True, action="append", type=Path)
+    copy_scripts = copy_parser.add_mutually_exclusive_group(required=True)
+    copy_scripts.add_argument("--script", action="append", type=Path)
+    copy_scripts.add_argument("--discovery", type=Path,
+                              help="verified discover-check case containing three or more replayed flows")
     copy_parser.add_argument("--project", required=True, type=Path)
     copy_parser.add_argument("--rebuilt-bundle", required=True)
     copy_parser.add_argument("--out", required=True, type=Path)
@@ -626,6 +630,14 @@ def main() -> None:
                                help="combine verified reports for one exact device and App build")
     portfolio.add_argument("--report", required=True, action="append", type=Path)
     portfolio.add_argument("--out", required=True, type=Path)
+    discovery_check = sub.add_parser("discover-check",
+                                     help="replay and verify 3–12 agent-authored original-App UI flows")
+    discovery_check.add_argument("--udid", required=True)
+    discovery_check.add_argument("--bundle", required=True)
+    discovery_check.add_argument("--script", required=True, action="append", type=Path)
+    discovery_check.add_argument("--backend", choices=("ios-mcp", "ictrl"), default="ios-mcp")
+    discovery_check.add_argument("--resume", action="store_true")
+    discovery_check.add_argument("--out", required=True, type=Path)
     visual_audit = sub.add_parser("visual-audit",
                                   help="measure every saved rebuild screenshot pair in a declared region")
     visual_audit.add_argument("--check", required=True, type=Path)
@@ -1022,8 +1034,10 @@ def main() -> None:
         elif args.command == "copy":
             survey_collector = lambda udid, bundle, output, launch: command_survey(
                 udid, bundle, output, launch, args.ui_backend)
+            scripts = (accepted_playbooks(args.discovery, args.udid, args.bundle,
+                                          args.backend) if args.discovery else args.script)
             path, complete = asyncio.run(copy_app(
-                args.udid, args.bundle, args.script, args.project,
+                args.udid, args.bundle, scripts, args.project,
                 args.rebuilt_bundle, args.out, survey_collector,
                 workspace=args.workspace, backend=args.backend,
                 ui_backend=args.ui_backend, analysis_provider=args.analysis_provider,
@@ -1035,7 +1049,8 @@ def main() -> None:
                 ghidra_dir=args.ghidra_dir, java_home=args.java_home,
                 disabled_analyzer=args.ghidra_disable_analyzer,
                 analysis_timeout=args.analysis_timeout,
-                agent_timeout=args.agent_timeout_seconds, resume=args.resume))
+                agent_timeout=args.agent_timeout_seconds,
+                discovery_case=args.discovery, resume=args.resume))
             print(path)
             code = 0 if complete else 1
         elif args.command == "rebuild-plan":
@@ -1081,6 +1096,12 @@ def main() -> None:
         elif args.command == "report-portfolio":
             print(create_report_portfolio(args.report, args.out))
             code = 0
+        elif args.command == "discover-check":
+            path, complete = check_discovered_flows(
+                args.udid, args.bundle, args.script, args.out,
+                args.backend, args.resume)
+            print(path)
+            code = 0 if complete else 1
         elif args.command == "visual-audit":
             print(create_visual_audit(args.check, args.out, args.roi,
                                       args.max_mean, args.max_changed,

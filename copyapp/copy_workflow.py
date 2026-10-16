@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Callable, Awaitable, Optional
 
 from copyapp.agent_run import run_agent_task
+from copyapp.discover_check import accepted_playbooks
 from copyapp.prepare_app import prepare_app
 from copyapp.prepare_rebuild import prepare_rebuild
 from copyapp.verify import sha256_file, verify_case
@@ -149,6 +150,15 @@ def validate_copy_workflow(root: Path, record: dict) -> bool:
                 not isinstance(record.get("scripts"), list) or
                 not 1 <= len(record["scripts"]) <= 12):
             return False
+        if record.get("discovery_case") is not None:
+            discovery = Path(record["discovery_case"]).resolve(strict=True)
+            if (sha256_file(discovery / "manifest.json") !=
+                    record.get("discovery_manifest_sha256") or
+                    [str(path) for path in accepted_playbooks(
+                        discovery, record["device_udid"], record["bundle_id"],
+                        record["backend"])] !=
+                    [item["path"] for item in record["scripts"]]):
+                return False
         preparation = _child(root, "preparation")
         scripts = record["scripts"]
         if (not _preparation_ready(root, record) or
@@ -186,6 +196,7 @@ async def copy_app(udid: str, bundle: str, scripts: list[Path], project: Path,
                    disabled_analyzer: Optional[str] = None,
                    analysis_timeout: int = 240, agent_timeout: int = 7200,
                    agent_executable: Optional[Path] = None,
+                   discovery_case: Optional[Path] = None,
                    resume: bool = False) -> tuple[Path, bool]:
     """Run both stages without accepting a CLI exit as proof of a deliverable.
 
@@ -209,6 +220,14 @@ async def copy_app(udid: str, bundle: str, scripts: list[Path], project: Path,
         agent_executable = agent_executable.resolve(strict=True)
     elif not shutil.which(agent_provider):
         raise FileNotFoundError(f"{agent_provider} CLI is not installed")
+    if discovery_case is not None:
+        discovery_case = discovery_case.resolve(strict=True)
+        if (not discovery_case.is_relative_to(workspace) or
+                output == discovery_case or output in discovery_case.parents or
+                discovery_case in output.parents or
+                [path.resolve(strict=True) for path in scripts] !=
+                accepted_playbooks(discovery_case, udid, bundle, backend)):
+            raise ValueError("workflow scripts differ from the verified discovery case")
     script_records = [{"path": str(path.resolve(strict=True)),
                        "sha256": sha256_file(path.resolve(strict=True))}
                       for path in scripts]
@@ -231,6 +250,9 @@ async def copy_app(udid: str, bundle: str, scripts: list[Path], project: Path,
         "disabled_analyzer": disabled_analyzer,
         "analysis_timeout": analysis_timeout, "agent_timeout": agent_timeout,
         "agent_executable": str(agent_executable.resolve()) if agent_executable else None,
+        "discovery_case": str(discovery_case) if discovery_case else None,
+        "discovery_manifest_sha256":
+        sha256_file(discovery_case / "manifest.json") if discovery_case else None,
     }
     manifest = output / "manifest.json"
     if resume:
