@@ -4,7 +4,7 @@
 
 状态：已进入实施。本文确定产品范围、架构、验收标准和实施顺序；当前可运行原型与实机结果见 `README.md` 和本地 `cases/`。
 
-2026-10-16 更新：`copyapp copy --auto-discover --agent-provider current` 现先生成发现任务并暂停，当前会话将 3–12 条脚本提交 `discover-check` 后以 `--resume` 续跑，不嵌套启动 Agent。XR 上的 `cases/clock-current-auto-workflow-20261016/` 使用三条先前编写的 Clock 脚本完成真机重放、包与分析准备，父案例到达 `analysis_agent_needs_review`。它验证了发现与分析交接，不证明模型自主发现。另一个 `cases/clock-current-workflow-live-20261016/` 已完成报告、复刻、安装和三流程对照，但复刻源码沿用既有独立实现。英文默认入口为 `README.md`、`PLAN.en.md` 和 `docs/copy-workflow.md`；对应中文版本可从页面顶部切换。
+2026-10-16 更新：`copyapp copy --auto-discover --agent-provider current` 现先生成发现任务并暂停，当前会话将 3–12 条脚本提交 `discover-check` 后以 `--resume` 续跑，不嵌套启动 Agent。XR 上的 `cases/clock-current-auto-workflow-20261016/` 使用三条先前编写的 Clock 脚本完成真机重放、正式报告、独立复刻工程、安装和三流程对照。3/3 行为及末端视图断言通过，10 对截图逐张审阅为轻微差异，父案例 517 项证据文件通过校验。它验证了完整编排，不证明模型自主发现或从零生成；复刻源码改自既有独立实现。另一个 `cases/clock-current-workflow-live-20261016/` 也完成报告、复刻、安装和三流程对照。英文默认入口为 `README.md`、`PLAN.en.md` 和 `docs/copy-workflow.md`；对应中文版本可从页面顶部切换。
 
 ## 1. 产品目标与第一版边界
 

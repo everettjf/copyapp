@@ -43,7 +43,7 @@ Clock 随后扩展到四个主标签：[四流程分析报告](cases/clock-four-
 
 上述 `current` 模式已在 XR 上完成一次真实三流程父案例：[Clock 正式报告](cases/clock-current-workflow-live-20261016/analysis-agent/reviewed-report/report.md) → [复刻任务](cases/clock-current-workflow-live-20261016/rebuild-preparation/task/TASK.md) → [Copy Clock Probe 源码](rebuild/ClockCurrentProbe) → [真机交付](cases/clock-current-workflow-live-20261016/rebuild-agent/agent-delivery/report.md)。父案例与交付均通过来源重验；世界时钟城市选择、未保存闹钟编辑和秒表启停重置 3/3 行为及末端视图断言通过，10 对截图逐张审阅为轻微差异，无重大差异。复刻工程沿用了本项目先前独立编写的 ClockClone 源码并针对本次对照修正了北京相对日期与城市弹窗；这是对现有独立实现的再交付，并非外部模型从零生成。城市列表字母索引、未选页面与跨系统行为仍是缺口。
 
-新的 [`--auto-discover --agent-provider current` XR 案例](cases/clock-current-auto-workflow-20261016/manifest.json)先生成发现任务，再用三条先前编写的 Clock 脚本在 XR 上重放并通过 `discover-check`；同一父案例续跑完成包和分析准备，按预期停在 `analysis_agent_needs_review`，无错误。这验证了当前会话发现交接到报告交接的真机链路，不代表模型已从空白自主编写脚本。默认英文的[实施计划](PLAN.en.md)与[流程指南](docs/copy-workflow.md)均可从对应中文版切换。
+新的 [`--auto-discover --agent-provider current` XR 案例](cases/clock-current-auto-workflow-20261016/manifest.json)先生成发现任务，用三条先前编写的 Clock 脚本在 XR 上重放并通过 `discover-check`，随后完成[正式报告](cases/clock-current-auto-workflow-20261016/analysis-agent/reviewed-report/report.md)、[独立复刻源码](rebuild/ClockCurrentAutoProbe)、安装、三流程同机对照及[交付](cases/clock-current-auto-workflow-20261016/rebuild-agent/agent-delivery/report.md)。3/3 行为与末端视图断言通过，10 对截图逐张审阅为轻微差异，无重大差异；父案例 517 项证据文件通过校验。脚本取自先前场景，源码沿用并改造既有独立实现，因此证明当前会话编排闭环，不证明陌生 App 自主发现或从零生成。默认英文的[实施计划](PLAN.en.md)与[流程指南](docs/copy-workflow.md)均可从对应中文版切换。
 
 ## iPhone XR 实测（iOS 16.1.1）
 
