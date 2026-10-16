@@ -197,16 +197,147 @@ final class AlarmEditorController: UITableViewController {
 }
 
 final class StopwatchController: UIViewController {
+    private let timeLabel = UILabel()
+    private let leftButton = UIButton(type: .system)
+    private let rightButton = UIButton(type: .system)
+    private let lapLabel = UILabel()
+    private let lapTimeLabel = UILabel()
+    private let lapDivider = UIView()
+    private var ticker: Timer?
+    private var startedAt: Date?
+    private var elapsed: TimeInterval = 0
+    private var lapStartedAt: TimeInterval = 0
+    private var laps: [TimeInterval] = []
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
-        title = "Stopwatch"
-        let label = UILabel()
-        label.text = "00:00.00"
-        label.font = .monospacedDigitSystemFont(ofSize: 48, weight: .thin)
-        label.textAlignment = .center
-        label.frame = CGRect(x: 0, y: 200, width: view.bounds.width, height: 80)
-        view.addSubview(label)
+        timeLabel.text = "00:00.00"
+        timeLabel.font = .monospacedDigitSystemFont(ofSize: 88, weight: .ultraLight)
+        timeLabel.adjustsFontSizeToFitWidth = true
+        timeLabel.minimumScaleFactor = 0.8
+        timeLabel.textAlignment = .center
+        [leftButton, rightButton].forEach { button in
+            button.layer.cornerRadius = 42
+            button.layer.borderWidth = 2
+            button.titleLabel?.font = .systemFont(ofSize: 16)
+        }
+        leftButton.setTitle("Lap", for: .normal)
+        leftButton.setTitleColor(.lightGray, for: .normal)
+        leftButton.backgroundColor = UIColor(white: 0.13, alpha: 1)
+        leftButton.layer.borderColor = UIColor(white: 0.25, alpha: 1).cgColor
+        leftButton.addTarget(self, action: #selector(lapOrReset), for: .touchUpInside)
+        rightButton.addTarget(self, action: #selector(startOrStop), for: .touchUpInside)
+        for label in [lapLabel, lapTimeLabel] {
+            label.font = .systemFont(ofSize: 16)
+            label.textColor = .white
+        }
+        lapTimeLabel.textAlignment = .right
+        lapDivider.backgroundColor = UIColor(white: 0.18, alpha: 1)
+        let bottomDivider = UIView()
+        bottomDivider.backgroundColor = UIColor(white: 0.18, alpha: 1)
+        let dots = UILabel()
+        dots.text = "● ●"
+        dots.textColor = .lightGray
+        dots.font = .systemFont(ofSize: 12)
+        dots.textAlignment = .center
+        [timeLabel, leftButton, rightButton, lapLabel, lapTimeLabel,
+         lapDivider, bottomDivider, dots].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview($0)
+        }
+        NSLayoutConstraint.activate([
+            timeLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            timeLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            timeLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 150),
+            timeLabel.heightAnchor.constraint(equalToConstant: 112),
+            leftButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            leftButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 366),
+            leftButton.widthAnchor.constraint(equalToConstant: 84),
+            leftButton.heightAnchor.constraint(equalToConstant: 84),
+            rightButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            rightButton.topAnchor.constraint(equalTo: leftButton.topAnchor),
+            rightButton.widthAnchor.constraint(equalToConstant: 84),
+            rightButton.heightAnchor.constraint(equalToConstant: 84),
+            dots.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            dots.centerYAnchor.constraint(equalTo: leftButton.centerYAnchor),
+            bottomDivider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            bottomDivider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            bottomDivider.topAnchor.constraint(equalTo: leftButton.bottomAnchor, constant: 16),
+            bottomDivider.heightAnchor.constraint(equalToConstant: 1),
+            lapLabel.leadingAnchor.constraint(equalTo: bottomDivider.leadingAnchor),
+            lapLabel.topAnchor.constraint(equalTo: bottomDivider.bottomAnchor, constant: 12),
+            lapTimeLabel.trailingAnchor.constraint(equalTo: bottomDivider.trailingAnchor),
+            lapTimeLabel.topAnchor.constraint(equalTo: lapLabel.topAnchor),
+            lapDivider.leadingAnchor.constraint(equalTo: bottomDivider.leadingAnchor),
+            lapDivider.trailingAnchor.constraint(equalTo: bottomDivider.trailingAnchor),
+            lapDivider.topAnchor.constraint(equalTo: lapLabel.bottomAnchor, constant: 12),
+            lapDivider.heightAnchor.constraint(equalToConstant: 1),
+        ])
+        refresh()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: false)
+    }
+
+    deinit { ticker?.invalidate() }
+
+    private var total: TimeInterval {
+        elapsed + (startedAt.map { Date().timeIntervalSince($0) } ?? 0)
+    }
+
+    private func formatted(_ duration: TimeInterval) -> String {
+        let hundredths = max(0, Int(duration * 100))
+        return String(format: "%02d:%02d.%02d", hundredths / 6000,
+                      (hundredths / 100) % 60, hundredths % 100)
+    }
+
+    private func refresh() {
+        let running = startedAt != nil
+        timeLabel.text = formatted(total)
+        rightButton.setTitle(running ? "Stop" : "Start", for: .normal)
+        rightButton.setTitleColor(running ? .systemRed : .systemGreen, for: .normal)
+        rightButton.backgroundColor = (running ? UIColor.systemRed : UIColor.systemGreen)
+            .withAlphaComponent(0.2)
+        rightButton.layer.borderColor = (running ? UIColor.systemRed : UIColor.systemGreen)
+            .withAlphaComponent(0.35).cgColor
+        leftButton.setTitle(running ? "Lap" : elapsed > 0 ? "Reset" : "Lap", for: .normal)
+        leftButton.setTitleColor(elapsed > 0 || running ? .white : .lightGray, for: .normal)
+        let showLap = elapsed > 0 || running
+        lapLabel.isHidden = !showLap
+        lapTimeLabel.isHidden = !showLap
+        lapDivider.isHidden = !showLap
+        lapLabel.text = "Lap \(laps.count + 1)"
+        lapTimeLabel.text = showLap ? formatted(total - lapStartedAt) : nil
+    }
+
+    @objc private func startOrStop() {
+        if let start = startedAt {
+            elapsed += Date().timeIntervalSince(start)
+            startedAt = nil
+            ticker?.invalidate()
+            ticker = nil
+        } else {
+            startedAt = Date()
+            ticker = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+                self?.refresh()
+            }
+        }
+        refresh()
+    }
+
+    @objc private func lapOrReset() {
+        if startedAt != nil {
+            laps.append(total - lapStartedAt)
+            lapStartedAt = total
+        } else if elapsed > 0 {
+            elapsed = 0
+            lapStartedAt = 0
+            laps.removeAll()
+        }
+        refresh()
     }
 }
 

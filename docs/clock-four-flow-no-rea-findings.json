@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "target_bundle_id": "com.apple.mobiletimer",
+  "title": "Clock：iPhone XR 四条界面流程与关键函数的无 REA 分析",
+  "sections": [
+    {
+      "title": "目标、获取方式与证据范围",
+      "findings": [
+        {
+          "claim": "目标是 iPhone XR / iOS 16.1.1 上的系统 Clock，Bundle ID 为 com.apple.mobiletimer",
+          "confidence": "observed",
+          "evidence": [
+            "case.survey",
+            "app.all"
+          ],
+          "explanation": "USB 安装信息与 iOS MCP 的前台 Bundle ID、三条原版流程都指向同一 App。安装服务未提供营销版本，只返回构建 1.0。",
+          "limitation": "本次未在 iOS 17 或 26 上执行；构建号不能替代系统 App 的公开版本号。"
+        },
+        {
+          "claim": "从已安装 .app 取得分析快照；主程序无加密加载命令",
+          "confidence": "observed",
+          "evidence": [
+            "case.static"
+          ],
+          "explanation": "快照索引为 36 条包路径，主程序 SHA-256 为 4a8b94cdb86d520013f91da7b6528e3a9c8139ee6dd3639de0acf8fdb93b3c5e，Mach-O 的加密命令状态为 command_absent。",
+          "limitation": "没有对这款系统 App 执行内存脱壳；快照不是 App Store 原始 IPA。"
+        },
+        {
+          "claim": "主程序索引到 58 个本地 Objective-C 类与 1358 个方法",
+          "confidence": "observed",
+          "evidence": [
+            "case.objc"
+          ],
+          "explanation": "包括 MTAWorldClockTableViewController、MTAAlarmTableViewController、MTAAlarmEditViewController、MTATimerViewController 和 MTATabBarController；方法签名和静态 IMP 地址保留在原始索引。",
+          "limitation": "仅为主程序内可见的 Objective-C 元数据，不涵盖私有 Framework、Swift 符号或完整调用图。"
+        }
+      ]
+    },
+    {
+      "title": "动态库、权限与沙盒",
+      "findings": [
+        {
+          "claim": "主程序静态链接 31 个动态库，其中 17 个位于系统 PrivateFrameworks",
+          "confidence": "observed",
+          "evidence": [
+            "case.static"
+          ],
+          "explanation": "依赖包含 UIKit、Foundation、MobileTimer、MobileTimerSupport、MobileTimerUI、ToneKit 和 ToneLibrary 等；包快照另有 1 个扩展。",
+          "limitation": "依赖存在不证明每条被选流程都调用这些库，也没有对私有框架内部作函数级分析。"
+        },
+        {
+          "claim": "安装服务可见系统 App 权限与私有服务相关键",
+          "confidence": "observed",
+          "evidence": [
+            "case.survey"
+          ],
+          "explanation": "可见键包括 platform-application、com.apple.private.mobiletimerd、com.apple.private.sleepd、com.apple.developer.healthkit 和 com.apple.private.tcc.allow。",
+          "limitation": "这里只列键名，未完整审计签名权限值，也不能把某个键直接归因到所选界面动作。"
+        },
+        {
+          "claim": "只读沙盒索引记录 26 条路径，包含 Preferences、缓存与场景恢复文件",
+          "confidence": "observed",
+          "evidence": [
+            "case.sandbox"
+          ],
+          "explanation": "SSH 元数据索引深度为 8；可见 Library/Preferences/com.apple.mobiletimerd.plist、Library/Caches/com.apple.mobiletimer/Circles 和 Saved Application State 等路径。",
+          "limitation": "没有读取这些文件的正文，也没有在操作前后做内容差分，不能断定闹钟、城市或铃声数据具体存在哪里。"
+        }
+      ]
+    },
+    {
+      "title": "界面结构和四条已重放流程",
+      "findings": [
+        {
+          "claim": "底部存在 World Clock、Alarm、Stopwatch、Timer 四个标签页",
+          "confidence": "observed",
+          "evidence": [
+            "app.all"
+          ],
+          "explanation": "四条来源脚本在同一 XR 的原版 App 中观察四个标签，再分别进入世界时钟、闹钟、秒表与计时器；弹窗流程取消后返回所属标签，秒表在开始与停止后重置。",
+          "limitation": "只验证列出的状态转移，没有覆盖每个标签的完整功能和跨标签状态保持。"
+        },
+        {
+          "claim": "世界时钟的 Add 打开 Choose a City 搜索列表，Cancel 返回含现有城市的页面",
+          "confidence": "observed",
+          "evidence": [
+            "app.all",
+            "world.direct"
+          ],
+          "explanation": "原版脚本在 World Clock 页面点击 Add 后记录城市列表、Search、Cancel 与城市行，随后取消并确认回到 World Clock；同一步的 showAddView 入口命中。",
+          "limitation": "本次未选择或保存新城市；列表来源、搜索算法与城市上限值未验证。"
+        },
+        {
+          "claim": "闹钟 Add 打开未保存的编辑页，含时间滚轮、Repeat、Label、Sound、Snooze 与 Save，Cancel 返回闹钟列表",
+          "confidence": "observed",
+          "evidence": [
+            "app.all",
+            "alarm.direct"
+          ],
+          "explanation": "脚本先记录 Add Alarm 页面与所列控件，再点击 Cancel；对应 showAddView 与 _cancelButtonClicked: 分别在各自点击窗口命中。",
+          "limitation": "没有点击 Save 或更改任何设置；不能推断通知调度、重复规则、持久化或与 Health 睡眠闹钟的关系。"
+        },
+        {
+          "claim": "Timer 的 When Timer Ends 打开铃声选择页，显示 Radar (Default)、Cancel 和 Set，Cancel 回到时间滚轮",
+          "confidence": "observed",
+          "evidence": [
+            "app.all",
+            "timer.direct"
+          ],
+          "explanation": "原版脚本在计时器页观察 Hours、Minutes、Seconds，打开音调列表后取消；两个动作分别命中 showSoundPicker: 和 dismissSoundPicker。",
+          "limitation": "未改变铃声、设置计时器时长或启动倒计时；可用音调全集与播放行为未验证。"
+        },
+        {
+          "claim": "Stopwatch 的 Start、Stop、Reset 分别进入运行、暂停与归零状态，运行时出现 Lap 1",
+          "confidence": "observed",
+          "evidence": [
+            "stopwatch.flow",
+            "stopwatch.direct"
+          ],
+          "explanation": "同一 XR 上的脚本按 Stopwatch、Start、Stop、Reset 顺序操作；截图与无障碍树显示 00:00.00 → 递增时间和 Lap 1 → 停止时间及 Reset → 00:00.00。三个对应入口在各自点击窗口各命中一次，其他点击窗口为零。",
+          "limitation": "只验证一次未记录分段的短时运行；未验证多分段、后台计时、跨启动保存或模拟表盘。"
+        }
+      ]
+    },
+    {
+      "title": "核心代码路径与可解释原理",
+      "findings": [
+        {
+          "claim": "iPhone 世界时钟的 Add 由 MTAWorldClockTableViewController::showAddView 处理",
+          "confidence": "inferred",
+          "evidence": [
+            "world.direct",
+            "case.objc"
+          ],
+          "explanation": "Add 点击窗口的当前 IMP 与主程序静态入口各命中一次，另两个窗口为零。地址 0x100025658 的同哈希 Ghidra 伪代码先调用 WorldClockManager.sharedManager 的一个未命名方法；非零分支通过父类 showAddViewWithCompletion: 呈现界面，另一分支构造 TOO_MANY_WORLD_CLOCKS 提示。",
+          "limitation": "未命名调用的精确选择子和数量阈值未从本函数还原；点击与函数命中是强关联，但没有完整调用栈。"
+        },
+        {
+          "claim": "原先自动选择的 MTAWorldClockPadViewController::addClock: 在这台 XR 的所选点击窗口均为零命中",
+          "confidence": "observed",
+          "evidence": [
+            "app.all",
+            "world.direct"
+          ],
+          "explanation": "初始调查的自动候选属于 Pad 控制器；随后用 iPhone 表格控制器方法重跑，Add 点击窗口命中 showAddView。报告以实测命中路径为准。",
+          "limitation": "零命中仅指本次监测窗口；不能断言该 Pad 方法在所有设备或状态下永不执行。"
+        },
+        {
+          "claim": "闹钟 Add 的 MTAAlarmTableViewController::showAddView 把空参数传给 showAddViewForAlarm:；取消按钮调用编辑器委托",
+          "confidence": "inferred",
+          "evidence": [
+            "alarm.direct"
+          ],
+          "explanation": "0x100019fc0 的伪代码只有 showAddViewForAlarm:(nil) 转发；0x100027388 的 _cancelButtonClicked: 伪代码记录日志并获取 delegate，随后调用未具名委托 stub。两入口分别在 Add 与 Cancel 的受控窗口命中。",
+          "limitation": "委托 stub 的实际选择子和更深的保存路径未在这两个函数中还原；不能仅凭取消调用推断文件没有被写入。"
+        },
+        {
+          "claim": "计时器铃声选择器由 MTATimerViewController 构建并呈现，取消入口负责关闭",
+          "confidence": "inferred",
+          "evidence": [
+            "timer.direct"
+          ],
+          "explanation": "0x10000c5fc 的伪代码懒加载 TKTonePickerViewController，读取 timer.sound.toneIdentifier，设定本地化标题、Cancel/Set 动作及 UINavigationController，再 present；0x10000cc18 的伪代码清理观察者并 dismiss。两入口分别在打开与取消窗口命中。",
+          "limitation": "没有追踪 Set/confirmPickingSound、音频预览或实际计时器运行；反编译中的未具名 stub 语义仍待核实。"
+        },
+        {
+          "claim": "秒表 Start、Stop、Reset 分别进入 startLapTimer、pauseLapTimer、resetLapTimer",
+          "confidence": "inferred",
+          "evidence": [
+            "stopwatch.flow",
+            "stopwatch.direct"
+          ],
+          "explanation": "三个当前 IMP 与同哈希主程序静态入口在各自点击窗口各命中一次。0x10002d924 伪代码将 offset 归零、创建 NSDate startTime、更新状态和分段表；0x10002da5c 计算起点到当前的时间差并累加 offset，再清空 startTime；0x10002dcd8 清除 startTime 与 offset，并清空分段、刷新表格。",
+          "limitation": "未具名 ObjC stub 的具体选择子和持久化实现尚未还原；点击窗口关联与伪代码不能证明完整调用链。"
+        }
+      ]
+    },
+    {
+      "title": "复刻边界与未覆盖功能",
+      "findings": [
+        {
+          "claim": "这些证据足以规定四条已验证的独立可运行界面与状态复刻任务",
+          "confidence": "inferred",
+          "evidence": [
+            "app.all",
+            "world.direct",
+            "alarm.direct",
+            "timer.direct",
+            "stopwatch.direct"
+          ],
+          "explanation": "四条原版脚本保存了入口、操作后状态和末端页面的可见文字与截图；主要动作入口具有同设备、同二进制的运行时及静态函数证据。",
+          "limitation": "不等于完整 Clock；城市写入、闹钟调度、计时器倒计时、音调播放、秒表多分段和后台状态均未验收。"
+        }
+      ]
+    }
+  ]
+}

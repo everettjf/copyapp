@@ -187,7 +187,8 @@ def check_final_view(flow_case: Path, assertion: dict) -> dict:
             class_name = str(node.get("class_name", ""))
             if (node.get("text") != expected["text"] or
                     not (class_name.endswith("UILabel") or
-                         class_name in ("UITableViewLabel", "UITabBarButtonLabel") or
+                         class_name in ("UITableViewLabel", "UITabBarButtonLabel",
+                                        "MTUITimeView") or
                          (include_button and class_name == "UIButtonLabel"))):
                 continue
             x = y = 0.0

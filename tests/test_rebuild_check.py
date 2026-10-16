@@ -39,6 +39,24 @@ class RebuildCheckTest(unittest.TestCase):
             self.assertTrue(result["passed"])
             self.assertEqual(result["matches"][0]["class_name"], "UITableViewLabel")
 
+    def test_final_view_accepts_clock_time_view_only_in_selected_region(self):
+        with tempfile.TemporaryDirectory() as temp:
+            flow = Path(temp)
+            (flow / "view-tree").mkdir()
+            (flow / "manifest.json").write_text("{}")
+            (flow / "view-tree/view-tree.json").write_text(json.dumps({"nodes": [
+                {"id": 0, "parent": None, "class_name": "UIWindow",
+                 "frame": {"x": 0, "y": 0, "width": 414, "height": 896}},
+                {"id": 1, "parent": 0, "class_name": "MTUITimeView", "text": "00:00.00",
+                 "frame": {"x": 0, "y": 200, "width": 414, "height": 106}},
+                {"id": 2, "parent": 0, "class_name": "MTUITimeView", "text": "00:00.00",
+                 "frame": {"x": 550, "y": 313, "width": 136, "height": 30}},
+            ]}))
+            result = check_final_view(flow, {"text": "00:00.00",
+                "region_points": [0, 190, 414, 325]})
+            self.assertTrue(result["passed"])
+            self.assertEqual([item["node_id"] for item in result["matches"]], [1])
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

@@ -8,6 +8,8 @@ REA 不属于正式链路的运行依赖。深入函数分析优先用 Copy APP 
 
 一个新的无账号系统 App 试点也在 XR 上完整经过三条流程发现、无 REA 包与函数分析、正式报告、独立源码、TrollStore 安装和同机对照：[Clock 报告](cases/clock-three-flow-no-rea-reviewed-report-v3-20261015/report.md) → [复刻任务](cases/clock-three-flow-rebuild-preparation-v4-20261015/task/TASK.md) → [Copy Clock 源码](rebuild/ClockClone) → [交付核验 v9](cases/clock-three-flow-agent-delivery-v9-20261015/report.md)。世界时钟城市选择、未保存闹钟编辑和计时器铃声选择的 3/3 条脚本及末端 UIKit 断言通过；9 对截图均已逐张审阅，没有重大视觉差异，三个流程仍有轻微差异。首屏截图曾在 UIKit 尚未完成绘制时采集到缺失的导航栏，重放器现在对启动、底部标签切换和稳定截图增加就绪等待。该试点没有实现 Clock 的保存、倒计时和后台能力，也没有证明独立终端的一命令 Agent 流程。
 
+Clock 试点现已扩展到四个主标签：[四流程分析报告](cases/clock-four-flow-no-rea-reviewed-report-v5-20261015/report.md)引用 Stopwatch 的 Start、Stop、Reset 三个同二进制方法在对应点击窗口的 Frida 命中和 Copy APP 直连 Ghidra 伪代码。[四流程复刻任务](cases/clock-four-flow-rebuild-preparation-v7-20261015/task/TASK.md)与[XR 交付核验](cases/clock-four-flow-agent-delivery-v1-20261015/report.md)记录 4/4 行为断言、4/4 末端 UIKit 断言和 13 对已审截图；均有轻微视觉差异，没有重大差异。复刻版 Stopwatch 可开始、暂停、重置并显示当前分段；多分段、后台计时、闹钟保存和 Timer 倒计时仍未验证。`rebuild-check` 现允许有界区域内的系统 `MTUITimeView` 文本作为末端断言，不会把屏幕外的同名视图当作通过。
+
 新生成的直接 Ghidra 案例包含有界 `function-facts.json`（函数签名、静态调用者与被调用者）及对应的 REA MIT 许可副本；[XR 导出分享扩展的真实案例](cases/fixture-share-direct-facts-license-20261015/summary.json)已通过来源校验。静态关系不代表这些调用在某次点击中执行。
 `function-facts.json` v2 又加入有界基本块、指令引用和可识别字符串的短预览；XR 导出分享扩展的[真实 Ghidra 输出](cases/fixture-share-direct-topology-v3-20261015/function-facts.json)与[报告导入](cases/fixture-share-direct-topology-report-20261015/report.md)已验证。旧 v1 证据仍可校验。这些线索是静态分析，不能代替真机分支轨迹。
 
