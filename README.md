@@ -1,12 +1,68 @@
 # Copy APP
 
-**Language:** English | [简体中文](README.zh-CN.md)
+**Language:** English · [简体中文](README.zh-CN.md) · [All 20 languages](#languages)
 
 Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app on a jailbroken iPhone and rebuilding selected behavior as an independent, runnable iOS app. It acquires package and sandbox evidence, inspects native code, captures UI and runtime behavior, produces a cited report and feature specification, then builds and compares a clone on the same device.
 
 The workflow verifies evidence identity and selected UI flows. It does **not** claim complete equivalence to an arbitrary app. The iPhone XR running iOS 16.1.1 is the tested device; iOS 17 and 26 testing is deferred at the user's request.
 
 A [standalone Codex CLI trial on the XR](docs/external-codex-xr-trial.md) completed a source-linked Calculator report, independent build and installation, and three paired behavior checks. It reused verified discovery scripts and earlier clone source; see the trial note for the exact scope.
+
+## How it works
+
+Copy APP has two deliverables: a **source-linked analysis report** and an **independent iOS app with measured coverage**. A coding agent can drive the workflow, but the CLI records and verifies the device observations behind its claims. The Mac does the orchestration and builds; the jailbroken iPhone supplies the installed App, UI and runtime evidence.
+
+```mermaid
+flowchart LR
+  A[Codex / Claude Code / current agent] --> B[Copy APP CLI on Mac]
+  B --> C[Exact USB device + Bundle ID]
+  C --> D[OpenSSH: App bundle + sandbox]
+  C --> E[iOS MCP or iCTRL: UI actions + screenshots]
+  C --> F[Frida: bounded runtime traces]
+  D --> G[Versioned local evidence cases]
+  E --> G
+  F --> G
+  B --> H[Mach-O index + optional Ghidra / Hopper]
+  H --> G
+  G --> I[Reviewed report + feature-spec.json]
+  I --> J[Independent Xcode project + IPA]
+  J --> K[Install on the same iPhone]
+  K --> L[Paired playbooks + visual review]
+  L --> M[Verified delivery + explicit gaps]
+```
+
+The device services have separate jobs. **OpenSSH** acquires the installed package and bounded sandbox evidence. **Frida** observes selected calls and can support the verified package recovery path. **iOS MCP** is the rootless tweak used for foreground identity, UI structure, screenshots and gestures; **iCTRL** is an optional XCTest-based UI backend. One backend performs a playbook's touches at a time. Ghidra and Hopper run on the Mac when selected; REA is not a runtime dependency. See the [workflow guide](docs/copy-workflow.md) for each stage and its inputs.
+
+```mermaid
+flowchart LR
+  S[Select device + App] --> O[Observe and discover flows]
+  O --> P[Acquire package, UI, sandbox and traces]
+  P --> R[Review code evidence and write report]
+  R --> T[Select bounded behavior to rebuild]
+  T --> U[Build and install independent App]
+  U --> V[Replay original and rebuilt flows]
+  V --> W[Inspect screenshots and verify evidence]
+  W -->|gaps found| T
+  W -->|selected gates pass| X[Deliver report, source, IPA and limits]
+```
+
+### Philosophy
+
+- **Evidence before explanation.** A screenshot, trace or pseudocode fragment is an observation; a claim about how a feature works must link to evidence and say what remains unknown.
+- **Measured scope.** “Copy” means implementing named, tested flows. A passing comparison does not imply full App equivalence or recovery of the original source.
+- **Reproducible, local cases.** Cases pin the device, App, inputs, timestamps and hashes. Raw IPAs, screenshots, sandbox data and credentials stay in ignored local `cases/` rather than in Git.
+- **Independent implementation.** Rebuilt Apps are new projects. We preserve upstream attribution for tools and source we adapt; we do not treat decompiler output as original source.
+- **Replaceable tools.** The workflow can use either UI backend and optional native analyzers while keeping the same evidence and delivery gates. It runs without REA.
+
+## How to contribute
+
+Start with an issue or a focused pull request. Useful contributions include a reproducible device/backend bug, a bounded analysis adapter, a verified UI playbook, clearer setup instructions, and translations. Include the iOS version, jailbreak, tool versions, exact command, expected result and sanitized logs when reporting a device issue. Keep IPAs, credentials, account data and raw sandbox exports out of commits. Run `PYTHONPYCACHEPREFIX=/tmp/copyapp-pycache .venv/bin/python -m unittest discover -s tests` for code changes; verify any generated case with `copyapp verify`. For changes to a device path, describe the real-device evidence and remaining versions to test. The [contribution guide](CONTRIBUTING.md) has the checklist and repository map.
+
+## Languages
+
+Copy APP's README language choices follow the [REA README language list](https://github.com/morluto/rea). English and Simplified Chinese contain the full setup guide; the other pages provide localized project overviews and link to the detailed English guide. Documentation language does not change the CLI or generated report language.
+
+[English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
 ## Install and run your first survey
 
@@ -169,7 +225,7 @@ From an active Codex or Claude Code session, use the current agent as the worker
 
 The command first writes `<CASE>/discovery-agent/TASK.md` and pauses. The current agent observes the real app, writes 3–12 bounded UI playbooks, and runs `copyapp discover-check` against the specified device. Resume the same `copyapp copy` command with `--resume` after its discovery case verifies. Preparation then collects package, sandbox, UI, runtime and optional network evidence. The workflow pauses again for a formal analysis report and `analysis-delivery`, and once more for independent app implementation, installation, paired real-device comparison, screenshot review and `agent-delivery`. Each phase resumes only after its evidence passes verification. This mode never starts a nested coding-agent process.
 
-If representative flows already exist, replace `--auto-discover` with repeated `--script <PLAYBOOK>` or `--discovery <VERIFIED_DISCOVERY_CASE>`. These options are mutually exclusive. An independent terminal may instead choose `--agent-provider codex` or `claude` for external CLI execution; the external model's end-to-end autonomous run has not yet been validated. Agent process exit alone is never accepted as a finished report or clone.
+If representative flows already exist, replace `--auto-discover` with repeated `--script <PLAYBOOK>` or `--discovery <VERIFIED_DISCOVERY_CASE>`. These options are mutually exclusive. An independent terminal may instead choose `--agent-provider codex` or `claude` for external CLI execution. The [standalone Codex CLI trial](docs/external-codex-xr-trial.md) passed selected Calculator report and rebuild gates using existing discovery scripts and clone source; unfamiliar-app autonomy and the Claude CLI path remain untested. Agent process exit alone is never accepted as a finished report or clone.
 
 See [the workflow guide](docs/copy-workflow.md) for the exact handoffs, commands and evidence gates, or [its Chinese version](docs/copy-workflow.zh-CN.md). Agents working in this repository should follow [the Copy APP skill](skills/copyapp-copy/SKILL.md) and [repository guidance](AGENTS.md).
 
@@ -212,7 +268,7 @@ Formal reports now render a bounded Assets.car name list and a metadata-only san
 
 `copyapp verify` checks recorded source links and file hashes. For a standalone `install.json` directory, it also rechecks the saved IPA hash, Bundle ID and version; that does not prove the App is still installed now. A matching hash does not prove that a decompiler interpretation is correct or that an app is functionally equivalent. Store raw IPA files, screenshots, sandbox snapshots, traces and credentials only in ignored local `cases/`. Reports should distinguish direct observations, inferences and unknown behavior.
 
-The current gaps are general discovery and independent implementation across unfamiliar apps, a real external Codex/Claude CLI end-to-end run, broader app behavior and backend semantics, full sandbox and network interpretation, and cross-version validation. iOS 17 and 26 devices have not been run through this workflow.
+The current gaps are general discovery and independent implementation across unfamiliar apps, a real Claude CLI end-to-end run, broader app behavior and backend semantics, full sandbox and network interpretation, and cross-version validation. iOS 17 and 26 devices have not been run through this workflow.
 
 ## Documentation
 

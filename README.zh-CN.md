@@ -1,12 +1,66 @@
 # Copy APP
 
-**语言：** [English](README.md) | 简体中文
+**语言：** [English](README.md) · 简体中文 · [全部 20 种语言](README.md#languages)
 
 在已越狱的 iPhone XR（iOS 16.1.1）上，[Translate 完整案例](docs/translate-xr-workflow.zh-CN.md)（[English](docs/translate-xr-workflow.md)）已经从新写的发现脚本走通到[审阅报告](cases/translate-current-workflow-20261016/analysis-agent/reviewed-report/report.md)、[独立 UIKit 工程](rebuild/TranslateFreshProbe)、真机安装与三组原版/复刻版对照。六张截图逐张审阅，均有轻微图标或间距差异。范围限于文字输入但不提交翻译、Favorites 空状态和 Conversation 待机导航；翻译结果、语音和相机能力仍未实现或验证。
 
 第一版正在实现“分析 → 复刻 → 真机对照”流程。Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 只读导出包和索引数据沙盒；本地解析 Mach-O。iOS MCP 的截图、前台识别、App 启动和点击已在 iPhone XR 上验收。原版 Compass 的关键交互已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展也已在 XR 上自动恢复为完整可分析 IPA。按用户当前安排，iOS 17/26 两台设备暂不验收；一键生成完整复刻仍在开发。
 
 [独立 Codex CLI 的 XR 实测](docs/external-codex-xr-trial.zh-CN.md)已完成 Calculator 的有来源报告、新 App 构建与安装、三条原版/复刻版行为对照。此次沿用已验证的发现脚本和既有复刻源码，具体范围见实测记录。
+
+## 架构与工作原理
+
+Copy APP 连续交付两类结果：**有来源引用的分析报告**，以及**覆盖范围经过真机验证的独立 iOS App**。Coding Agent 可以驱动流程，但具体结论必须回到 Mac 端保存的设备证据。Mac 负责调度、分析和编译；越狱 iPhone 提供已安装 App、界面和运行时观测。
+
+```mermaid
+flowchart LR
+  A[Codex / Claude Code / 当前 Agent] --> B[Mac 上的 Copy APP CLI]
+  B --> C[精确选择 USB 设备和 Bundle ID]
+  C --> D[OpenSSH：App 包和沙盒]
+  C --> E[iOS MCP 或 iCTRL：界面操作和截图]
+  C --> F[Frida：限定范围运行时跟踪]
+  D --> G[带版本的本地证据案例]
+  E --> G
+  F --> G
+  B --> H[Mach-O 索引及可选 Ghidra / Hopper]
+  H --> G
+  G --> I[审阅报告及 feature-spec.json]
+  I --> J[独立 Xcode 工程及 IPA]
+  J --> K[在同一台 iPhone 上安装]
+  K --> L[原版/复刻版脚本对照和逐图审阅]
+  L --> M[可校验交付及明确缺口]
+```
+
+**OpenSSH** 获取已安装包与限定范围的沙盒证据；**Frida** 观察选定方法，也可支持已验证的整包恢复路径；**iOS MCP** 是提供前台识别、界面树、截图和手势的 rootless tweak；**iCTRL** 是可选的 XCTest 界面后端。一次脚本只由一个后端执行触控。Ghidra、Hopper 按需在 Mac 上运行，REA 不是运行依赖。各阶段的输入和验收条件见[流程指南](docs/copy-workflow.zh-CN.md)。
+
+```mermaid
+flowchart LR
+  S[选择设备与 App] --> O[观察并发现流程]
+  O --> P[采集包、界面、沙盒和跟踪]
+  P --> R[审阅代码证据并撰写报告]
+  R --> T[选定要复刻的功能范围]
+  T --> U[编译并安装独立 App]
+  U --> V[重放原版与复刻版流程]
+  V --> W[逐图审阅并校验证据]
+  W -->|存在差距| T
+  W -->|选定验收项通过| X[交付报告、源码、IPA 和限制]
+```
+
+### 项目理念
+
+- **先有证据，再作解释。** 截图、跟踪和伪代码是观测；关于功能原理的结论应指向证据，并注明尚未确认之处。
+- **明确覆盖范围。** “Copy”是实现指定且经过测试的流程。通过对照不代表完整等价，也不代表拿到了原作者源码。
+- **本地、可复查的案例。** 案例固定设备、App、输入、时间和哈希；原始 IPA、截图、沙盒数据及凭据保存在被 Git 忽略的 `cases/`。
+- **独立实现。** 复刻版是新工程；引用或改造上游工具时保留署名，不把反编译结果当作原始源码。
+- **工具可替换。** 两种界面后端及可选反编译器共享同一套证据和交付校验；默认流程不依赖 REA。
+
+## 如何贡献
+
+欢迎提交聚焦的 issue 或 PR：可复现的设备/后端问题、限定范围的分析适配器、已验证的界面脚本、安装文档和翻译都很有价值。设备问题请写明 iOS、越狱、工具版本、完整命令、预期结果及去敏日志；不要提交 IPA、密钥、账号数据或原始沙盒。代码改动运行 `PYTHONPYCACHEPREFIX=/tmp/copyapp-pycache .venv/bin/python -m unittest discover -s tests`，生成的案例运行 `copyapp verify`；设备通道改动还应注明真机证据及未测系统版本。详细约定见[贡献指南](CONTRIBUTING.zh-CN.md)。
+
+## 文档语言
+
+README 的语言列表参考 [REA 官方仓库](https://github.com/morluto/rea)。英文和简体中文提供完整安装说明，其余语言页面提供本地化概览并指向详细英文指南；文档语言不改变 CLI 和报告的语言。全部入口见 [Languages](README.md#languages)。
 
 ## 新用户：安装与第一次运行
 
@@ -160,7 +214,7 @@ UI 脚本还支持有界[文本输入](docs/ui-text-playbooks.zh-CN.md)（[Engli
 
 正式报告现在会把 `Assets.car` 的资源名称及沙盒的只读文件元数据摘要直接写入人可读附录，完整索引仍保留证据链接。进一步的 [Calculator 深入报告](cases/calculator-ui-deep-report-20261016/report.md)和[来源关联的分析交付](cases/calculator-ui-deep-analysis-delivery-20261016/report.md)已通过核验，还加入 Copy APP 直连 Ghidra 对根视图组装、键盘按钮 frame 布局和结果视图手势装配的同二进制函数证据。资源名或数据库/偏好文件名只提供调查线索，不能单独证明某个功能实际读取它们；本次三条运算流程也未测试显示区手势。
 
-旧 REA 命令和 provider 桥接已删除。深入函数分析可选 Copy APP 直连 Ghidra 或 `--provider hopper-direct`（顶层 `copy` 使用 `--analysis-provider hopper-direct`）；后者也提供 `hopper-function` 和 `hopper-queue`，支持 `--hopper-app <Hopper.app>` 指定安装路径。Hopper 需要在正常 macOS 用户会话中安装并完成许可激活；受限会话可能无法通过 Spotlight 启动。iOS 16.1.1 XR 上的[集成调查案例](cases/fixture-counter-hopper-investigation-v2-20261016/manifest.json)已跑通 UI 重放、Frida 跟踪、候选绑定和 Hopper 反编译，并导入[来源校验报告](cases/fixture-counter-hopper-integrated-report-20261016/report.md)。启动时 Instruments 失败会在有界等待后回退到 iCTRL 终止并重启 App。完整的 `copy` 分析到复刻真机交付仍待验证。旧案例仍可校验已保存的 REA 证据。见[Hopper 接入说明](docs/rea-hopper-integration.zh-CN.md)与[独立运行边界](docs/rea-independence.md)。
+旧 REA 命令和 provider 桥接已删除。深入函数分析可选 Copy APP 直连 Ghidra 或 `--provider hopper-direct`（顶层 `copy` 使用 `--analysis-provider hopper-direct`）；后者也提供 `hopper-function` 和 `hopper-queue`，支持 `--hopper-app <Hopper.app>` 指定安装路径。Hopper 需要在正常 macOS 用户会话中安装并完成许可激活；受限会话可能无法通过 Spotlight 启动。iOS 16.1.1 XR 上的[集成调查案例](cases/fixture-counter-hopper-investigation-v2-20261016/manifest.json)已跑通 UI 重放、Frida 跟踪、候选绑定和 Hopper 反编译，并导入[来源校验报告](cases/fixture-counter-hopper-integrated-report-20261016/report.md)。启动时 Instruments 失败会在有界等待后回退到 iCTRL 终止并重启 App。选定流程的 `copy` 分析到复刻真机交付已在 XR 验证；任意 App 的完整复刻尚未验证。旧案例仍可校验已保存的 REA 证据。见[Hopper 接入说明](docs/rea-hopper-integration.zh-CN.md)与[独立运行边界](docs/rea-independence.md)。
 
 当前最完整的真实 App 示例是 XR 上的 [DeepSeek 综合逆向报告](cases/deepseek-comprehensive-xr-20261015/report.md)：以 `copyapp report-portfolio` 核对同设备、同 App 版本及同一解密主程序，汇合三条登录页的 UI/函数/网络分析和另一次沙盒/SQLite 结构分析。报告保留两轮证据的各自时点；原始数据库和 IPA 仍在忽略的本地 `cases/` 中。登录后功能、从零自动生成完整复刻和 iOS 17/26 仍未验收。
 
@@ -189,7 +243,7 @@ Clock 随后扩展到四个主标签：[四流程分析报告](cases/clock-four-
 
 已有脚本时可改用重复的 `--script <PLAYBOOK>`；已有真机验收案例时可用 `--discovery <DISCOVERY_CASE>`。三个选项互斥。自动发现阶段要求 Agent 在指定手机上验收 3–12 条不同的有界流程，并把案例、脚本和哈希固定在父案例中。这不保证覆盖整个 App。
 
-它顺序执行 `prepare-app`、经过交付核验的分析 Agent、`prepare-rebuild`、经过真机交付核验的复刻 Agent；默认整包脱壳、采集网络元数据且不依赖 REA。需要直接 Ghidra 函数证据时，可加 `--analysis-provider ghidra-direct --ghidra-dir <GHIDRA_DIR> --java-home <JDK_HOME>`。`copyapp verify cases/<NEW_WORKFLOW_CASE>` 会重验最终的来源链。成功只表示选定流程具备来源关联的报告、行为断言、逐图审阅和无重大视觉差异；其余页面与服务端行为保留为未验证。若 Agent 阶段失败，案例保存现场，`--resume` 复用已经通过的阶段，但不会自动再次运行可能改动手机状态的失败 Agent；审阅其输出后使用新的案例重试。自动发现加总入口已通过模拟 Agent 的完整路径与拒绝测试，尚未从独立终端用真实 Agent CLI 完成端到端实跑，也尚未证明能自主探索任意 App。
+它顺序执行 `prepare-app`、经过交付核验的分析 Agent、`prepare-rebuild`、经过真机交付核验的复刻 Agent；默认整包脱壳、采集网络元数据且不依赖 REA。需要直接 Ghidra 函数证据时，可加 `--analysis-provider ghidra-direct --ghidra-dir <GHIDRA_DIR> --java-home <JDK_HOME>`。`copyapp verify cases/<NEW_WORKFLOW_CASE>` 会重验最终的来源链。成功只表示选定流程具备来源关联的报告、行为断言、逐图审阅和无重大视觉差异；其余页面与服务端行为保留为未验证。若 Agent 阶段失败，案例保存现场，`--resume` 复用已经通过的阶段，但不会自动再次运行可能改动手机状态的失败 Agent；审阅其输出后使用新的案例重试。独立 Codex CLI 已在 XR 完成选定 Calculator 流程的端到端实跑，详见[实测记录](docs/external-codex-xr-trial.zh-CN.md)；陌生 App 的自主发现和从零实现尚未证明。
 
 用户只给 App 时，当前 Codex/Claude 可按 [`copyapp-copy` Skill](skills/copyapp-copy/SKILL.md) 观察首页并编写三条代表性脚本。`copyapp discover-check --udid <UDID> --bundle <BUNDLE> --script <FLOW> ... --out cases/<DISCOVERY>` 先检查脚本身份、不同点击路径和有界步骤，再在同一手机上重放每条流程；`copyapp copy` 可用 `--discovery cases/<DISCOVERY>` 直接读取验收后的脚本副本。XR 上三条 DeepSeek 登录页脚本的[实测发现验收](cases/deepseek-three-flow-discovery-check-live-20261015/report.md)和父案例哈希均通过。脚本仍由 Agent 按真实界面编写，自动发现任意 App 全部页面的能力尚未验证。
 
@@ -308,7 +362,7 @@ Clock 随后扩展到四个主标签：[四流程分析报告](cases/clock-four-
 
 从普通终端发起独立 Coding Agent 时，可用 `copyapp agent-run --task cases/<TASK> --provider codex|claude --out cases/<RUN>`。它接受 `draft-analysis` 的语义审阅任务，也接受 `agent-task` 的复刻任务；两者都要求来源可验证且位于当前仓库。复刻任务还要求报告全部选定流程已具备原版脚本、工程路径在仓库内。Codex 使用 workspace-write 与自动审批审查，Claude Code 使用 auto 权限模式。命令把 Agent 输出、错误和会话 ID 保存到本地案例。语义审阅任务可加 `--verify-analysis`：Agent 必须把正式报告写到 `<RUN>/reviewed-report`，进程退出后 Copy APP 自动运行 `analysis-delivery` 检查全部调查流程并保存 `<RUN>/analysis-delivery`；缺报告或来源不符返回非零，诊断留在 `analysis-verification.json`。这仍不自动证明函数解释正确。先加 `--dry-run` 可检查调用而不启动 Agent；[DeepSeek 三流程固定交付路径预演](cases/deepseek-three-flow-verified-analysis-agent-dry-20261015/run.json)已通过来源校验，尚未实际启动外部模型。既有 Calculator 的 [Codex 分析调用预演](cases/calculator-analysis-codex-run-dry-20261015/run.json)、[Claude 分析调用预演](cases/calculator-analysis-claude-run-dry-20261015/run.json)，以及 [Codex 复刻调用预演](cases/compass-agent-run-dry-20261015/run.json)、[Claude 复刻调用预演](cases/calculator-claude-agent-run-dry-20261015/run.json)均已通过。`agent_exited_unverified` 只表示 CLI 正常退出，绝不代表报告语义、源码、安装或真机对照通过。在已经运行的 Codex/Claude 会话内，直接执行 `TASK.md`，无需嵌套启动另一个 Agent。
 
-复刻任务可加 `agent-run --verify-rebuild`：Agent 将安装记录、任务直连真机对照和逐图审阅分别保存到 `<RUN>/install`、`<RUN>/rebuild-check` 和 `<RUN>/visual-review`。进程退出后 Copy APP 自动生成并校验 `<RUN>/agent-delivery`，核对同一源码、IPA、设备、版本与所选脚本。选定流程须有操作后或末端行为断言，所有截图须审阅；缺证据、未通过行为断言、未审图片或重大视觉差异会使命令返回非零并写入 `rebuild-verification.json`，同时保留已生成的交付材料。轻微视觉差异仍在交付中列明，不等于像素一致。[DeepSeek 三流程固定交付路径预演](cases/deepseek-three-flow-verified-rebuild-agent-dry-20261015/run.json)已通过任务来源校验；实际外部 Agent 自动生成源码并完成真机对照尚未验证。
+复刻任务可加 `agent-run --verify-rebuild`：Agent 将安装记录、任务直连真机对照和逐图审阅分别保存到 `<RUN>/install`、`<RUN>/rebuild-check` 和 `<RUN>/visual-review`。进程退出后 Copy APP 自动生成并校验 `<RUN>/agent-delivery`，核对同一源码、IPA、设备、版本与所选脚本。选定流程须有操作后或末端行为断言，所有截图须审阅；缺证据、未通过行为断言、未审图片或重大视觉差异会使命令返回非零并写入 `rebuild-verification.json`，同时保留已生成的交付材料。轻微视觉差异仍在交付中列明，不等于像素一致。[DeepSeek 三流程固定交付路径预演](cases/deepseek-three-flow-verified-rebuild-agent-dry-20261015/run.json)已通过任务来源校验；后续[独立 Codex CLI 的 XR 实测](docs/external-codex-xr-trial.zh-CN.md)完成了实际构建、安装和三流程对照，但沿用了既有复刻源码。
 
 报告可以只选择第一版要实现的三条代表流程。此时 `agent-task` 状态为 `selected_flows_ready`，`agent-run` 会保留所选和未选流程清单；`agent-delivery` 可引用覆盖更多流程的真机对照，但只给任务内流程计数并列出额外检查项。[Calculator 三流程任务](cases/calculator-selected3-task-20261015/TASK.md)从九流程报告生成，[Codex 调用预演](cases/calculator-selected3-codex-dry-20261015/run.json)和[当前 0.1.10 的三流程交付核验](cases/calculator-selected3-delivery-v11-20261015/report.md)均通过来源验证。交付中的 3/3 末端断言引用已有 XR 九流程对照，六条未选流程未计入该任务；视觉仍为 `unreviewed`，也没有独立 Agent 实际执行记录。
 
