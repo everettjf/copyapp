@@ -544,7 +544,7 @@ def main() -> None:
     copy_scripts.add_argument("--discovery", type=Path,
                               help="verified discover-check case containing three or more replayed flows")
     copy_scripts.add_argument("--auto-discover", action="store_true",
-                              help="ask the standalone coding agent to discover and replay representative flows")
+                              help="discover and replay representative flows; current mode pauses for this session")
     copy_parser.add_argument("--project", required=True, type=Path)
     copy_parser.add_argument("--rebuilt-bundle", required=True)
     copy_parser.add_argument("--out", required=True, type=Path)

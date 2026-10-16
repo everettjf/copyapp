@@ -1,0 +1,36 @@
+# Copy APP 工作流程
+
+**语言：** [English](copy-workflow.md) | 简体中文
+
+Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组织为可续跑、按证据验收的流程。`current` 模式供已经打开的 Codex 或 Claude Code 会话执行；独立终端也可选择外部 Agent CLI，但真实模型从头到尾自主完成的路径尚未验收。
+
+## 1. 发现代表性流程
+
+```sh
+.venv/bin/copyapp copy --udid <UDID> --bundle <原版_BUNDLE_ID> \
+  --auto-discover --agent-provider current \
+  --project rebuild/<新工程> --rebuilt-bundle <复刻版_BUNDLE_ID> \
+  --out cases/<新案例>
+```
+
+首次调用生成 `discovery-agent/TASK.md` 并暂停，不会先操作手机。当前 Agent 观察真实 App，在 `discovery-agent/candidates/` 编写 3–12 条不同且有界的 UI 脚本，再以同一设备、Bundle ID 和 UI 后端运行 `copyapp discover-check`，将通过的案例保存到 `discovery-agent/discovery/`。失败案例保留诊断，检查手机状态后再试。验收绑定脚本内容、设备身份和真机重放证据；它只证明选定路径，不代表覆盖整个 App。
+
+已有验收案例可用 `--discovery <案例>`；已有脚本可重复使用 `--script <文件>`。这三种输入互斥。
+
+## 2. 采集与解释
+
+对完全相同的 `copyapp copy` 命令添加 `--resume`。父流程先重验发现结果，再用 `prepare-app` 采集安装包、沙盒、请求的脱壳结果及 UI/运行时调查证据。状态为 `analysis_agent_needs_review` 时，阅读 `analysis-agent/TASK.md` 和来源证据，在 `analysis-agent/reviewed-report/` 写正式报告与 `feature-spec.json`，然后运行 `copyapp analysis-delivery` 保存到 `analysis-agent/analysis-delivery/`。交付关卡检查来源身份和每条流程的证据关联；反编译函数的语义仍须由 Agent 审阅，未知部分要明确标注。
+
+默认链路不依赖 REA。需要直接反编译时可添加 `--analysis-provider ghidra-direct --ghidra-dir <目录> --java-home <目录>`；此模式需要外部 Ghidra 和 JDK。Frida 的运行时命中与静态伪代码是不同证据，不能单凭其中一项认定完整实现。
+
+## 3. 实现与真机对照
+
+再次续跑后，`prepare-rebuild` 生成关联报告的复刻任务，并停在 `rebuild-agent/TASK.md`。在指定的 `--project` 编写独立 Xcode 工程，在绑定设备上安装并保存证据；使用 `rebuild-task-check` 在同一 UI 后端对照原版与复刻版选定流程。逐张审阅截图，保存 `visual-review`，最后运行不带 `--run` 的 `agent-delivery`。父流程要求每条选定流程通过行为或末端视图断言、全部图片已审且无重大差异；轻微差异仍需记录。
+
+最后一次 `--resume` 仅在所有子案例和来源关联通过时将父案例标为完成。`copyapp verify cases/<案例>` 可以重验哈希，但不能证明语义解释正确，也不能证明未测功能等价。已处于 Coding Agent 会话时不要嵌套启动 `copyapp agent-run` 或另一个 Codex/Claude 进程。
+
+## 当前验收边界
+
+iOS 16.1.1 的 iPhone XR 已完成 Clock 三流程的当前 Agent 父案例：正式报告、独立 App 源码、安装、3/3 行为与末端视图断言及 10 对逐张审阅的截图，截图均有轻微差异。另一个[当前 Agent 自动发现交接案例](../cases/clock-current-auto-workflow-20261016/manifest.json)重放三条先前编写的脚本并抵达分析审阅，验证了真机接入但不代表模型自主编写脚本。外部进程试验同样使用固定脚本。任意 App 的发现、从零生成源码、全功能等价以及 iOS 17/26 兼容性尚未验证；后两台手机的测试按用户要求暂缓。
+
+参见 [中文 README](../README.zh-CN.md)、[英文 README](../README.md) 和 [详细试验记录](../PLAN.md)。
