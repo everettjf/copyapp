@@ -40,7 +40,7 @@ class InvestigateAppTest(unittest.TestCase):
             path = child / "manifest.json"
             path.write_text(json.dumps({"status": status, "bundle_id": self.bundle,
                 "device_id_sha256_prefix": self.prefix,
-                "ui_backend": "ios-mcp", "provider": "ghidra",
+                "ui_backend": "ios-mcp", "provider": "none",
                 "selected_methods": [],
                 "source_script_sha256": sha256_file(script)}))
             return path, status == "complete"
@@ -48,7 +48,7 @@ class InvestigateAppTest(unittest.TestCase):
         with patch("copyapp.investigate_app.verify_case", return_value=True), \
              patch("copyapp.investigate_app.investigate_flow", side_effect=first_pass) as worker:
             parent, complete = investigate_app(self.udid, self.analysis,
-                                               self.scripts, output, provider="ghidra")
+                                               self.scripts, output, provider="none")
         self.assertFalse(complete)
         self.assertEqual(worker.call_count, 2)
         self.assertEqual(json.loads(parent.read_text())["status"], "needs_review")
@@ -68,7 +68,7 @@ class InvestigateAppTest(unittest.TestCase):
              patch("copyapp.report._main_and_embedded_hashes", return_value=set()), \
              patch("copyapp.investigate_app.investigate_flow", side_effect=second_pass) as worker:
             parent, complete = investigate_app(self.udid, self.analysis,
-                                               self.scripts, output, provider="ghidra", resume=True)
+                                               self.scripts, output, provider="none", resume=True)
         self.assertTrue(complete)
         worker.assert_called_once()
         record = json.loads(parent.read_text())

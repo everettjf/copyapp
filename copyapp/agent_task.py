@@ -58,7 +58,7 @@ def _source_script(report: Path, entry: dict,
 
 
 def _analysis_function_files(flow_root: Path) -> list[Path]:
-    """Expose bounded native and direct-Ghidra function evidence to the coder."""
+    """Expose bounded native, Ghidra and Hopper function evidence to the coder."""
     files = []
     native = flow_root / "native"
     native_index = native / "index.json"
@@ -82,6 +82,15 @@ def _analysis_function_files(flow_root: Path) -> list[Path]:
                 facts = summary.parent / "function-facts.json"
                 if facts.is_file():
                     files.append(facts)
+    hopper = flow_root / "direct-hopper"
+    hopper_queue = hopper / "queue.json"
+    if hopper_queue.is_file():
+        files.append(hopper_queue)
+        for result in _read(hopper_queue).get("results", []):
+            if result.get("status") == "complete":
+                summary = checked_path(hopper, result["summary"])
+                files.extend((summary, checked_path(hopper,
+                    str(Path(result["summary"]).parent / "pseudocode.txt"))))
     return files
 
 
@@ -93,6 +102,7 @@ def _evidence_files(report: Path, entry: dict,
     extras = {
         "rea": ("pseudocode.txt", "evidence.json"),
         "ghidra_direct": ("pseudocode.txt", "function-facts.json", "summary.json"),
+        "hopper_direct": ("pseudocode.txt", "summary.json"),
         "native_disassembly": ("assembly.txt", "summary.json"),
         "playbook": ("playbook.json",),
         "flow_capture": ("playbook/playbook.json", "view-tree/view-tree.json",
@@ -130,6 +140,15 @@ def _evidence_files(report: Path, entry: dict,
             branch_trace = root / "sources/branch-flow/trace/trace.json"
             if branch_trace.is_file():
                 files.append(branch_trace)
+    if entry.get("kind") == "hopper_direct_queue":
+        queue_path = root / "queue.json"
+        if queue_path.is_file():
+            files.append(queue_path)
+            for result in _read(queue_path).get("results", []):
+                if result.get("status") == "complete":
+                    files.extend((checked_path(root, result["summary"]),
+                                  checked_path(root, str(Path(result["summary"]).parent /
+                                                         "pseudocode.txt"))))
     if entry.get("kind") == "investigation":
         files.extend(_analysis_function_files(root))
     if entry.get("kind") == "app_investigation" and source_flow_index is not None:

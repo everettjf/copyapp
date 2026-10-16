@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.copyapp.ictrl.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>ictrl-app</string>
+			</array>
+		</dict>
+	</array>
+	<!-- Pairing files can be shared to iCTRL ("Open in" / share sheet) from
+	     Files, Mail, AirDrop or a chat app, for when the in-app picker cannot
+	     reach the file. Alternate rank: iCTRL is offered, never the default
+	     opener for property lists. Copied in (not opened in place) and
+	     validated before it is stored. -->
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Pairing File</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.copyapp.ictrl.pairing-record</string>
+				<string>com.apple.property-list</string>
+				<string>public.xml</string>
+			</array>
+		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.copyapp.ictrl.pairing-record</string>
+			<key>UTTypeDescription</key>
+			<string>Device Pairing Record</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>com.apple.property-list</string>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>mobiledevicepairing</string>
+					<string>mobiledevicepair</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<false/>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_ictrl._tcp</string>
+	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>ictrl</string>
+		<string>stikdebug</string>
+		<string>stikjit</string>
+		<string>localdevvpn</string>
+	</array>
+</dict>
+</plist>

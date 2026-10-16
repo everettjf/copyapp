@@ -1,8 +1,8 @@
 # Copy APP 与 REA 的边界
 
-Copy APP 的正式分析与复刻链路不要求安装 REA。手机端采集、整包恢复、Mach-O/Objective-C 与 Assets.car 资源索引、UI 和 Frida 实验、原生汇编、直接 Ghidra 反编译、证据报告、Agent 任务和真机对照都由本仓库的命令串联。需要函数伪代码时选 `--provider ghidra-direct`；这个选项调用本仓库的 `CopyAppDecompile.java`，不调用 REA CLI、MCP 或桥接服务。外部 Ghidra、JDK、Frida、macOS `assetutil` 和手机端组件仍需按所选能力安装。
+Copy APP 的正式分析与复刻链路不要求安装 REA。手机端采集、整包恢复、Mach-O/Objective-C 与 Assets.car 资源索引、UI 和 Frida 实验、原生汇编、直接 Ghidra/Hopper 反编译、证据报告、Agent 任务和真机对照都由本仓库的命令串联。需要函数伪代码时选 `--provider ghidra-direct` 或 `--provider hopper-direct`；前者调用本仓库的 `CopyAppDecompile.java`，后者调用本仓库的 `hopper_script.py`，都不调用 REA CLI、MCP 或桥接服务。外部 Ghidra、JDK、Hopper、Frida、macOS `assetutil` 和手机端组件仍需按所选能力安装。
 
-`rea-function`、`rea-queue`、`rea-bridge` 及显式 `--provider ghidra|hopper` 是兼容旧案例的可选入口。它们不会在 `--provider none` 或 `ghidra-direct` 时执行。旧报告可继续验证其已保存的 REA 证据，但新案例优先使用直接 Ghidra 证据。
+旧 `rea-function`、`rea-queue`、`rea-bridge` 命令及 REA 后端 `--provider ghidra|hopper` 已删除。新案例接受 `none`、`ghidra-direct` 或 Copy APP 自己的 `hopper-direct`；旧报告仍可校验已保存的 REA 证据，不会启动 REA。
 
 ## 选择性移植
 
@@ -12,12 +12,12 @@ Copy APP 的正式分析与复刻链路不要求安装 REA。手机端采集、�
 | --- | --- | --- |
 | Ghidra 函数伪代码与分析器配置 | `ghidra-function`、`ghidra-queue`、`ghidra-indirect` 和 `--provider ghidra-direct` 已独立实现并在 XR 案例验证 | 保持直接实现，无需复制整个 REA 桥接层 |
 | 函数调用关系、交叉引用、字符串引用、基本块 | `function-facts.json` v2 输出有界调用者、被调用者、签名、静态基本块和指令引用；可识别的字符串值只保留短预览。已在 XR 导出的 FixtureShare 二进制上由真实 Ghidra 运行并验证；原生汇编队列另提供有界直接调用跟随 | 针对具体 App 继续补动态分支验证；静态引用不能证明运行时命中 |
-| Hopper 函数资料 | 旧入口依赖 REA/Hopper | 如需不安装 REA 仍用 Hopper，单独实现 Hopper adapter；主流程先以直接 Ghidra 覆盖 |
+| Hopper 函数资料 | `hopper-function`、`hopper-queue` 和 `--provider hopper-direct` 独立实现；XR 导出夹具的真实函数与报告导入已验证 | 目前输出函数签名和伪代码，调用关系与间接目标跟随仍用 Ghidra；完整 Hopper 一命令真机流程尚未验收 |
 | 通用 MCP 会话、其他平台反编译器、跨平台进程管理 | Copy APP 没有这些通用需求 | 不整体搬入，避免把 REA 的通用产品复杂度带进 iOS 专用流程 |
 
 移植的验收标准是：干净环境不安装 REA，也能从越狱机采集目标、生成经校验的分析报告和复刻任务、构建独立 App，并在同一设备执行对照。已有 Calculator 与 DeepSeek 的限定流程完成过该链路；这不代表任意 App 的所有页面和逻辑都已自动复刻。报告中的代码仍是反编译推断，运行时分支和 UI 结果需单独取证。
 
-XR 上的 DeepSeek 三流程 `prepare-analysis --provider none` 案例已经生成待审任务，再由 Copy APP 把实机 UI/Frida、原生汇编和此前直接 Ghidra 证据汇成[来源绑定的报告](../cases/deepseek-no-rea-three-flow-prepared-report-v9-20261015/report.md)及[分析交付](../cases/deepseek-no-rea-three-flow-analysis-delivery-v9-20261015/report.md)。`none` 路径自身不生成新的伪代码；需要新函数伪代码时明确使用 `ghidra-direct`。代码可以按 MIT 条款选择性参考或移植，但现有正式路径没有必须从 REA 再复制的模块。Copy APP 仍依赖设备端组件及相应外部工具链，独立的含义是运行时不依赖 REA。
+XR 上的 DeepSeek 三流程 `prepare-analysis --provider none` 案例已经生成待审任务，再由 Copy APP 把实机 UI/Frida、原生汇编和此前直接 Ghidra 证据汇成[来源绑定的报告](../cases/deepseek-no-rea-three-flow-prepared-report-v9-20261015/report.md)及[分析交付](../cases/deepseek-no-rea-three-flow-analysis-delivery-v9-20261015/report.md)。`none` 路径自身不生成新的伪代码；需要新函数伪代码时明确使用 `ghidra-direct` 或 `hopper-direct`。代码可以按 MIT 条款选择性参考或移植，但现有正式路径没有必须从 REA 再复制的模块。Copy APP 仍依赖设备端组件及相应外部工具链，独立的含义是运行时不依赖 REA。
 
 新函数资料的真实运行案例在 `cases/fixture-share-direct-facts-20261015/`：Ghidra 给出了 `viewDidLoad` 的签名、一个调用者，以及包括 `addSubview:`、`activateConstraints:` 在内的静态被调用函数。其[独立报告](../cases/fixture-share-direct-facts-report-20261015/report.md)已导入函数资料；两个案例均通过 `copyapp verify`。外部函数地址是 Ghidra 分析地址，不能按主程序偏移解释。
 

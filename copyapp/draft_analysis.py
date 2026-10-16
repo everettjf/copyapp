@@ -141,6 +141,8 @@ def _review_task(output: Path, analysis: Path, investigation: Path,
         queue = _read(queue_path) if queue_path.is_file() else None
         direct_path = investigation / f"flows/flow-{index:02d}/direct-ghidra/queue.json"
         direct = _read(direct_path) if direct_path.is_file() else None
+        hopper_path = investigation / f"flows/flow-{index:02d}/direct-hopper/queue.json"
+        hopper = _read(hopper_path) if hopper_path.is_file() else None
         native_path = investigation / f"flows/flow-{index:02d}/native/index.json"
         native = _read(native_path) if native_path.is_file() else None
         paths = [root / "flow/playbook/playbook.json",
@@ -156,6 +158,8 @@ def _review_task(output: Path, analysis: Path, investigation: Path,
             paths.append(root / "rea/queue.json")
         if direct is not None:
             paths.append(root / "direct-ghidra/queue.json")
+        if hopper is not None:
+            paths.append(root / "direct-hopper/queue.json")
         if native is not None:
             paths.append(root / "native/index.json")
         pseudocode = []
@@ -189,6 +193,15 @@ def _review_task(output: Path, analysis: Path, investigation: Path,
                     paths.append(facts)
                     item["facts_path"] = str(facts.relative_to(output))
                 pseudocode.append(item)
+        for result in hopper.get("results", []) if hopper else []:
+            if result.get("status") == "complete":
+                pseudo = checked_path(root / "direct-hopper",
+                                      str(Path(result["summary"]).parent / "pseudocode.txt"))
+                paths.append(pseudo)
+                pseudocode.append({"address": result["address"],
+                                   "evidence_id": "app.all",
+                                   "path": str(pseudo.relative_to(output)),
+                                   "origin": "runtime_observed", "provider": "hopper-direct"})
         assembly = []
         for result in (native.get("results", []) + native.get("followed", [])) if native else []:
             if result.get("status") == "complete":
@@ -217,6 +230,8 @@ def _review_task(output: Path, analysis: Path, investigation: Path,
             links.append(f"[REA 队列]({root / 'rea/queue.json'})")
         if direct is not None:
             links.append(f"[Copy APP 直连 Ghidra 队列]({root / 'direct-ghidra/queue.json'})")
+        if hopper is not None:
+            links.append(f"[Copy APP 直连 Hopper 队列]({root / 'direct-hopper/queue.json'})")
         if native is not None:
             links.append(f"[原生反汇编队列]({root / 'native/index.json'})")
         lines.extend([f"### {spec['id']}", "",
@@ -350,6 +365,8 @@ def draft_analysis(analysis: Path, investigation: Path, output: Path,
         queue = _read(queue_path) if queue_path.is_file() else None
         direct_path = root / "direct-ghidra/queue.json"
         direct = _read(direct_path) if direct_path.is_file() else None
+        hopper_path = root / "direct-hopper/queue.json"
+        hopper = _read(hopper_path) if hopper_path.is_file() else None
         native_path = root / "native/index.json"
         native = _read(native_path) if native_path.is_file() else None
         tree = _read(root / "flow/view-tree/view-tree.json")
@@ -372,6 +389,9 @@ def draft_analysis(analysis: Path, investigation: Path, output: Path,
         direct_functions = [f"`{result['address']}`" for result in
                             (direct.get("results", []) if direct else [])
                             if result.get("status") == "complete"]
+        hopper_functions = [f"`{result['address']}`" for result in
+                            (hopper.get("results", []) if hopper else [])
+                            if result.get("status") == "complete"]
         native_functions = [f"`{result['address']}`" for result in
                             ((native.get("results", []) + native.get("followed", [])) if native else [])
                             if result.get("status") == "complete"]
@@ -390,12 +410,13 @@ def draft_analysis(analysis: Path, investigation: Path, output: Path,
             {"claim": method_claim + (f"；REA 保存 {len(functions)} 个入口函数证据" if
                                       queue else "；本次未请求 REA") +
                       (f"；Copy APP 直连 Ghidra 保存 {len(direct_functions)} 个函数伪代码" if direct else "") +
+                      (f"；Copy APP 直连 Hopper 保存 {len(hopper_functions)} 个函数伪代码" if hopper else "") +
                       (f"；原生工具保存 {len(native_functions)} 个函数汇编窗口" if native else ""),
              "confidence": "observed", "evidence": ["app.all"],
              "explanation": method_explanation +
-                            "。反编译函数：" + ("、".join((functions + direct_functions)[:12]) or "无") +
+                            "。反编译函数：" + ("、".join((functions + direct_functions + hopper_functions)[:12]) or "无") +
                             "；汇编窗口：" + ("、".join(native_functions[:12]) or "无") + "。",
-             "limitation": "时间窗口内命中不独自证明点击因果；未反编译时不掌握函数体语义。" if queue is None and direct is None else
+             "limitation": "时间窗口内命中不独自证明点击因果；未反编译时不掌握函数体语义。" if queue is None and direct is None and hopper is None else
                            "时间窗口内命中不独自证明点击因果；反编译文本不是原作者源码。"},
             {"claim": f"末端 UIKit 视图的屏幕上部有 {len(upper_labels)} 个可见文字标签候选",
              "confidence": "observed", "evidence": ["app.all"],

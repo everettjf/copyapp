@@ -6,6 +6,8 @@ import json
 import math
 import re
 import shutil
+import subprocess
+import sys
 import time
 from contextlib import ExitStack
 from datetime import datetime, timezone
@@ -15,7 +17,7 @@ from typing import Any, Dict, Optional, Tuple
 from copyapp.experiment import ExperimentUI
 from copyapp.gestures import GESTURE_ACTIONS, gesture_params
 from copyapp.text_actions import TYPE_ACTION, type_params
-from copyapp.ictrl import DEFAULT_CLIENT
+from copyapp.ictrl import DEFAULT_CLIENT, ICtrlClient
 from copyapp.ocr_file import ocr_file
 from copyapp.usb_tunnel import ictrl_tunnel, ios_mcp_tunnel
 from copyapp.ui_capture import capture_stable
@@ -27,16 +29,15 @@ def _now() -> str:
 
 
 async def _fresh_launch(udid: str, bundle: str) -> None:
-    from pymobiledevice3.lockdown import create_using_usbmux
-    from pymobiledevice3.services.dvt.instruments.dvt_provider import DvtProvider
-    from pymobiledevice3.services.dvt.instruments.process_control import ProcessControl
-
-    device = await create_using_usbmux(serial=udid, connection_type="USB", autopair=False)
     try:
-        async with DvtProvider(device) as provider, ProcessControl(provider) as control:
-            await control.launch(bundle, kill_existing=True)
-    finally:
-        await device.close()
+        result = subprocess.run(
+            [sys.executable, "-m", "copyapp.dvt_launch", udid, bundle],
+            capture_output=True, text=True, timeout=20, check=False)
+    except subprocess.TimeoutExpired as exc:
+        raise TimeoutError("Instruments fresh launch exceeded 20 seconds") from exc
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()[-300:]
+        raise RuntimeError(f"Instruments fresh launch exited {result.returncode}: {detail}")
 
 
 def _text(observation: Dict[str, Any], backend: str) -> str:
@@ -155,8 +156,21 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
             # Instruments connection, which may be unavailable on this XR.
             ui.client.call_ui("terminate_app", {"bundle_id": bundle})
             ui.launch(bundle)
+            record["fresh_launch_backend"] = "ictrl"
         else:
-            asyncio.run(_fresh_launch(udid, bundle))
+            try:
+                asyncio.run(_fresh_launch(udid, bundle))
+                record["fresh_launch_backend"] = "instruments"
+            except (TimeoutError, RuntimeError, OSError) as exc:
+                record["fresh_launch_primary_error"] = (
+                    f"{type(exc).__name__}: {str(exc)[:250]}")
+                # The iCTRL runner can terminate and relaunch the exact target
+                # without Instruments. Keep iOS MCP for observations and taps.
+                with ictrl_tunnel(udid, ictrl_client) as fallback_port:
+                    lifecycle = ICtrlClient(port=fallback_port, client=ictrl_client)
+                    lifecycle.call_ui("terminate_app", {"bundle_id": bundle})
+                    lifecycle.call_ui("launch_app", {"bundle_id": bundle})
+                record["fresh_launch_backend"] = "ictrl_lifecycle_fallback"
         for _ in range(10):
             if ui.frontmost() == bundle:
                 break

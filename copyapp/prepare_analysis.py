@@ -4,8 +4,6 @@ import hashlib
 import io
 import json
 import os
-import shutil
-import subprocess
 from contextlib import redirect_stdout
 from datetime import datetime, timezone
 from pathlib import Path
@@ -43,49 +41,27 @@ def _save(output: Path, record: dict) -> Path:
     return path
 
 
-def _rea_ready(output: Path, provider: str, rea_script: Optional[Path],
-               ghidra_dir: Optional[Path], java_home: Optional[Path],
-               disabled_analyzer: Optional[str] = None) -> None:
+def _ghidra_ready(output: Path, ghidra_dir: Optional[Path],
+                  java_home: Optional[Path],
+                  disabled_analyzer: Optional[str] = None) -> None:
     """Check the selected decompiler before any phone touch is attempted."""
-    if provider == "ghidra-direct":
-        from copyapp.ghidra_direct import check_direct_ghidra
-        if ghidra_dir is None:
-            raise FileNotFoundError("direct Ghidra requires --ghidra-dir or GHIDRA_INSTALL_DIR")
-        selected_java = java_home or (Path(os.environ["JAVA_HOME"])
-                                      if os.environ.get("JAVA_HOME") else None)
-        if selected_java is None:
-            raise FileNotFoundError("direct Ghidra requires a JDK via --java-home or JAVA_HOME")
-        result = check_direct_ghidra(ghidra_dir, selected_java, disabled_analyzer)
-        (output / "toolchain-doctor.json").write_text(
-            json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        return
-    if rea_script is None:
-        binary = shutil.which("rea")
-        if binary is None:
-            raise FileNotFoundError("REA CLI not found; pass --rea-script or set COPYAPP_REA_SCRIPT")
-        argv = [binary]
-    else:
-        node = shutil.which("node")
-        if node is None:
-            raise FileNotFoundError("Node.js is required for --rea-script")
-        argv = [node, str(rea_script.resolve(strict=True))]
-    environment = os.environ.copy()
-    if ghidra_dir is not None:
-        environment["GHIDRA_INSTALL_DIR"] = str(ghidra_dir.resolve(strict=True))
-    if java_home is not None:
-        environment["JAVA_HOME"] = str(java_home.resolve(strict=True))
-    run = subprocess.run(argv + ["doctor", "--provider", provider, "--json"],
-                         capture_output=True, timeout=30, env=environment)
-    if len(run.stdout) > 2 * 1024 * 1024:
-        raise RuntimeError("REA doctor result is too large")
-    try:
-        result = json.loads(run.stdout)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError("REA doctor did not return JSON") from exc
+    from copyapp.ghidra_direct import check_direct_ghidra
+    if ghidra_dir is None:
+        raise FileNotFoundError("direct Ghidra requires --ghidra-dir or GHIDRA_INSTALL_DIR")
+    selected_java = java_home or (Path(os.environ["JAVA_HOME"])
+                                  if os.environ.get("JAVA_HOME") else None)
+    if selected_java is None:
+        raise FileNotFoundError("direct Ghidra requires a JDK via --java-home or JAVA_HOME")
+    result = check_direct_ghidra(ghidra_dir, selected_java, disabled_analyzer)
     (output / "toolchain-doctor.json").write_text(
         json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    if run.returncode != 0 or not isinstance(result, dict) or result.get("healthy") is not True:
-        raise RuntimeError(f"REA {provider} toolchain is unavailable; inspect toolchain-doctor.json")
+
+
+def _hopper_ready(output: Path, hopper_app: Optional[Path]) -> None:
+    from copyapp.hopper_direct import check_direct_hopper
+    result = check_direct_hopper(hopper_app)
+    (output / "toolchain-doctor.json").write_text(
+        json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def prepare_analysis(udid: str, analysis: Path, scripts: list[Path], output: Path,
@@ -96,16 +72,15 @@ def prepare_analysis(udid: str, analysis: Path, scripts: list[Path], output: Pat
                      rebuilt_bundle_id: str = "", resume: bool = False,
                      investigation: Optional[Path] = None,
                      disabled_analyzer: Optional[str] = None,
-                     network: bool = False) -> tuple[Path, bool]:
+                     network: bool = False,
+                     hopper_app: Optional[Path] = None) -> tuple[Path, bool]:
     """Prepare a verified review task; completion still needs semantic agent work."""
     if not 1 <= len(scripts) <= 12:
         raise ValueError("provide 1–12 playbooks for one app")
     if disabled_analyzer is not None and provider != "ghidra-direct":
         raise ValueError("disabled analyzer requires ghidra-direct provider")
-    if provider in ("ghidra", "hopper") and rea_script is None and os.environ.get("COPYAPP_REA_SCRIPT"):
-        rea_script = Path(os.environ["COPYAPP_REA_SCRIPT"])
-    if provider == "ghidra-direct":
-        rea_script = None
+    if provider not in ("none", "ghidra-direct", "hopper-direct") or rea_script is not None:
+        raise ValueError("unsupported analysis provider or removed REA script option")
     if ghidra_dir is None and os.environ.get("GHIDRA_INSTALL_DIR"):
         ghidra_dir = Path(os.environ["GHIDRA_INSTALL_DIR"])
     if java_home is None and os.environ.get("JAVA_HOME"):
@@ -172,14 +147,16 @@ def prepare_analysis(udid: str, analysis: Path, scripts: list[Path], output: Pat
         elif source["external_investigation"]:
             raise ValueError("external investigation is not complete")
         else:
-            if provider != "none":
-                _rea_ready(output, provider, rea_script, ghidra_dir, java_home,
-                           disabled_analyzer)
+            if provider == "ghidra-direct":
+                _ghidra_ready(output, ghidra_dir, java_home, disabled_analyzer)
+            elif provider == "hopper-direct":
+                _hopper_ready(output, hopper_app)
             _save(output, record)
             _, complete = investigate_app(
                 udid, analysis, [Path(item["path"]) for item in script_records], investigation,
                 backend, provider, rea_limit, rea_script, ghidra_dir, java_home,
                 timeout, resume and child_manifest.is_file(),
+                **({"hopper_app": hopper_app} if provider == "hopper-direct" else {}),
                 **({"network": True} if network else {}),
                 **({"disabled_analyzer": disabled_analyzer}
                    if disabled_analyzer is not None else {}))

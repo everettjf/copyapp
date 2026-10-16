@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Awaitable, Callable, Optional
 
 from copyapp.analyze import analyze_case
-from copyapp.prepare_analysis import _rea_ready, prepare_analysis
+from copyapp.prepare_analysis import _ghidra_ready, prepare_analysis
 from copyapp.verify import sha256_file, verify_case
 
 
@@ -58,24 +58,23 @@ async def prepare_app(udid: str, bundle: str, scripts: list[Path], output: Path,
                       java_home: Optional[Path] = None, timeout: int = 240,
                       rebuilt_bundle_id: str = "", resume: bool = False,
                       disabled_analyzer: Optional[str] = None,
-                      network: bool = False) -> tuple[Path, bool]:
+                      network: bool = False,
+                      hopper_app: Optional[Path] = None) -> tuple[Path, bool]:
     """Produce a source-bound semantic-review task from one connected App."""
     if not 1 <= len(scripts) <= 12:
         raise ValueError("provide 1–12 playbooks for one app")
     if disabled_analyzer is not None and provider != "ghidra-direct":
         raise ValueError("disabled analyzer requires ghidra-direct provider")
     if not bundle or not udid or ui_backend not in ("usb", "ios-mcp") or \
-            backend not in ("ios-mcp", "ictrl") or provider not in ("none", "ghidra-direct", "ghidra", "hopper"):
+            backend not in ("ios-mcp", "ictrl") or provider not in ("none", "ghidra-direct", "hopper-direct"):
         raise ValueError("invalid device, bundle, UI backend or analysis provider")
+    if rea_script is not None:
+        raise ValueError("REA script option has been removed")
     if not 1 <= ssh_port <= 65535 or ssh_user not in ("root", "mobile"):
         raise ValueError("invalid SSH transport")
     if provider == "none":
         rea_script = ghidra_dir = java_home = None
     else:
-        if provider in ("ghidra", "hopper") and rea_script is None and os.environ.get("COPYAPP_REA_SCRIPT"):
-            rea_script = Path(os.environ["COPYAPP_REA_SCRIPT"])
-        if provider == "ghidra-direct":
-            rea_script = None
         if ghidra_dir is None and os.environ.get("GHIDRA_INSTALL_DIR"):
             ghidra_dir = Path(os.environ["GHIDRA_INSTALL_DIR"])
         if java_home is None and os.environ.get("JAVA_HOME"):
@@ -106,6 +105,7 @@ async def prepare_app(udid: str, bundle: str, scripts: list[Path], output: Path,
         "rea_script": str(rea_script.resolve()) if rea_script else None,
         "ghidra_dir": str(ghidra_dir.resolve()) if ghidra_dir else None,
         "java_home": str(java_home.resolve()) if java_home else None,
+        "hopper_app": str(hopper_app.resolve()) if hopper_app else None,
         "timeout": timeout, "rebuilt_bundle_id": rebuilt_bundle_id,
     }
     if disabled_analyzer is not None:
@@ -146,9 +146,11 @@ async def prepare_app(udid: str, bundle: str, scripts: list[Path], output: Path,
         )
         if not analysis_ok:
             # Explicit decompilation needs a toolchain preflight before device work.
-            if provider != "none":
-                _rea_ready(output, provider, rea_script, ghidra_dir, java_home,
-                           disabled_analyzer)
+            if provider == "ghidra-direct":
+                _ghidra_ready(output, ghidra_dir, java_home, disabled_analyzer)
+            elif provider == "hopper-direct":
+                from copyapp.prepare_analysis import _hopper_ready
+                _hopper_ready(output, hopper_app)
             _save(output, record)
             completed = await analyze_case(
                 udid, bundle, analysis, launch, ssh_port, ssh_user,
@@ -181,7 +183,8 @@ async def prepare_app(udid: str, bundle: str, scripts: list[Path], output: Path,
             (preparation / "manifest.json").is_file(),
             **({"network": True} if network else {}),
             **({"disabled_analyzer": disabled_analyzer}
-               if disabled_analyzer is not None else {}))
+               if disabled_analyzer is not None else {}),
+            **({"hopper_app": hopper_app} if provider == "hopper-direct" else {}))
         record["preparation_manifest_sha256"] = sha256_file(prepared)
         record["preparation_status"] = _read(prepared).get("status")
         record["status"] = "needs_semantic_review" if complete else "preparation_incomplete"

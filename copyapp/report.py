@@ -17,7 +17,6 @@ from copyapp.ocr_file import verify_ocr_source
 from copyapp.flow_capture import validate_flow_pair, validate_flow_trace_pair
 from copyapp.network_flow import validate_network_flow, validate_network_trace_files
 from copyapp.ghidra_direct import validate_function_facts
-from copyapp.rea_bridge import bridge_callees
 from copyapp.branch_map import validate_branch_map
 from copyapp.sqlite_schema import validate_sqlite_schema_case
 from copyapp.plist_schema import validate_plist_schema_case
@@ -26,6 +25,29 @@ from copyapp.sandbox_capture import validate_sandbox_file_capture
 
 EVIDENCE_ID = re.compile(r"[A-Za-z][A-Za-z0-9_.-]{0,79}\Z")
 CONFIDENCE = {"observed": "直接观察", "inferred": "多证据推断", "unknown": "待验证"}
+
+
+def bridge_callees(evidence: dict) -> list:
+    """Read local callee leads in an archived REA bridge case."""
+    result = evidence.get("normalized_result") or {}
+    candidates = []
+    seen = set()
+    for item in result.get("callees", []):
+        if not isinstance(item, dict):
+            continue
+        address = item.get("address")
+        classification = item.get("classification") or {}
+        body = item.get("body") or {}
+        if (not isinstance(address, str) or not re.fullmatch(r"0x[0-9a-fA-F]+", address) or
+                not re.fullmatch(r"FUN_[0-9a-fA-F]+", str(item.get("name", ""))) or
+                classification.get("external") is not False or
+                classification.get("thunk") is not False or
+                body.get("available") is not True or
+                address.lower() in seen):
+            continue
+        seen.add(address.lower())
+        candidates.append({"address": address.lower(), "name": item["name"]})
+    return sorted(candidates, key=lambda item: int(item["address"], 16))
 
 
 def _inline_data(value: object) -> str:
@@ -157,6 +179,105 @@ def _validate_rea(path: Path, binary_hashes: set) -> dict:
             summary.get("pseudocode_is_original_source") is not False):
         raise ValueError(f"REA evidence identity mismatch: {path}")
     return summary
+
+
+def _validate_hopper_direct(path: Path, binary_hashes: set) -> dict:
+    """Check a Copy APP Hopper result against its pinned source and script."""
+    with redirect_stdout(io.StringIO()):
+        if not verify_case(path):
+            raise ValueError("direct Hopper evidence hash mismatch")
+    manifest = _read_json(path / "manifest.json")
+    summary = _read_json(path / "summary.json")
+    result = _read_json(path / "result.json")
+    required = {"CopyAppHopper.py", "launcher.log", "result.json",
+                "pseudocode.txt", "summary.json", "report.md"}
+    listed = {item.get("path") for item in manifest.get("evidence", [])
+              if isinstance(item, dict)}
+    pseudo = path / "pseudocode.txt"
+    actual = {item.name for item in path.iterdir()
+              if item.is_file() and item.name != "manifest.json"}
+    from copyapp.hopper_direct import MAX_LOG, MAX_PSEUDOCODE
+    from copyapp.ipa import _slice_macho
+    import hashlib
+    if (manifest.get("schema_version") != 1 or
+            manifest.get("kind") != "hopper_direct_decompilation" or
+            manifest.get("status") != "complete" or
+            summary.get("kind") != "hopper_direct_decompilation" or
+            summary.get("status") != "complete" or
+            summary.get("provider") != "hopper-direct" or
+            manifest.get("binary_sha256") != summary.get("binary_sha256") or
+            summary.get("binary_sha256") not in binary_hashes or
+            manifest.get("address") != summary.get("address") or
+            listed != required or actual != required or
+            not isinstance(summary.get("binary"), str) or
+            not Path(summary["binary"]).is_file() or
+            sha256_file(Path(summary["binary"])) != summary["binary_sha256"] or
+            summary.get("script_sha256") != sha256_file(path / "CopyAppHopper.py") or
+            summary.get("slice_sha256") != result.get("slice_sha256") or
+            summary.get("slice_sha256") !=
+            hashlib.sha256(_slice_macho(Path(summary["binary"]).read_bytes())).hexdigest() or
+            result.get("status") != "complete" or
+            result.get("address") != summary.get("address") or
+            result.get("name") != summary.get("function_name") or
+            result.get("signature") != summary.get("signature") or
+            not isinstance(result.get("binary_path"), str) or
+            Path(result["binary_path"]).name != "target.macho" or
+            not pseudo.is_file() or not 0 < pseudo.stat().st_size <= MAX_PSEUDOCODE or
+            summary.get("pseudocode_sha256") != sha256_file(pseudo) or
+            (path / "launcher.log").stat().st_size > MAX_LOG):
+        raise ValueError("direct Hopper function identity or evidence differs")
+    return {"summary": summary, "files": sorted(required | {"manifest.json"})}
+
+
+def _validate_hopper_direct_queue(path: Path, bundle: str,
+                                  device_prefix: str, binary_hashes: set) -> dict:
+    """Recheck a Hopper queue and every pinned candidate and function result."""
+    with redirect_stdout(io.StringIO()):
+        if not verify_case(path) or not verify_case(path / "sources/candidates"):
+            raise ValueError("direct Hopper queue evidence hash mismatch")
+    manifest = _read_json(path / "manifest.json")
+    record = _read_json(path / "queue.json")
+    source = _read_json(path / "sources/candidates/candidates.json")
+    from copyapp.native_disasm import rank_native_candidates
+    digest = record.get("binary_sha256")
+    expected = [{"address": item["static_address"], "class": item.get("class"),
+                 "selector": item.get("selector")} for item in
+                rank_native_candidates(source.get("candidates", []), digest,
+                                       record.get("limit", 0))]
+    results = record.get("results")
+    if (manifest.get("schema_version") != 1 or
+            record.get("schema_version") != 1 or
+            manifest.get("kind") != "hopper_direct_candidate_queue" or
+            manifest.get("status") != "complete" or
+            record.get("kind") != "hopper_direct_candidate_queue" or
+            record.get("status") != "complete" or
+            source.get("bundle_id") != bundle or
+            source.get("device_id_sha256_prefix") != device_prefix or
+            digest not in binary_hashes or
+            source.get("binary_sha256") != digest or
+            manifest.get("binary_sha256") != digest or
+            record.get("candidate_case_sha256") !=
+            sha256_file(path / "sources/candidates/candidates.json") or
+            manifest.get("candidate_case_sha256") != record.get("candidate_case_sha256") or
+            not isinstance(record.get("limit"), int) or
+            not 1 <= record["limit"] <= 32 or
+            record.get("selected") != expected or
+            not isinstance(results, list) or len(results) != len(expected)):
+        raise ValueError("direct Hopper queue identity or selection differs")
+    for selected, result in zip(expected, results):
+        if result.get("status") != "complete" or result.get("address") != selected["address"]:
+            raise ValueError("direct Hopper queue result differs from selected address")
+        child = checked_path(path, result["summary"]).parent
+        summary = _validate_hopper_direct(child, binary_hashes)["summary"]
+        if summary["address"] != selected["address"]:
+            raise ValueError("direct Hopper function differs from queue target")
+    listed = {item.get("path") for item in manifest.get("evidence", [])
+              if isinstance(item, dict)}
+    files = {str(item.relative_to(path)) for item in path.rglob("*")
+             if item.is_file() and item != path / "manifest.json"}
+    if listed != files:
+        raise ValueError("direct Hopper queue evidence list is incomplete")
+    return {"record": record, "files": sorted(files | {"manifest.json"})}
 
 
 def _validate_native_disassembly(path: Path, binary_hashes: set) -> dict:
@@ -891,11 +1012,22 @@ def _validate_investigation(path: Path, bundle: str, device_prefix: str,
              direct["record"].get("disabled_analyzer")) or
             (provider != "ghidra-direct" and direct_status is not None)):
         raise ValueError("unexpected direct Ghidra investigation evidence")
+    hopper_status = manifest.get("direct_hopper_status")
+    hopper_path = path / "direct-hopper"
+    hopper_direct = (_validate_hopper_direct_queue(hopper_path, bundle, device_prefix,
+                                                   binary_hashes)
+                     if hopper_status == "complete" else None)
+    if (hopper_status not in (None, "not_requested", "complete") or
+            (hopper_direct is None and hopper_path.exists()) or
+            (provider == "hopper-direct" and hopper_status !=
+             ("complete" if candidates and candidates.get("candidates") else "not_requested")) or
+            (provider != "hopper-direct" and hopper_status is not None)):
+        raise ValueError("unexpected direct Hopper investigation evidence")
     native_status = manifest.get("native_status")
     native_path = path / "native"
     native = None
     if native_status in ("complete", "partial", "unavailable"):
-        if candidates is None or provider not in ("none", "ghidra-direct"):
+        if candidates is None or provider not in ("none", "ghidra-direct", "hopper-direct"):
             raise ValueError("native disassembly has no matching no-REA candidates")
         native = _validate_native_candidate_queue(native_path, candidates,
                                                   path / "candidates/candidates.json",
@@ -916,7 +1048,7 @@ def _validate_investigation(path: Path, bundle: str, device_prefix: str,
             manifest.get("ui_backend") != flow["manifest"].get("ui_backend") or
             bool(manifest.get("network_requested")) !=
             bool(flow["manifest"].get("network_requested")) or
-            provider not in ("none", "ghidra-direct", "ghidra", "hopper") or
+            provider not in ("none", "ghidra-direct", "hopper-direct", "ghidra", "hopper") or
             (queue is not None and provider != queue["record"].get("provider")) or
             manifest.get("flow_status") != "complete" or
             manifest.get("candidate_status") !=
@@ -944,7 +1076,7 @@ def _validate_investigation(path: Path, bundle: str, device_prefix: str,
             (candidates is None and (provider in ("ghidra", "hopper") or methods != [] or
              flow.get("trace") is not None)) or
             (native is not None and native_status != native["record"]["status"]) or
-            (native_status == "not_requested" and provider in ("none", "ghidra-direct") and
+            (native_status == "not_requested" and provider in ("none", "ghidra-direct", "hopper-direct") and
              candidates is not None and candidates.get("candidates"))):
         raise ValueError("investigation stage identity or source chain differs")
     listed = {item.get("path") for item in manifest.get("evidence", [])
@@ -964,10 +1096,12 @@ def _validate_investigation(path: Path, bundle: str, device_prefix: str,
         required |= {"native/manifest.json", "native/index.json"}
     if direct is not None:
         required |= {"direct-ghidra/manifest.json", "direct-ghidra/queue.json"}
+    if hopper_direct is not None:
+        required |= {"direct-hopper/manifest.json", "direct-hopper/queue.json"}
     if not required <= listed:
         raise ValueError("investigation evidence list is incomplete")
     return {"manifest": manifest, "flow": flow, "queue": queue, "native": native,
-            "direct_ghidra": direct,
+            "direct_ghidra": direct, "direct_hopper": hopper_direct,
             "files": sorted(listed | {"manifest.json"})}
 
 
@@ -986,7 +1120,7 @@ def _validate_app_investigation(path: Path, bundle: str, device_prefix: str,
             manifest.get("device_id_sha256_prefix") != device_prefix or
             manifest.get("analysis_index_sha256") != analysis_index_sha256 or
             manifest.get("ui_backend") not in ("ios-mcp", "ictrl") or
-            manifest.get("provider") not in ("none", "ghidra-direct", "ghidra", "hopper") or
+            manifest.get("provider") not in ("none", "ghidra-direct", "hopper-direct", "ghidra", "hopper") or
             not isinstance(scripts, list) or not 1 <= len(scripts) <= 12 or
             not isinstance(flows, list) or len(scripts) != len(flows)):
         raise ValueError("app investigation identity or flow list differs")
@@ -1167,6 +1301,9 @@ def compose_report(case: Path, findings_path: Path, evidence_args: List[str],
             elif summary_kind == "ghidra_direct_decompilation":
                 kind, data = "ghidra_direct", _validate_ghidra_direct(
                     path, binary_hashes)
+            elif summary_kind == "hopper_direct_decompilation":
+                kind, data = "hopper_direct", _validate_hopper_direct(
+                    path, binary_hashes)
             else:
                 kind, data = "rea", _validate_rea(path, binary_hashes)
         elif path.is_dir() and (path / "experiment.json").is_file():
@@ -1203,6 +1340,9 @@ def compose_report(case: Path, findings_path: Path, evidence_args: List[str],
             queue_kind = _read_json(path / "queue.json").get("kind")
             if queue_kind == "ghidra_direct_candidate_queue":
                 kind, data = "ghidra_direct_queue", _validate_ghidra_direct_queue(
+                    path, bundle, str(survey.get("device_id_sha256_prefix") or ""), binary_hashes)
+            elif queue_kind == "hopper_direct_candidate_queue":
+                kind, data = "hopper_direct_queue", _validate_hopper_direct_queue(
                     path, bundle, str(survey.get("device_id_sha256_prefix") or ""), binary_hashes)
             else:
                 kind, data = "rea_queue", _validate_rea_queue(
@@ -1259,7 +1399,7 @@ def compose_report(case: Path, findings_path: Path, evidence_args: List[str],
     for _, path, kind, data in supplied:
         if kind == "file" and path.suffix.lower() in (".jpg", ".jpeg", ".png"):
             image_inputs.append(path)
-        elif kind in ("playbook", "runtime_probe", "sandbox_diff", "view_tree", "flow_capture", "network_flow", "rea_queue", "ghidra_direct_queue", "rea_bridge", "investigation", "app_investigation"):
+        elif kind in ("playbook", "runtime_probe", "sandbox_diff", "view_tree", "flow_capture", "network_flow", "rea_queue", "ghidra_direct_queue", "hopper_direct_queue", "rea_bridge", "investigation", "app_investigation"):
             image_inputs.extend(checked_path(path, name) for name in data["files"]
                                 if Path(name).suffix.lower() in (".jpg", ".jpeg", ".png"))
         elif kind == "branch_map":
@@ -1310,6 +1450,7 @@ def compose_report(case: Path, findings_path: Path, evidence_args: List[str],
         files = (["summary.json", "evidence.json", "pseudocode.txt"] if kind == "rea" else
                  data["files"] if kind == "native_disassembly" else
                  data["files"] if kind == "ghidra_direct" else
+                 data["files"] if kind == "hopper_direct" else
                  ["experiment.json", "before.jpg", "after.jpg"] if kind == "experiment" else
                  data["files"] if kind == "runtime_probe" else
                  data["files"] if kind == "sandbox_diff" else
@@ -1322,6 +1463,7 @@ def compose_report(case: Path, findings_path: Path, evidence_args: List[str],
                  data["files"] if kind == "network_flow" else
                  data["files"] if kind == "rea_queue" else
                  data["files"] if kind == "ghidra_direct_queue" else
+                 data["files"] if kind == "hopper_direct_queue" else
                  data["files"] if kind == "rea_bridge" else
                  data["files"] if kind == "branch_map" else
                  data["files"] if kind == "investigation" else
@@ -1358,14 +1500,14 @@ def compose_report(case: Path, findings_path: Path, evidence_args: List[str],
             artifacts[key + "/replay-sources.json"] = {
                 "path": str(replay_path.relative_to(output)),
                 "sha256": sha256_file(replay_path)}
-        primary = ("summary.json" if kind in ("rea", "native_disassembly", "ghidra_direct") else
+        primary = ("summary.json" if kind in ("rea", "native_disassembly", "ghidra_direct", "hopper_direct") else
                    "experiment.json" if kind == "experiment"
                    else "probe.json" if kind == "runtime_probe"
                    else "changes.json" if kind == "sandbox_diff"
                    else "schema.json" if kind == "sqlite_schema"
                    else "profile.json" if kind == "plist_schema"
                    else "ipa-index.json" if kind == "ipa_static_index"
-                   else "manifest.json" if kind in ("playbook", "view_tree", "flow_capture", "network_flow", "rea_queue", "ghidra_direct_queue", "rea_bridge", "branch_map", "investigation", "app_investigation")
+                   else "manifest.json" if kind in ("playbook", "view_tree", "flow_capture", "network_flow", "rea_queue", "ghidra_direct_queue", "hopper_direct_queue", "rea_bridge", "branch_map", "investigation", "app_investigation")
                    else path.name)
         evidence[key] = {"kind": kind, "path": artifacts[key + "/" + primary]["path"],
                          "sha256": artifacts[key + "/" + primary]["sha256"]}
@@ -1391,7 +1533,15 @@ def compose_report(case: Path, findings_path: Path, evidence_args: List[str],
                                   "address": data["summary"]["address"],
                                   "function_name": data["summary"]["function_name"],
                                   "script_sha256": data["summary"]["script_sha256"]})
+        elif kind == "hopper_direct":
+            evidence[key].update({"binary_sha256": data["summary"]["binary_sha256"],
+                                  "address": data["summary"]["address"],
+                                  "function_name": data["summary"]["function_name"],
+                                  "script_sha256": data["summary"]["script_sha256"]})
         elif kind == "ghidra_direct_queue":
+            evidence[key].update({"binary_sha256": data["record"]["binary_sha256"],
+                                  "function_count": len(data["record"]["results"])})
+        elif kind == "hopper_direct_queue":
             evidence[key].update({"binary_sha256": data["record"]["binary_sha256"],
                                   "function_count": len(data["record"]["results"])})
         elif kind == "experiment":
@@ -1469,6 +1619,8 @@ def compose_report(case: Path, findings_path: Path, evidence_args: List[str],
                                                      if data["queue"] else
                                                      len(data["direct_ghidra"]["record"]["results"])
                                                      if data["direct_ghidra"] else 0),
+                                  "hopper_function_count": (len(data["direct_hopper"]["record"]["results"])
+                                                            if data["direct_hopper"] else 0),
                                   "native_function_count": (data["native"]["complete_count"]
                                                             if data["native"] else 0)})
         elif kind == "app_investigation":
@@ -1518,6 +1670,11 @@ def compose_report(case: Path, findings_path: Path, evidence_args: List[str],
             lines.append(f"- [{key}]({item['path']})：Copy APP 直连 Ghidra 函数 "
                          f"`{item['function_name']}` at `{item['address']}`；"
                          f"[伪代码]({stem}/pseudocode.txt){facts_link}。")
+        elif item["kind"] == "hopper_direct":
+            stem = str(Path(item["path"]).parent)
+            lines.append(f"- [{key}]({item['path']})：Copy APP 直连 Hopper 函数 "
+                         f"`{item['function_name']}` at `{item['address']}`；"
+                         f"[伪代码]({stem}/pseudocode.txt)。")
         elif item["kind"] == "ghidra_direct_queue":
             source_path, _, queue_data = supplied_by_id[key]
             stem = str(Path(item["path"]).parent)
@@ -1538,6 +1695,16 @@ def compose_report(case: Path, findings_path: Path, evidence_args: List[str],
                              + (f" · [函数关系]({stem}/{function_dir}/function-facts.json)"
                                 if (source_path / function_dir / "function-facts.json").is_file()
                                 else "") + "。")
+        elif item["kind"] == "hopper_direct_queue":
+            source_path, _, queue_data = supplied_by_id[key]
+            stem = str(Path(item["path"]).parent)
+            lines.append(f"- [{key}]({stem}/queue.json)：Copy APP 直连 Hopper，"
+                         f"{item['function_count']} 个候选函数。")
+            for result in queue_data["record"]["results"]:
+                summary = _read_json(source_path / result["summary"])
+                function_dir = str(Path(result["summary"]).parent)
+                lines.append(f"  - `{result['address']}` `{summary['function_name']}`："
+                             f"[伪代码]({stem}/{function_dir}/pseudocode.txt)。")
         elif item["kind"] == "native_disassembly":
             stem = str(Path(item["path"]).parent)
             lines.append(f"- [{key}]({item['path']})：`{item['address']}` 的有界原生汇编；"

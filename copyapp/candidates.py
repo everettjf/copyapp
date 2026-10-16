@@ -175,9 +175,6 @@ def build_candidates(udid: str, bundle: str, binary: Path, objc_index: Path,
     for key in conflicts:
         found.pop(key, None)
     candidates = sorted(found.values(), key=lambda item: (item["class"], item["selector"]))
-    for item in candidates:
-        item["rea_function_args"] = ["--file", str(binary), "--sha256", static["binary_sha256"],
-                                     "--procedure", item["static_address"], "--provider", "ghidra"]
     output.mkdir(parents=True)
     evidence = []
     _evidence(output, Path("sources/objc-index.json"), objc_index, evidence)

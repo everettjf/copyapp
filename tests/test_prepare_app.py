@@ -72,51 +72,51 @@ class PrepareAppTest(unittest.IsolatedAsyncioTestCase):
         return output / "manifest.json", True
 
     async def test_collect_prepare_verify_and_resume_without_device_touch(self):
-        with patch("copyapp.prepare_app._rea_ready", side_effect=self._doctor), \
+        with patch("copyapp.prepare_app._ghidra_ready", side_effect=self._doctor), \
              patch("copyapp.prepare_app.analyze_case", side_effect=self._analyze), \
              patch("copyapp.prepare_app.prepare_analysis", side_effect=self._prepare), \
              patch("copyapp.prepare_app.verify_case", return_value=True):
             manifest, ready = await prepare_app(self.udid, self.bundle, [self.script],
-                                                self.output, self._survey, provider="ghidra")
+                                                self.output, self._survey, provider="ghidra-direct")
             self.assertTrue(ready)
             self.assertEqual(self.analyze_calls, 1)
             with patch("copyapp.verify._verify_silent", return_value=True):
                 self.assertTrue(verify_case(self.output))
             manifest, ready = await prepare_app(self.udid, self.bundle, [self.script],
-                                                self.output, self._survey, provider="ghidra", resume=True)
+                                                self.output, self._survey, provider="ghidra-direct", resume=True)
             self.assertTrue(ready)
             self.assertEqual(self.analyze_calls, 1)
         self.assertEqual(self.prepare_calls, [False])
         self.assertEqual(json.loads(manifest.read_text())["status"], "needs_semantic_review")
 
     async def test_changed_playbook_rejected_before_device_work(self):
-        with patch("copyapp.prepare_app._rea_ready", side_effect=self._doctor), \
+        with patch("copyapp.prepare_app._ghidra_ready", side_effect=self._doctor), \
              patch("copyapp.prepare_app.analyze_case", side_effect=self._analyze), \
              patch("copyapp.prepare_app.prepare_analysis", side_effect=self._prepare), \
              patch("copyapp.prepare_app.verify_case", return_value=True):
             await prepare_app(self.udid, self.bundle, [self.script], self.output, self._survey,
-                              provider="ghidra")
+                              provider="ghidra-direct")
             self.script.write_text(json.dumps({"bundle_id": self.bundle,
                                                "steps": [{"action": "tap", "x": 7}]}))
             with self.assertRaisesRegex(ValueError, "resume target, playbooks or settings differ"):
                 await prepare_app(self.udid, self.bundle, [self.script], self.output,
-                                  self._survey, provider="ghidra", resume=True)
+                                  self._survey, provider="ghidra-direct", resume=True)
         self.assertEqual(self.analyze_calls, 1)
 
     async def test_missing_toolchain_fails_before_device_work(self):
-        with patch("copyapp.prepare_app._rea_ready",
-                   side_effect=FileNotFoundError("REA CLI not found")), \
+        with patch("copyapp.prepare_app._ghidra_ready",
+                   side_effect=FileNotFoundError("Ghidra not found")), \
              patch("copyapp.prepare_app.analyze_case", side_effect=self._analyze):
             manifest, ready = await prepare_app(self.udid, self.bundle, [self.script],
-                                                self.output, self._survey, provider="ghidra")
+                                                self.output, self._survey, provider="ghidra-direct")
         self.assertFalse(ready)
         self.assertEqual(self.analyze_calls, 0)
         self.assertEqual(json.loads(manifest.read_text())["error"]["type"],
                          "FileNotFoundError")
 
     async def test_default_prepares_without_rea_toolchain(self):
-        with patch("copyapp.prepare_app._rea_ready",
-                   side_effect=AssertionError("REA must not run")) as doctor, \
+        with patch("copyapp.prepare_app._ghidra_ready",
+                   side_effect=AssertionError("Ghidra must not run")) as doctor, \
              patch("copyapp.prepare_app.analyze_case", side_effect=self._analyze), \
              patch("copyapp.prepare_app.prepare_analysis", side_effect=self._prepare), \
              patch("copyapp.prepare_app.verify_case", return_value=True):
@@ -144,30 +144,30 @@ class PrepareAppTest(unittest.IsolatedAsyncioTestCase):
                 "decrypt_requested": True}))
             return complete
 
-        with patch("copyapp.prepare_app._rea_ready", side_effect=self._doctor), \
+        with patch("copyapp.prepare_app._ghidra_ready", side_effect=self._doctor), \
              patch("copyapp.prepare_app.analyze_case", side_effect=collect), \
              patch("copyapp.prepare_app.prepare_analysis", side_effect=self._prepare), \
              patch("copyapp.prepare_app.verify_case", return_value=True):
             manifest, ready = await prepare_app(self.udid, self.bundle, [self.script],
-                                                self.output, self._survey, decrypt=True, provider="ghidra")
+                                                self.output, self._survey, decrypt=True, provider="ghidra-direct")
             self.assertFalse(ready)
             self.assertEqual(json.loads(manifest.read_text())["status"],
                              "analysis_incomplete")
             self.assertFalse(self.prepare_calls)
             manifest, ready = await prepare_app(self.udid, self.bundle, [self.script],
                                                 self.output, self._survey,
-                                                decrypt=True, provider="ghidra", resume=True)
+                                                decrypt=True, provider="ghidra-direct", resume=True)
             self.assertTrue(ready)
         self.assertEqual(attempts, [False, True])
         self.assertEqual(self.prepare_calls, [False])
 
     async def test_parent_verifier_rejects_changed_source_script(self):
-        with patch("copyapp.prepare_app._rea_ready", side_effect=self._doctor), \
+        with patch("copyapp.prepare_app._ghidra_ready", side_effect=self._doctor), \
              patch("copyapp.prepare_app.analyze_case", side_effect=self._analyze), \
              patch("copyapp.prepare_app.prepare_analysis", side_effect=self._prepare), \
              patch("copyapp.prepare_app.verify_case", return_value=True):
             await prepare_app(self.udid, self.bundle, [self.script], self.output, self._survey,
-                              provider="ghidra")
+                              provider="ghidra-direct")
         self.script.write_text(json.dumps({"bundle_id": self.bundle,
                                            "steps": [{"action": "tap", "x": 7}]}))
         with patch("copyapp.verify._verify_silent", return_value=True):

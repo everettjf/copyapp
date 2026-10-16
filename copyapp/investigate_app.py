@@ -88,9 +88,12 @@ def investigate_app(udid: str, analysis: Path, scripts: List[Path], output: Path
                     java_home: Optional[Path] = None,
                     timeout: int = 240, resume: bool = False,
                     disabled_analyzer: Optional[str] = None,
-                    network: bool = False) -> Tuple[Path, bool]:
+                    network: bool = False,
+                    hopper_app: Optional[Path] = None) -> Tuple[Path, bool]:
     if not 1 <= len(scripts) <= 12:
         raise ValueError("provide 1–12 playbooks for one app")
+    if provider not in ("none", "ghidra-direct", "hopper-direct") or rea_script is not None:
+        raise ValueError("unsupported analysis provider or removed REA script option")
     if disabled_analyzer is not None and provider != "ghidra-direct":
         raise ValueError("disabled analyzer requires ghidra-direct provider")
     if output.exists() and any(output.iterdir()) and not resume:
@@ -169,6 +172,7 @@ def investigate_app(udid: str, analysis: Path, scripts: List[Path], output: Path
                                                java_home=java_home,
                                                timeout=timeout,
                                                resume=resume and child_manifest.is_file(),
+                                               hopper_app=hopper_app,
                                                **({"network": True} if network else {}),
                                                **({"disabled_analyzer": disabled_analyzer}
                                                   if disabled_analyzer is not None else {}))

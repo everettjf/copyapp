@@ -6,7 +6,153 @@ Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app 
 
 The workflow verifies evidence identity and selected UI flows. It does **not** claim complete equivalence to an arbitrary app. The iPhone XR running iOS 16.1.1 is the tested device; iOS 17 and 26 testing is deferred at the user's request.
 
-## Start here
+## Install and run your first survey
+
+Copy APP is a **Mac command-line project plus services on your own jailbroken iPhone**. Start with the Mac CLI and one USB survey; that first result needs no phone-side Copy APP tweak, SSH, Frida, iCTRL or decompiler. Add those components only for deep analysis and rebuilding. The Mac bootstrap script below handles Python and CLI installation, but USB trust, phone permissions and jailbreak packages still need setup on the device. A full Xcode installation is needed for device developer services and building a rebuilt app. The files under `cases/` contain local device evidence and are Git-ignored, so the example case links later in this README exist only in the original test workspace.
+
+If Codex or Claude Code is open in this repository, you can ask it: **“Set up Copy APP and run a first USB survey of the App on my connected iPhone.”** The agent can run the Mac commands and identify the exact device and Bundle ID; you still approve USB trust on the phone. A first survey is an initial observation, not the full reverse-engineering report.
+
+| Goal | Set up now |
+| --- | --- |
+| First survey | Mac bootstrap, USB cable and phone trust. |
+| Detailed analysis | Add phone OpenSSH and Frida, plus UI control. The documented XR path uses iOS MCP; iCTRL is optional. Ghidra and Hopper are optional. |
+| Runnable rebuild | Add Xcode signing and a working install path such as TrollStore. |
+
+### 1. Install the Mac CLI
+
+```sh
+git clone https://github.com/everettjf/copyapp.git
+cd copyapp
+sh scripts/bootstrap-macos.sh
+```
+
+The script creates or reuses `.venv/`, installs Copy APP and prints the next three commands. It requires macOS and Python 3.9 or newer. When you reach runtime tracing or encrypted App recovery, rerun `sh scripts/bootstrap-macos.sh --trace` to install host Frida 17.x. Check `xcode-select -p` if you plan to use Xcode device services or build a clone; select a **full Xcode**, rather than only Command Line Tools. Keep `.venv/` and `cases/` on the Mac; neither is committed.
+
+### 2. Connect and identify one phone
+
+On the phone, activate its compatible jailbreak, unlock it, connect it by USB, and accept **Trust This Computer**. Start by listing the exact USB device and its apps:
+
+```sh
+.venv/bin/copyapp devices
+.venv/bin/copyapp apps --udid <UDID> --all
+```
+
+Replace `<UDID>` with the USB device ID from `devices`; never use a displayed phone name as the selector. `apps` lists user apps by default, while `--all` includes system apps. Resolve the target's exact Bundle ID before collecting anything. If `devices` is empty, fix USB trust, unlocking and the cable first; the phone service installation cannot fix an absent USB device. On iOS 16, if screenshots or Instruments need developer services, enable Developer Mode and run `.venv/bin/pymobiledevice3 mounter auto-mount --udid <UDID>`; the first survey can report which observations were unavailable.
+
+### 3. Make a first USB-only case
+
+Open the target App on the phone and leave it on the screen you want to inspect. This first survey needs no jailbreak-side Copy APP tweak, SSH or Frida:
+
+```sh
+.venv/bin/copyapp survey --udid <UDID> --bundle <BUNDLE_ID> \
+  --ui-backend usb --out cases/first-survey
+.venv/bin/copyapp verify cases/first-survey
+```
+
+Read `cases/first-survey/report.md` and its screenshot. This is an installation and device smoke test, not the deep analysis report. Use a new `--out` directory for each run; Copy APP preserves existing evidence rather than overwriting it.
+
+You can stop here for a first impression. The remaining setup is for full package recovery, runtime evidence, richer UI control and real-device rebuild checks.
+
+### 4. Add phone services for full analysis
+
+First install host Frida if you have not already: `sh scripts/bootstrap-macos.sh --trace`. The phone-side steps below are one-time per device. `copyapp doctor` reports which channels are ready once they are configured.
+
+The full pipeline needs the following channels on the **same UDID**:
+
+| Component | Setup | Used for |
+| --- | --- | --- |
+| OpenSSH on the jailbroken phone | Install a rootless-compatible OpenSSH server; keep it reachable through the USB port forward below. | Read-only App bundle and sandbox acquisition. |
+| Frida server on the phone | Install and start a root-capable Frida server compatible with the host's Frida 17.x. | Runtime method tracing and the optional full-package decrypt helper. |
+| Copy APP iOS MCP tweak | Build and install [`device/ios-mcp`](device/ios-mcp/README.md), then reload SpringBoard. | Foreground identity, UI tree, screenshots and gestures over a USB-forwarded localhost service. |
+| iCTRL runner and paired Mac client | Run `copyapp setup ictrl --udid <UDID> --out cases/ictrl-setup` after SSH and Xcode setup, then approve the phone's pairing prompt. | Optional UI backend and fallback for an Instruments fresh-launch failure. |
+
+For the tweak, the source build requires a complete Xcode, Theos, the iPhoneOS 16.5 SDK and `ldid`; the SDK and Theos are **not** vendored here. From the repository root, after installing those tools, run `THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules make -C device/ios-mcp package`. Install the resulting `.deb` from `device/ios-mcp/packages/` with the phone's package manager or Filza, then reload SpringBoard. The XR/iOS 16 package is tested; do not assume that build works unchanged on iOS 17 or 26. The optional iCTRL source is pinned in [`vendor/ictrl`](vendor/ictrl/UPSTREAM.md) with its Apache 2.0 license and NOTICE; generated signing files, large build dependencies and pairing keys stay local.
+
+Copy APP expects a dedicated `mobile` SSH key at `cases/ssh/id_ed25519`, a pinned host-key file at `cases/ssh-known-hosts`, and an SSH USB forward from Mac port `22222` to phone port `22`. In a separate terminal, keep this forward running:
+
+```sh
+.venv/bin/python -m pymobiledevice3 usbmux forward 22222 22 --serial <UDID>
+```
+
+In the repository terminal, create the key and collect the phone's host key:
+
+```sh
+mkdir -p cases/ssh
+ssh-keygen -t ed25519 -f cases/ssh/id_ed25519 -C copyapp
+ssh-keyscan -p 22222 127.0.0.1 > cases/ssh-known-hosts
+ssh-keygen -lf cases/ssh-known-hosts
+```
+
+Compare that fingerprint with the iPhone's SSH host-key fingerprint **before** accepting it; repeat this check for another phone. Add `cases/ssh/id_ed25519.pub` to the phone's `mobile` account `~/.ssh/authorized_keys` in the phone terminal, or use one initial password-authenticated SSH session after the fingerprint check:
+
+```sh
+cat cases/ssh/id_ed25519.pub | ssh -p 22222 \
+  -o UserKnownHostsFile=cases/ssh-known-hosts \
+  -o StrictHostKeyChecking=yes -o PubkeyAuthentication=no \
+  mobile@127.0.0.1 'umask 077; mkdir -p ~/.ssh; cat >> ~/.ssh/authorized_keys; chmod 700 ~/.ssh; chmod 600 ~/.ssh/authorized_keys'
+```
+
+Enter the `mobile` password only at that prompt. Keep the private key on the Mac and do not put a phone password in a command or chat. If you chose a passphrase for the key, load it into `ssh-agent`: Copy APP uses noninteractive SSH authentication. Confirm the connection prints the same `<UDID>`:
+
+```sh
+ssh -p 22222 -i cases/ssh/id_ed25519 \
+  -o UserKnownHostsFile=cases/ssh-known-hosts \
+  -o StrictHostKeyChecking=yes mobile@127.0.0.1 'deviceinfo uniqueid'
+```
+
+To add the optional iCTRL UI backend, install `xcodegen` (`brew install xcodegen`) and configure an Apple Development signing team in Xcode. The iCTRL runner is installed through the phone's existing TrollStore, using the SSH key above. `setup` builds the vendored Mac client and signed XCTest runner, applies the tested Xcode 27/iOS 16 outer-runner minimum-version adjustment before signing, installs it, opens a temporary USB tunnel and pairs it. The first build downloads iCTRL's pinned IDevice framework (about 215 MB). Approve the matching pairing fingerprint on the phone. It does not save the pairing token in `cases/`:
+
+```sh
+.venv/bin/copyapp setup ictrl --udid <UDID> --out cases/first-ictrl-setup
+.venv/bin/copyapp verify cases/first-ictrl-setup
+.venv/bin/copyapp doctor --udid <UDID> --out cases/doctor-with-ictrl
+```
+
+If a compatible runner is already installed, `setup` reuses it and verifies the existing pairing. An already signed runner IPA can be supplied with `--runner-ipa <IPA>`; setup checks its Bundle ID and minimum iOS version before installation. Add `--reinstall` to replace an existing runner with that IPA. Use a new `--out` directory for retries. The vendored Xcode 27 build, `com.copyapp` migration and first pairing passed on XR/iOS 16.1.1; iOS 17/26 remain untested. See [the iCTRL notes](docs/ictrl-xr-validation.md).
+
+Copy APP's iCTRL builds use team-scoped IDs: `com.copyapp.<team-id>.ictrl` for the optional settings app and `com.copyapp.<team-id>.ictrl.uitests.xctrunner` for the runner. The generated, ignored `vendor/ictrl/Config/Local.xcconfig` overrides the default; if upgrading an earlier upstream build, change its `ICTRL_BUNDLE_PREFIX` to `com.copyapp.<team-id>` or delete the file to regenerate it, then reinstall the runner. A new Bundle ID is a new app, so iOS may ask for notification permission and iCTRL pairing again. Approve the matching fingerprint and rerun `setup` with a new output directory if its first attempt times out. The old runner can be removed after the new ID passes authenticated health.
+
+The vendored runtime's URL registration names, pairing-file type, dispatch queue labels and Keychain service also use `com.copyapp`. Current pairings persist in the sandbox file and survived the XR runner update; legacy pairings stored only in the old Keychain service need pairing again. The `ictrl://` and `ictrl-app://` URL schemes and the RPC protocol remain the same. Upstream identity and old device observations remain in the license/provenance and validation notes.
+
+Then record a capability baseline:
+
+```sh
+.venv/bin/copyapp doctor --udid <UDID> --out cases/first-doctor
+.venv/bin/copyapp verify cases/first-doctor
+```
+
+Read `cases/first-doctor/report.md`. Before a full analysis, `usb_lockdown`, `ssh_mobile`, `frida_usb` and `ios_mcp` should be `available`. `ictrl` may be `not_configured` until `setup ictrl` is run. `doctor` can exit successfully when USB works even if another probe is unavailable; **inspect the individual rows**. The SSH forward must remain running for `doctor`, `analyze` and the full workflow. `doctor` and playbook replay open their own short-lived iOS MCP forwards, but `survey`/`analyze` use the fixed Mac port `22223` when `--ui-backend ios-mcp` is selected. Start another forward in a third terminal and keep it running for those commands and the full `copy` workflow:
+
+```sh
+.venv/bin/python -m pymobiledevice3 usbmux forward 22223 8090 --serial <UDID>
+```
+
+### 5. Run analysis, then choose decompilation and rebuild
+
+For a first package/UI/sandbox analysis, open the target App or let the command launch it:
+
+```sh
+.venv/bin/copyapp analyze --udid <UDID> --bundle <BUNDLE_ID> \
+  --launch --ui-backend ios-mcp --out cases/first-analysis
+.venv/bin/copyapp verify cases/first-analysis
+```
+
+Read `cases/first-analysis/analysis.md`. It is a collection index, so a detailed functional report still needs controlled UI flows, function review and `copyapp report`. For an App Store binary with encrypted Mach-O files, prepare the pinned helper with `sh scripts/prepare-ipadecrypt-helper.sh` and add `--decrypt` to `analyze` or use the default full `copy` path; the helper is downloaded outside this repository under `../toolchains/`. Decrypted output is an **analysis IPA**, not an installable signed App. An App you compiled locally may already have `cryptid=0` and need no decryption. See [full-package recovery](docs/full-package-decryption.md).
+
+Direct Ghidra or Hopper pseudocode is optional and requires a separately installed tool. Choose `--analysis-provider ghidra-direct --ghidra-dir <DIR> --java-home <JDK_HOME>` or `--analysis-provider hopper-direct` in the full workflow. Hopper also needs a licensed GUI session. For the rebuilt App, Xcode and a working signing/install path are required; the tested XR path uses an existing TrollStore installation. Start the staged `copy` job below only after the required `doctor` channels work. The [workflow guide](docs/copy-workflow.md) explains every pause, report and device check.
+
+| If setup stops here | Check |
+| --- | --- |
+| `devices` lists nothing | Unlock the phone, accept USB trust, change the cable or USB port, and rerun `devices`. |
+| Screenshot or DVT is unavailable | Check Developer Mode, full Xcode selection and the device's Developer Disk Image; rerun `doctor` into a new directory. |
+| `ssh_mobile` is unavailable | Keep the `22222 → 22` forward alive, check the pinned host key and `mobile` key login, then compare `deviceinfo uniqueid` with the chosen UDID. |
+| `ios_mcp` is unavailable | Check that the rootless tweak loaded after SpringBoard reload. For `analyze`, also keep the separate `22223 → 8090` forward alive. |
+| `frida_usb` is unavailable | Check that Frida server is running on that phone and its version is compatible with the installed host Frida 17.x. |
+| Fresh UI launch fails when Instruments is unavailable | Run `setup ictrl`, then check `doctor`'s `ictrl` row; on XR with Xcode 27, see the [iOS 16 compatibility trial](docs/ictrl-xr-validation.md). |
+
+If a case fails, inspect its manifest and stage logs before retrying. `analyze` and the staged `copy` workflow accept `--resume` with their original arguments; a failed UI action may have changed App state, so check the screen before replaying it.
+
+## Run the full Analyze → Rebuild workflow
 
 From an active Codex or Claude Code session, use the current agent as the worker:
 
@@ -30,11 +176,11 @@ See [the workflow guide](docs/copy-workflow.md) for the exact handoffs, commands
 | --- | --- | --- |
 | Device and UI | Exact USB device selection, screenshot, foreground identity, accessibility tree, bounded taps, stable screenshots | iPhone XR; iOS MCP and selected iCTRL paths |
 | Acquisition | App package and sandbox metadata collection, full-package Mach-O recovery, source hashes | XR; encrypted Kimi and DeepSeek main apps and extensions |
-| Native analysis | Mach-O and Objective-C indexing, Frida method/branch observations, bounded ARM64 inspection, direct Ghidra pseudocode | XR Compass, Calculator, Clock, DeepSeek and a known-source fixture |
+| Native analysis | Mach-O and Objective-C indexing, Frida method/branch observations, bounded ARM64 inspection, direct Ghidra or Hopper pseudocode | XR Compass, Calculator, Clock, DeepSeek and a known-source fixture; integrated Hopper investigation verified on the fixture |
 | Report | Verified investigation cases, reviewed semantic report, feature specification, source-linked delivery | Selected, observed flows; function interpretations still require human or agent review |
 | Rebuild | Independent Xcode project, real-device installation, paired flow replay, UIKit assertions, visual review and delivery | XR pilots with recorded minor visual differences |
 
-REA is optional. The default path runs without it; direct Ghidra can be enabled with `--analysis-provider ghidra-direct --ghidra-dir <DIR> --java-home <DIR>`. Ghidra and the JDK remain external tools for that option. See [REA independence](docs/rea-independence.md) for the integration boundary.
+The REA command and provider bridge has been removed. Choose `--analysis-provider ghidra-direct --ghidra-dir <DIR> --java-home <DIR>` or `--analysis-provider hopper-direct` for pseudocode. Hopper can be selected in `investigate-flow`, `investigate-app`, `prepare-analysis`, `prepare-app`, and `copy`; `--hopper-app <Hopper.app>` overrides the installed app location. Its `hopper-function` and `hopper-queue` commands also work independently. Hopper needs an installed, licensed GUI app in a normal macOS user session; a sandboxed launcher may fail its Spotlight lookup. On the iOS 16.1.1 XR, [one integrated Hopper investigation](cases/fixture-counter-hopper-investigation-v2-20261016/manifest.json) completed UI replay, Frida tracing, static candidate binding and decompilation; its evidence was imported into a [source-checked report](cases/fixture-counter-hopper-integrated-report-20261016/report.md). The bounded fresh launch falls back from Instruments to iCTRL lifecycle commands when Instruments fails. A full `copy --analysis-provider hopper-direct` analysis-to-rebuild device run has not yet been verified. See [the standalone analysis boundary](docs/rea-independence.md) and [Hopper integration guide](docs/rea-hopper-integration.md).
 
 A complete current-agent, three-flow Clock case is saved at [the XR workflow manifest](cases/clock-current-workflow-live-20261016/manifest.json). Its [reviewed report](cases/clock-current-workflow-live-20261016/analysis-agent/reviewed-report/report.md), [independent source](rebuild/ClockCurrentProbe) and [device delivery](cases/clock-current-workflow-live-20261016/rebuild-agent/agent-delivery/report.md) cover world-city selection, an unsaved alarm edit and stopwatch start/stop/reset. A second [XR auto-discovery parent](cases/clock-current-auto-workflow-20261016/manifest.json) now joins discovery, [formal report](cases/clock-current-auto-workflow-20261016/analysis-agent/reviewed-report/report.md), [independent source](rebuild/ClockCurrentAutoProbe) and [device delivery](cases/clock-current-auto-workflow-20261016/rebuild-agent/agent-delivery/report.md) in one verified case: 3/3 selected behavior and final-view checks passed; all 10 screenshot pairs were reviewed with minor differences and no major difference. This second run reused previously authored discovery scripts and adapted the earlier independent Clock implementation. It validates orchestration and selected-flow delivery, not autonomous script authoring, zero-shot source generation or whole-app equivalence.
 
@@ -76,3 +222,21 @@ The current gaps are general discovery and independent implementation across unf
 - [Copy APP agent skill](skills/copyapp-copy/SKILL.md)
 - [Repository agent instructions](AGENTS.md)
 - [Full Chinese README and historical evidence links](README.zh-CN.md)
+
+## Acknowledgements
+
+Copy APP builds on the work of these projects. Thank you to their maintainers and contributors.
+
+**Source included or adapted in this repository:**
+
+- [witchan/ios-mcp](https://github.com/witchan/ios-mcp) provides the basis for the adapted, rootless [iOS MCP tweak](device/ios-mcp/README.md). Its MIT license and NOTICE are retained.
+- [OpenMinis/iCTRL](https://github.com/OpenMinis/iCTRL) provides the vendored XCUITest runner, companion app and encrypted client. The [pinned source and modifications](vendor/ictrl/UPSTREAM.md) retain its Apache-2.0 license and NOTICE.
+- [morluto/rea](https://github.com/morluto/rea) informed the direct Ghidra scripts. Its [MIT license](docs/third-party/REA-LICENSE.txt) is retained; the current workflow does not require REA to run.
+
+**Tools and components used by the workflow or the XR trials:**
+
+- [pymobiledevice3](https://github.com/doronz88/pymobiledevice3) and [OpenSSH](https://www.openssh.com/) provide USB device services, port forwarding and authenticated file transfer.
+- [londek/ipadecrypt](https://github.com/londek/ipadecrypt) supplies the pinned full-package decryption helper, fetched outside this repository. [Frida](https://frida.re/) supplies runtime tracing and device-side instrumentation.
+- [Ghidra](https://github.com/NationalSecurityAgency/ghidra) and [Hopper](https://www.hopperapp.com/) provide optional, separately installed decompilers; Hopper requires a license.
+- [Theos](https://github.com/theos/theos), [ldid](https://github.com/ProcursusTeam/ldid), [XcodeGen](https://github.com/yonaskolb/XcodeGen) and [Apple Xcode/XCTest](https://developer.apple.com/xcode/) support tweak, runner and rebuilt-app builds. [jkcoxson/idevice](https://github.com/jkcoxson/idevice) is fetched for iCTRL's device-image component.
+- [TrollStore](https://github.com/opa334/TrollStore) installs the tested runner and rebuilt IPAs; the tested XR uses the [Dopamine](https://github.com/opa334/Dopamine) jailbreak. [Pillow](https://github.com/python-pillow/Pillow) supports image processing and visual comparisons.

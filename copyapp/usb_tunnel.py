@@ -9,13 +9,30 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Optional
 
 from copyapp.ios_mcp import IOSMCPClient
 from copyapp.ictrl import ICtrlClient, DEFAULT_CLIENT
 
 
-ICTRL_RUNNER_BUNDLE = "com.openminis.ypv49m8592.ictrl.uitests.xctrunner"
+def configured_ictrl_runner_bundle(udid: str) -> Optional[str]:
+    """Read the Bundle ID installed by setup for this exact device."""
+    config = Path(__file__).resolve().parents[1] / "toolchains" / "ictrl-runners.json"
+    if config.is_file():
+        try:
+            value = json.loads(config.read_text()).get(udid)
+            if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_.-]+", value):
+                return value
+        except (OSError, ValueError):
+            pass
+    return None
+
+
+def ictrl_runner_bundle(udid: str) -> str:
+    bundle = configured_ictrl_runner_bundle(udid)
+    if bundle is None:
+        raise FileNotFoundError("iCTRL runner is not configured for this device; run copyapp setup ictrl")
+    return bundle
 
 
 async def _launch_ictrl_runner(udid: str) -> None:
@@ -26,7 +43,7 @@ async def _launch_ictrl_runner(udid: str) -> None:
     device = await create_using_usbmux(serial=udid, connection_type="USB", autopair=False)
     try:
         async with DvtProvider(device) as provider, ProcessControl(provider) as control:
-            await control.launch(ICTRL_RUNNER_BUNDLE, kill_existing=False)
+            await control.launch(ictrl_runner_bundle(udid), kill_existing=False)
     finally:
         await device.close()
 

@@ -24,6 +24,23 @@ def minimal_macho():
 
 
 class InvestigateFlowTest(unittest.TestCase):
+    def test_hopper_preflight_precedes_device_capture(self):
+        with patch("copyapp.hopper_direct.check_direct_hopper",
+                   side_effect=FileNotFoundError("Hopper unavailable")), \
+             patch("copyapp.investigate_flow.capture_flow") as capture:
+            with self.assertRaisesRegex(FileNotFoundError, "Hopper unavailable"):
+                investigate_flow(self.udid, self.analysis, self.script,
+                                 self.root / "hopper-preflight",
+                                 provider="hopper-direct")
+        capture.assert_not_called()
+
+    def test_removed_rea_provider_is_rejected_before_device_work(self):
+        with patch("copyapp.investigate_flow.capture_flow") as capture:
+            with self.assertRaisesRegex(ValueError, "unsupported analysis provider"):
+                investigate_flow(self.udid, self.analysis, self.script,
+                                 self.root / "removed-rea", provider="ghidra")
+        capture.assert_not_called()
+
     def test_network_option_reaches_flow_and_is_pinned_for_resume(self):
         output = self.root / "network-option"
         with patch("copyapp.investigate_flow.verify_case", return_value=True), \
@@ -116,7 +133,7 @@ class InvestigateFlowTest(unittest.TestCase):
         with patch("copyapp.investigate_flow.verify_case", return_value=True), \
              patch("copyapp.investigate_flow.capture_flow", side_effect=RuntimeError("stop")) as flow:
             path, complete = investigate_flow(self.udid, self.analysis, self.script, output,
-                                              provider="ghidra")
+                                              provider="none")
         self.assertFalse(complete)
         self.assertEqual(flow.call_args.kwargs["methods"],
                          ["HomeViewController::showCounter"])
@@ -163,15 +180,13 @@ class InvestigateFlowTest(unittest.TestCase):
              patch("copyapp.investigate_flow.capture_view_tree",
                    side_effect=entry_stage) as entry, \
              patch("copyapp.investigate_flow.capture_flow",
-                   side_effect=RuntimeError("stop before touching device")) as flow, \
-             patch("copyapp.investigate_flow.analyze_candidate_queue") as rea:
+                   side_effect=RuntimeError("stop before touching device")) as flow:
             manifest, complete = investigate_flow(self.udid, self.analysis,
                                                   self.script, output)
         self.assertFalse(complete)
         entry.assert_called_once()
         self.assertEqual(flow.call_args.kwargs["methods"],
                          ["_TtC13DeepSeek_Chat8DSButton::objcOnTap"])
-        rea.assert_not_called()
         record = json.loads(manifest.read_text())
         self.assertEqual(record["provider"], "none")
         self.assertEqual(record["method_selection"], "runtime_view_heuristic")
@@ -206,15 +221,13 @@ class InvestigateFlowTest(unittest.TestCase):
                    side_effect=entry_stage) as entry, \
              patch("copyapp.investigate_flow.capture_flow",
                    side_effect=flow_stage) as flow, \
-             patch("copyapp.investigate_flow.build_candidates") as candidates, \
-             patch("copyapp.investigate_flow.analyze_candidate_queue") as rea:
+             patch("copyapp.investigate_flow.build_candidates") as candidates:
             manifest, complete = investigate_flow(self.udid, self.analysis,
                                                   self.script, output)
         self.assertTrue(complete)
         entry.assert_called_once()
         self.assertIsNone(flow.call_args.kwargs["methods"])
         candidates.assert_not_called()
-        rea.assert_not_called()
         record = json.loads(manifest.read_text())
         self.assertEqual(record["entry_view_status"], "unavailable")
         self.assertEqual(record["rea_status"], "not_requested")
@@ -224,94 +237,7 @@ class InvestigateFlowTest(unittest.TestCase):
                  "trace": None, "manifest": {"ui_backend": "ios-mcp"}}):
             _validate_investigation(output, self.bundle, self.prefix, {self.digest})
 
-    def test_one_command_orchestrates_selected_method_and_preserves_evidence(self):
-        output = self.root / "investigation"
 
-        def complete_stage(*args, **kwargs):
-            target = args[-1]
-            target.mkdir(parents=True)
-            manifest = target / "manifest.json"
-            manifest.write_text("{}")
-            return manifest, True
-
-        def complete_rea(*args, **kwargs):
-            target = args[2]
-            target.mkdir(parents=True)
-            manifest = target / "manifest.json"
-            manifest.write_text("{}")
-            return manifest, True
-
-        with patch("copyapp.investigate_flow.verify_case", return_value=True), \
-             patch("copyapp.investigate_flow.capture_flow", side_effect=complete_stage) as flow, \
-             patch("copyapp.investigate_flow.build_candidates", side_effect=complete_stage) as candidates, \
-             patch("copyapp.investigate_flow.analyze_candidate_queue", side_effect=complete_rea) as rea, \
-             patch("copyapp.investigate_flow.write_review_brief") as brief:
-            path, complete = investigate_flow(self.udid, self.analysis, self.script, output,
-                                              provider="ghidra")
-        self.assertTrue(complete)
-        self.assertEqual(json.loads(path.read_text())["selected_methods"],
-                         ["View::buttonPressed:"])
-        self.assertEqual(flow.call_args.kwargs["methods"], ["View::buttonPressed:"])
-        self.assertEqual(flow.call_args.kwargs["arg2_u32_methods"],
-                         ["View::buttonPressed:"])
-        candidates.assert_called_once()
-        rea.assert_called_once()
-        brief.assert_called_once()
-        self.assertTrue(verify_case(output))
-
-    def test_failed_rea_retry_archives_error_without_repeating_ui_capture(self):
-        output = self.root / "rea-retry"
-        attempts = []
-
-        def flow_stage(*args, **kwargs):
-            target = args[3]
-            target.mkdir(parents=True)
-            (target / "manifest.json").write_text('{"status":"complete"}')
-            return target / "manifest.json", True
-
-        def candidate_stage(*args, **kwargs):
-            target = args[-1]
-            (target / "sources/flow-01").mkdir(parents=True)
-            (target / "sources/flow-01/manifest.json").write_bytes(
-                (output / "flow/manifest.json").read_bytes())
-            (target / "candidates.json").write_text(json.dumps({
-                "bundle_id": self.bundle, "device_id_sha256_prefix": self.prefix,
-                "binary_sha256": self.digest, "candidates": [{}]}))
-            (target / "manifest.json").write_text("{}")
-            return target / "manifest.json", True
-
-        def rea_stage(candidates, provider, target, *args):
-            attempts.append(target)
-            target.mkdir(parents=True)
-            complete = len(attempts) == 2
-            (target / "queue.json").write_text(json.dumps({
-                "kind": "rea_candidate_queue", "provider": provider,
-                "status": "complete" if complete else "failed",
-                "binary_sha256": self.digest,
-                "candidate_case_sha256": sha256_file(candidates / "candidates.json")}))
-            (target / "manifest.json").write_text(json.dumps({
-                "kind": "rea_candidate_queue", "status": "complete" if complete else "failed",
-                "evidence": [{"path": "queue.json", "sha256": sha256_file(target / "queue.json")}] }))
-            return target / "manifest.json", complete
-
-        with patch("copyapp.investigate_flow.verify_case", return_value=True), \
-             patch("copyapp.investigate_flow.capture_flow", side_effect=flow_stage) as capture, \
-             patch("copyapp.investigate_flow.build_candidates", side_effect=candidate_stage), \
-             patch("copyapp.investigate_flow.analyze_candidate_queue", side_effect=rea_stage), \
-             patch("copyapp.investigate_flow.write_review_brief"), \
-             patch("copyapp.report._validate_flow_capture"):
-            _, complete = investigate_flow(self.udid, self.analysis, self.script, output,
-                                           provider="ghidra")
-            self.assertFalse(complete)
-            _, complete = investigate_flow(self.udid, self.analysis, self.script, output,
-                                           provider="ghidra", resume=True)
-        self.assertTrue(complete, json.loads((output / "manifest.json").read_text()).get("error"))
-        capture.assert_called_once()
-        self.assertEqual(len(attempts), 2)
-        archives = list((output / "attempts").glob("rea-*/queue.json"))
-        self.assertEqual(len(archives), 1)
-        self.assertEqual(json.loads(archives[0].read_text())["status"], "failed")
-        self.assertTrue(verify_case(output))
 
     def test_failed_flow_retry_archives_original_before_new_device_touch(self):
         self.save_index([("View", "firstAction:", "0x100001000"),
@@ -347,18 +273,6 @@ class InvestigateFlowTest(unittest.TestCase):
                          "complete")
         self.assertTrue(verify_case(output))
 
-    def test_ambiguous_scout_leaves_reviewable_case_without_touches(self):
-        self.save_index([("View", "tappedOne:", "0x100001000"),
-                         ("View", "tappedTwo:", "0x100001004")])
-        output = self.root / "review"
-        with patch("copyapp.investigate_flow.verify_case", return_value=True), \
-             patch("copyapp.investigate_flow.capture_flow") as flow:
-            path, complete = investigate_flow(self.udid, self.analysis, self.script, output,
-                                              provider="ghidra")
-        self.assertFalse(complete)
-        self.assertEqual(json.loads(path.read_text())["status"], "needs_review")
-        flow.assert_not_called()
-        self.assertTrue(verify_case(output))
 
     def test_default_needs_no_rea_or_objc_method_for_ui_evidence(self):
         self.save_index([("View", "tappedOne:", "0x100001000"),
@@ -374,14 +288,12 @@ class InvestigateFlowTest(unittest.TestCase):
 
         with patch("copyapp.investigate_flow.verify_case", return_value=True), \
              patch("copyapp.investigate_flow.capture_flow", side_effect=flow_stage) as capture, \
-             patch("copyapp.investigate_flow.build_candidates") as candidates, \
-             patch("copyapp.investigate_flow.analyze_candidate_queue") as rea:
+             patch("copyapp.investigate_flow.build_candidates") as candidates:
             manifest, complete = investigate_flow(self.udid, self.analysis,
                                                   self.script, output)
         self.assertTrue(complete, manifest.read_text())
         self.assertIsNone(capture.call_args.kwargs["methods"])
         candidates.assert_not_called()
-        rea.assert_not_called()
         record = json.loads(manifest.read_text())
         self.assertEqual(record["provider"], "none")
         self.assertEqual(record["rea_status"], "not_requested")
@@ -416,12 +328,10 @@ class InvestigateFlowTest(unittest.TestCase):
 
         with patch("copyapp.investigate_flow.verify_case", return_value=True), \
              patch("copyapp.investigate_flow.capture_flow", side_effect=flow_stage), \
-             patch("copyapp.investigate_flow.build_candidates", side_effect=candidate_stage), \
-             patch("copyapp.investigate_flow.analyze_candidate_queue") as rea:
+             patch("copyapp.investigate_flow.build_candidates", side_effect=candidate_stage):
             manifest, complete = investigate_flow(self.udid, self.analysis,
                                                   self.script, output)
         self.assertTrue(complete, manifest.read_text())
-        rea.assert_not_called()
         self.assertEqual(json.loads(manifest.read_text())["candidate_status"],
                          "no_candidates")
         with patch("copyapp.report.verify_case", return_value=True), \
@@ -462,12 +372,10 @@ class InvestigateFlowTest(unittest.TestCase):
 
         with patch("copyapp.investigate_flow.verify_case", return_value=True), \
              patch("copyapp.investigate_flow.capture_flow", side_effect=flow_stage), \
-             patch("copyapp.investigate_flow.build_candidates", side_effect=candidate_stage), \
-             patch("copyapp.investigate_flow.analyze_candidate_queue") as rea:
+             patch("copyapp.investigate_flow.build_candidates", side_effect=candidate_stage):
             manifest, complete = investigate_flow(self.udid, self.analysis,
                                                   self.script, output)
         self.assertTrue(complete, manifest.read_text())
-        rea.assert_not_called()
         self.assertEqual(json.loads(manifest.read_text())["native_status"],
                          "unavailable")
         self.assertTrue(verify_case(output))
@@ -479,44 +387,6 @@ class InvestigateFlowTest(unittest.TestCase):
                                                 self.prefix, {self.digest})
         self.assertEqual(validated["native"]["complete_count"], 0)
 
-    def test_resume_review_case_with_explicit_method_preserves_prior_scout(self):
-        self.save_index([("View", "tappedOne:", "0x100001000"),
-                         ("View", "tappedTwo:", "0x100001004")])
-        output = self.root / "review-resumed"
-        with patch("copyapp.investigate_flow.verify_case", return_value=True):
-            _, complete = investigate_flow(self.udid, self.analysis, self.script, output,
-                                           provider="ghidra")
-        self.assertFalse(complete)
-
-        def complete_stage(*args, **kwargs):
-            target = args[-1]
-            target.mkdir(parents=True)
-            manifest = target / "manifest.json"
-            manifest.write_text("{}")
-            return manifest, True
-
-        def complete_rea(*args, **kwargs):
-            target = args[2]
-            target.mkdir(parents=True)
-            (target / "manifest.json").write_text("{}")
-            return target / "manifest.json", True
-
-        with patch("copyapp.investigate_flow.verify_case", return_value=True), \
-             patch("copyapp.investigate_flow.capture_flow", side_effect=complete_stage) as flow, \
-             patch("copyapp.investigate_flow.build_candidates", side_effect=complete_stage), \
-             patch("copyapp.investigate_flow.analyze_candidate_queue", side_effect=complete_rea), \
-             patch("copyapp.investigate_flow.write_review_brief"):
-            path, complete = investigate_flow(self.udid, self.analysis, self.script, output,
-                                              methods=["View::tappedOne:"], provider="ghidra",
-                                              resume=True)
-        self.assertTrue(complete)
-        self.assertEqual(flow.call_args.kwargs["methods"], ["View::tappedOne:"])
-        self.assertEqual(json.loads(path.read_text())["status"], "complete")
-        self.assertEqual(json.loads((output / "method-scout-before-review.json").read_text())
-                         ["used_methods"], [])
-        self.assertEqual(json.loads((output / "method-scout.json").read_text())
-                         ["used_methods"], ["View::tappedOne:"])
-        self.assertTrue(verify_case(output))
 
     def test_resolves_decrypted_main_from_verified_ipa_member(self):
         decrypted = self.analysis / "decrypted"

@@ -36,6 +36,7 @@ from copyapp.objc import index_objc, write_objc_report
 from copyapp.verify import verify_case
 from copyapp.ui_evidence import ui_attribution
 from copyapp.ictrl import ICtrlClient, DEFAULT_CLIENT
+from copyapp.ictrl_setup import setup_ictrl
 from copyapp.trace import parse_branch_register, trace_methods
 from copyapp.experiment import trace_tap
 from copyapp.decrypt_verify import inspect_decrypted_ipa, write_decryption_check
@@ -43,14 +44,13 @@ from copyapp.decrypt import decrypt_main, decrypt_extension
 from copyapp.assemble import assemble_analysis_ipa
 from copyapp.root_bridge import run_root_command
 from copyapp.decrypt_package import decrypt_package
-from copyapp.rea_function import analyze_rea_function
 from copyapp.ghidra_direct import decompile_ghidra_function
+from copyapp.hopper_direct import decompile_hopper_function
+from copyapp.hopper_queue import decompile_hopper_queue
 from copyapp.ghidra_queue import decompile_candidate_queue
 from copyapp.indirect_follow import follow_indirect
 from copyapp.native_disasm import (disassemble_native_candidates,
                                    disassemble_native_function)
-from copyapp.rea_queue import analyze_candidate_queue
-from copyapp.rea_bridge import follow_rea_bridges
 from copyapp.investigate_app import investigate_app
 from copyapp.rebuild_check import rebuild_check
 from copyapp.draft_analysis import draft_analysis
@@ -384,6 +384,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Copy APP USB survey (v0.1)")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("devices", help="list connected USB devices")
+    setup = sub.add_parser("setup", help="build, install and pair optional device tooling")
+    setup.add_argument("component", choices=("ictrl",))
+    setup.add_argument("--udid", required=True)
+    setup.add_argument("--out", required=True, type=Path)
+    setup.add_argument("--runner-ipa", type=Path,
+                       help="use an already signed runner IPA instead of building it")
+    setup.add_argument("--reinstall", action="store_true",
+                       help="reinstall the runner even when its Bundle ID is already installed")
+    setup.add_argument("--ssh-port", type=int, default=22222)
+    setup.add_argument("--ssh-identity", type=Path, default=Path("cases/ssh/id_ed25519"))
+    setup.add_argument("--ssh-known-hosts", type=Path, default=Path("cases/ssh-known-hosts"))
     doctor = sub.add_parser("doctor", help="record capability baseline for one exact USB iPhone")
     doctor.add_argument("--udid", required=True)
     doctor.add_argument("--out", required=True, type=Path)
@@ -436,19 +447,19 @@ def main() -> None:
                             help="exact acquired Mach-O used for static Frida entry binding")
     branch_map.add_argument("--out", required=True, type=Path)
     investigate = sub.add_parser("investigate-flow",
-                                 help="investigate one UI flow; native assembly by default, REA optional")
+                                 help="investigate one UI flow with native assembly or direct Ghidra/Hopper")
     investigate.add_argument("--udid", required=True)
     investigate.add_argument("--analysis", required=True, type=Path)
     investigate.add_argument("--script", required=True, type=Path)
     investigate.add_argument("--backend", choices=("ios-mcp", "ictrl"), default="ios-mcp")
     investigate.add_argument("--method", action="append", dest="methods",
                              help="override heuristic method choice; repeat for more methods")
-    investigate.add_argument("--provider", choices=("none", "ghidra-direct", "ghidra", "hopper"), default="none")
-    investigate.add_argument("--function-limit", "--rea-limit", dest="rea_limit",
+    investigate.add_argument("--provider", choices=("none", "ghidra-direct", "hopper-direct"), default="none")
+    investigate.add_argument("--function-limit", dest="rea_limit",
                              type=int, default=4, metavar="N",
                              help="maximum observed entry functions; direct Ghidra may also follow bounded native calls")
-    investigate.add_argument("--rea-script", type=Path)
     investigate.add_argument("--ghidra-dir", type=Path)
+    investigate.add_argument("--hopper-app", type=Path)
     investigate.add_argument("--java-home", type=Path)
     investigate.add_argument("--ghidra-disable-analyzer")
     investigate.add_argument("--network", action="store_true",
@@ -464,12 +475,12 @@ def main() -> None:
     app_investigate.add_argument("--script", required=True, action="append", type=Path,
                                  help="bounded playbook; repeat for each selected flow")
     app_investigate.add_argument("--backend", choices=("ios-mcp", "ictrl"), default="ios-mcp")
-    app_investigate.add_argument("--provider", choices=("none", "ghidra-direct", "ghidra", "hopper"), default="none")
-    app_investigate.add_argument("--function-limit", "--rea-limit", dest="rea_limit",
+    app_investigate.add_argument("--provider", choices=("none", "ghidra-direct", "hopper-direct"), default="none")
+    app_investigate.add_argument("--function-limit", dest="rea_limit",
                                  type=int, default=4, metavar="N",
                                  help="maximum observed entry functions; direct Ghidra may also follow bounded native calls")
-    app_investigate.add_argument("--rea-script", type=Path)
     app_investigate.add_argument("--ghidra-dir", type=Path)
+    app_investigate.add_argument("--hopper-app", type=Path)
     app_investigate.add_argument("--java-home", type=Path)
     app_investigate.add_argument("--ghidra-disable-analyzer")
     app_investigate.add_argument("--network", action="store_true",
@@ -491,12 +502,12 @@ def main() -> None:
     prepare.add_argument("--investigation", type=Path,
                          help="reuse an already completed, verified investigation")
     prepare.add_argument("--backend", choices=("ios-mcp", "ictrl"), default="ios-mcp")
-    prepare.add_argument("--provider", choices=("none", "ghidra-direct", "ghidra", "hopper"), default="none")
-    prepare.add_argument("--function-limit", "--rea-limit", dest="rea_limit",
+    prepare.add_argument("--provider", choices=("none", "ghidra-direct", "hopper-direct"), default="none")
+    prepare.add_argument("--function-limit", dest="rea_limit",
                          type=int, default=4, metavar="N",
                          help="maximum observed entry functions; direct Ghidra may also follow bounded native calls")
-    prepare.add_argument("--rea-script", type=Path)
     prepare.add_argument("--ghidra-dir", type=Path)
+    prepare.add_argument("--hopper-app", type=Path)
     prepare.add_argument("--java-home", type=Path)
     prepare.add_argument("--ghidra-disable-analyzer")
     prepare.add_argument("--network", action="store_true",
@@ -523,12 +534,12 @@ def main() -> None:
                                     default=Path("cases/ssh/id_ed25519"))
     prepare_app_parser.add_argument("--ssh-known-hosts", type=Path,
                                     default=Path("cases/ssh-known-hosts"))
-    prepare_app_parser.add_argument("--provider", choices=("none", "ghidra-direct", "ghidra", "hopper"), default="none")
-    prepare_app_parser.add_argument("--function-limit", "--rea-limit", dest="rea_limit",
+    prepare_app_parser.add_argument("--provider", choices=("none", "ghidra-direct", "hopper-direct"), default="none")
+    prepare_app_parser.add_argument("--function-limit", dest="rea_limit",
                                     type=int, default=4, metavar="N",
                                     help="maximum observed entry functions; direct Ghidra may also follow bounded native calls")
-    prepare_app_parser.add_argument("--rea-script", type=Path)
     prepare_app_parser.add_argument("--ghidra-dir", type=Path)
+    prepare_app_parser.add_argument("--hopper-app", type=Path)
     prepare_app_parser.add_argument("--java-home", type=Path)
     prepare_app_parser.add_argument("--ghidra-disable-analyzer")
     prepare_app_parser.add_argument("--network", action="store_true",
@@ -553,7 +564,7 @@ def main() -> None:
     copy_parser.add_argument("--backend", choices=("ios-mcp", "ictrl"), default="ios-mcp")
     copy_parser.add_argument("--ui-backend", choices=("usb", "ios-mcp"), default="ios-mcp")
     copy_parser.add_argument("--analysis-provider",
-                             choices=("none", "ghidra-direct", "ghidra", "hopper"),
+                             choices=("none", "ghidra-direct", "hopper-direct"),
                              default="none")
     copy_parser.add_argument("--agent-provider", choices=("codex", "claude", "current"),
                              default="codex",
@@ -570,6 +581,7 @@ def main() -> None:
     copy_parser.add_argument("--ssh-known-hosts", type=Path,
                              default=Path("cases/ssh-known-hosts"))
     copy_parser.add_argument("--ghidra-dir", type=Path)
+    copy_parser.add_argument("--hopper-app", type=Path)
     copy_parser.add_argument("--java-home", type=Path)
     copy_parser.add_argument("--ghidra-disable-analyzer")
     copy_parser.add_argument("--analysis-timeout", type=int, default=240)
@@ -700,16 +712,6 @@ def main() -> None:
     package.add_argument("--ssh-port", type=int, default=22222)
     package.add_argument("--ssh-identity", type=Path, default=Path("cases/ssh/id_ed25519"))
     package.add_argument("--ssh-known-hosts", type=Path, default=Path("cases/ssh-known-hosts"))
-    rea = sub.add_parser("rea-function", help="retain one hash-bound REA/Ghidra or REA/Hopper function dossier")
-    rea.add_argument("--file", required=True, type=Path)
-    rea.add_argument("--sha256", required=True)
-    rea.add_argument("--procedure", required=True)
-    rea.add_argument("--provider", required=True, choices=("ghidra", "hopper"))
-    rea.add_argument("--out", required=True, type=Path)
-    rea.add_argument("--rea-script", type=Path)
-    rea.add_argument("--ghidra-dir", type=Path)
-    rea.add_argument("--java-home", type=Path)
-    rea.add_argument("--timeout", type=int, default=240)
     ghidra_direct = sub.add_parser("ghidra-function",
                                    help="decompile one pinned function with Ghidra directly; no REA")
     ghidra_direct.add_argument("--file", required=True, type=Path)
@@ -721,6 +723,21 @@ def main() -> None:
     ghidra_direct.add_argument("--disable-analyzer",
                                help="disable one named Ghidra analyzer before auto-analysis")
     ghidra_direct.add_argument("--out", required=True, type=Path)
+    hopper_direct = sub.add_parser("hopper-function",
+                                   help="decompile one pinned function with Hopper directly")
+    hopper_direct.add_argument("--file", required=True, type=Path)
+    hopper_direct.add_argument("--sha256", required=True)
+    hopper_direct.add_argument("--address", required=True)
+    hopper_direct.add_argument("--hopper-app", type=Path)
+    hopper_direct.add_argument("--timeout", type=int, default=600)
+    hopper_direct.add_argument("--out", required=True, type=Path)
+    hopper_queue = sub.add_parser("hopper-queue",
+                                  help="decompile a verified candidate queue with Hopper directly")
+    hopper_queue.add_argument("--candidates", required=True, type=Path)
+    hopper_queue.add_argument("--hopper-app", type=Path)
+    hopper_queue.add_argument("--limit", type=int, default=4)
+    hopper_queue.add_argument("--timeout", type=int, default=600)
+    hopper_queue.add_argument("--out", required=True, type=Path)
     ghidra_queue = sub.add_parser("ghidra-queue",
                                   help="decompile a verified candidate queue with Ghidra directly; no REA")
     ghidra_queue.add_argument("--candidates", required=True, type=Path)
@@ -773,24 +790,6 @@ def main() -> None:
     candidates.add_argument("--experiment", "--flow", required=True, action="append",
                             type=Path, help="completed tap experiment or traced flow; repeat as needed")
     candidates.add_argument("--out", required=True, type=Path)
-    rea_queue = sub.add_parser("rea-queue", help="run REA on a verified bounded candidate queue")
-    rea_queue.add_argument("--candidates", required=True, type=Path)
-    rea_queue.add_argument("--provider", required=True, choices=("ghidra", "hopper"))
-    rea_queue.add_argument("--limit", type=int, default=8)
-    rea_queue.add_argument("--rea-script", type=Path)
-    rea_queue.add_argument("--ghidra-dir", type=Path)
-    rea_queue.add_argument("--java-home", type=Path)
-    rea_queue.add_argument("--timeout", type=int, default=240)
-    rea_queue.add_argument("--out", required=True, type=Path)
-    bridge = sub.add_parser("rea-bridge", help="follow unique local bridge callees from a verified REA queue")
-    bridge.add_argument("--queue", required=True, type=Path)
-    bridge.add_argument("--limit", type=int, default=4)
-    bridge.add_argument("--max-depth", type=int, default=2)
-    bridge.add_argument("--rea-script", type=Path)
-    bridge.add_argument("--ghidra-dir", type=Path)
-    bridge.add_argument("--java-home", type=Path)
-    bridge.add_argument("--timeout", type=int, default=240)
-    bridge.add_argument("--out", required=True, type=Path)
     root = sub.add_parser("root-run", help="run one command on a named USB device via its existing root Frida server")
     root.add_argument("--udid", required=True)
     root.add_argument("--out", required=True, type=Path)
@@ -933,7 +932,7 @@ def main() -> None:
     report.add_argument("--case", required=True, type=Path)
     report.add_argument("--findings", required=True, type=Path)
     report.add_argument("--evidence", action="append", default=[], metavar="ID=PATH",
-                        help="verified native/REA dossier, completed experiment, or file; repeat as needed")
+                        help="verified analysis dossier, completed experiment, or file; repeat as needed")
     report.add_argument("--feature-spec", type=Path)
     report.add_argument("--out", required=True, type=Path)
     ui = sub.add_parser("ui", help="control one UI backend through a localhost USB tunnel")
@@ -955,6 +954,12 @@ def main() -> None:
     try:
         if args.command == "devices":
             code = asyncio.run(command_devices())
+        elif args.command == "setup":
+            path, ready = setup_ictrl(args.udid, args.out, args.ssh_port,
+                                      args.ssh_identity, args.ssh_known_hosts,
+                                      args.runner_ipa, args.reinstall)
+            print(path)
+            code = 0 if ready else 1
         elif args.command == "doctor":
             path, connected = run_doctor(args.udid, args.out, args.ssh_port,
                                          args.ssh_identity, args.ssh_known_hosts,
@@ -988,20 +993,20 @@ def main() -> None:
             path, complete = investigate_flow(args.udid, args.analysis, args.script,
                                               args.out, args.backend, args.methods,
                                               args.provider, args.rea_limit,
-                                              args.rea_script, args.ghidra_dir,
+                                              None, args.ghidra_dir,
                                               args.java_home, args.timeout, args.resume,
                                               disabled_analyzer=args.ghidra_disable_analyzer,
-                                              network=args.network)
+                                              network=args.network, hopper_app=args.hopper_app)
             print(path)
             code = 0 if complete else 1
         elif args.command == "investigate-app":
             path, complete = investigate_app(args.udid, args.analysis, args.script,
                                              args.out, args.backend, args.provider,
-                                             args.rea_limit, args.rea_script,
+                                             args.rea_limit, None,
                                              args.ghidra_dir, args.java_home,
                                              args.timeout, args.resume,
                                              disabled_analyzer=args.ghidra_disable_analyzer,
-                                             network=args.network)
+                                             network=args.network, hopper_app=args.hopper_app)
             print(path)
             code = 0 if complete else 1
         elif args.command == "draft-analysis":
@@ -1013,10 +1018,10 @@ def main() -> None:
             path, complete = prepare_analysis(
                 args.udid, args.analysis, args.script, args.out,
                 args.backend, args.provider, args.rea_limit,
-                args.rea_script, args.ghidra_dir, args.java_home,
+                None, args.ghidra_dir, args.java_home,
                 args.timeout, args.rebuilt_bundle, args.resume,
                 args.investigation, disabled_analyzer=args.ghidra_disable_analyzer,
-                network=args.network)
+                network=args.network, hopper_app=args.hopper_app)
             print(path)
             code = 0 if complete else 1
         elif args.command == "prepare-app":
@@ -1029,12 +1034,12 @@ def main() -> None:
                 decrypt_helper=args.decrypt_helper, ssh_port=args.ssh_port,
                 ssh_user=args.ssh_user, ssh_identity=args.ssh_identity,
                 ssh_known_hosts=args.ssh_known_hosts, provider=args.provider,
-                rea_limit=args.rea_limit, rea_script=args.rea_script,
+                rea_limit=args.rea_limit,
                 ghidra_dir=args.ghidra_dir, java_home=args.java_home,
                 timeout=args.timeout, rebuilt_bundle_id=args.rebuilt_bundle,
                 resume=args.resume,
                 disabled_analyzer=args.ghidra_disable_analyzer,
-                network=args.network))
+                network=args.network, hopper_app=args.hopper_app))
             print(path)
             code = 0 if complete else 1
         elif args.command == "copy":
@@ -1057,7 +1062,7 @@ def main() -> None:
                 analysis_timeout=args.analysis_timeout,
                 agent_timeout=args.agent_timeout_seconds,
                 discovery_case=args.discovery, auto_discover=args.auto_discover,
-                resume=args.resume))
+                resume=args.resume, hopper_app=args.hopper_app))
             print(path)
             code = 0 if complete else 1
         elif args.command == "rebuild-plan":
@@ -1147,17 +1152,22 @@ def main() -> None:
                                   args.out, args.ssh_port, args.ssh_identity,
                                   args.ssh_known_hosts))
             code = 0
-        elif args.command == "rea-function":
-            print(analyze_rea_function(args.file, args.sha256, args.procedure,
-                                       args.provider, args.out, args.rea_script,
-                                       args.ghidra_dir, args.java_home, args.timeout))
-            code = 0
         elif args.command == "ghidra-function":
             print(decompile_ghidra_function(args.file, args.sha256, args.address,
                                             args.out, args.ghidra_dir,
                                             args.java_home, args.timeout,
                                             args.disable_analyzer))
             code = 0
+        elif args.command == "hopper-function":
+            print(decompile_hopper_function(args.file, args.sha256, args.address,
+                                            args.out, args.hopper_app, args.timeout))
+            code = 0
+        elif args.command == "hopper-queue":
+            path, complete = decompile_hopper_queue(
+                args.candidates, args.out, args.hopper_app,
+                args.limit, args.timeout)
+            print(path)
+            code = 0 if complete else 1
         elif args.command == "ghidra-queue":
             path, complete = decompile_candidate_queue(
                 args.candidates, args.out, args.ghidra_dir,
@@ -1178,13 +1188,6 @@ def main() -> None:
                                                     args.objc_index, args.experiment, args.out)
             print(path)
             code = 0 if has_candidates else 1
-        elif args.command == "rea-queue":
-            path, complete = analyze_candidate_queue(args.candidates, args.provider,
-                                                     args.out, args.limit, args.rea_script,
-                                                     args.ghidra_dir, args.java_home,
-                                                     args.timeout)
-            print(path)
-            code = 0 if complete else 1
         elif args.command == "native-disasm":
             print(disassemble_native_function(args.file, args.sha256,
                                               args.address, args.out,
@@ -1196,13 +1199,6 @@ def main() -> None:
                                                 args.timeout, args.follow_limit,
                                                 args.follow_depth))
             code = 0
-        elif args.command == "rea-bridge":
-            path, complete = follow_rea_bridges(args.queue, args.out, args.limit,
-                                                args.max_depth, args.rea_script,
-                                                args.ghidra_dir, args.java_home,
-                                                args.timeout)
-            print(path)
-            code = 0 if complete else 1
         elif args.command == "root-run":
             command = args.argv[1:] if args.argv and args.argv[0] == "--" else args.argv
             result = run_root_command(args.udid, command, args.out, args.ssh_port,

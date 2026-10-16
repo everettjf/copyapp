@@ -1,11 +1,12 @@
 import json
+import subprocess
 import tempfile
 import unittest
 from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
-from copyapp.playbook import _exact_labels, run_playbook
+from copyapp.playbook import _exact_labels, _fresh_launch, run_playbook
 
 
 @contextmanager
@@ -109,6 +110,47 @@ class PlaybookExactLabelsTest(unittest.TestCase):
         self.assertEqual(CachedUI.opened, ["dev.copyapp.clockclone"])
         self.assertEqual(CachedUI.terminated, [
             ("terminate_app", {"bundle_id": "dev.copyapp.clockclone"})])
+
+    def test_instruments_launch_is_bounded(self):
+        with patch("copyapp.playbook.subprocess.run", side_effect=subprocess.TimeoutExpired(
+                cmd="dvt", timeout=20)) as run:
+            with self.assertRaisesRegex(TimeoutError, "exceeded 20 seconds"):
+                import asyncio
+                asyncio.run(_fresh_launch("00008020-000D650434B8003A", "dev.copyapp.fixture"))
+        self.assertEqual(run.call_args.kwargs["timeout"], 20)
+
+    def test_ios_mcp_fresh_launch_falls_back_to_ictrl_lifecycle(self):
+        class FallbackClient:
+            calls = []
+
+            def __init__(self, **_kwargs):
+                pass
+
+            def call_ui(self, method, params):
+                self.calls.append((method, params))
+
+        self.script.write_text(json.dumps({
+            "schema_version": 1, "bundle_id": "com.apple.mobiletimer",
+            "fresh_launch": True,
+            "steps": [{"action": "observe", "exact_labels": ["Stopwatch"]}],
+        }))
+        with patch("copyapp.playbook.ExperimentUI", FakeUI), \
+             patch("copyapp.playbook.ios_mcp_tunnel", fake_tunnel), \
+             patch("copyapp.playbook.ictrl_tunnel", fake_tunnel), \
+             patch("copyapp.playbook.ICtrlClient", FallbackClient), \
+             patch("copyapp.playbook._fresh_launch", new_callable=AsyncMock,
+                   side_effect=TimeoutError("timed out")), \
+             patch("copyapp.playbook.time.sleep"):
+            path, complete = run_playbook("device", "ios-mcp", self.script,
+                                          self.root / "fallback")
+        record = json.loads(path.read_text())
+        self.assertTrue(complete, record.get("error"))
+        self.assertEqual(record["fresh_launch_backend"], "ictrl_lifecycle_fallback")
+        self.assertIn("TimeoutError: timed out", record["fresh_launch_primary_error"])
+        self.assertEqual(FallbackClient.calls, [
+            ("terminate_app", {"bundle_id": "com.apple.mobiletimer"}),
+            ("launch_app", {"bundle_id": "com.apple.mobiletimer"}),
+        ])
 
 
 if __name__ == "__main__":

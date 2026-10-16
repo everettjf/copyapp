@@ -6,7 +6,7 @@ from pathlib import Path
 
 from copyapp.ghidra_queue import (decompile_candidate_queue, select_ghidra_targets,
                                   verified_indirect_targets)
-from copyapp.prepare_analysis import _rea_ready
+from copyapp.prepare_analysis import _ghidra_ready
 from copyapp.report import _validate_ghidra_direct_queue
 from copyapp.verify import sha256_file, verify_case
 from tests.test_native_disasm import BASE, ENTRY, sample_macho
@@ -101,8 +101,8 @@ pathlib.Path(args[args.index('-log') + 1]).write_text('fake provider\\n')
         java.write_text("#!/bin/sh\necho 'openjdk version 21-test' >&2\n")
         java.chmod(0o755)
         with self.assertRaisesRegex(FileNotFoundError, "JDK"):
-            _rea_ready(doctor_dir, "ghidra-direct", None, self.root / "ghidra", None)
-        _rea_ready(doctor_dir, "ghidra-direct", None,
+            _ghidra_ready(doctor_dir, self.root / "ghidra", None)
+        _ghidra_ready(doctor_dir,
                    self.root / "ghidra", java_home)
         doctor = json.loads((doctor_dir / "toolchain-doctor.json").read_text())
         self.assertEqual(doctor["provider"], "ghidra-direct")

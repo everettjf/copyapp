@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e2235"/>
+      <stop offset="100%" stop-color="#0d0f1a"/>
+    </linearGradient>
+    <linearGradient id="trail" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00e5ff"/>
+      <stop offset="40%" stop-color="#0099ff"/>
+      <stop offset="100%" stop-color="#6c3ce0"/>
+    </linearGradient>
+    <linearGradient id="iDot" x1="0.3" y1="0.2" x2="0.8" y2="0.9">
+      <stop offset="0%" stop-color="#00ffee"/>
+      <stop offset="100%" stop-color="#0088ff"/>
+    </linearGradient>
+    <linearGradient id="iStem" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#00ddff"/>
+      <stop offset="100%" stop-color="#0066dd"/>
+    </linearGradient>
+    <linearGradient id="ctrlGrad" x1="0" y1="0.3" x2="1" y2="0.7">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#b0c4de"/>
+    </linearGradient>
+    <radialGradient id="dotGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+
+  <!-- ===== Circular orbits ===== -->
+  <circle cx="512" cy="512" r="400" fill="none" stroke="url(#trail)" stroke-width="2" opacity="0.07"
+    stroke-dasharray="2060 454" stroke-linecap="round" transform="rotate(-115 512 512)"/>
+
+  <circle cx="512" cy="512" r="340" fill="none" stroke="url(#trail)" stroke-width="4.5" opacity="0.16"
+    stroke-dasharray="1750 386" stroke-linecap="round" transform="rotate(-125 512 512)"/>
+
+  <circle cx="512" cy="512" r="278" fill="none" stroke="url(#trail)" stroke-width="7" opacity="0.35"
+    stroke-dasharray="1430 317" stroke-linecap="round" transform="rotate(-135 512 512)"/>
+
+  <!-- ===== Text: iCTRL ===== -->
+  <!-- Scaled to fit well inside the inner orbit -->
+  <!-- Text baseline ~530, cap height ~440, centered horizontally -->
+
+  <!-- "i" stem — cyan gradient -->
+  <rect x="225" y="450" width="40" height="130" rx="14" fill="url(#iStem)"/>
+
+  <!-- "i" dot — glow origin -->
+  <circle cx="245" cy="385" r="42" fill="url(#dotGlow)"/>
+  <circle cx="245" cy="385" r="28" fill="url(#iDot)"/>
+  <circle cx="239" cy="378" r="9" fill="#ffffff" opacity="0.55"/>
+
+  <!-- "C" — white gradient -->
+  <path d="M 355 450 C 310 450, 290 475, 290 490 C 290 505, 310 580, 355 580"
+    fill="none" stroke="url(#ctrlGrad)" stroke-width="40" stroke-linecap="round"/>
+
+  <!-- "T" -->
+  <line x1="390" y1="450" x2="490" y2="450" stroke="url(#ctrlGrad)" stroke-width="40" stroke-linecap="round"/>
+  <line x1="440" y1="450" x2="440" y2="580" stroke="url(#ctrlGrad)" stroke-width="40" stroke-linecap="round"/>
+
+  <!-- "R" -->
+  <line x1="525" y1="450" x2="525" y2="580" stroke="url(#ctrlGrad)" stroke-width="40" stroke-linecap="round"/>
+  <path d="M 525 450 L 570 450 C 600 450, 600 495, 570 505"
+    fill="none" stroke="url(#ctrlGrad)" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="565" y1="500" x2="605" y2="580" stroke="url(#ctrlGrad)" stroke-width="40" stroke-linecap="round"/>
+
+  <!-- "L" -->
+  <line x1="640" y1="450" x2="640" y2="580" stroke="url(#ctrlGrad)" stroke-width="40" stroke-linecap="round"/>
+  <line x1="640" y1="580" x2="725" y2="580" stroke="url(#ctrlGrad)" stroke-width="40" stroke-linecap="round"/>
+
+  <!-- Particles -->
+  <circle cx="850" cy="350" r="5" fill="#00ccff" opacity="0.4"/>
+  <circle cx="195" cy="700" r="4" fill="#7b42f6" opacity="0.3"/>
+  <circle cx="780" cy="740" r="3.5" fill="#0088ff" opacity="0.25"/>
+</svg>

@@ -27,7 +27,7 @@ Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组
 
 对完全相同的 `copyapp copy` 命令添加 `--resume`。父流程先重验发现结果，再用 `prepare-app` 采集安装包、沙盒、请求的脱壳结果及 UI/运行时调查证据。状态为 `analysis_agent_needs_review` 时，阅读 `analysis-agent/TASK.md` 和来源证据，在 `analysis-agent/reviewed-report/` 写正式报告与 `feature-spec.json`，然后运行 `copyapp analysis-delivery` 保存到 `analysis-agent/analysis-delivery/`。交付关卡检查来源身份和每条流程的证据关联；反编译函数的语义仍须由 Agent 审阅，未知部分要明确标注。
 
-默认链路不依赖 REA。需要直接反编译时可添加 `--analysis-provider ghidra-direct --ghidra-dir <目录> --java-home <目录>`；此模式需要外部 Ghidra 和 JDK。Frida 的运行时命中与静态伪代码是不同证据，不能单凭其中一项认定完整实现。
+默认链路不依赖 REA。需要直接反编译时，可选 `--analysis-provider ghidra-direct --ghidra-dir <目录> --java-home <目录>`，或 `--analysis-provider hopper-direct`（可用 `--hopper-app <Hopper.app>` 指定路径）。前者需要 Ghidra 和 JDK；后者需要在正常 macOS 用户会话中运行已授权的 Hopper GUI。iOS 16.1.1 XR 上的 `investigate-flow --provider hopper-direct` 已完整运行 UI 重放、Frida 跟踪与 Hopper 反编译，结果进入校验通过的报告。完整的 Hopper `copy` 分析到复刻流程仍待测。Frida 的运行时命中与静态伪代码是不同证据，不能单凭其中一项认定完整实现。
 
 ## 3. 实现与真机对照
 

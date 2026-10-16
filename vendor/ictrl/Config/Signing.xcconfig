@@ -1,0 +1,17 @@
+// Signing settings shared by both targets.
+//
+// Don't put your own values here — this file is committed. They go in
+// Config/Local.xcconfig (gitignored), which `make` creates on the first run
+// from the Apple Development certificate in your keychain:
+//
+//   DEVELOPMENT_TEAM = ABCDE12345
+//   ICTRL_BUNDLE_PREFIX = com.example.you
+//
+// The prefix matters as much as the team: an explicit App ID is unique across
+// ALL developer accounts, so "com.copyapp.ictrl" can only ever be registered
+// by one team, and automatic signing fails for everyone else.
+
+DEVELOPMENT_TEAM =
+ICTRL_BUNDLE_PREFIX = com.copyapp
+
+#include? "Local.xcconfig"

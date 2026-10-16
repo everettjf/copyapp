@@ -12,6 +12,13 @@ cases/
 .theos/
 packages/
 build/
+toolchains/
+vendor/ictrl/build/
+vendor/ictrl/Frameworks/
+vendor/ictrl/cli/ictrl
+vendor/ictrl/Config/Local.xcconfig
+vendor/ictrl/iCTRL.xcodeproj/
+vendor/ictrl/*.ipa
 rebuild/*/build/
 rebuild/*/*.xcodeproj/project.xcworkspace/xcuserdata/
 rebuild/*/*.xcodeproj/xcuserdata/

@@ -40,7 +40,7 @@ class PrepareAnalysisTest(unittest.TestCase):
                 "device_id_sha256_prefix": self.prefix,
                 "analysis_index_sha256": sha256_file(self.analysis / "analysis-index.json"),
                 "scripts": [{"path": str(self.script.resolve()), "sha256": sha256_file(self.script)}],
-                "ui_backend": "ios-mcp", "provider": "ghidra"}))
+                "ui_backend": "ios-mcp", "provider": "ghidra-direct"}))
             return output / "manifest.json", complete
 
         def draft(analysis, investigation, output, rebuilt_bundle):
@@ -55,16 +55,16 @@ class PrepareAnalysisTest(unittest.TestCase):
             return output / "manifest.json", True
 
         with patch("copyapp.prepare_analysis.verify_case", return_value=True), \
-             patch("copyapp.prepare_analysis._rea_ready"), \
+             patch("copyapp.prepare_analysis._ghidra_ready"), \
              patch("copyapp.prepare_analysis.investigate_app", side_effect=investigate), \
              patch("copyapp.prepare_analysis.draft_analysis", side_effect=draft) as writer:
             _, ready = prepare_analysis(self.udid, self.analysis, [self.script], self.output,
-                                        provider="ghidra")
+                                        provider="ghidra-direct")
             self.assertFalse(ready)
             self.assertEqual(json.loads((self.output / "manifest.json").read_text())["status"],
                              "investigation_incomplete")
             _, ready = prepare_analysis(self.udid, self.analysis, [self.script], self.output,
-                                        provider="ghidra", resume=True)
+                                        provider="ghidra-direct", resume=True)
             self.assertTrue(ready, (self.output / "manifest.json").read_text())
             writer.assert_called_once()
         self.assertEqual(attempts, [False, True])
@@ -87,11 +87,11 @@ class PrepareAnalysisTest(unittest.TestCase):
 
     def test_missing_decompiler_stops_before_touching_phone(self):
         with patch("copyapp.prepare_analysis.verify_case", return_value=True), \
-             patch("copyapp.prepare_analysis._rea_ready",
-                   side_effect=FileNotFoundError("REA CLI not found")), \
+             patch("copyapp.prepare_analysis._ghidra_ready",
+                   side_effect=FileNotFoundError("Ghidra not found")), \
              patch("copyapp.prepare_analysis.investigate_app") as worker:
             manifest, ready = prepare_analysis(
-                self.udid, self.analysis, [self.script], self.output, provider="ghidra")
+                self.udid, self.analysis, [self.script], self.output, provider="ghidra-direct")
         self.assertFalse(ready)
         self.assertEqual(json.loads(manifest.read_text())["error"]["type"],
                          "FileNotFoundError")
@@ -99,8 +99,8 @@ class PrepareAnalysisTest(unittest.TestCase):
 
     def test_default_skips_rea_doctor(self):
         with patch("copyapp.prepare_analysis.verify_case", return_value=True), \
-             patch("copyapp.prepare_analysis._rea_ready",
-                   side_effect=AssertionError("REA must not run")) as doctor, \
+             patch("copyapp.prepare_analysis._ghidra_ready",
+                   side_effect=AssertionError("Ghidra must not run")) as doctor, \
              patch("copyapp.prepare_analysis.investigate_app", return_value=(None, False)):
             manifest, ready = prepare_analysis(
                 self.udid, self.analysis, [self.script], self.output)

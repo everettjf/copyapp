@@ -18,11 +18,11 @@ A passing case proves only the selected, observed flows. It cannot recover the o
 ## Architecture
 
 - **Device:** Jailbroken iPhone with a bounded UI service, package/sandbox acquisition helper, Frida runtime connection and an interchangeable package recovery path.
-- **Mac:** Versioned `copyapp` CLI for device selection, iOS MCP/iCTRL routing, evidence cases, Mach-O/Objective-C indexing, direct Ghidra analysis when selected, reporting, Xcode builds and paired real-device checks.
+- **Mac:** Versioned `copyapp` CLI for device selection, iOS MCP/iCTRL routing, evidence cases, Mach-O/Objective-C indexing, direct Ghidra or Hopper analysis when selected, reporting, Xcode builds and paired real-device checks.
 - **Agent:** Codex or Claude Code follows repository skills. In an active session, `--agent-provider current` writes tasks and pauses without launching a nested Agent. In an independent terminal, `codex` or `claude` can be launched by the workflow, but that autonomous end-to-end path is not yet validated.
 - **Evidence:** Every case records the exact device, app, version when available, script bytes, timestamps, raw observations and source hashes. Reports label direct observations, interpretations and unknowns separately.
 
-REA is optional. The default path uses Copy APP's own bounded analysis and device tools; `ghidra-direct` uses an external Ghidra installation and JDK for function pseudocode.
+The REA command and provider bridge has been removed. Copy APP uses its own bounded analysis and device tools; `ghidra-direct` uses an external Ghidra installation and JDK; `hopper-direct` uses an external, licensed Hopper GUI installation in a normal macOS session. An integrated XR fixture investigation and report import have been verified; the full `copy` analysis-to-rebuild device workflow remains untested. Archived REA evidence remains readable for historical case verification.
 
 ## Milestones and current evidence
 

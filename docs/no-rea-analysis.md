@@ -15,13 +15,18 @@ Copy APP 的默认 `--provider none` 不启动 REA、Ghidra 或 Hopper。`prepar
 .venv/bin/copyapp native-queue --candidates cases/<CANDIDATES> --limit 4 --follow-depth 2 --follow-limit 4 --out cases/<NATIVE_QUEUE>
 .venv/bin/copyapp native-disasm --file <DECRYPTED_OR_UNENCRYPTED_MACHO> --sha256 <SHA256> --address 0xADDRESS --out cases/<FUNCTION>
 .venv/bin/copyapp ghidra-function --file <DECRYPTED_OR_UNENCRYPTED_MACHO> --sha256 <SHA256> --address 0xADDRESS --ghidra-dir <GHIDRA_INSTALL_DIR> --out cases/<DECOMPILATION>
+.venv/bin/copyapp hopper-function --file <DECRYPTED_OR_UNENCRYPTED_MACHO> --sha256 <SHA256> --address 0xADDRESS --out cases/<HOPPER_FUNCTION>
+.venv/bin/copyapp hopper-queue --candidates cases/<CANDIDATES> --limit 4 --out cases/<HOPPER_QUEUE>
 .venv/bin/copyapp ghidra-queue --candidates cases/<CANDIDATES> --ghidra-dir <GHIDRA_INSTALL_DIR> --java-home <JDK_HOME> --limit 4 --out cases/<QUEUE>
 .venv/bin/copyapp ghidra-queue --candidates cases/<CANDIDATES> --native cases/<NATIVE_QUEUE> --branch-flow cases/<TRACED_FLOW> --ghidra-dir <GHIDRA_INSTALL_DIR> --java-home <JDK_HOME> --limit 4 --out cases/<INDIRECT_QUEUE>
 .venv/bin/copyapp ghidra-indirect --udid <UDID> --investigation cases/<INVESTIGATION> --objc-index cases/<ANALYSIS>/decrypted/static/objc-index.json --ghidra-dir <GHIDRA_INSTALL_DIR> --java-home <JDK_HOME> --out cases/<INDIRECT_FOLLOW>
 .venv/bin/copyapp prepare-app --udid <UDID> --bundle <BUNDLE_ID> --script playbooks/<FLOW>.json --provider ghidra-direct --ghidra-dir <GHIDRA_INSTALL_DIR> --java-home <JDK_HOME> --out cases/<PREPARATION>
+.venv/bin/copyapp prepare-app --udid <UDID> --bundle <BUNDLE_ID> --script playbooks/<FLOW>.json --provider hopper-direct --out cases/<HOPPER_PREPARATION>
 ```
 
-`ghidra-function` 使用 Copy APP 自带的 Java post-script，直接调用 Ghidra Headless；它不会启动 REA，也不复制 REA 的桥接代码。命令核对原始 Mach-O 的 SHA-256、请求地址和 Ghidra 返回的函数入口，保存伪代码、脚本、日志及完整证据清单。`ghidra-queue` 从已验证的 Frida/静态候选中按命中次数选取有限函数；传入 `--native <NATIVE_QUEUE>` 时，还会从同一二进制已核验的原生汇编队列选取唯一直接调用的下游函数。选出多个函数时在一次 Ghidra 导入和自动分析中依次反编译，分别保存函数证据与共用会话日志。`--provider ghidra-direct` 将候选和原生队列自动接到 `investigate-flow`、`investigate-app`、`prepare-analysis` 与 `prepare-app`，其产物进入同一份审阅任务和正式报告；`--function-limit` 限制运行时入口数，额外的静态跟随函数由原生队列自身的深度及数量上限约束。工具链会在手机操作前预检。`copyapp report --evidence ID=<DECOMPILATION_OR_QUEUE>` 可导入单函数或整队列案例。外部 Ghidra 和兼容 JDK 仍是反编译所需的工具，Copy APP 自身不附带它们。原有 `--provider ghidra|hopper` 目前仍调用 REA，仅供历史或显式选择的路径；默认调查与原生汇编均无需 REA。伪代码须由 Coding Agent 结合动态证据审阅，不能当作原始源码或点击因果证明。
+`ghidra-function` 使用 Copy APP 自带的 Java post-script，直接调用 Ghidra Headless；它不会启动 REA，也不复制 REA 的桥接代码。命令核对原始 Mach-O 的 SHA-256、请求地址和 Ghidra 返回的函数入口，保存伪代码、脚本、日志及完整证据清单。`ghidra-queue` 从已验证的 Frida/静态候选中按命中次数选取有限函数；传入 `--native <NATIVE_QUEUE>` 时，还会从同一二进制已核验的原生汇编队列选取唯一直接调用的下游函数。选出多个函数时在一次 Ghidra 导入和自动分析中依次反编译，分别保存函数证据与共用会话日志。`--provider ghidra-direct` 将候选和原生队列自动接到 `investigate-flow`、`investigate-app`、`prepare-analysis` 与 `prepare-app`，其产物进入同一份审阅任务和正式报告；`--function-limit` 限制运行时入口数，额外的静态跟随函数由原生队列自身的深度及数量上限约束。工具链会在手机操作前预检。`copyapp report --evidence ID=<DECOMPILATION_OR_QUEUE>` 可导入单函数或整队列案例。外部 Ghidra 和兼容 JDK 仍是反编译所需的工具，Copy APP 自身不附带它们。旧 `--provider ghidra|hopper`（REA 后端）已删除；当前接受 `none`、`ghidra-direct` 与 Copy APP 自己的 `hopper-direct`。伪代码须由 Coding Agent 结合动态证据审阅，不能当作原始源码或点击因果证明。
+
+`hopper-function` 使用本仓库 Python 脚本直接调用 Hopper；`hopper-queue` 根据已校验的候选地址逐函数分析。集成路径在手机操作前预检 Hopper 安装，保存原始 Mach-O、ARM64 slice、函数地址、脚本和伪代码哈希。Hopper 需外部 GUI 安装和正常 macOS 用户会话，受限会话的 Spotlight 查询可能导致启动失败。与 Ghidra 不同，当前 Hopper 队列尚不自动跟随直接或间接调用。详见[独立 Hopper 接入](rea-hopper-integration.md)。
 
 对 `blr` 间接调用，可用 `flow-capture` 在原机一次点击中记录指定指令和寄存器的目标地址，再让 `ghidra-queue --branch-flow` 选择同一步观测到的 App 内目标。Copy APP 会重验原生汇编确有该 `blr`、目标是 Mach-O 精确函数起点、Frida 案例与候选属于同一二进制，并把全部来源复制进队列。它只确定观察窗口内执行过该目标；功能因果关系还要结合下游伪代码和 UI 实验审阅。
 

@@ -46,6 +46,7 @@ def _preparation_ready(root: Path, source: dict) -> bool:
                 prep.get("ssh_known_hosts") == source["ssh_known_hosts"] and
                 prep.get("ghidra_dir") == source["ghidra_dir"] and
                 prep.get("java_home") == source["java_home"] and
+                prep.get("hopper_app") == source.get("hopper_app") and
                 prep.get("disabled_analyzer") == source["disabled_analyzer"] and
                 prep.get("timeout") == source["analysis_timeout"] and
                 bool(prep.get("network_requested")) == source["network"] and
@@ -248,7 +249,8 @@ async def copy_app(udid: str, bundle: str, scripts: list[Path], project: Path,
                    agent_executable: Optional[Path] = None,
                    discovery_case: Optional[Path] = None,
                    auto_discover: bool = False,
-                   resume: bool = False) -> tuple[Path, bool]:
+                   resume: bool = False,
+                   hopper_app: Optional[Path] = None) -> tuple[Path, bool]:
     """Run both stages without accepting a CLI exit as proof of a deliverable.
 
     Failed Agent runs are not automatically repeated: they may have changed App or
@@ -263,6 +265,7 @@ async def copy_app(udid: str, bundle: str, scripts: list[Path], project: Path,
         raise ValueError("workflow output and independent project must be separate workspace paths")
     if (not udid or not bundle or not rebuilt_bundle or bundle == rebuilt_bundle or
             agent_provider not in ("codex", "claude", "current") or
+            analysis_provider not in ("none", "ghidra-direct", "hopper-direct") or
             backend not in ("ios-mcp", "ictrl") or
             ui_backend not in ("usb", "ios-mcp") or
             (not 1 <= len(scripts) <= 12 and not (auto_discover and not scripts)) or
@@ -343,6 +346,7 @@ async def copy_app(udid: str, bundle: str, scripts: list[Path], project: Path,
         "ssh_known_hosts": str(ssh_known_hosts.resolve()),
         "ghidra_dir": str(ghidra_dir.resolve()) if ghidra_dir else None,
         "java_home": str(java_home.resolve()) if java_home else None,
+        "hopper_app": str(hopper_app.resolve()) if hopper_app else None,
         "disabled_analyzer": disabled_analyzer,
         "analysis_timeout": analysis_timeout, "agent_timeout": agent_timeout,
         "agent_executable": str(agent_executable.resolve()) if agent_executable else None,
@@ -382,6 +386,7 @@ async def copy_app(udid: str, bundle: str, scripts: list[Path], project: Path,
                 decrypt_helper=decrypt_helper, ssh_port=ssh_port, ssh_user=ssh_user,
                 ssh_identity=ssh_identity, ssh_known_hosts=ssh_known_hosts,
                 provider=analysis_provider, ghidra_dir=ghidra_dir, java_home=java_home,
+                hopper_app=hopper_app,
                 disabled_analyzer=disabled_analyzer, network=network,
                 timeout=analysis_timeout, rebuilt_bundle_id=rebuilt_bundle,
                 resume=(preparation / "manifest.json").is_file())

@@ -1,4 +1,4 @@
-"""One bounded device flow through UI capture, method binding and REA."""
+"""One bounded device flow through UI capture and native method analysis."""
 
 import hashlib
 import io
@@ -15,10 +15,10 @@ from copyapp.candidates import build_candidates
 from copyapp.experiment import _static_targets
 from copyapp.flow_capture import capture_flow
 from copyapp.ghidra_queue import decompile_candidate_queue
+from copyapp.hopper_queue import decompile_hopper_queue
 from copyapp.ipa import MAX_BINARY
 from copyapp.method_scout import refine_scout_with_view_tree, scout_methods
 from copyapp.native_disasm import disassemble_native_candidates
-from copyapp.rea_queue import analyze_candidate_queue
 from copyapp.trace import MAX_METHODS, parse_method
 from copyapp.verify import sha256_file, verify_case
 from copyapp.view_tree import capture_view_tree
@@ -53,6 +53,8 @@ def write_review_brief(output: Path, plan: dict) -> Path:
     queue = _read(output / "rea/queue.json") if (output / "rea/queue.json").is_file() else None
     direct_path = output / "direct-ghidra/queue.json"
     direct = _read(direct_path) if direct_path.is_file() else None
+    hopper_path = output / "direct-hopper/queue.json"
+    hopper = _read(hopper_path) if hopper_path.is_file() else None
     native_path = output / "native/index.json"
     native = _read(native_path) if native_path.is_file() else None
     scout = _read(output / "method-scout.json")
@@ -131,7 +133,14 @@ def write_review_brief(output: Path, plan: dict) -> Path:
                              f"{chain}Copy APP 直连 Ghidra；"
                              f"[伪代码](direct-ghidra/{Path(result['summary']).parent}/pseudocode.txt)"
                              f"{facts_link}")
-    if queue is None and direct is None:
+    if hopper is not None:
+        for result in hopper.get("results", []):
+            if result.get("status") == "complete":
+                summary = _read(output / "direct-hopper" / result["summary"])
+                lines.append(f"- `{result['address']}`：`{summary['function_name']}`；"
+                             "Copy APP 直连 Hopper；"
+                             f"[伪代码](direct-hopper/{Path(result['summary']).parent}/pseudocode.txt)")
+    if queue is None and direct is None and hopper is None:
         lines.append("- 本次未请求反编译；函数体和深层调用语义仍需结合运行时实验或其他可用工具验证。")
     if native is not None:
         for result in native.get("results", []) + native.get("followed", []):
@@ -246,11 +255,14 @@ def investigate_flow(udid: str, analysis: Path, script: Path, output: Path,
                      java_home: Optional[Path] = None,
                      timeout: int = 240, resume: bool = False,
                      disabled_analyzer: Optional[str] = None,
-                     network: bool = False) -> Tuple[Path, bool]:
+                     network: bool = False,
+                     hopper_app: Optional[Path] = None) -> Tuple[Path, bool]:
     if backend not in ("ios-mcp", "ictrl"):
         raise ValueError("unsupported UI backend")
-    if provider not in ("none", "ghidra-direct", "ghidra", "hopper"):
+    if provider not in ("none", "ghidra-direct", "hopper-direct"):
         raise ValueError("unsupported analysis provider")
+    if rea_script is not None:
+        raise ValueError("REA script option has been removed")
     if disabled_analyzer is not None and provider != "ghidra-direct":
         raise ValueError("--ghidra-disable-analyzer requires ghidra-direct provider")
     if provider == "ghidra-direct":
@@ -262,6 +274,9 @@ def investigate_flow(udid: str, analysis: Path, script: Path, output: Path,
             raise ValueError("ghidra-direct requires Ghidra and JDK paths before device work")
         from copyapp.ghidra_direct import check_direct_ghidra
         check_direct_ghidra(ghidra_dir, java_home, disabled_analyzer)
+    if provider == "hopper-direct":
+        from copyapp.hopper_direct import check_direct_hopper
+        check_direct_hopper(hopper_app)
     if output.exists() and any(output.iterdir()) and not resume:
         raise FileExistsError(f"output directory is not empty: {output}")
     plan = _read(script)
@@ -323,7 +338,7 @@ def investigate_flow(udid: str, analysis: Path, script: Path, output: Path,
         scout = scout_methods(index, tap_labels=tap_labels)
         if scout["binary_sha256"] != record["binary_sha256"]:
             raise ValueError("method scout index belongs to another binary")
-        if methods is None and provider in ("none", "ghidra-direct") and not scout["selected_methods"] and tap_labels:
+        if methods is None and provider in ("none", "ghidra-direct", "hopper-direct") and not scout["selected_methods"] and tap_labels:
             stage = "entry_view"
             entry_dir = output / "entry-view"
             if resume and (entry_dir / "manifest.json").is_file():
@@ -376,10 +391,6 @@ def investigate_flow(udid: str, analysis: Path, script: Path, output: Path,
         else:
             scout_path.write_text(json.dumps(scout, ensure_ascii=False, indent=2) + "\n",
                                   encoding="utf-8")
-        if not selected and provider in ("ghidra", "hopper"):
-            record["status"] = "needs_review"
-            record["reason"] = "no uniquely ranked action method; select a method from method-scout.json"
-            return output / "manifest.json", False
         if selected:
             _static_targets(binary, index, [parse_method(item) for item in selected])
         record["selected_methods"] = selected
@@ -431,6 +442,8 @@ def investigate_flow(udid: str, analysis: Path, script: Path, output: Path,
             record["native_status"] = "not_requested"
             if provider == "ghidra-direct":
                 record["direct_ghidra_status"] = "not_requested"
+            if provider == "hopper-direct":
+                record["direct_hopper_status"] = "not_requested"
             stage = "review_brief"
             write_review_brief(output, plan)
             record["status"] = "complete"
@@ -455,11 +468,9 @@ def investigate_flow(udid: str, analysis: Path, script: Path, output: Path,
             _, candidates_ok = build_candidates(udid, bundle, binary, index,
                                                  [flow_dir], candidate_dir)
         record["candidate_status"] = "complete" if candidates_ok else "no_candidates"
-        if not candidates_ok and provider in ("ghidra", "hopper"):
-            raise RuntimeError("flow observed no valid static method candidate")
-        stage = "rea_queue"
+        stage = "native_queue"
         rea_dir = output / "rea"
-        if provider in ("none", "ghidra-direct"):
+        if provider in ("none", "ghidra-direct", "hopper-direct"):
             if rea_dir.exists():
                 raise ValueError("REA evidence is unexpected in a no-REA investigation")
             record["rea_status"] = "not_requested"
@@ -522,43 +533,43 @@ def investigate_flow(udid: str, analysis: Path, script: Path, output: Path,
                     raise RuntimeError("direct Ghidra queue failed; inspect direct-ghidra/queue.json")
             elif provider == "ghidra-direct":
                 record["direct_ghidra_status"] = "not_requested"
-            rea_ok = True
-        elif resume and (rea_dir / "manifest.json").is_file():
-            saved_queue = _read(rea_dir / "queue.json")
-            if (saved_queue.get("kind") != "rea_candidate_queue" or
-                    saved_queue.get("provider") != provider or
-                    saved_queue.get("binary_sha256") != record["binary_sha256"] or
-                    saved_queue.get("candidate_case_sha256") !=
-                    sha256_file(candidate_dir / "candidates.json")):
-                raise ValueError("existing REA queue belongs to another candidate or binary")
-            with redirect_stdout(io.StringIO()):
-                if not verify_case(rea_dir):
-                    raise ValueError("existing REA queue evidence hash mismatch")
-            if saved_queue.get("status") == "complete":
-                from copyapp.report import _validate_rea_queue
-                _validate_rea_queue(rea_dir, bundle, prefix, {record["binary_sha256"]})
-                rea_ok = True
-            else:
-                archive = output / "attempts" / (
-                    "rea-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f"))
-                archive.parent.mkdir(exist_ok=True)
-                shutil.move(str(rea_dir), str(archive))
-                record.setdefault("history", []).append({
-                    "at": _now(), "archived_failed_rea": str(archive.relative_to(output)),
-                    "manifest_sha256": sha256_file(archive / "manifest.json")})
-                _, rea_ok = analyze_candidate_queue(candidate_dir, provider,
-                                                     rea_dir, rea_limit, rea_script,
-                                                     ghidra_dir, java_home, timeout)
-        elif rea_dir.exists():
-            raise ValueError("existing REA queue is incomplete; retain it and use a new output")
-        else:
-            _, rea_ok = analyze_candidate_queue(candidate_dir, provider,
-                                                 rea_dir, rea_limit, rea_script,
-                                                 ghidra_dir, java_home, timeout)
-        record["rea_status"] = ("not_requested" if provider in ("none", "ghidra-direct") else
-                                "complete" if rea_ok else "failed")
-        if not rea_ok:
-            raise RuntimeError("REA candidate queue failed; inspect rea/queue.json")
+            if provider == "hopper-direct" and candidates_ok:
+                stage = "direct_hopper_queue"
+                hopper_dir = output / "direct-hopper"
+                if resume and (hopper_dir / "manifest.json").is_file():
+                    saved = _read(hopper_dir / "queue.json")
+                    if (saved.get("kind") != "hopper_direct_candidate_queue" or
+                            saved.get("binary_sha256") != record["binary_sha256"] or
+                            saved.get("candidate_case_sha256") !=
+                            sha256_file(candidate_dir / "candidates.json")):
+                        raise ValueError("existing Hopper queue belongs to another candidate")
+                    with redirect_stdout(io.StringIO()):
+                        if not verify_case(hopper_dir):
+                            raise ValueError("existing Hopper queue hash mismatch")
+                    if saved.get("status") == "complete":
+                        from copyapp.report import _validate_hopper_direct_queue
+                        _validate_hopper_direct_queue(
+                            hopper_dir, bundle, prefix, {record["binary_sha256"]})
+                        hopper_ok = True
+                    else:
+                        archive = output / "attempts" / (
+                            "direct-hopper-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f"))
+                        archive.parent.mkdir(exist_ok=True)
+                        shutil.move(str(hopper_dir), str(archive))
+                        hopper_ok = decompile_hopper_queue(
+                            candidate_dir, hopper_dir, hopper_app, rea_limit,
+                            max(timeout, 60))[1]
+                elif hopper_dir.exists():
+                    raise ValueError("existing Hopper queue is incomplete")
+                else:
+                    hopper_ok = decompile_hopper_queue(
+                        candidate_dir, hopper_dir, hopper_app, rea_limit,
+                        max(timeout, 60))[1]
+                record["direct_hopper_status"] = "complete" if hopper_ok else "failed"
+                if not hopper_ok:
+                    raise RuntimeError("direct Hopper queue failed; inspect direct-hopper/queue.json")
+            elif provider == "hopper-direct":
+                record["direct_hopper_status"] = "not_requested"
         stage = "review_brief"
         write_review_brief(output, plan)
         record["status"] = "complete"

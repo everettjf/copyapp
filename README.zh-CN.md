@@ -6,6 +6,149 @@
 
 第一版正在实现“分析 → 复刻 → 真机对照”流程。Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 只读导出包和索引数据沙盒；本地解析 Mach-O。iOS MCP 的截图、前台识别、App 启动和点击已在 iPhone XR 上验收。原版 Compass 的关键交互已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展也已在 XR 上自动恢复为完整可分析 IPA。按用户当前安排，iOS 17/26 两台设备暂不验收；一键生成完整复刻仍在开发。
 
+## 新用户：安装与第一次运行
+
+Copy APP 由 **Mac 命令行程序和越狱 iPhone 上的服务**组成。先安装 Mac 命令行并完成一次 USB 初步采集；这一步不需要手机端 Copy APP tweak、SSH、Frida、iCTRL 或反编译器。深入分析和复刻时再逐项添加。下方脚本自动准备 Python 环境与 Mac 命令行；USB 信任、手机权限和越狱软件包仍需在手机上配置。完整 Xcode 用于设备开发服务和复刻版编译。`cases/` 保存手机证据并被 Git 忽略，因此下文指向旧 `cases/` 的实测链接不会出现在全新克隆中。
+
+如果已在本仓库打开 Codex 或 Claude Code，可以直接说：**“帮我安装 Copy APP，并对已连接 iPhone 上的这个 App 做第一次 USB 初步采集。”** Agent 可以运行 Mac 端命令并确认设备与 Bundle ID；你仍需在手机上批准 USB 信任。首次采集只是初步观察，不是完整逆向报告。
+
+| 目标 | 当前需要配置 |
+| --- | --- |
+| 初步采集 | Mac 引导脚本、USB 连接和手机信任。 |
+| 详尽分析 | 再加手机 OpenSSH、Frida 和界面控制；文档中的 XR 流程使用 iOS MCP，iCTRL 可选。Ghidra 和 Hopper 可选。 |
+| 可运行复刻 | 再加 Xcode 签名和 TrollStore 等可用安装路径。 |
+
+### 1. 安装 Mac 端
+
+```sh
+git clone https://github.com/everettjf/copyapp.git
+cd copyapp
+sh scripts/bootstrap-macos.sh
+```
+
+脚本创建或复用 `.venv/`，安装 Copy APP，并打印接下来的三条命令。要求 macOS 和 Python 3.9 或更新版本。开始运行时追踪或加密 App 恢复时，再运行 `sh scripts/bootstrap-macos.sh --trace` 安装 Mac 端 Frida 17.x。需要 Xcode 设备服务或复刻版编译时，用 `xcode-select -p` 检查开发者目录指向**完整 Xcode**，不能只有 Command Line Tools。`.venv/` 与 `cases/` 都不提交到 Git。
+
+### 2. 连接并选定手机
+
+在手机上激活兼容的越狱，解锁后通过 USB 连接 Mac，点“信任此电脑”。先列出准确的 USB 设备和已安装 App：
+
+```sh
+.venv/bin/copyapp devices
+.venv/bin/copyapp apps --udid <UDID> --all
+```
+
+用 `devices` 返回的设备 ID 替换 `<UDID>`；不要用手机显示名称当选择器。`apps` 默认只列用户安装的 App，加 `--all` 才含系统 App。采集前先确认目标的准确 Bundle ID。如果没有列出手机，先检查线缆、解锁和 USB 信任，安装手机端 tweak 不能修复 USB 未识别。iOS 16 若截图或 Instruments 需要开发者服务，启用开发者模式，再运行 `.venv/bin/pymobiledevice3 mounter auto-mount --udid <UDID>`；首次采集可以先记录哪些内容不可用。
+
+### 3. 先做纯 USB 冒烟测试
+
+在手机上打开目标 App，停留于要观察的页面；这一轮不需要 Copy APP tweak、SSH 或 Frida：
+
+```sh
+.venv/bin/copyapp survey --udid <UDID> --bundle <BUNDLE_ID> \
+  --ui-backend usb --out cases/first-survey
+.venv/bin/copyapp verify cases/first-survey
+```
+
+查看 `cases/first-survey/report.md` 和截图。它只证明基本安装和设备采集可用，不是详尽的逆向报告。每次运行使用新的 `--out` 目录，工具不会覆盖旧证据。
+
+只想初步了解 App，到这里就可以停下。下面的配置用于整包恢复、运行时证据、更完整的界面操作与真机复刻对照。
+
+### 4. 配置完整分析所需手机端服务
+
+若尚未安装 Mac 端 Frida，先运行 `sh scripts/bootstrap-macos.sh --trace`。以下手机端步骤每台设备只需配置一次，配置后用 `copyapp doctor` 检查哪些通道已就绪。
+
+下列通道必须都指向**同一 UDID**：
+
+| 组件 | 安装或配置 | 用途 |
+| --- | --- | --- |
+| 手机 OpenSSH | 安装适配 rootless 的 OpenSSH 服务端，通过下方 USB 端口转发访问。 | 只读获取 App 包和沙盒。 |
+| 手机 Frida server | 安装并启动有 root 能力、与 Mac 端 Frida 17.x 兼容的版本。 | 运行时函数跟踪与可选的整包恢复。 |
+| Copy APP iOS MCP tweak | 按 [手机端说明](device/ios-mcp/README.zh-CN.md)编译安装，随后重新载入 SpringBoard。 | 经 USB 本地服务读取前台 App、界面树、截图并执行手势。 |
+| iCTRL runner 与配对 Mac 客户端 | 完成 SSH、Xcode 配置后运行 `copyapp setup ictrl --udid <UDID> --out cases/ictrl-setup`，再批准手机上的配对提示。 | 可选界面后端，以及 Instruments 启动失败时的终止/重启回退。 |
+
+iOS MCP tweak 编译需要完整 Xcode、Theos、iPhoneOS 16.5 SDK 和 `ldid`；本仓库**不提供** Theos 与 SDK。安装好后，在仓库根目录运行 `THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules make -C device/ios-mcp package`，再用手机包管理器或 Filza 安装 `device/ios-mcp/packages/` 生成的 `.deb`，重新载入 SpringBoard。该包只在 XR/iOS 16 验证，不能由此推断 iOS 17/26 兼容性。可选的 iCTRL 源码及 Apache 2.0 许可、NOTICE 已固定在 [`vendor/ictrl`](vendor/ictrl/UPSTREAM.md)；生成的签名文件、大型构建依赖及配对密钥只保存在本地。
+
+Mac 端预期专用 SSH 私钥位于 `cases/ssh/id_ed25519`，已核对的设备主机公钥位于 `cases/ssh-known-hosts`，端口 `22222` 从 Mac 转发到手机的 SSH 端口 `22`。另开一个终端并让转发保持运行：
+
+```sh
+.venv/bin/python -m pymobiledevice3 usbmux forward 22222 22 --serial <UDID>
+```
+
+在仓库终端创建专用密钥并读取手机的主机公钥：
+
+```sh
+mkdir -p cases/ssh
+ssh-keygen -t ed25519 -f cases/ssh/id_ed25519 -C copyapp
+ssh-keyscan -p 22222 127.0.0.1 > cases/ssh-known-hosts
+ssh-keygen -lf cases/ssh-known-hosts
+```
+
+信任主机公钥前，先把显示的指纹与手机端 SSH 主机公钥指纹比对；换手机也要重新核对。可在手机终端把 `cases/ssh/id_ed25519.pub` 加到 `mobile` 用户的 `~/.ssh/authorized_keys`，也可以**完成指纹核对后**，用一次密码 SSH 登录执行：
+
+```sh
+cat cases/ssh/id_ed25519.pub | ssh -p 22222 \
+  -o UserKnownHostsFile=cases/ssh-known-hosts \
+  -o StrictHostKeyChecking=yes -o PubkeyAuthentication=no \
+  mobile@127.0.0.1 'umask 077; mkdir -p ~/.ssh; cat >> ~/.ssh/authorized_keys; chmod 700 ~/.ssh; chmod 600 ~/.ssh/authorized_keys'
+```
+
+只在该交互提示输入 `mobile` 密码。私钥留在 Mac，不要把手机密码写进命令或聊天。如果私钥设置了口令，先加载到 `ssh-agent`，因为 Copy APP 的 SSH 调用使用非交互认证。用以下命令检查返回的是同一个 `<UDID>`：
+
+```sh
+ssh -p 22222 -i cases/ssh/id_ed25519 \
+  -o UserKnownHostsFile=cases/ssh-known-hosts \
+  -o StrictHostKeyChecking=yes mobile@127.0.0.1 'deviceinfo uniqueid'
+```
+
+可选接入 iCTRL 界面后端：安装 `xcodegen`（`brew install xcodegen`），并在 Xcode 配好 Apple Development 签名团队。手机需已安装 TrollStore，使用上面的 SSH 密钥安装 runner。`setup` 会从仓库固定源码编译 Mac 客户端和已签名 XCTest runner；对 Xcode 27/iOS 16，在上游签名步骤前自动修正外层 runner 的最低系统版本；随后安装、打开临时 USB 转发并配对。首次构建会下载约 215 MB 的固定版 IDevice 框架。手机出现配对提示时，核对指纹并批准；配对令牌不会写入 `cases/`：
+
+```sh
+.venv/bin/copyapp setup ictrl --udid <UDID> --out cases/first-ictrl-setup
+.venv/bin/copyapp verify cases/first-ictrl-setup
+```
+
+若 runner 已安装，`setup` 会复用并核验配对。已有签名 IPA 时可传 `--runner-ipa <IPA>`，安装前会检查 Bundle ID 和最低 iOS 版本；加 `--reinstall` 可替换现有 runner。重试用新的 `--out` 目录。仓库源码在 Xcode 27 下构建，XR/iOS 16.1.1 的 `com.copyapp` 迁移及首次配对均已通过；iOS 17/26 尚未验证。见 [iCTRL 实测记录](docs/ictrl-xr-validation.md)。
+
+Copy APP 的 iCTRL 默认使用按签名团队区分的 ID：可选设置 App 为 `com.copyapp.<team-id>.ictrl`，runner 为 `com.copyapp.<team-id>.ictrl.uitests.xctrunner`。本地生成且被 Git 忽略的 `vendor/ictrl/Config/Local.xcconfig` 优先于默认值；从旧上游版本升级时，把其中 `ICTRL_BUNDLE_PREFIX` 改为 `com.copyapp.<team-id>`，或删除该文件让它重新生成，再重装 runner。新的 Bundle ID 会被 iOS 视为新 App，可能再次弹出通知授权与配对请求。核对指纹并批准；若首次运行因弹窗超时，用新 `--out` 目录重跑 `setup`。新 ID 通过认证检查后可卸载旧 runner。
+
+内置运行时的 URL 注册名、配对文件类型、任务队列标签和 Keychain 服务名也已统一为 `com.copyapp`。当前版本的配对会话保存在沙盒文件中，XR 上的更新保留了现有配对；只有仅存于旧 Keychain 服务名中的早期配对需要重新操作。`ictrl://`、`ictrl-app://` URL scheme 和 RPC 协议保持兼容。许可、上游来源和旧设备实测记录保留原有名称。
+
+然后记录设备能力基线：
+
+```sh
+.venv/bin/copyapp doctor --udid <UDID> --out cases/first-doctor
+.venv/bin/copyapp verify cases/first-doctor
+```
+
+查看 `cases/first-doctor/report.md`：正式分析前，`usb_lockdown`、`ssh_mobile`、`frida_usb`、`ios_mcp` 应为 `available`；尚未运行 `setup ictrl` 时该项可以是 `not_configured`。`doctor` 即使只有 USB 正常也可能返回成功，因此要逐项看状态。运行 `doctor`、`analyze` 和完整工作流时都要保留 SSH 转发。`doctor` 和 playbook 会自行建立短时 iOS MCP 转发，但 `survey`/`analyze` 选 `--ui-backend ios-mcp` 时固定连接 Mac 端口 `22223`。在第三个终端再启动并保持以下转发，供这些命令和完整 `copy` 工作流使用：
+
+```sh
+.venv/bin/python -m pymobiledevice3 usbmux forward 22223 8090 --serial <UDID>
+```
+
+### 5. 进行首次分析
+
+```sh
+.venv/bin/copyapp analyze --udid <UDID> --bundle <BUNDLE_ID> \
+  --launch --ui-backend ios-mcp --out cases/first-analysis
+.venv/bin/copyapp verify cases/first-analysis
+```
+
+阅读 `cases/first-analysis/analysis.md`。它是采集索引；完整功能原理仍需要受控界面流程、函数审阅和 `copyapp report`。App Store 二进制若有加密 Mach-O，先运行 `sh scripts/prepare-ipadecrypt-helper.sh` 获取仓库外 `../toolchains/` 中的固定版本 helper，再给 `analyze` 加 `--decrypt`，或使用下文默认整包恢复的 `copy` 流程。恢复出的 IPA 是**分析副本**，不是可直接安装的已签名 App。本机编译的 App 可能本来就是 `cryptid=0`，无需脱壳。详见[整包恢复说明](docs/full-package-decryption.md)。
+
+反编译是可选步骤：Ghidra 需单独安装并配 JDK；Hopper 需单独安装、授权并在正常 macOS 图形会话运行。完整流程分别选 `--analysis-provider ghidra-direct --ghidra-dir <DIR> --java-home <JDK_HOME>` 或 `--analysis-provider hopper-direct`。复刻版编译和真机安装需要 Xcode 及可用的签名/安装方式；XR 实测使用已有 TrollStore。上述 `doctor` 必需通道可用后，再运行下文分阶段的 `copy` 工作流；每次暂停的报告、实现和设备对照见[工作流说明](docs/copy-workflow.zh-CN.md)。
+
+| 卡在什么地方 | 检查方法 |
+| --- | --- |
+| `devices` 没有手机 | 解锁、点 USB 信任、换线或端口，再运行 `devices`。 |
+| 截图或 DVT 不可用 | 检查开发者模式、完整 Xcode 选择和对应 Developer Disk Image；用新目录重跑 `doctor`。 |
+| `ssh_mobile` 不可用 | 保持 `22222 → 22` 转发，核对主机指纹及 `mobile` 密钥登录，再比较 `deviceinfo uniqueid`。 |
+| `ios_mcp` 不可用 | 检查 SpringBoard 重载后 tweak 是否载入；`analyze` 还需保持 `22223 → 8090` 转发。 |
+| `frida_usb` 不可用 | 检查该手机的 Frida server 是否运行、是否与 Mac 端 Frida 17.x 兼容。 |
+| Instruments 无法启动 App | 运行 `setup ictrl` 并检查 `doctor` 的 `ictrl` 项；XR + Xcode 27 的 iOS 16 适配见[实测记录](docs/ictrl-xr-validation.md)。 |
+
+案例失败时，先看清单与阶段日志。`analyze` 和分阶段 `copy` 可以带原参数加 `--resume`；失败的界面操作可能改变 App 状态，重放前先检查手机画面。
+
 指定系统 App 时可先运行 `.venv/bin/copyapp apps --udid <UDID> --all` 查准确 Bundle ID；默认 `apps` 只列用户安装的 App。XR 上 `--all` 已返回 Calculator、Compass 和 Clock 对应的系统 Bundle ID。显示名称重名时仍应核对前台 App 身份。
 
 UI 脚本现可通过 iOS MCP 和 iCTRL 执行有界滑动、长按与双击；语法、后端差异及 XR 实测见[中文手势指南](docs/ui-gesture-playbooks.zh-CN.md)（[English](docs/ui-gesture-playbooks.md)）。XR 已安装 iOS MCP 0.1.4 并列出三种操作。Calculator 显示区输入 `98` 后左滑变成 `9` 的行为也在独立复刻版上通过；新版复刻版重新通过原先三条运算流程。长按和双击仅验证调用可用，未断定具体 App 功能结果。
@@ -14,7 +157,7 @@ UI 脚本还支持有界[文本输入](docs/ui-text-playbooks.zh-CN.md)（[Engli
 
 正式报告现在会把 `Assets.car` 的资源名称及沙盒的只读文件元数据摘要直接写入人可读附录，完整索引仍保留证据链接。进一步的 [Calculator 深入报告](cases/calculator-ui-deep-report-20261016/report.md)和[来源关联的分析交付](cases/calculator-ui-deep-analysis-delivery-20261016/report.md)已通过核验，还加入 Copy APP 直连 Ghidra 对根视图组装、键盘按钮 frame 布局和结果视图手势装配的同二进制函数证据。资源名或数据库/偏好文件名只提供调查线索，不能单独证明某个功能实际读取它们；本次三条运算流程也未测试显示区手势。
 
-REA 不属于正式链路的运行依赖。深入函数分析优先用 Copy APP 直连 Ghidra；旧 REA 入口保留作可选兼容。代码借鉴、许可及尚未移植的能力见[独立运行边界](docs/rea-independence.md)。
+旧 REA 命令和 provider 桥接已删除。深入函数分析可选 Copy APP 直连 Ghidra 或 `--provider hopper-direct`（顶层 `copy` 使用 `--analysis-provider hopper-direct`）；后者也提供 `hopper-function` 和 `hopper-queue`，支持 `--hopper-app <Hopper.app>` 指定安装路径。Hopper 需要在正常 macOS 用户会话中安装并完成许可激活；受限会话可能无法通过 Spotlight 启动。iOS 16.1.1 XR 上的[集成调查案例](cases/fixture-counter-hopper-investigation-v2-20261016/manifest.json)已跑通 UI 重放、Frida 跟踪、候选绑定和 Hopper 反编译，并导入[来源校验报告](cases/fixture-counter-hopper-integrated-report-20261016/report.md)。启动时 Instruments 失败会在有界等待后回退到 iCTRL 终止并重启 App。完整的 `copy` 分析到复刻真机交付仍待验证。旧案例仍可校验已保存的 REA 证据。见[Hopper 接入说明](docs/rea-hopper-integration.zh-CN.md)与[独立运行边界](docs/rea-independence.md)。
 
 当前最完整的真实 App 示例是 XR 上的 [DeepSeek 综合逆向报告](cases/deepseek-comprehensive-xr-20261015/report.md)：以 `copyapp report-portfolio` 核对同设备、同 App 版本及同一解密主程序，汇合三条登录页的 UI/函数/网络分析和另一次沙盒/SQLite 结构分析。报告保留两轮证据的各自时点；原始数据库和 IPA 仍在忽略的本地 `cases/` 中。登录后功能、从零自动生成完整复刻和 iOS 17/26 仍未验收。
 
@@ -93,7 +236,7 @@ Clock 随后扩展到四个主标签：[四流程分析报告](cases/clock-four-
 - 已通过 USB SSH 获取 Compass 数据容器的 24 项元数据索引（未读取文件内容），并结合 Ghidra 对 11 个本地定义的 Objective-C 类及关键方法做了初步解释。可审阅的案例见 [Compass XR 报告](docs/compass-xr-analysis.md)，机器可读的三流程目标见 [复刻规格](docs/compass-feature-spec.json)。`copyapp report` 已把 Compass 与源码已知夹具的分散证据组装为带证据 ID、函数伪代码、动态实验和完整方法附录的可验证报告；本地结果分别在 `cases/compass-xr-deep-report-v15-20261015/` 与 `cases/fixture-xr-deep-report-v12-20261015/`。Compass 报告包含双向方位锁定实验、运行时 IMP 与静态模块偏移核对、Hopper/Ghidra 对关键函数的交叉分析、45° 受控扇区实测、地图 URL 运行时证据，以及定位授权变化时的静态函数链和拒绝授权的真机界面。夹具报告还包含笔记操作前后的沙盒元数据差异、SwiftUI Counter 页的视图/无障碍联合观察，以及 Counter、Notes 和 Catalog 三条一命令调查证据。两份最新报告的每条复刻流程都引用已导入的证据 ID。
 - Frida 方法计数器已在 Copy Compass 和原版系统 Compass 中真机挂载；`experiment` 把启动、挂载、点击、前后截图与调用计数串成无需手机端输入的实验。原版 Compass 的一次方位盘点击记录到三个方位相关方法各调用一次。
 - `decrypt-main` 已在 XR 上对磁盘 `cryptid=1` 的 Kimi 3.0.9 主程序完成真实运行时恢复；旧的单主程序分析包正确报告另外 3 个扩展仍加密。新的 `decrypt-package` 在同一手机上自动恢复 DeepSeek 的 2 个、Kimi 的 4 个原加密可执行文件，并分别检查包内 32、17 个 Mach-O，全部通过；见 [整包脱壳实测](docs/full-package-decryption.md)与 [Kimi 试点](docs/kimi-decryption-pilot.md)。
-- REA/Ghidra 已在源码已知的 iOS 夹具上沿 Objective-C/Swift 桥接入口追到 SQLite 建表与 `INSERT` 实现。REA/Hopper 已对 XR 导出的夹具分享扩展和真实 Compass 主程序完成函数反编译；证据分别进入夹具与 Compass 深度报告。受限执行环境中的早期超时和运行条件见 [REA 与 Hopper 集成记录](docs/rea-hopper-integration.md)。
+- REA/Ghidra 已在源码已知的 iOS 夹具上沿 Objective-C/Swift 桥接入口追到 SQLite 建表与 `INSERT` 实现。REA/Hopper 已对 XR 导出的夹具分享扩展和真实 Compass 主程序完成函数反编译；证据分别进入夹具与 Compass 深度报告。受限执行环境中的早期超时和运行条件见 [REA 与 Hopper 集成记录](docs/rea-hopper-integration.zh-CN.md)。
 - [源码已知测试夹具](fixture/CopyAppFixture/README.md) 已在 XR 安装并跑通 SwiftUI 计数、UIKit/SQLite 笔记和 Framework 目录三条流程。UI、沙盒内容、Frida 调用与 XR 导出二进制的 REA/Ghidra 结果见 [夹具真机验证](docs/fixture-xr-validation.md)。
 - 已验证无需在手机输入的 root 操作通道：`root-run` 通过指定 UDID 的 USB Frida 服务启动一次性进程，经已配对的 mobile SSH 取回退出码和日志；执行前核对两条通道的设备 UDID。XR 上已实测 `uid=0` 并自主移除失败的试验包，不增加 root SSH 登录或网络监听。
 - Copy APP 的 rootless iOS MCP 界面插件已作为独立 `.deb` 通过 XR 上的 Filza 安装；`dpkg` 显示 `install ok installed`。SpringBoard 重载后，USB 转发上的 `copyapp-ios-mcp` 服务通过身份检查，已实测 414×896 JPEG 截图、前台识别、App 启动和屏幕点击。USB 无障碍 `press` 返回激活请求但未实际点击；iOS MCP 的 `tap` 已在原版和复刻版上产生可见状态变化。iCTRL 的 Mac 端加密客户端与适配器也已在 XR 的 iOS 16 兼容试验版 runner 上完成配对、加密 RPC、Compass 截图和方位锁定点击。详见 [iCTRL XR 实测](docs/ictrl-xr-validation.md)。
@@ -102,20 +245,6 @@ Clock 随后扩展到四个主标签：[四流程分析报告](cases/clock-four-
 - 本地 IPA 索引器已用 [Dopamine 3.0.11 官方发布包](https://github.com/opa334/Dopamine/releases/tag/3.0.11)验证：解析 147 个包文件、9 个 Framework 和 15 个 Mach-O，主程序的动态库清单及 `cryptid=0` 与 `otool` 一致。该包来自公开发布页，不能充当手机已安装 App 的原始证据；手机上的 Dopamine Bundle ID 另带签名后缀。
 
 已确认前台归属的一次式案例保存在本地 `cases/compass-xr-mcp-onepass-20261015/`；原版与复刻版的交互截图也保存在 `cases/`。这些目录默认不进入 Git。`copyapp verify` 可检查初步采集、完整 `analyze` 案例、深入报告或 App 包获取目录里记录的文件哈希；这属于本地一致性检查，不提供防篡改签名。
-
-## 安装
-
-```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install --upgrade pip setuptools
-.venv/bin/pip install -e .
-```
-
-iOS 16 上的截图与无障碍读取需要开发者模式及已挂载的 Developer Disk Image。若尚未挂载，可运行：
-
-```sh
-.venv/bin/pymobiledevice3 mounter auto-mount --udid <UDID>
-```
 
 ## 使用
 
@@ -133,17 +262,12 @@ iOS 16 上的截图与无障碍读取需要开发者模式及已挂载的 Develo
 .venv/bin/copyapp check-ipa /path/to/candidate.ipa --bundle <BUNDLE_ID> --out cases/<CASE_ID>/decryption-check
 .venv/bin/copyapp decrypt-main --udid <UDID> --bundle <BUNDLE_ID> --out cases/<CASE_ID>/decryption
 .venv/bin/copyapp decrypt-package --udid <UDID> --bundle <BUNDLE_ID> --snapshot cases/<ACQUIRE_CASE>/bundle-snapshot.ipa --out cases/<CASE_ID>/full-decryption
-.venv/bin/copyapp rea-function --file /path/to/recovered/main --sha256 <BINARY_SHA256> --procedure 0xADDRESS --provider ghidra --out cases/<CASE_ID>/rea/function-1 --rea-script /path/to/rea/scripts/rea.mjs --ghidra-dir /path/to/ghidra --java-home /path/to/jdk
 .venv/bin/copyapp candidates --udid <UDID> --bundle <BUNDLE_ID> --binary /path/to/executable --objc-index cases/<CASE_ID>/static/objc-index.json --experiment cases/<EXPERIMENT_CASE> --out cases/<CANDIDATE_CASE>
 .venv/bin/copyapp candidates --udid <UDID> --bundle <BUNDLE_ID> --binary /path/to/executable --objc-index cases/<CASE_ID>/static/objc-index.json --flow cases/<TRACED_FLOW> --out cases/<CANDIDATE_CASE>
-.venv/bin/copyapp rea-queue --candidates cases/<CANDIDATE_CASE> --provider ghidra --limit 8 --rea-script /path/to/rea/scripts/rea.mjs --ghidra-dir /path/to/ghidra --java-home /path/to/jdk --out cases/<REA_QUEUE>
-.venv/bin/copyapp rea-bridge --queue cases/<REA_QUEUE> --limit 4 --max-depth 2 --rea-script /path/to/rea/scripts/rea.mjs --ghidra-dir /path/to/ghidra --java-home /path/to/jdk --out cases/<BRIDGE_CASE>
 .venv/bin/copyapp native-disasm --file /path/to/recovered/main --sha256 <BINARY_SHA256> --address 0xADDRESS --out cases/<NATIVE_FUNCTION>
 .venv/bin/copyapp native-queue --candidates cases/<CANDIDATE_CASE> --limit 4 --out cases/<NATIVE_QUEUE>
 .venv/bin/copyapp investigate-flow --udid <UDID> --analysis cases/<ANALYSIS_CASE> --script playbooks/<FLOW>.json --out cases/<INVESTIGATION_NO_REA>
 .venv/bin/copyapp prepare-app --udid <UDID> --bundle <BUNDLE_ID> --script playbooks/<FLOW>.json --out cases/<PREPARATION_NO_REA>
-.venv/bin/copyapp investigate-flow --udid <UDID> --analysis cases/<ANALYSIS_CASE> --script playbooks/<FLOW>.json --backend ios-mcp --provider ghidra --rea-script /path/to/rea/scripts/rea.mjs --ghidra-dir /path/to/ghidra --java-home /path/to/jdk --out cases/<INVESTIGATION>
-.venv/bin/copyapp investigate-app --udid <UDID> --analysis cases/<ANALYSIS_CASE> --script playbooks/<FLOW_1>.json --script playbooks/<FLOW_2>.json --backend ios-mcp --provider ghidra --rea-script /path/to/rea/scripts/rea.mjs --ghidra-dir /path/to/ghidra --java-home /path/to/jdk --out cases/<APP_INVESTIGATION>
 .venv/bin/copyapp decrypt-extension --udid <UDID> --bundle <BUNDLE_ID> --appex '<EXTENSION_NAME>' --out cases/<CASE_ID>/extension
 .venv/bin/copyapp root-run --udid <UDID> --out cases/<CASE_ID>/root-command -- /var/jb/usr/bin/id
 .venv/bin/copyapp assemble-ipa --snapshot cases/<ACQUIRE_CASE>/bundle-snapshot.ipa --recovered cases/<CASE_ID>/decryption --out cases/<CASE_ID>/assembly
@@ -201,27 +325,23 @@ iOS 16 上的截图与无障碍读取需要开发者模式及已挂载的 Develo
 
 `decrypt-package` 是 XR 已验证的完整路径。先运行 `sh scripts/prepare-ipadecrypt-helper.sh` 获取固定提交的设备 helper；命令检查本机和设备端的 helper SHA-256、USB Frida 与 SSH 指向同一 UDID、原包版本/构建号及传输哈希。它限时启动 helper，恢复主程序和扩展；再逐一检查包内 Mach-O，并确认每个原加密二进制只有加密区和 `cryptid` 字段发生变化。Mac 端还核对归档成员及未加密文件字节，只允许省略 `SC_Info` 收据，并用原包的 ZIP 元数据重组分析 IPA，避免设备端时间戳影响内容哈希。成功后自动生成解密后的 IPA 静态索引和主程序 Objective-C 类/方法索引，并写出可用 `copyapp verify <DECRYPT_CASE>` 再次审计的独立案例；[XR 实跑结果](cases/deepseek-verifiable-decrypt-live-20261015/manifest.json)已通过。输出仍是**分析 IPA**，不保证可安装。`decrypt-extension` 提供已运行扩展的直接 Frida 读取接口；XR 上对 Kimi/DeepSeek 分享扩展的附加均超时，因此当前正式整包路径使用 `decrypt-package`。`assemble-ipa` 的 `--recovered` 可重复提供已验证的主程序与扩展案例。
 
-`rea-function` 对精确哈希的二进制调用 REA 的指定 provider，保存完整证据、伪代码和摘要。`--timeout` 会给所选 provider 留出较短的内部启动期限，以便外层超时前完成错误报告和清理；显式设置 `REA_GHIDRA_STARTUP_TIMEOUT_MS` 或 `REA_HOPPER_STARTUP_TIMEOUT_MS` 时尊重该设置。REA 查询现在使用独立进程组；外层超时时会先终止整组，再强制清理仍运行的子进程，已用真实父子进程做本机验证。大型 App 的 Ghidra 自动分析可能超过默认期限，应为单次任务选择足够的 `--timeout`。REA/Ghidra 与 REA/Hopper 都已在源码已知夹具上验证；Hopper 需在可访问 Spotlight/Apple Events 的正常 macOS 用户会话中启动。详见 [REA 与 Hopper 集成记录](docs/rea-hopper-integration.md)。
-
 无需 REA 的反编译入口包括单函数 `copyapp ghidra-function --file <MACHO> --sha256 <SHA256> --address 0xADDRESS --ghidra-dir <GHIDRA_INSTALL_DIR> --out cases/<CASE>`、按已验证候选排序的 `copyapp ghidra-queue --candidates cases/<CANDIDATES> --ghidra-dir <GHIDRA_INSTALL_DIR> --java-home <JDK_HOME> --out cases/<QUEUE>`，以及整条调查的 `--provider ghidra-direct`。Copy APP 自带最小 Ghidra headless 脚本，保存函数伪代码、来源哈希、脚本与日志；正式报告可用 `--evidence ghidra.queue=cases/<QUEUE>` 导入。它仍需要外部 Ghidra 和 JDK。默认 `prepare-app` 的方法筛选与汇编路径可独立运行；显式选择 `ghidra-direct` 时将候选队列接入调查和 Agent 审阅任务，且无需 REA。XR Calculator 百分比候选的[直连案例](cases/calculator-direct-ghidra-percent-20261015/report.md)、加法的[候选队列](cases/calculator-direct-ghidra-queue-addition-v3-20261015/queue.json)及[一命令真机准备任务](cases/calculator-prepare-app-ghidra-direct-live-20261015/preparation/draft/TASK.md)均已运行并通过来源校验。完整边界见[无 REA 分析路径](docs/no-rea-analysis.md)。
 
 大型二进制可在独立命令中加 `--disable-analyzer 'Objective-C Message Analyzer'`，或在整条调查中加 `--ghidra-disable-analyzer 'Objective-C Message Analyzer'`；所选配置、Copy APP 脚本哈希及生效结果均进入案例。Ghidra 即使在自动分析超时后继续输出伪代码，Copy APP 也会判失败，避免把部分分析当作完整结果。[分析配置与许可说明](docs/no-rea-analysis.md)。
 
 上述三流程报告已形成[分析交付](cases/calculator-three-flow-no-rea-analysis-delivery-20261015/report.md)和[复刻任务](cases/calculator-three-flow-no-rea-rebuild-preparation-20261015/task/TASK.md)。在 XR 上复用已安装的 CalculatorClone 0.1.10 做[三流程对照](cases/calculator-three-flow-no-rea-rebuild-check-20261015/report.md)：加法、百分比、重复等号的末端 UIKit 断言均通过，六对截图的[逐张审阅](cases/calculator-three-flow-no-rea-visual-review-20261015/report.md)发现轻微差异；[交付记录](cases/calculator-three-flow-no-rea-agent-delivery-20261015/report.md)通过哈希验证。该源码早于本次无 REA 报告，本结果不证明报告自动生成了复刻 App。
 
-`candidates` 将已完成的点击/Frida 实验中的非零方法计数，与**同一精确哈希二进制**的 Objective-C 实例方法索引按类名和 selector 关联，生成可直接送入 `rea-function` 的地址队列。它检查实验的设备、Bundle ID、前后台归属与截图哈希，并复制源证据供 `copyapp verify` 核对。`experiment` 同时传入 `--binary` 和 `--objc-index` 时会挂钩当前 Objective-C IMP 与 App 本体静态入口，记录各自命中次数及模块偏移。系统辅助功能层替换当前 IMP 时，`candidates` 保留该冲突，并在静态入口独立命中的条件下恢复原二进制函数候选。未提供静态入口的实验仍需当前 IMP 模块/偏移匹配；旧实验缺少偏移字段时仅按类名与 selector 匹配。即使偏移一致，也不证明手机上加载的代码字节与采集副本完全相同；观察窗口内调用不自动证明由点击引起。XR Calculator 的完整实测见 [Calculator 复刻验证](docs/calculator-xr-rebuild-verification.md)。Compass 的证据链见[点击到函数的实测](docs/compass-runtime-static-rea.md)。[Frida 指针与模块 API](https://frida.re/docs/javascript-api/)
+`candidates` 将已完成的点击/Frida 实验中的非零方法计数，与**同一精确哈希二进制**的 Objective-C 实例方法索引按类名和 selector 关联，生成可送入 `ghidra-queue` 或 `native-queue` 的地址队列。它检查实验的设备、Bundle ID、前后台归属与截图哈希，并复制源证据供 `copyapp verify` 核对。`experiment` 同时传入 `--binary` 和 `--objc-index` 时会挂钩当前 Objective-C IMP 与 App 本体静态入口，记录各自命中次数及模块偏移。系统辅助功能层替换当前 IMP 时，`candidates` 保留该冲突，并在静态入口独立命中的条件下恢复原二进制函数候选。未提供静态入口的实验仍需当前 IMP 模块/偏移匹配；旧实验缺少偏移字段时仅按类名与 selector 匹配。即使偏移一致，也不证明手机上加载的代码字节与采集副本完全相同；观察窗口内调用不自动证明由点击引起。XR Calculator 的完整实测见 [Calculator 复刻验证](docs/calculator-xr-rebuild-verification.md)。Compass 的证据链见[点击到函数的实测](docs/compass-runtime-static-rea.md)。[Frida 指针与模块 API](https://frida.re/docs/javascript-api/)
 
-`candidates --flow` 直接读取带方法跟踪的 `flow-capture` 案例，按每个点击步骤保留命中次数和来源；报告导入器会先校验脚本、App、设备、截图/视图树及静态二进制哈希。`rea-queue` 再按静态入口和当前 IMP 的观察次数排序，对候选的精确地址逐个调用指定 REA provider；失败会停止后续函数并保留已完成结果与失败记录。XR Calculator 的[流程候选](cases/calculator-traced-flow-candidates-20261015/candidates.json)定位到 `0x10000eb0c`，[Ghidra 队列](cases/calculator-traced-flow-rea-queue-20261015/queue.json)已成功保存完整函数证据，二者通过 `copyapp verify`。报告器可校验整条队列及来源后导入，见[深度报告 v12](cases/calculator-xr-deep-report-v12-20261015/report.md)。选择哪个函数与解释反编译结果仍需 agent 审阅，调用计数不单独证明因果。
+`candidates --flow` 直接读取带方法跟踪的 `flow-capture` 案例，按每个点击步骤保留命中次数和来源；报告导入器会先校验脚本、App、设备、截图/视图树及静态二进制哈希。当前可用 `ghidra-queue` 对候选地址做有界反编译。旧 REA 队列案例仅作为历史证据保留。XR Calculator 的[流程候选](cases/calculator-traced-flow-candidates-20261015/candidates.json)定位到 `0x10000eb0c`，[Ghidra 队列](cases/calculator-traced-flow-rea-queue-20261015/queue.json)已成功保存完整函数证据，二者通过 `copyapp verify`。报告器可校验整条队列及来源后导入，见[深度报告 v12](cases/calculator-xr-deep-report-v12-20261015/report.md)。选择哪个函数与解释反编译结果仍需 agent 审阅，调用计数不单独证明因果。
 
-`investigate-flow` 默认不依赖 REA：有静态候选时调用 Xcode 自带 `llvm-objdump` 保存有界 ARM64 汇编（默认最多 4 个函数，可用 `--function-limit` 调整）；工具不可用时保留失败记录并继续生成 UI/Frida 证据。工具还会在函数起点表确认目标时，沿唯一的本地直接 `bl` 调用或 `b` 分支有界跟随；多目标、间接分派和截断窗口会停止选择。汇编和静态边不是反编译源码，也不证明点击实际执行了下游函数。`investigate-flow` 默认不依赖 REA：把已验证的 `analyze` 案例和一条 playbook 接到方法候选、真机 UI/Frida 采集与静态候选；仅显式选择 `--provider ghidra|hopper` 时才运行 REA 队列。它按方法名生成可查看的候选排名，选择分数明显领先的动作入口，也会用各次点击的可见标签匹配唯一的导航或操作方法；默认无 REA 模式在方法不唯一时继续采集 UI 证据，并明确标记没有方法跟踪；显式选择 REA 时，模糊方法会保存 `method-scout.json` 并在操作设备前停下，可用同一输出目录加 `--resume --method 'Class::selector:'` 继续，原候选清单会保留。中途失败时，`--resume` 会重验并复用已完成阶段，避免重复操作手机。加密 App 会从已校验的解密 IPA 中提取主程序，未解密的磁盘主程序会被拒绝。XR 上[Calculator 一命令案例](cases/calculator-one-command-investigation-20261015/manifest.json)已完整成功，包含[待审摘要](cases/calculator-one-command-investigation-20261015/review-brief.md)；[SwiftUI 夹具 Counter 自动选择案例](cases/fixture-counter-autoselect-investigation-20261015/manifest.json)、[UIKit/SQLite Notes 双入口自动选择案例](cases/fixture-notes-autoselect-investigation-20261015/manifest.json)与[Catalog 自动选择案例](cases/fixture-catalog-autoselect-investigation-20261015/manifest.json)均已在 XR 完成，并进入[夹具深度报告 v12](cases/fixture-xr-deep-report-v12-20261015/report.md)。同一目标解析器还从 XR 的 DeepSeek 解密分析包提取并核对主程序哈希。报告器现可将整个调查作为一个带跨阶段身份核验的证据导入，见[深度报告 v14](cases/calculator-xr-deep-report-v14-20261015/report.md)。深层函数语义与复刻规格仍需 coding agent 审阅生成。
+`investigate-flow` 默认不依赖 REA：有静态候选时调用 Xcode 自带 `llvm-objdump` 保存有界 ARM64 汇编（默认最多 4 个函数，可用 `--function-limit` 调整）；工具不可用时保留失败记录并继续生成 UI/Frida 证据。工具还会在函数起点表确认目标时，沿唯一的本地直接 `bl` 调用或 `b` 分支有界跟随；多目标、间接分派和截断窗口会停止选择。汇编和静态边不是反编译源码，也不证明点击实际执行了下游函数。`investigate-flow` 默认不依赖 REA：把已验证的 `analyze` 案例和一条 playbook 接到方法候选、真机 UI/Frida 采集与静态候选；显式选择 `--provider ghidra-direct` 时调用本项目直连 Ghidra 队列。它按方法名生成可查看的候选排名，选择分数明显领先的动作入口，也会用各次点击的可见标签匹配唯一的导航或操作方法；默认无 REA 模式在方法不唯一时继续采集 UI 证据，并明确标记没有方法跟踪。中途失败时，`--resume` 会重验并复用已完成阶段，避免重复操作手机。加密 App 会从已校验的解密 IPA 中提取主程序，未解密的磁盘主程序会被拒绝。XR 上[Calculator 一命令案例](cases/calculator-one-command-investigation-20261015/manifest.json)已完整成功，包含[待审摘要](cases/calculator-one-command-investigation-20261015/review-brief.md)；[SwiftUI 夹具 Counter 自动选择案例](cases/fixture-counter-autoselect-investigation-20261015/manifest.json)、[UIKit/SQLite Notes 双入口自动选择案例](cases/fixture-notes-autoselect-investigation-20261015/manifest.json)与[Catalog 自动选择案例](cases/fixture-catalog-autoselect-investigation-20261015/manifest.json)均已在 XR 完成，并进入[夹具深度报告 v12](cases/fixture-xr-deep-report-v12-20261015/report.md)。同一目标解析器还从 XR 的 DeepSeek 解密分析包提取并核对主程序哈希。报告器现可将整个调查作为一个带跨阶段身份核验的证据导入，见[深度报告 v14](cases/calculator-xr-deep-report-v14-20261015/report.md)。深层函数语义与复刻规格仍需 coding agent 审阅生成。
 
 `investigate-app` 将同一分析案例下最多 12 条有界 playbook 顺序执行为一个任务，逐条保留 `investigate-flow` 原始案例和状态。失败时 `--resume` 会重验并跳过已完成的子流程；不同 Bundle ID、设备或脚本哈希会在操作手机前拒绝。XR 夹具的[三流程总案例](cases/fixture-app-investigation-20261015/manifest.json)在一条命令内完成 Counter、Notes、Catalog，父清单含 193 项证据文件；报告器会重验每个子案例和脚本身份，[夹具深度报告 v12](cases/fixture-xr-deep-report-v12-20261015/report.md)已用单个 `app.all` 证据 ID 引用全案。功能解释与复刻规格仍需 coding agent 审阅生成。
 
 `prepare-analysis` 把已验证的 `analyze` 案例、1–12 条原版脚本接成可恢复的调查与语义审阅任务：`.venv/bin/copyapp prepare-analysis --udid <UDID> --analysis cases/<ANALYSIS> --script playbooks/<FLOW>.json --out cases/<PREPARATION>`。成功后检查 `<PREPARATION>/draft/TASK.md` 并由当前 Codex/Claude Code 审阅、补证和生成正式报告；`needs_semantic_review` 只表示材料齐备。失败后用同样输入加 `--resume`，已完成的调查不会重复触屏。`--investigation cases/<EXISTING>` 可复用已完成且身份匹配的调查案例，不操作手机。[Calculator 三流程复用演练](cases/calculator-preparation-reused-20261015/manifest.json)已通过 `copyapp verify`，产出新的待审任务。
 
-若已选定 1–12 条原版 UI 脚本，可用 `copyapp prepare-app --udid <UDID> --bundle <BUNDLE_ID> --script playbooks/<FLOW>.json --out cases/<CASE>` 从已安装 App 一次接通 USB 采集、选定流程调查和审阅任务生成；默认仅采集 UI/Frida 和原生汇编，显式 `--provider ghidra-direct` 使用 Copy APP 自带 Ghidra 队列，显式 `--provider ghidra|hopper` 使用旧 REA 桥接；加 `--decrypt` 时同一轮执行已验证的整包恢复，前提是设备上的 root Frida 和固定 helper 可用。失败后以原参数加 `--resume`，已验证阶段无需重新触屏。XR 上 [Calculator 直连 Ghidra 单流程实跑](cases/calculator-prepare-app-ghidra-direct-live-20261015/manifest.json)从采集到审阅任务均已完成且不调用 REA。XR 上 DeepSeek 2.4.4 的 `--decrypt` 分支也已完成整包恢复、UI/Frida 跟踪和旧 REA/Ghidra 函数分析；[准备任务](cases/deepseek-prepare-app-encrypted-20261015/manifest.json)达到 `needs_semantic_review`。经审阅的[限定登录门控报告](cases/deepseek-password-gate-reviewed-report-v3-20261015/report.md)和[交付核验](cases/deepseek-password-gate-analysis-delivery-v2-20261015/report.md)覆盖所选 1/1 条流程；其他页面和登录后行为仍未分析。大型二进制的 Ghidra 默认自动分析曾超时；对当时 REA 分析 profile 禁用 `Objective-C Message Analyzer` 后完成，范围与剩余工作见 [DeepSeek 加密 App 试点](docs/deepseek-encrypted-flow-xr-verification.md)。
-
-显式选择 `--provider ghidra|hopper` 时，新调查开始触屏前，`prepare-analysis` 会调用所选 REA provider 的 `doctor` 并保存 `toolchain-doctor.json`。REA 脚本可用 `--rea-script` 或 `COPYAPP_REA_SCRIPT` 指定，Ghidra/JDK 可用 `--ghidra-dir`、`--java-home` 或对应的 `GHIDRA_INSTALL_DIR`、`JAVA_HOME`。XR 上[Calculator 单流程实跑](cases/calculator-preparation-live-20261015/manifest.json)经历了 REA CLI 缺失和 JDK Home 配置错误；续跑保留了两次失败队列，复用已采集的 UI/Frida 证据，只重跑 REA，并最终生成哈希验证通过的审阅任务。它尚不是经语义审阅的深度报告。
+若已选定 1–12 条原版 UI 脚本，可用 `copyapp prepare-app --udid <UDID> --bundle <BUNDLE_ID> --script playbooks/<FLOW>.json --out cases/<CASE>` 从已安装 App 一次接通 USB 采集、选定流程调查和审阅任务生成；默认仅采集 UI/Frida 和原生汇编，显式 `--provider ghidra-direct` 使用 Copy APP 自带 Ghidra 队列；加 `--decrypt` 时同一轮执行已验证的整包恢复，前提是设备上的 root Frida 和固定 helper 可用。失败后以原参数加 `--resume`，已验证阶段无需重新触屏。XR 上 [Calculator 直连 Ghidra 单流程实跑](cases/calculator-prepare-app-ghidra-direct-live-20261015/manifest.json)从采集到审阅任务均已完成且不调用 REA。XR 上 DeepSeek 2.4.4 的 `--decrypt` 分支也已完成整包恢复、UI/Frida 跟踪和旧 REA/Ghidra 函数分析；[准备任务](cases/deepseek-prepare-app-encrypted-20261015/manifest.json)达到 `needs_semantic_review`。经审阅的[限定登录门控报告](cases/deepseek-password-gate-reviewed-report-v3-20261015/report.md)和[交付核验](cases/deepseek-password-gate-analysis-delivery-v2-20261015/report.md)覆盖所选 1/1 条流程；其他页面和登录后行为仍未分析。大型二进制的 Ghidra 默认自动分析曾超时；对当时 REA 分析 profile 禁用 `Objective-C Message Analyzer` 后完成，范围与剩余工作见 [DeepSeek 加密 App 试点](docs/deepseek-encrypted-flow-xr-verification.md)。
 
 `copyapp draft-analysis --analysis cases/<ANALYSIS> --investigation cases/<APP_INVESTIGATION> --out cases/<DRAFT>` 在整案已完成后重验分析索引、设备/App 身份、每条脚本及已有的 Frida、原生汇编和可选反编译证据链，生成事实草稿 `findings.json`、待审 `feature-spec.json`、审阅入口 `review-dossier.md` 与引用完整证据的 `report/`。新版还生成 `TASK.md` 和 `task.json`：逐流程链接原版脚本、末端截图、视图树，以及采集到的点击追踪和可选伪代码，明确 Coding Agent 必须产出经审阅的结论、可执行规格及新报告；`copyapp verify` 会重验其来源分析、调查和草稿报告。它只描述采集时明确通过的观察断言、点击窗口计数、已分析函数地址、沙盒元数据数量和未知项；`review_status=needs_semantic_review` 会阻止直接送入 `rebuild-check`。[夹具三流程交接任务](cases/fixture-auto-draft-v4-20261015/TASK.md)及其案例已通过校验。Coding agent 仍需沿已有运行时、静态及可选伪代码证据补全功能原理、可执行规格和未覆盖状态，不能将事实草稿当作已完成的深入分析。
 
@@ -237,9 +357,7 @@ iOS 16 上的截图与无障碍读取需要开发者模式及已挂载的 Develo
 
 规格流程可选 `final_view: {"text": "15", "region_points": [0, 150, 414, 341]}`。设置后，`rebuild-check` 对原版和复刻版使用 `flow-capture`，在脚本结束后不重启 App 地采集当前 UIKit 视图树；只有指定屏幕区域内恰好一个可见 `UILabel` 的文本与规格完全一致才通过。XR Calculator 的[带视图断言的三流程验收](cases/calculator-xr-rebuild-check-with-view-20261015/report.md)已实测：两端最终显示标签分别为 `15`、`110`、`9`，六份状态检查及 127 项案例文件通过哈希校验，[图片审阅](cases/calculator-xr-rebuild-check-with-view-20261015/visual-review.md)单独记录可见差异。这条断言只覆盖保存时刻的 UIKit 标签；SwiftUI 绘制、自绘数字、动画及其他未观察状态需要其他证据，逐流程视觉状态仍标为 `unreviewed`。
 
-`rea-bridge` 从已验证的 REA 队列自动追踪唯一的本地匿名调用目标，按函数数和深度限制继续；遇到多个分支会保存清单并停止选择。XR Calculator 的[桥接追踪](cases/calculator-bridge-follow-20261015/bridge-map.json)从 `0x10000eb0c` 唯一进入 `0x10000e9b8`，随后列出 10 个分支供 agent 结合按钮 ID 审阅。它复制原始候选/REA 队列并核对每个跟随边、函数哈希、地址、provider 和伪代码；[深度报告 v14](cases/calculator-xr-deep-report-v14-20261015/report.md)已导入整条追踪。静态调用图不证明特定点击执行了某个下游分支。
-
-`report` 将一个已验证的 `analyze` 案例、agent 撰写的 `findings.json`、可选复刻规格和选定证据组装到新目录。每个 `--evidence ID=PATH` 可指向 `rea-function` 输出目录、已完成的 `experiment` 目录或单个文件。它会核对 REA 的二进制哈希与采集包、Evidence ID、provider、分析配置、函数身份和伪代码文本的一致性，以及实验的 Bundle ID、前台状态和前后截图哈希；非“待验证”的结论必须引用已导入证据。输出包含 `report.md`、`report-index.json`、证据副本和 `feature-spec.json`（若提供），可再用 `copyapp verify <报告目录>` 检查。Compass 和夹具的结构化结论分别见 [compass-findings.json](docs/compass-findings.json) 与 [fixture-findings.json](docs/fixture-findings.json)。证据的语义解释仍由 coding agent 审阅撰写，哈希通过不自动证明结论正确。
+`report` 将一个已验证的 `analyze` 案例、agent 撰写的 `findings.json`、可选复刻规格和选定证据组装到新目录。每个 `--evidence ID=PATH` 可指向直接 Ghidra、已完成的 `experiment` 目录或单个文件。它会核对函数证据的二进制哈希、分析配置、函数身份和伪代码文本的一致性，以及实验的 Bundle ID、前台状态和前后截图哈希；非“待验证”的结论必须引用已导入证据。输出包含 `report.md`、`report-index.json`、证据副本和 `feature-spec.json`（若提供），可再用 `copyapp verify <报告目录>` 检查。Compass 和夹具的结构化结论分别见 [compass-findings.json](docs/compass-findings.json) 与 [fixture-findings.json](docs/fixture-findings.json)。证据的语义解释仍由 coding agent 审阅撰写，哈希通过不自动证明结论正确。
 
 `view-tree` 在目标 App 前台时通过 Frida 读取当前 UIKit 窗口与有限深度的子视图，保存类名、父子关系、frame、可访问性文本、常见标签/按钮文字以及 UILabel 字体名称和字号；同时保存可用的 iOS MCP/iCTRL 无障碍观察树。扫描源脚本、截图和树数据都带哈希。XR Calculator 的原版与独立复刻版已各自捕获；字体差异及修复见[真机复核](docs/calculator-typography-xr-review.md)。SwiftUI 夹具的 `_UIHostingView<CounterView>` 没有对应的 UILabel 计数文本，同次无障碍树则给出 Counter 数值和按钮。`report` 导入该目录时会核对目标设备、App、前台归属、节点结构和证据哈希。一次视图树只代表当时已加载的页面，不代表完整页面图或原始源码。
 
@@ -322,11 +440,10 @@ Mac 端已加入 `copyapp ui`，仅调用 iOS MCP 的界面观察、触控和 Ap
 
 ## iCTRL 界面适配器（XR 真机已验收）
 
-Mac 端 `copyapp ui --backend ictrl` 通过上游 iCTRL 的加密客户端调用已配对 runner，只开放界面观察、触控、截图和 App 启动等方法；不自行实现或绕过配对协议。当前研究源码固定为 `OpenMinis/iCTRL@d88bbf0b3a5addead31b4298d605d7ac7a87d6e7`。运行 `sh scripts/build-ictrl-client.sh` 可从该提交构建 `../toolchains/ictrl-macos` 并执行上游密码学自检；现有本机运行结果全部通过。runner 启动后先建立 USB 转发；首次配对需要在手机上批准，指纹应与客户端显示的一致：
+Mac 端 `copyapp ui --backend ictrl` 通过上游 iCTRL 的加密客户端调用已配对 runner，只开放界面观察、触控、截图和 App 启动等方法；不自行实现或绕过配对协议。仓库固定源码为 `OpenMinis/iCTRL@d88bbf0b3a5addead31b4298d605d7ac7a87d6e7`；`copyapp setup ictrl` 会从这份源码构建 `toolchains/ictrl-macos` 并执行密码学自检，也可单独运行 `sh scripts/build-ictrl-client.sh`。`setup` 自动处理首次配对；交互式 `copyapp ui` 要在另一个终端保持以下 USB 转发：
 
 ```sh
 .venv/bin/pymobiledevice3 usbmux forward 22224 8200 --serial <UDID>
-../toolchains/ictrl-macos --host 127.0.0.1:22224 pair --name 'Copy APP'
 .venv/bin/copyapp ui health --backend ictrl
 .venv/bin/copyapp ui observe --backend ictrl
 .venv/bin/copyapp ui screenshot --backend ictrl --out cases/<CASE_ID>/ictrl.jpg
@@ -346,3 +463,21 @@ Mac 端 `copyapp ui --backend ictrl` 通过上游 iCTRL 的加密客户端调用
 ## 复刻工程
 
 `rebuild/CompassClone` 用 UIKit、CoreMotion、CoreLocation 和程序化绘图实现三条 Compass 流程。运行 `sh rebuild/CompassClone/package.sh` 可生成 `rebuild/CompassClone/build/dist/CopyAppCompass.ipa`。脚本用 `ldid` 做临时签名，供 TrollStore 等越狱安装路径处理；普通 USB 安装服务虽然接受 IPA，XR 的 SpringBoard 仍拒绝启动，日志见本地 `cases/rebuild-launch-syslog.txt`。通过 TrollStore 安装的最新版已在 XR 运行，实测及差异见 [XR 复刻实测记录](docs/xr-rebuild-verification.md)。
+
+## 致谢
+
+Copy APP 建立在以下项目的工作之上，感谢维护者和贡献者。
+
+**仓库内包含或参考的源码：**
+
+- [witchan/ios-mcp](https://github.com/witchan/ios-mcp) 是改造后的 rootless [iOS MCP tweak](device/ios-mcp/README.zh-CN.md) 的基础；保留了 MIT 许可证和 NOTICE。
+- [OpenMinis/iCTRL](https://github.com/OpenMinis/iCTRL) 提供仓库内的 XCUITest runner、配套 App 和加密客户端；[固定版本与改动说明](vendor/ictrl/UPSTREAM.md)保留 Apache-2.0 许可证和 NOTICE。
+- [morluto/rea](https://github.com/morluto/rea) 为直连 Ghidra 的脚本提供参考；保留其 [MIT 许可证](docs/third-party/REA-LICENSE.txt)。当前流程运行时不依赖 REA。
+
+**流程及 XR 实测使用的独立工具和组件：**
+
+- [pymobiledevice3](https://github.com/doronz88/pymobiledevice3) 与 [OpenSSH](https://www.openssh.com/) 用于 USB 设备服务、端口转发和认证文件传输。
+- [londek/ipadecrypt](https://github.com/londek/ipadecrypt) 提供固定版本的整包解密 helper，源码下载到仓库外；[Frida](https://frida.re/) 用于运行时跟踪与设备端插桩。
+- [Ghidra](https://github.com/NationalSecurityAgency/ghidra) 与 [Hopper](https://www.hopperapp.com/) 是可选、需单独安装的反编译器；Hopper 需要许可证。
+- [Theos](https://github.com/theos/theos)、[ldid](https://github.com/ProcursusTeam/ldid)、[XcodeGen](https://github.com/yonaskolb/XcodeGen) 和 [Apple Xcode/XCTest](https://developer.apple.com/xcode/) 支持 tweak、runner 与复刻 App 的构建；[jkcoxson/idevice](https://github.com/jkcoxson/idevice) 用于 iCTRL 的设备镜像组件构建。
+- [TrollStore](https://github.com/opa334/TrollStore) 用于安装实测 runner 和复刻 IPA；XR 测试机使用 [Dopamine](https://github.com/opa334/Dopamine) 越狱。[Pillow](https://github.com/python-pillow/Pillow) 用于图片处理与画面对比。

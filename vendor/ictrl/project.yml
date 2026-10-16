@@ -1,0 +1,122 @@
+name: iCTRL
+options:
+  bundleIdPrefix: com.copyapp
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "16.0"
+
+# Team and bundle-id prefix come from here, not from this file: each developer
+# has their own (see Config/Signing.xcconfig and Scripts/setup-signing.sh).
+configFiles:
+  Debug: Config/Signing.xcconfig
+  Release: Config/Signing.xcconfig
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+
+targets:
+  iCTRL:
+    type: application
+    platform: iOS
+    sources:
+      - path: iCTRLApp
+      - path: iCTRLKit
+      # Shared with the runner: one string table for both processes, so a phrase
+      # the user sees in a notification matches the one in the app.
+      - path: iCTRLUITests/Localized.swift
+
+    dependencies:
+      # idevice (MIT) — the lockdown/RSD/image-mounter client that does the
+      # actual DDI mount. Fetched by Scripts/fetch-idevice.sh rather than
+      # committed: the upstream xcframework is a 215MB release asset and is not
+      # in the repo tree, so SPM cannot resolve it by URL.
+      - framework: Frameworks/IDevice.xcframework
+        embed: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: "$(ICTRL_BUNDLE_PREFIX).ictrl"
+        GENERATE_INFOPLIST_FILE: YES
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: 1
+        CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: "iCTRL reaches this device's debug service through LocalDevVPN to mount the Developer Disk Image, and serves the automation API on your network."
+        # LSApplicationQueriesSchemes can't be expressed as an INFOPLIST_KEY_
+        # setting — Xcode only maps an allowlist of keys and drops this one
+        # silently — so it lives in a real plist that gets merged in. Without it
+        # iOS denies UIApplication.open() for these schemes with no error, which
+        # would break the Start button and the StikDebug shortcut.
+        INFOPLIST_FILE: iCTRLApp/Info.plist
+
+  iCTRLUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: iCTRLUITests
+      - path: iCTRLKit
+      # The operating manual, bundled so GET /skill can serve it at runtime.
+      - path: SKILL.md
+        buildPhase: resources
+      # The reference client, served at GET /skill/examples/python so a caller
+      # can download a working v1-envelope implementation straight off the
+      # device instead of writing the crypto itself.
+      - path: Scripts/ictrl_rpc.py
+        buildPhase: resources
+      # Static aarch64-musl CLI, served at GET /skill/examples/cli. Built for
+      # the Minis sandbox (Alpine arm64), whose minirootfs has no python3 — the
+      # reference client there would cost an `apk add` before the first call.
+      - path: cli/ictrl
+        buildPhase: resources
+      - path: cli/ictrl.sh
+        buildPhase: resources
+    dependencies:
+      - target: iCTRL
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: "$(ICTRL_BUNDLE_PREFIX).ictrl.uitests"
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_OBJC_BRIDGING_HEADER: iCTRLUITests/XCTestPrivate-Bridging-Header.h
+        # The server runs in THIS (runner) process, so the runner is the app that
+        # needs Local Network access. Declared here so the permission prompt has a
+        # rationale (raised via a LAN touch only when on Wi-Fi and remote is
+        # unreachable — skipped on cellular).
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: "iCTRL needs local network access to serve the automation API on your LAN."
+        TEST_HOST: ""
+    postBuildScripts:
+      - name: "Strip unnecessary XCTest frameworks"
+        script: |
+          RUNNER_APP="${BUILT_PRODUCTS_DIR}/iCTRLUITests-Runner.app"
+          echo "🔧 Stripping XCTest frameworks from Runner.app..."
+          rm -rf "${RUNNER_APP}/Frameworks/XCTAutomationSupport.framework"
+          rm -rf "${RUNNER_APP}/Frameworks/XCTest.framework"
+          rm -rf "${RUNNER_APP}/Frameworks/XCTestCore.framework"
+          rm -rf "${RUNNER_APP}/Frameworks/XCTestSupport.framework"
+          rm -rf "${RUNNER_APP}/Frameworks/XCUIAutomation.framework"
+          rm -rf "${RUNNER_APP}/Frameworks/XCUnit.framework"
+          rm -rf "${RUNNER_APP}/Frameworks/Testing.framework"
+          rm -f  "${RUNNER_APP}/Frameworks/libXCTestSwiftSupport.dylib"
+          rmdir  "${RUNNER_APP}/Frameworks" 2>/dev/null || true
+          echo "✅ Frameworks stripped"
+
+schemes:
+  iCTRL:
+    build:
+      targets:
+        iCTRL: all
+        iCTRLUITests: [test]
+    test:
+      targets:
+        - iCTRLUITests
+      testPlans: []
+      # testStartServer is one test that runs for hours and always ends killed,
+      # i.e. "failed" — so XCTest's default screen recording (30fps H.264 in
+      # testmanagerd's tmp, kept on failure) piled up as tens of GB of "System
+      # Data" on the phone. The server takes its own frames; record nothing.
+      preferredScreenCaptureFormat: screenshots
+      captureScreenshotsAutomatically: false

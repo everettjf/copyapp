@@ -16,7 +16,7 @@ ICTRL_UI_METHODS = frozenset({
     "tap", "swipe", "long_press", "double_tap", "type", "launch_app",
     "terminate_app", "home", "screenshot",
 })
-DEFAULT_CLIENT = Path(__file__).resolve().parents[2] / "toolchains" / "ictrl-macos"
+DEFAULT_CLIENT = Path(__file__).resolve().parents[1] / "toolchains" / "ictrl-macos"
 
 
 class ICtrlError(RuntimeError):
