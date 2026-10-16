@@ -6,7 +6,7 @@
 
 指定系统 App 时可先运行 `.venv/bin/copyapp apps --udid <UDID> --all` 查准确 Bundle ID；默认 `apps` 只列用户安装的 App。XR 上 `--all` 已返回 Calculator、Compass 和 Clock 对应的系统 Bundle ID。显示名称重名时仍应核对前台 App 身份。
 
-正式报告现在会把 `Assets.car` 的资源名称及沙盒的只读文件元数据摘要直接写入人可读附录，完整索引仍保留证据链接。[重新生成的 Calculator 报告](cases/calculator-rich-inventory-report-20261016/report.md)和[来源关联的分析交付](cases/calculator-rich-inventory-analysis-delivery-20261016/report.md)已通过本地核验。资源名或数据库/偏好文件名只提供调查线索，不能单独证明某个功能实际读取它们。
+正式报告现在会把 `Assets.car` 的资源名称及沙盒的只读文件元数据摘要直接写入人可读附录，完整索引仍保留证据链接。进一步的 [Calculator 深入报告](cases/calculator-ui-deep-report-20261016/report.md)和[来源关联的分析交付](cases/calculator-ui-deep-analysis-delivery-20261016/report.md)已通过核验，还加入 Copy APP 直连 Ghidra 对根视图组装、键盘按钮 frame 布局和结果视图手势装配的同二进制函数证据。资源名或数据库/偏好文件名只提供调查线索，不能单独证明某个功能实际读取它们；本次三条运算流程也未测试显示区手势。
 
 REA 不属于正式链路的运行依赖。深入函数分析优先用 Copy APP 直连 Ghidra；旧 REA 入口保留作可选兼容。代码借鉴、许可及尚未移植的能力见[独立运行边界](docs/rea-independence.md)。
 

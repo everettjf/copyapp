@@ -40,6 +40,8 @@ The [Calculator parent](cases/calculator-current-auto-workflow-20261016/manifest
 
 The device-name entry now supports `copyapp apps --udid <UDID> --all` for system apps; the XR returned 182 installed entries, including Calculator, Compass and Clock. The report renderer adds bounded resource names and read-only sandbox metadata to the readable appendix. A [new Calculator report](cases/calculator-rich-inventory-report-20261016/report.md) and [analysis delivery](cases/calculator-rich-inventory-analysis-delivery-20261016/report.md) verify the new output against the same saved evidence. These entries do not prove runtime resource or file access.
 
+The [latest Calculator analysis](cases/calculator-ui-deep-report-20261016/report.md) adds seven source-verified direct Ghidra function cases from the same 361,440-byte binary. It follows `CalculatorController.loadView` into the root-view builder, `CalculatorKeypadView.layoutSubviews` into the button-frame loop, and `DisplayViewController.loadView` into its lazy display view and gesture setup. The [analysis delivery](cases/calculator-ui-deep-analysis-delivery-20261016/report.md) still binds the same three observed XR scripts. Static UI construction is now better explained, while display gesture outcomes and the private Calculate framework algorithm remain untested.
+
 ## Next engineering gates
 
 1. Exercise an independent terminal run with a real Codex or Claude CLI and record its output and delivery gates.

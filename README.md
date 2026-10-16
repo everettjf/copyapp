@@ -53,7 +53,7 @@ Other local XR pilots include [Compass](docs/compass-xr-analysis.md), [Calculato
 
 `apps` lists user-installed apps by default. `--all` also lists system apps, including Calculator, Compass and Clock on the tested XR, so a target named by its display name can be resolved to an exact Bundle ID.
 
-Formal reports now render a bounded Assets.car name list and a metadata-only sandbox summary when those indexes exist. A [recomposed Calculator report](cases/calculator-rich-inventory-report-20261016/report.md) and its [source-linked analysis delivery](cases/calculator-rich-inventory-analysis-delivery-20261016/report.md) verify this on the XR evidence; resource names and storage-looking filenames are investigation leads, not evidence of runtime use.
+Formal reports now render a bounded Assets.car name list and a metadata-only sandbox summary when those indexes exist. A [deeper Calculator report](cases/calculator-ui-deep-report-20261016/report.md) and its [source-linked analysis delivery](cases/calculator-ui-deep-analysis-delivery-20261016/report.md) verify these appendices and add direct Ghidra evidence for the root view, keypad frame layout and result-view gesture setup. Resource names and storage-looking filenames are investigation leads, not evidence of runtime use; the three arithmetic flows did not exercise the display gestures.
 
 `copyapp verify` checks recorded source links and file hashes. A matching hash does not prove that a decompiler interpretation is correct or that an app is functionally equivalent. Store raw IPA files, screenshots, sandbox snapshots, traces and credentials only in ignored local `cases/`. Reports should distinguish direct observations, inferences and unknown behavior.
 
