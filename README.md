@@ -35,6 +35,8 @@ Clock 随后扩展到四个主标签：[四流程分析报告](cases/clock-four-
 
 用户只给 App 时，当前 Codex/Claude 可按 [`copyapp-copy` Skill](skills/copyapp-copy/SKILL.md) 观察首页并编写三条代表性脚本。`copyapp discover-check --udid <UDID> --bundle <BUNDLE> --script <FLOW> ... --out cases/<DISCOVERY>` 先检查脚本身份、不同点击路径和有界步骤，再在同一手机上重放每条流程；`copyapp copy` 可用 `--discovery cases/<DISCOVERY>` 直接读取验收后的脚本副本。XR 上三条 DeepSeek 登录页脚本的[实测发现验收](cases/deepseek-three-flow-discovery-check-live-20261015/report.md)和父案例哈希均通过。脚本仍由 Agent 按真实界面编写，自动发现任意 App 全部页面的能力尚未验证。
 
+`--auto-discover` 的进程与真机交接已用固定脚本替身在 XR 上实测：[Clock 三流程发现案例](cases/clock-auto-discovery-agent-live-20261016/discovery/report.md)与外层 Agent 记录均通过校验；[父流程](cases/clock-auto-copy-live-20261016/manifest.json)还完成了整包采集、原版逐流程调查与分析任务准备，在替身分析 Agent 未提交正式报告时按预期停在 `analysis_agent_needs_review`。这检验了设备、脚本和证据链的连接，尚未检验真实模型自主发现或生成复刻。该实测还暴露了 `cryptid=0` 的 Clock 被旧校验器误拒的问题：现在只有来源 IPA 的全部 Mach-O 头部已无加密标记时才允许零个恢复二进制；真正仍加密的来源不能借此通过。
+
 ## iPhone XR 实测（iOS 16.1.1）
 
 - USB 配对、系统与 App 信息、Developer Disk Image 挂载、截图、无障碍读取和 App 包目录索引已通过。`/var/jb` 可列出，包含 Dopamine 与 Procursus 标记。

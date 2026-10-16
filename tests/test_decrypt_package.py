@@ -1,6 +1,7 @@
 import hashlib
 import json
 import plistlib
+import shutil
 import struct
 import tempfile
 import unittest
@@ -164,6 +165,46 @@ class PackageByteAuditTest(unittest.TestCase):
         (case / "decryption.json").write_text(json.dumps(record))
         _write_case_manifest(case, self.snapshot, record)
         self.assertFalse(verify_case(case))
+
+    def test_standalone_already_decrypted_package_needs_no_changed_binary(self):
+        with ZipFile(self.snapshot) as source:
+            info_plist = source.read('Payload/Example.app/Info.plist')
+        with ZipFile(self.snapshot, 'w') as source:
+            source.writestr('Payload/Example.app/Info.plist', info_plist)
+            source.writestr(self.main, binary(False))
+            source.writestr(self.extension, binary(False))
+        case = self.root / 'unchanged-case'
+        case.mkdir()
+        ipa = case / 'analysis.ipa'
+        shutil.copyfile(self.snapshot, ipa)
+        check = inspect_decrypted_ipa(ipa, 'com.example.test')
+        self.assertTrue(check['header_check_passed'])
+        write_decryption_check(check, case / 'check')
+        write_ipa_report(analyze_ipa(ipa), case / 'static')
+        (case / 'static/objc-status.json').write_text(
+            json.dumps({'status': 'unsupported', 'reason': 'synthetic Mach-O'}))
+        (case / 'device-run').mkdir()
+        device_id = '00000000-0000000000000000'
+        (case / 'device-run/result.json').write_text(json.dumps({
+            'device_id': device_id, 'exit_code': 0,
+            'command': ['helper', '-v', 'decrypt', 'com.example.test', '/app', '/out'],
+        }))
+        (case / 'device-run/output.txt').write_text('already decrypted')
+        record = {
+            'schema_version': 1, 'bundle_id': 'com.example.test',
+            'device_id_sha256_prefix': hashlib.sha256(device_id.encode()).hexdigest()[:16],
+            'installed_version': '1.0', 'installed_build': '1',
+            'source_snapshot_sha256': hashlib.sha256(self.snapshot.read_bytes()).hexdigest(),
+            'analysis_ipa_sha256': hashlib.sha256(ipa.read_bytes()).hexdigest(),
+            'helper_sha256': PINNED_HELPER_SHA256,
+            'all_macho_headers_decrypted': True,
+            'checked_macho_count': check['checked_binaries'],
+            'recovered_binaries': [],
+            'objc_class_count': None, 'objc_method_count': None,
+        }
+        (case / 'decryption.json').write_text(json.dumps(record))
+        _write_case_manifest(case, self.snapshot, record)
+        self.assertTrue(verify_case(case))
 
 
 if __name__ == "__main__":

@@ -216,7 +216,9 @@ def validate_decrypt_package_case(output: Path, manifest: dict) -> bool:
             check != saved_check):
         return False
     changed = _verify_changed_binaries(snapshot, candidate, source_index)
-    if changed != record.get("recovered_binaries") or not changed:
+    if changed != record.get("recovered_binaries"):
+        return False
+    if not changed and not inspect_decrypted_ipa(snapshot, record["bundle_id"])["header_check_passed"]:
         return False
     with tempfile.TemporaryDirectory(prefix="copyapp-decrypt-verify-") as scratch:
         expected = Path(scratch) / "analysis.ipa"
@@ -340,7 +342,10 @@ def decrypt_package(udid: str, bundle: str, snapshot: Path, helper: Path,
             "objc_class_count": objc_classes,
             "objc_method_count": objc_methods,
             "all_macho_headers_decrypted": True,
-            "note": "Analysis IPA only. Its modified code signatures are invalid; installability is not asserted.",
+            "note": ("No encrypted Mach-O required recovery; no App code bytes changed. "
+                     "Installability is not asserted." if not changed else
+                     "Analysis IPA only. Its modified code signatures are invalid; "
+                     "installability is not asserted."),
         }
         path = output / "decryption.json"
         path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
