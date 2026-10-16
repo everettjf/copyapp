@@ -120,6 +120,9 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
             time.sleep(0.3)
         else:
             raise RuntimeError("target did not become frontmost after fresh launch")
+        # SpringBoard can report the new foreground app before UIKit paints its
+        # first complete navigation bar. XR / iOS 16 Clock reproduced this.
+        time.sleep(2.0)
     if trace_observer is not None:
         if ui.frontmost() != bundle:
             raise RuntimeError("target is not frontmost before trace attachment")
@@ -241,6 +244,13 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
             finally:
                 if trace_observer is not None:
                     trace_observer.end_step()
+            match = item["result"].get("match", {})
+            tap_y = match.get("y") if isinstance(match, dict) else None
+            if isinstance(tap_y, (int, float)) and tap_y >= height * 0.8:
+                # Tab changes can expose accessibility labels before the new
+                # view has finished painting; settle before observing it.
+                time.sleep(2.0)
+                item["post_tap_settle_ms"] = 2000
         elif action == "tap":
             x, y = step.get("x"), step.get("y")
             if (not isinstance(x, (int, float)) or isinstance(x, bool) or
@@ -257,6 +267,9 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
         else:
             path = output / f"step-{index:02d}-screenshot.jpg"
             if step.get("stable") is True:
+                # Allow the last accessibility update to reach the rendered
+                # frame before assessing screenshot stability.
+                time.sleep(1.0)
                 sample = output / f".step-{index:02d}-sample.jpg"
                 try:
                     def capture() -> bytes:

@@ -1,0 +1,58 @@
+{
+  "pairs": [
+    {
+      "flow_id": "clock-world-city-chooser",
+      "step": 4,
+      "verdict": "minor_difference",
+      "note": "两侧都有 World Clock、Edit、北京时间和四个标签。截图中右侧 Add 只呈现水平笔画；按钮仍可点击，后续截图显示完整。时间字体与返回标题不同。"
+    },
+    {
+      "flow_id": "clock-world-city-chooser",
+      "step": 7,
+      "verdict": "minor_difference",
+      "note": "两侧均有 Choose a City、Search、Cancel 与同序城市。复刻的标题位置、搜索框排布、列表行高和右侧字母索引仍不同。"
+    },
+    {
+      "flow_id": "clock-world-city-chooser",
+      "step": 10,
+      "verdict": "minor_difference",
+      "note": "取消后两侧都返回 World Clock 与北京时间。复刻的时间字重、间距和左上返回文字仍不同。"
+    },
+    {
+      "flow_id": "clock-alarm-unsaved-editor",
+      "step": 4,
+      "verdict": "minor_difference",
+      "note": "两侧均显示 Alarm、Sleep | Wake Up、床图标、No Alarm 和 SET UP 胶囊。按钮图标在采图帧中不完整；复刻的文字起点及分隔线位置略有差别。"
+    },
+    {
+      "flow_id": "clock-alarm-unsaved-editor",
+      "step": 7,
+      "verdict": "minor_difference",
+      "note": "两侧显示相同的 Add Alarm、时间滚轮及 Repeat、Label、Sound、Snooze。复刻的滚轮背景、标题间距和字体细节仍不同。"
+    },
+    {
+      "flow_id": "clock-alarm-unsaved-editor",
+      "step": 10,
+      "verdict": "minor_difference",
+      "note": "取消后两侧都回到 Alarm 与 No Alarm；床图标、SET UP 已保留，文字位置和分隔线仍有细微差别。"
+    },
+    {
+      "flow_id": "clock-timer-sound-chooser",
+      "step": 4,
+      "verdict": "minor_difference",
+      "note": "两侧均有相同的 0 小时 15 分钟、Start、Cancel 和 When Timer Ends。复刻的滚轮刻度、圆形按钮边框与颜色略有差异。"
+    },
+    {
+      "flow_id": "clock-timer-sound-chooser",
+      "step": 7,
+      "verdict": "minor_difference",
+      "note": "两侧均有 When Timer Ends、Cancel、Set 及 Radar 默认选中。铃声行距、分隔线和底部可见条目数有差异。"
+    },
+    {
+      "flow_id": "clock-timer-sound-chooser",
+      "step": 10,
+      "verdict": "minor_difference",
+      "note": "取消后两侧都回到 Timer，未提交铃声更改。时长值相同，滚轮和按钮样式仍不同。"
+    }
+  ]
+}

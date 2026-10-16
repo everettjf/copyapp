@@ -112,6 +112,7 @@ final class AlarmController: UITableViewController {
         title = "Alarm"
         tableView.backgroundColor = .black
         tableView.separatorColor = .darkGray
+        tableView.separatorInset = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 0)
         navigationItem.rightBarButtonItem = systemButton("Add", selector: #selector(addAlarm), target: self)
     }
 
@@ -131,12 +132,25 @@ final class AlarmController: UITableViewController {
         cell.backgroundColor = .black
         cell.selectionStyle = .none
         if indexPath.section == 0 {
+            cell.imageView?.image = UIImage(systemName: "bed.double.fill")
+            cell.imageView?.tintColor = .white
+            cell.imageView?.transform = CGAffineTransform(translationX: 20, y: 3)
             cell.textLabel?.text = "Sleep | Wake Up"
             cell.textLabel?.font = .systemFont(ofSize: 16, weight: .medium)
+            cell.textLabel?.transform = CGAffineTransform(translationX: -14, y: 3)
         } else {
             cell.textLabel?.text = "No Alarm"
-            cell.detailTextLabel?.text = "SET UP"
-            cell.detailTextLabel?.textColor = .systemOrange
+            cell.textLabel?.textColor = .secondaryLabel
+            cell.textLabel?.transform = CGAffineTransform(translationX: 20, y: 0)
+            let setup = UIButton(type: .system)
+            setup.setTitle("SET UP", for: .normal)
+            setup.setTitleColor(.systemOrange, for: .normal)
+            setup.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
+            setup.backgroundColor = UIColor(white: 0.18, alpha: 1)
+            setup.layer.cornerRadius = 16
+            setup.frame = CGRect(x: 0, y: 0, width: 74, height: 32)
+            setup.transform = CGAffineTransform(translationX: 20, y: 0)
+            cell.accessoryView = setup
         }
         return cell
     }
