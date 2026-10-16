@@ -40,6 +40,8 @@ A complete current-agent, three-flow Clock case is saved at [the XR workflow man
 
 A fresh [Calculator auto-discovery parent](cases/calculator-current-auto-workflow-20261016/manifest.json) now tests those missing current-agent handoffs on the XR. The current agent observed the real Calculator UI, wrote three new playbooks, retained failed discovery attempts, produced a [source-linked report](cases/calculator-current-auto-workflow-20261016/analysis-agent/reviewed-report/report.md), and wrote a new [UIKit clone](rebuild/CalculatorFreshProbe) from an empty project. The installed clone passed 3/3 paired behavior and terminal UIKit assertions for decimal addition (`0.3`), negative addition (`−7`) and percent (`0.5`). All three [screenshot pairs](cases/calculator-current-auto-workflow-20261016/rebuild-agent/visual-review-v2/report.md) were reviewed as minor differences, with none major; the [delivery](cases/calculator-current-auto-workflow-20261016/rebuild-agent/agent-delivery/report.md) and parent both verify. This is one selected-flow, current-agent result; it does not establish general discovery, external CLI autonomy or complete Calculator behavior.
 
+An unfamiliar-app [Translate XR workflow](docs/translate-xr-workflow.md) ([中文](docs/translate-xr-workflow.zh-CN.md)) now completes the same current-agent chain without REA: three newly discovered flows, a reviewed [binary/UI/data report](cases/translate-current-workflow-20261016/analysis-agent/reviewed-report/report.md), a new [UIKit clone](rebuild/TranslateFreshProbe), installation and 3/3 paired real-device replays. Six screenshots were reviewed with minor differences, mainly icons and spacing. The tested behavior is text entry without translation submission, Favorites empty state and Conversation idle navigation; translation output, speech and camera behavior remain outside this result.
+
 Other local XR pilots include [Compass](docs/compass-xr-analysis.md), [Calculator](docs/calculator-button-dispatch-xr.md), [DeepSeek](docs/deepseek-three-flow-xr-verification.md) and [Clock](cases/clock-six-flow-no-rea-reviewed-report-v8-20261015/report.md), plus a known-source fixture. The current roadmap is in [the English plan](PLAN.en.md); the full historical experiment log is in [the Chinese plan](PLAN.md).
 
 ## Verification and limits
@@ -68,6 +70,7 @@ The current gaps are general discovery and independent implementation across unf
 - [End-to-end workflow](docs/copy-workflow.md) · [中文](docs/copy-workflow.zh-CN.md)
 - [UI gesture playbooks](docs/ui-gesture-playbooks.md) · [中文](docs/ui-gesture-playbooks.zh-CN.md)
 - [UI text entry](docs/ui-text-playbooks.md) · [中文](docs/ui-text-playbooks.zh-CN.md)
+- [Translate XR full workflow](docs/translate-xr-workflow.md) · [中文](docs/translate-xr-workflow.zh-CN.md)
 - [Implementation plan](PLAN.en.md) · [中文及详细试验记录](PLAN.md)
 - [REA independence](docs/rea-independence.md)
 - [Copy APP agent skill](skills/copyapp-copy/SKILL.md)

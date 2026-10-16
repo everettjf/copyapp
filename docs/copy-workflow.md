@@ -19,6 +19,8 @@ Each playbook may use bounded taps, swipes, long presses and double taps. Includ
 
 For input-heavy apps, use [bounded text entry](ui-text-playbooks.md) ([中文](ui-text-playbooks.zh-CN.md)) after focusing an empty field. Check the resulting UI: an input RPC can succeed without visible text reaching the app.
 
+The [Translate XR case](translate-xr-workflow.md) ([中文](translate-xr-workflow.zh-CN.md)) is a concrete three-flow run using iCTRL for visible text input. It reaches a reviewed report, an independently built UIKit app, paired replay and a screenshot-by-screenshot visual review without REA. The example documents the exact behavior covered and the remaining differences.
+
 If a verified discovery case already exists, use `--discovery <CASE>` instead; if scripts were chosen explicitly, use repeated `--script <FILE>`. The three inputs are mutually exclusive.
 
 ## 2. Prepare and interpret

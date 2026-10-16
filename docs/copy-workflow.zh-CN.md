@@ -4,6 +4,8 @@
 
 Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组织为可续跑、按证据验收的流程。`current` 模式供已经打开的 Codex 或 Claude Code 会话执行；独立终端也可选择外部 Agent CLI，但真实模型从头到尾自主完成的路径尚未验收。
 
+[Translate XR 完整案例](translate-xr-workflow.zh-CN.md)（[English](translate-xr-workflow.md)）展示了不依赖 REA 的三流程实测：iCTRL 文字输入、审阅报告、独立 UIKit 复刻、原版/复刻版真机对照以及逐张截图审阅。案例明确标出已经覆盖的行为和剩余差异。
+
 ## 1. 发现代表性流程
 
 ```sh

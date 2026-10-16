@@ -65,6 +65,21 @@ class SqliteSchemaTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "recorded source artifact"):
                 create_sqlite_schema(source, "extra.sqlite", root / "schema")
 
+    def test_detached_wal_mode_database_is_read_without_sidecars(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, db_file = self._source(root)
+            with sqlite3.connect(db_file) as db:
+                self.assertEqual(db.execute("PRAGMA journal_mode=WAL").fetchone()[0], "wal")
+            manifest = json.loads((source / "manifest.json").read_text())
+            manifest["evidence"][0]["sha256"] = sha256_file(db_file)
+            (source / "manifest.json").write_text(json.dumps(manifest))
+            output = root / "schema"
+            create_sqlite_schema(source, "notes.sqlite", output)
+            self.assertTrue(verify_case(output))
+            self.assertEqual(json.loads((output / "schema.json").read_text())["schema"]["tables"][0]["name"],
+                             "notes")
+
 
 if __name__ == "__main__":
     unittest.main()

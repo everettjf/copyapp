@@ -2,6 +2,8 @@
 
 **语言：** [English](README.md) | 简体中文
 
+在已越狱的 iPhone XR（iOS 16.1.1）上，[Translate 完整案例](docs/translate-xr-workflow.zh-CN.md)（[English](docs/translate-xr-workflow.md)）已经从新写的发现脚本走通到[审阅报告](cases/translate-current-workflow-20261016/analysis-agent/reviewed-report/report.md)、[独立 UIKit 工程](rebuild/TranslateFreshProbe)、真机安装与三组原版/复刻版对照。六张截图逐张审阅，均有轻微图标或间距差异。范围限于文字输入但不提交翻译、Favorites 空状态和 Conversation 待机导航；翻译结果、语音和相机能力仍未实现或验证。
+
 第一版正在实现“分析 → 复刻 → 真机对照”流程。Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 只读导出包和索引数据沙盒；本地解析 Mach-O。iOS MCP 的截图、前台识别、App 启动和点击已在 iPhone XR 上验收。原版 Compass 的关键交互已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展也已在 XR 上自动恢复为完整可分析 IPA。按用户当前安排，iOS 17/26 两台设备暂不验收；一键生成完整复刻仍在开发。
 
 指定系统 App 时可先运行 `.venv/bin/copyapp apps --udid <UDID> --all` 查准确 Bundle ID；默认 `apps` 只列用户安装的 App。XR 上 `--all` 已返回 Calculator、Compass 和 Clock 对应的系统 Bundle ID。显示名称重名时仍应核对前台 App 身份。

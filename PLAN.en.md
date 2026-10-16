@@ -4,6 +4,8 @@
 
 The [Chinese plan](PLAN.md) contains the original full architecture, acceptance criteria and chronological experiment log. This English plan describes the current product contract and remaining work. For exact commands and handoffs, read the [workflow guide](docs/copy-workflow.md).
 
+**Latest XR milestone:** The [Translate workflow](docs/translate-xr-workflow.md) completed the current-agent analyze → rebuild chain without REA on iOS 16.1.1. Three selected flows passed on the original and new clone; six image pairs were reviewed with minor differences. This second app exercised visible text input, two app methods linked to UI actions, bounded native assembly and a schema-only SQLite read. Translation submission, speech and camera remain outside the tested scope.
+
 ## Product contract
 
 Copy APP has two consecutive jobs:

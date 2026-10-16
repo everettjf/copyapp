@@ -62,7 +62,9 @@ def _schema_from_file(path: Path, wal_path: Optional[Path]) -> dict:
         shutil.copyfile(path, copied)
         if wal_path is not None:
             shutil.copyfile(wal_path, Path(str(copied) + "-wal"))
-        with sqlite3.connect(copied.as_uri() + "?mode=ro", uri=True) as db:
+        # The source is a detached, verified snapshot. Immutable mode avoids
+        # SQLite trying to create WAL sidecars while inspecting that copy.
+        with sqlite3.connect(copied.as_uri() + "?mode=ro&immutable=1", uri=True) as db:
             db.execute("PRAGMA query_only=ON")
             rows = db.execute(
                 "SELECT type, name, tbl_name FROM sqlite_master "
