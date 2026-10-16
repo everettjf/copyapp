@@ -2,6 +2,7 @@
 
 import json
 import io
+import html
 import math
 import re
 import shutil
@@ -25,6 +26,62 @@ from copyapp.sandbox_capture import validate_sandbox_file_capture
 
 EVIDENCE_ID = re.compile(r"[A-Za-z][A-Za-z0-9_.-]{0,79}\Z")
 CONFIDENCE = {"observed": "直接观察", "inferred": "多证据推断", "unknown": "待验证"}
+
+
+def _inline_data(value: object) -> str:
+    """Render a captured name as text, never as report markup."""
+    return "<code>" + html.escape(" ".join(str(value).split()), quote=True) + "</code>"
+
+
+def _sandbox_appendix(index: dict, evidence_path: str) -> List[str]:
+    entries = [entry for entry in index.get("entries", []) if isinstance(entry, dict)]
+    files = [entry for entry in entries if entry.get("kind") == "f"]
+    directories = [entry for entry in entries if entry.get("kind") == "d"]
+    groups: Dict[str, int] = {}
+    for entry in entries:
+        relative = entry.get("relative")
+        if not isinstance(relative, str) or not relative:
+            continue
+        first = relative.split("/", 1)[0]
+        group = first if "/" in relative or entry.get("kind") == "d" else "(root files)"
+        groups[group] = groups.get(group, 0) + 1
+    storage_suffixes = {".sqlite", ".sqlite3", ".db", ".realm", ".plist"}
+    candidates = sorted({entry["relative"] for entry in files
+                         if isinstance(entry.get("relative"), str) and
+                         Path(entry["relative"]).suffix.lower() in storage_suffixes})
+    lines = ["## 沙盒元数据附录", "",
+             f"- [只读路径索引]({evidence_path})：{len(entries)} 项，"
+             f"其中 {len(directories)} 个目录、{len(files)} 个文件；"
+             f"扫描深度上限 {index.get('depth_limit', '未知')}。",
+             "- 本附录只使用文件名、类型与元数据；未读取文件内容。", ""]
+    if groups:
+        lines += ["| 顶层位置 | 条目数 |", "| --- | ---: |"]
+        for name, count in sorted(groups.items()):
+            lines.append(f"| {_inline_data(name)} | {count} |")
+        lines.append("")
+    if candidates:
+        lines += ["可能含本地状态的文件名（仅按扩展名筛选，尚未证明实际使用）：", ""]
+        lines.extend(f"- {_inline_data(name)}" for name in candidates[:30])
+        if len(candidates) > 30:
+            lines.append(f"- 其余 {len(candidates) - 30} 项见完整路径索引。")
+        lines.append("")
+    return lines
+
+
+def _asset_appendix(catalogs: list, evidence_path: str) -> List[str]:
+    assets = [asset for catalog in catalogs if isinstance(catalog, dict)
+              for asset in catalog.get("assets", []) if isinstance(asset, dict)]
+    names = sorted({asset["name"] for asset in assets
+                    if isinstance(asset.get("name"), str) and asset["name"]})
+    lines = ["## 资源目录附录", "",
+             f"- [Assets.car 索引]({evidence_path})：{len(catalogs)} 个目录，"
+             f"{len(names)} 个具名资源。目录列出名称和变体元数据，不包含导出的图像像素。", ""]
+    if names:
+        lines.extend(f"- {_inline_data(name)}" for name in names[:30])
+        if len(names) > 30:
+            lines.append(f"- 其余 {len(names) - 30} 个名称见完整索引。")
+        lines.append("")
+    return lines
 
 
 def _read_json(path: Path) -> dict:
@@ -1521,6 +1578,11 @@ def compose_report(case: Path, findings_path: Path, evidence_args: List[str],
         for library in main.get("linked_libraries", []):
             lines.append(f"- `{library}`")
         lines.append("")
+        catalogs = static.get("asset_catalogs", [])
+        if isinstance(catalogs, list) and catalogs:
+            static_id = ("case.decrypted_static" if "case.decrypted_static" in evidence
+                         else "case.static")
+            lines += _asset_appendix(catalogs, evidence[static_id]["path"])
     objc_path = (case / "decrypted/static/objc-index.json" if
                  (case / "decrypted/static/objc-index.json").is_file() else
                  case / "acquired/static/objc-index.json")
@@ -1542,6 +1604,9 @@ def compose_report(case: Path, findings_path: Path, evidence_args: List[str],
         if len(ranked) > 60:
             lines.append(f"\n此表按方法数量展示前 60 类；其余 {len(ranked)-60} 类见完整索引。")
         lines.append("")
+    if "case.sandbox" in evidence:
+        lines += _sandbox_appendix(_read_json(case / "sandbox-index.json"),
+                                   evidence["case.sandbox"]["path"])
     lines += [
               "## 附录与复刻规格", "", "- [基础采集报告](evidence/case.survey/manifest.json)",
               "- [静态索引](evidence/case.static/ipa-index.json)" if "case.static" in evidence else

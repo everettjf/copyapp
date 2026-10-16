@@ -66,6 +66,31 @@ class ReportCompositionTest(unittest.TestCase):
         self.assertIn("`Example::tap` 1 次", text)
         self.assertTrue(verify_case(self.root / "report"))
 
+    def test_report_exposes_metadata_only_sandbox_and_asset_summary(self):
+        static_path = self.case / "acquired/static/ipa-index.json"
+        static = json.loads(static_path.read_text())
+        static["asset_catalogs"] = [{"path": "Payload/Target.app/Assets.car", "assets": [
+            {"name": "Button<Primary>"}, {"name": "AppIcon"}]}]
+        static_path.write_text(json.dumps(static))
+        (self.case / "sandbox-index.json").write_text(json.dumps({
+            "bundle_id": "com.example.target", "depth_limit": 8,
+            "entries": [
+                {"relative": "Documents", "kind": "d"},
+                {"relative": "Documents/state.sqlite", "kind": "f", "size": 512},
+                {"relative": "Library", "kind": "d"},
+                {"relative": "Library/Preferences/user.plist", "kind": "f", "size": 24},
+            ],
+        }))
+        with patch("copyapp.report.verify_case", return_value=True):
+            report = compose_report(self.case, self.findings,
+                                    ["exp.tap=" + str(self.exp)], self.root / "rich-report")
+        content = report.read_text()
+        self.assertIn("Documents/state.sqlite", content)
+        self.assertIn("2 个目录、2 个文件", content)
+        self.assertIn("Button&lt;Primary&gt;", content)
+        self.assertIn("未读取文件内容", content)
+        self.assertTrue(verify_case(self.root / "rich-report"))
+
     def test_imports_native_assembly_without_rea(self):
         native = self.root / "native"
         native.mkdir()

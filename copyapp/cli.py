@@ -115,10 +115,11 @@ def save_evidence(out: Path, name: str, payload: Any, kind: str) -> Dict[str, st
     return {"id": name.replace(".", "-"), "path": name, "sha256": digest, "kind": kind}
 
 
-async def installed_apps(device, bundle: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
+async def installed_apps(device, bundle: Optional[str] = None,
+                         include_system: bool = False) -> Dict[str, Dict[str, Any]]:
     async with InstallationProxyService(device) as proxy:
         return await proxy.get_apps(
-            application_type="Any" if bundle else "User",
+            application_type="Any" if bundle or include_system else "User",
             bundle_identifiers=[bundle] if bundle else None,
         )
 
@@ -237,10 +238,10 @@ async def command_devices() -> int:
     return 0
 
 
-async def command_apps(udid: str) -> int:
+async def command_apps(udid: str, include_system: bool = False) -> int:
     device = await create_using_usbmux(serial=udid, connection_type="USB", autopair=False)
     try:
-        apps = await installed_apps(device)
+        apps = await installed_apps(device, include_system=include_system)
         for bundle, info in sorted(apps.items()):
             print("\t".join((
                 bundle,
@@ -906,8 +907,9 @@ def main() -> None:
     plist_schema.add_argument("--path", required=True,
                               help="relative path to the recorded plist file inside the source case")
     plist_schema.add_argument("--out", required=True, type=Path)
-    apps = sub.add_parser("apps", help="list installed user apps")
+    apps = sub.add_parser("apps", help="list installed user apps; add --all for system apps")
     apps.add_argument("--udid", required=True)
+    apps.add_argument("--all", action="store_true", help="include system apps")
     survey = sub.add_parser("survey", help="capture one app's installation, sandbox and current UI evidence")
     survey.add_argument("--udid", required=True)
     survey.add_argument("--bundle", required=True)
@@ -1258,7 +1260,7 @@ def main() -> None:
                 print(asyncio.run(acquire_bundle(args.udid, args.bundle, args.out)))
             code = 0
         elif args.command == "apps":
-            code = asyncio.run(command_apps(args.udid))
+            code = asyncio.run(command_apps(args.udid, args.all))
         elif args.command == "sandbox":
             print(asyncio.run(index_sandbox_ssh(
                 args.udid, args.bundle, args.out, args.ssh_port,

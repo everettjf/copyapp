@@ -5,7 +5,7 @@ description: Take an installed App on a jailbroken iPhone through Copy APP's rep
 
 # Copy an installed iOS App
 
-Work in this repository. Treat the user's target device and App as the task scope. Find the exact USB UDID and Bundle ID with `copyapp devices` and `copyapp apps`; use `copyapp doctor` when a required device channel is uncertain. Read [the analysis workflow](../copyapp-analyze/SKILL.md) and [the rebuild workflow](../copyapp-rebuild/SKILL.md) for evidence and package details. Do not require the user to type phone commands when the existing USB, SSH, Frida and UI channels can do the job.
+Work in this repository. Treat the user's target device and App as the task scope. Find the exact USB UDID with `copyapp devices` and the Bundle ID with `copyapp apps --udid <UDID>`. Add `--all` when the target might be a system App: the default list only contains user-installed Apps. Confirm ambiguous display names against the observed foreground App before starting acquisition. Use `copyapp doctor` when a required device channel is uncertain. Read [the analysis workflow](../copyapp-analyze/SKILL.md) and [the rebuild workflow](../copyapp-rebuild/SKILL.md) for evidence and package details. Do not require the user to type phone commands when the existing USB, SSH, Frida and UI channels can do the job.
 
 ## Discover representative flows
 

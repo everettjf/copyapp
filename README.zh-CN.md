@@ -4,6 +4,10 @@
 
 第一版正在实现“分析 → 复刻 → 真机对照”流程。Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 只读导出包和索引数据沙盒；本地解析 Mach-O。iOS MCP 的截图、前台识别、App 启动和点击已在 iPhone XR 上验收。原版 Compass 的关键交互已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展也已在 XR 上自动恢复为完整可分析 IPA。按用户当前安排，iOS 17/26 两台设备暂不验收；一键生成完整复刻仍在开发。
 
+指定系统 App 时可先运行 `.venv/bin/copyapp apps --udid <UDID> --all` 查准确 Bundle ID；默认 `apps` 只列用户安装的 App。XR 上 `--all` 已返回 Calculator、Compass 和 Clock 对应的系统 Bundle ID。显示名称重名时仍应核对前台 App 身份。
+
+正式报告现在会把 `Assets.car` 的资源名称及沙盒的只读文件元数据摘要直接写入人可读附录，完整索引仍保留证据链接。[重新生成的 Calculator 报告](cases/calculator-rich-inventory-report-20261016/report.md)和[来源关联的分析交付](cases/calculator-rich-inventory-analysis-delivery-20261016/report.md)已通过本地核验。资源名或数据库/偏好文件名只提供调查线索，不能单独证明某个功能实际读取它们。
+
 REA 不属于正式链路的运行依赖。深入函数分析优先用 Copy APP 直连 Ghidra；旧 REA 入口保留作可选兼容。代码借鉴、许可及尚未移植的能力见[独立运行边界](docs/rea-independence.md)。
 
 当前最完整的真实 App 示例是 XR 上的 [DeepSeek 综合逆向报告](cases/deepseek-comprehensive-xr-20261015/report.md)：以 `copyapp report-portfolio` 核对同设备、同 App 版本及同一解密主程序，汇合三条登录页的 UI/函数/网络分析和另一次沙盒/SQLite 结构分析。报告保留两轮证据的各自时点；原始数据库和 IPA 仍在忽略的本地 `cases/` 中。登录后功能、从零自动生成完整复刻和 iOS 17/26 仍未验收。
