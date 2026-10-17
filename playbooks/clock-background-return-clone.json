@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "scenario_id": "clock-background-return-clone",
+  "bundle_id": "com.copyapp.clock.currentauto",
+  "fresh_launch": false,
+  "steps": [
+    {"action": "observe", "contains": ["Stopwatch", "Stop"]},
+    {"action": "screenshot", "stable": true, "ready_contains": "Stop"}
+  ]
+}

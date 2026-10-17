@@ -16,7 +16,7 @@ Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱�
 
 iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。此前交付的复刻版源码和 IPA 早于本报告存在；另一次[从报告新写源码并扩展四流程的试验](docs/ios17-calculator-fresh-from-report.zh-CN.md)已完成构建、签名、安装和同机对照。Calculator 全功能等价仍未验证。现有 RootHide Frida 服务不能提供 root `root-run`；已验证的加密包恢复路径使用 mobile SSH。
 
-[v0.1.10 双机发布验收](docs/releases/v0.1.10.zh-CN.md)新增[Clock 复刻版停止态与运行态重启验证](docs/clock-clone-two-device.zh-CN.md)，并通过两台手机运行中升级检查。[v0.1.9 发布](docs/releases/v0.1.9.zh-CN.md)确立跨设备基线并记录当时的状态丢失缺口。[v0.1.8 发布](docs/releases/v0.1.8.zh-CN.md)记录首次使用引导诊断和 Translate/Clock 四路检查。
+[v0.1.10 双机发布验收](docs/releases/v0.1.10.zh-CN.md)新增[Clock 复刻版停止态与运行态重启验证](docs/clock-clone-two-device.zh-CN.md)，并通过两台手机运行中升级检查。发布后又完成[复刻版双机约一分钟后台计时检查](docs/clock-background-two-device.zh-CN.md)，两机返回后均继续显示增长的秒表。[v0.1.9 发布](docs/releases/v0.1.9.zh-CN.md)确立跨设备基线并记录当时的状态丢失缺口。[v0.1.8 发布](docs/releases/v0.1.8.zh-CN.md)记录首次使用引导诊断和 Translate/Clock 四路检查。
 
 [双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)又在两台手机上，用**同一脚本**分别经 iOS MCP 与 iCTRL 验证 Calculator `98→9` 左滑和 Safari 地址栏的合成文本输入，并在 iOS 17 上跑通一条 `hopper-direct` 分析到复刻父工作流。这些有界结果不代表所有输入框、手势或 App 都相同。
 

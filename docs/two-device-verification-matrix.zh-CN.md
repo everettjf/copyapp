@@ -18,6 +18,7 @@
 | URLSession 观察与 Translate 输入 | `cases/ios16-translate-network-v0110-20261017/` 完成同一输入脚本并附加 8 个任务启动 hook | `cases/ios17-translate-network-v0110-20261017/` 完成同一脚本，经 RootHide Frida 独立服务附加 7 个 hook | 两份案例通过校验，均记录到**零条**任务启动事件。仅证明限定窗口内 hook 附加与界面重放成功；不能据此推断没有网络流量。其他网络 API、进程和时间窗口不在观察范围内。 |
 | URLSession 正事件对照：App Store Search 标签 | 一次启动失败和单独成功启动调查保留后，同一提交脚本 `playbooks/ios17-appstore-search-network-control.json` 捕获 21 条事件，其中 6 条落在点击窗口：`cases/ios16-appstore-search-network-retry-v0110-20261017/` | 同脚本捕获 12 条事件，其中 3 条落在点击窗口：`cases/ios17-appstore-search-network-v0110-20261017/` | 两份完成案例均通过校验。证明这些 App Store 进程和窗口内可采集任务启动元数据；时间相邻不证明每条请求均由点击引起。XR 首次失败案例保留。未执行搜索、安装或购买。 |
 | 同一独立 Clock 复刻项目跨系统 | 复刻版通过秒表成对对照、停止态与运行态重启检查、iCTRL 回归和运行中升级至构建 4；构建 4 的 TrollStore 升级经核对后重试一次才成功 | 同一源码通过成对对照、停止态与运行态重启检查、iCTRL 回归及签名后运行中升级至构建 4 | [双机记录](clock-clone-two-device.zh-CN.md)。当前安装案例保存 IPA 快照。v0.1.9 的状态丢失已修复；计时值、标签文案和样式仍有差异，长时间后台计时及 Clock 全功能未验证。 |
+| 复刻版秒表后台约一分钟 | 离开 App 70.2 秒后，运行值从 `00:01.25` 增至 `01:31.80`；启动、返回、停止案例均通过校验 | 离开 App 76.8 秒后从 `00:01.25` 增至 `01:36.55`；对应三份案例均通过校验 | [后台记录](clock-background-two-device.zh-CN.md)。每机仅一次；未核对原版 Clock、数小时挂起、设备重启、系统时间变化或精确计时误差。 |
 | 已知源码夹具分享扩展 | [v0.1.5](releases/v0.1.5.zh-CN.md)中的固定文本接收与 Counter/Notes/Catalog 回归 | 相同 | 仅一种纯文本输入；其他内容类型和无关扩展未验证。 |
 
 XR 旧 Translate 脚本点击 `(207,320)`，iOS MCP 虽返回字符派发成功，界面却无文字。同一旧脚本在 `cases/ios16-translate-old-tap-control-20261017/` 再次失败，截图有光标而无键盘。新共享脚本点击可见输入提示 `(100,201)`，键盘出现，两机两后端都通过。这证明该界面存在随点击及聚焦状态变化的差异，不能据此推断 XR 整机的 iOS MCP 文本输入失败。
@@ -26,4 +27,4 @@ iOS 17 的 Translate 和 Clock 尚未完成首次使用引导时，iOS MCP 与�
 
 v0.1.7 发布后，XR 的 Calculator 和 Translate 父案例、iOS 17 的四流程 Calculator 和一流程 Hopper 父案例再次通过 `copyapp verify`。v0.1.10 正式发布页下载的 wheel 与发布 SHA-256 一致，并从独立 `/tmp` 安装目录加载版本与 CLI 入口；两机新建的 doctor 和 Translate 网络观察案例也通过 `copyapp verify`。这些是产物、通道及证据完整性检查，不是重新执行所有原版/复刻版流程，也不能证明无关 App 行为。
 
-仍需解决的产品级门槛包括：陌生 App 的自主发现和全新源码生成、独立 Claude CLI 运行、更广的 App 状态与服务端行为、Clock 长时间计时、TrollStore 升级首次成功率，以及完整沙盒与网络解释。App Store 的正事件只覆盖一个进程和有界时间窗口，不能解释全部请求或服务端行为。更宽的结论不能由绿色设备探针、选定流程通过或发布标签推出。iOS 26 不在此双机矩阵内。
+仍需解决的产品级门槛包括：陌生 App 的自主发现和全新源码生成、独立 Claude CLI 运行、更广的 App 状态与服务端行为、Clock 更长时间及受系统事件干扰的计时、TrollStore 升级首次成功率，以及完整沙盒与网络解释。App Store 的正事件只覆盖一个进程和有界时间窗口，不能解释全部请求或服务端行为。更宽的结论不能由绿色设备探针、选定流程通过或发布标签推出。iOS 26 不在此双机矩阵内。
