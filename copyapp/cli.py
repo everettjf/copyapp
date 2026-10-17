@@ -1315,21 +1315,25 @@ def main() -> None:
                 "checks_status"] == "failed" else 0
         elif args.command == "acquire":
             if args.transport == "ssh":
-                print(asyncio.run(acquire_bundle_ssh(
-                    args.udid, args.bundle, args.out, args.ssh_port,
-                    args.ssh_identity, args.ssh_known_hosts, args.ssh_user,
-                )))
+                with exact_ssh_tunnel(args.udid, args.ssh_port, args.ssh_identity,
+                                      args.ssh_known_hosts, args.ssh_user):
+                    print(asyncio.run(acquire_bundle_ssh(
+                        args.udid, args.bundle, args.out, args.ssh_port,
+                        args.ssh_identity, args.ssh_known_hosts, args.ssh_user,
+                    )))
             else:
                 print(asyncio.run(acquire_bundle(args.udid, args.bundle, args.out)))
             code = 0
         elif args.command == "apps":
             code = asyncio.run(command_apps(args.udid, args.all))
         elif args.command == "sandbox":
-            print(asyncio.run(index_sandbox_ssh(
-                args.udid, args.bundle, args.out, args.ssh_port,
-                args.ssh_identity, args.ssh_known_hosts, args.ssh_user,
-                depth=args.depth,
-            )))
+            with exact_ssh_tunnel(args.udid, args.ssh_port, args.ssh_identity,
+                                  args.ssh_known_hosts, args.ssh_user):
+                print(asyncio.run(index_sandbox_ssh(
+                    args.udid, args.bundle, args.out, args.ssh_port,
+                    args.ssh_identity, args.ssh_known_hosts, args.ssh_user,
+                    depth=args.depth,
+                )))
             code = 0
         elif args.command == "sandbox-file":
             with exact_ssh_tunnel(args.udid, args.ssh_port, args.ssh_identity,

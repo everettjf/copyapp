@@ -8,6 +8,7 @@
 | --- | --- | --- | --- |
 | USB、截图、开发者文件系统、固定主机密钥的 mobile SSH、Frida、iOS MCP、已配对 iCTRL | `cases/ios16-v0110-doctor-20261017/` 全部可用 | `cases/ios17-v0110-doctor-20261017/` 全部可用 | 各代表一台手机的当前配置；能力探针通过不等于 App 行为通过。两份 v0.1.10 案例通过 `copyapp verify`。 |
 | 包、静态与有界沙盒证据 | Calculator 当前 Agent 父案例 `cases/calculator-current-auto-workflow-20261016/` 完成 | Calculator 父案例 `cases/ios17-calculator-current-parent-20261017/` 完成 | 只覆盖该构建及选定路径，未取得整个实时数据容器的一致性快照。 |
+| 新目标 Apple Podcasts 的包与静态采集 | `cases/ios16-podcasts-analysis-20261017/` 校验了 153 个文件的包快照、13 个二进制索引及有界沙盒索引；修复精确设备 SSH 转发后，独立 `acquire` 与 `sandbox` 也完成。 | `cases/ios17-podcasts-analysis-20261017/` 校验了 152 个文件的包快照、12 个二进制索引及有界沙盒索引；修复后两个独立命令也完成。 | 两机主程序均无加密加载命令，此目标没有检验砸壳。独立采集案例可校验；独立 `sandbox` 输出是 JSON 索引，不是 `copyapp verify` 案例。尚未产出语义代码报告或解释服务端行为。 |
 | 加密 App 分析 | XR 发布记录中的 DeepSeek/Kimi 整包恢复 | [iPhone 14 记录](relaxin-roothide-iphone14.md)中的 Remoboard 主 App 与键盘扩展恢复 | 分析 IPA 不保留原签名；其他保护手段未覆盖。 |
 | 选定报告 → 独立 App → 同机对照 | Calculator 父案例 3/3 结果、三对截图审阅 | Calculator 父案例 4/4 结果、五对截图审阅 | 两份独立源码均早于所引用的父案例；未证明整 App 等价或零样本生成。 |
 | 可选 Hopper 直连反编译 | `cases/fixture-counter-hopper-investigation-v2-20261016/` 将夹具 UI、Frida、候选与 Hopper 调查贯通并导入报告 | `cases/ios17-hopper-current-parent-20261017/` 完成 `--analysis-provider hopper-direct` 的 Calculator `copy` 父案例，包含一条原版跟踪、Hopper 伪代码、审阅报告、签名独立复刻版、一条通过的成对结果及两对截图审阅 | 仅一条入口和流程。源码早于父案例；伪代码不是原始源码或完整算法。 |

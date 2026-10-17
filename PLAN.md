@@ -4,6 +4,8 @@
 
 **当前双机状态：** [iOS 16/17 验证矩阵](docs/two-device-verification-matrix.zh-CN.md)记录两机新能力检查、同脚本分别经 iOS MCP 与 iCTRL 完成的 Calculator 手势、Safari/Translate 文本输入和 Clock 秒表、选定流程的分析到复刻交付，以及 iOS 17 的一流程 `hopper-direct` 父案例。iOS 17 的 Translate 与 Clock 需先完成[首次使用引导](docs/ios17-first-use-gates.zh-CN.md)才能正常启动。结论只限于已测设备与流程；整 App 等价、陌生 App 自主生成和 iOS 26 仍待验证。
 
+[v0.1.12 双机检查](docs/releases/v0.1.12.zh-CN.md)新增 Apple Podcasts：两机的包与静态索引、有界沙盒元数据和三条导航路径通过；独立 `acquire`、`sandbox` 命令也能自行管理固定主机密钥的 USB SSH 转发。Podcasts 尚未完成语义分析报告或复刻，因此陌生 App 全流程自主完成仍待验证。
+
 [v0.1.10 双机 Clock 检查](docs/releases/v0.1.10.zh-CN.md)进一步验证了停止态与运行态秒表跨进程重启、iCTRL 回归，以及两机运行中递增版本升级。TrollStore 对相同构建号重装超时，不计入升级通过结论。
 
 **最新 XR 进展：** [独立 Codex CLI 实测](docs/external-codex-xr-trial.zh-CN.md)已在 iOS 16.1.1 上完成 Calculator 的分析、复刻、安装和三条真机对照流程，三条行为断言通过，三对截图为轻微差异。此次沿用已验证的发现脚本及既有独立复刻源码，因此陌生 App 的自主发现和从零实现仍是下一阶段目标。[Translate 完整流程](docs/translate-xr-workflow.zh-CN.md)另行覆盖第二种界面技术栈。

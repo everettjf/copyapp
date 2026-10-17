@@ -16,9 +16,9 @@ Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱�
 
 iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。此前交付的复刻版源码和 IPA 早于本报告存在；另一次[从报告新写源码并扩展四流程的试验](docs/ios17-calculator-fresh-from-report.zh-CN.md)已完成构建、签名、安装和同机对照。Calculator 全功能等价仍未验证。现有 RootHide Frida 服务不能提供 root `root-run`；已验证的加密包恢复路径使用 mobile SSH。
 
-[v0.1.11 发布验收](docs/releases/v0.1.11.zh-CN.md)增加 XR TrollStore 超时时的有界 helper 输出与安装数据库版本记录；随后构建 5 在两机升级成功并保留完全相同的停止态秒表值。较早的超时尝试仍计为失败。
+[v0.1.12 发布验收](docs/releases/v0.1.12.zh-CN.md)让独立的 `acquire` 和 `sandbox` 命令自行建立并核验精确设备的 SSH 转发；Apple Podcasts 的包与静态采集、沙盒索引及三条界面导航在两机通过。此前的 [v0.1.11 发布](docs/releases/v0.1.11.zh-CN.md)记录了 TrollStore 超时诊断和两机 Clock 构建 5 升级；较早的超时尝试仍计为失败。
 
-此版本发布后，又以 Apple Podcasts 作为新的导航目标：两机分别通过资料库、搜索、现在收听三条 `discover-check` 流程，案例校验通过，六张末端截图已查看。iOS 17 初次启动先出现 SpringBoard 欢迎页，完成引导后正常进入 App。此次验证覆盖界面入口与导航，不包含 Podcasts 深度报告或复刻 App；[证据与边界见矩阵](docs/two-device-verification-matrix.zh-CN.md)。
+iOS 17 的 Podcasts 初次启动先出现 SpringBoard 欢迎页，完成引导后正常进入 App。选定流程尚不能证明 Podcasts 深度报告或复刻 App；[证据与边界见矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
 [v0.1.10 双机发布验收](docs/releases/v0.1.10.zh-CN.md)新增[Clock 复刻版停止态与运行态重启验证](docs/clock-clone-two-device.zh-CN.md)，并通过两台手机运行中升级检查。发布后又完成[复刻版双机约一分钟后台计时检查](docs/clock-background-two-device.zh-CN.md)，两机返回后均继续显示增长的秒表。[v0.1.9 发布](docs/releases/v0.1.9.zh-CN.md)确立跨设备基线并记录当时的状态丢失缺口。[v0.1.8 发布](docs/releases/v0.1.8.zh-CN.md)记录首次使用引导诊断和 Translate/Clock 四路检查。
 
@@ -197,7 +197,7 @@ Copy APP 的 iCTRL 默认使用按签名团队区分的 ID：可选设置 App �
 .venv/bin/copyapp verify cases/first-doctor
 ```
 
-查看 `cases/first-doctor/report.md`：正式分析前，`usb_lockdown`、`ssh_mobile`、`frida_usb`、`ios_mcp` 应为 `available`；不用 iCTRL 时它可以未配置。`doctor` 即使只有 USB 正常也可能返回成功，因此要逐项看状态和有序的 **Next steps**。没有常驻 SSH 转发时，`doctor` 会临时打开一条；`analyze`、`prepare-app` 和完整 `copy` 工作流现会自行打开并验证精确 UDID 的 SSH 临时转发；界面重放也会自行打开短时转发。每完成一项手机端配置，可重新运行 `onboard --udid <UDID> --stage analyze`，获取新的检查报告。
+查看 `cases/first-doctor/report.md`：正式分析前，`usb_lockdown`、`ssh_mobile`、`frida_usb`、`ios_mcp` 应为 `available`；不用 iCTRL 时它可以未配置。`doctor` 即使只有 USB 正常也可能返回成功，因此要逐项看状态和有序的 **Next steps**。没有常驻 SSH 转发时，`doctor` 会临时打开一条；独立的 `acquire --transport ssh`、`sandbox`、`analyze`、`prepare-app` 和完整 `copy` 工作流会自行打开并验证精确 UDID 的 SSH 临时转发；界面重放也会自行打开短时转发。每完成一项手机端配置，可重新运行 `onboard --udid <UDID> --stage analyze`，获取新的检查报告。
 
 两台手机同时连接时，始终显式指定 `--udid`，并为每台手机使用独立的 `--ssh-known-hosts` 文件和不同的 `--ssh-port`。发现主机密钥不匹配时先核对 USB 转发的目标与手机指纹，不要用另一台手机的密钥覆盖原记录。`doctor` 现在会直接指出这种情况。
 
