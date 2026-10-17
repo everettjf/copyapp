@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "scenario_id": "clock-paired-stopwatch-start-stop",
+  "bundle_id": "com.apple.mobiletimer",
+  "fresh_launch": true,
+  "steps": [
+    {"action": "observe", "contains": ["Stopwatch"]},
+    {"action": "tap_label", "label": "Stopwatch"},
+    {"action": "observe", "contains": ["Start"]},
+    {"action": "tap_label", "label": "Start"},
+    {"action": "observe", "wait_ms": 1200, "contains": ["Stop"]},
+    {"action": "tap_label", "label": "Stop"},
+    {"action": "observe", "contains": ["Start"]},
+    {"action": "screenshot", "stable": true, "ready_contains": "Start"}
+  ]
+}

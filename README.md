@@ -14,7 +14,7 @@ Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app 
 
 The earlier iOS 17 Calculator clone source and IPA existed before its report; a separate [new-source four-flow pilot](docs/ios17-calculator-fresh-from-report.md) now verifies report-guided implementation, signing, installation and paired comparison on that phone. Its installed RootHide Frida server cannot provide root `root-run`; the verified encrypted-package route uses mobile SSH. The [iOS 17 device record](docs/relaxin-roothide-iphone14.md) gives exact evidence and limits.
 
-The [v0.1.8 release validation](docs/releases/v0.1.8.md) adds first-use gate diagnosis and four-way Translate/Clock checks. The [v0.1.7 release](docs/releases/v0.1.7.md) records same-script Calculator/Safari checks and the Hopper-provider verification fix. The [v0.1.6 release](docs/releases/v0.1.6.md) established fresh device baselines and the four-flow iOS 17 Calculator `copyapp copy` case.
+The [v0.1.9 release validation](docs/releases/v0.1.9.md) adds [cross-device installation and comparison of one independent Clock clone](docs/clock-clone-two-device.md). The [v0.1.8 release](docs/releases/v0.1.8.md) records first-use gate diagnosis and four-way Translate/Clock checks. The [v0.1.7 release](docs/releases/v0.1.7.md) records same-script Calculator/Safari checks and the Hopper-provider verification fix.
 
 The [two-device verification matrix](docs/two-device-verification-matrix.md) now also records the **same** Calculator `98→9` swipe script and Safari synthetic text-entry script through both iOS MCP and iCTRL on each phone, plus a completed one-flow `hopper-direct` analysis-to-rebuild parent on iOS 17. These bounded outcomes do not imply every field, gesture or App behaves identically.
 

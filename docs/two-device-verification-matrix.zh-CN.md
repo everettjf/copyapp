@@ -15,6 +15,7 @@
 | 两种界面后端：Safari 文本输入 | **同一提交脚本** `playbooks/ios17-safari-synthetic-address-input.json` 在 Safari 地址栏通过两个后端显示 `copyapp-fixture-hello`：`cases/ios16-safari-text-{iosmcp,ictrl}-20261017/` | 同脚本、同可见文字：`cases/ios17-safari-text-{iosmcp,ictrl}-20261017/` | 未提交搜索；其他输入框仍需逐一验证聚焦及可见结果。 |
 | 两种界面后端：Translate 文本输入 | **同一提交脚本** `playbooks/ios17-translate-synthetic-input.json` 在两个后端都显示 `copyappfixture` 和键盘：`cases/ios16-translate-text-{iosmcp,ictrl}-20261017/` | 同脚本、同精确原文：`cases/ios17-translate-text-{iosmcp,ictrl}-20261017/`；自动出现翻译结果 | 仅一段合成文字。未按提交键；没有评估 iOS 17 自动翻译结果的语义质量。四份案例均通过校验。 |
 | 两种界面后端：Clock 秒表 | **同一提交脚本** `playbooks/ios17-clock-stopwatch-start-stop.json` 经两个后端启动、停止非零秒表：`cases/ios16-clock-stopwatch-{iosmcp,ictrl}-20261017/` | 同脚本、同可见启停：`cases/ios17-clock-stopwatch-{iosmcp,ictrl}-20261017/` | 每个后端各一次短时前台运行，保存停止态截图和 UIKit 文字；未覆盖后台计时、闹钟与通知。四份案例均通过校验。 |
+| 同一独立 Clock 复刻项目跨系统 | XR 已安装程序的可执行文件与当前项目构建一致；原版/复刻版秒表经 iOS MCP 成对对照通过，复刻版也通过 iCTRL | 同一项目构建经开发者签名并通过 USB 安装；原版/复刻版秒表经 iOS MCP 成对对照通过，复刻版也通过 iCTRL | [双机记录](clock-clone-two-device.zh-CN.md)。复刻版重启后不保留秒表状态；计时值、标签文案和样式也有差异。仅覆盖选定前台行为。 |
 | 已知源码夹具分享扩展 | [v0.1.5](releases/v0.1.5.zh-CN.md)中的固定文本接收与 Counter/Notes/Catalog 回归 | 相同 | 仅一种纯文本输入；其他内容类型和无关扩展未验证。 |
 
 XR 旧 Translate 脚本点击 `(207,320)`，iOS MCP 虽返回字符派发成功，界面却无文字。同一旧脚本在 `cases/ios16-translate-old-tap-control-20261017/` 再次失败，截图有光标而无键盘。新共享脚本点击可见输入提示 `(100,201)`，键盘出现，两机两后端都通过。这证明该界面存在随点击及聚焦状态变化的差异，不能据此推断 XR 整机的 iOS MCP 文本输入失败。
