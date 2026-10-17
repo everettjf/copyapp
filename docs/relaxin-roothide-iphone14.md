@@ -1,9 +1,6 @@
 # Relaxin / RootHide on iPhone 14 (iOS 17.3.1)
 
-This is a **partial, real-device validation** dated 2026-10-17. The exact USB
-device was an iPhone 14 (`iPhone14,7`, iOS 17.3.1, arm64e) running Relaxin
-0.5.5 with a RootHide bootstrap. These results do not establish full Copy APP
-support on iOS 17 or on other RootHide configurations.
+This is a **supported, real-device configuration for the first-release selected-flow workflow**, validated on 2026-10-17. The exact USB device was an iPhone 14 (`iPhone14,7`, iOS 17.3.1, arm64e) running Relaxin 0.5.5 with a RootHide bootstrap. The report, installation and paired behavior gates passed for the selected Calculator flow. This status does not extend to every iOS 17 device, RootHide build or App feature.
 
 ## Verified on the phone
 
@@ -112,8 +109,9 @@ For iOS 17, fresh App launches now use native RSD with `--kill-existing`;
 the older lockdown DVT route failed before this fix. Both sides of the final
 Calculator playbook used the repaired route. A selected-flow deep report and
 delivery now verify as recorded above. The next device work is to run more
-flows and other App types, while checking iCTRL transport stability and generic
-RootHide `root-run`. The 16.1.4 server crash is retained
+flows and other App types, while checking iCTRL transport stability. Generic
+RootHide `root-run` is unavailable with the installed mobile-privilege Frida
+server, as established below. The 16.1.4 server crash is retained
 as evidence; the working 17.23.3 sidecar is isolated from that package.
 iOS 26 is still untested.
 

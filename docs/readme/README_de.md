@@ -25,4 +25,4 @@ Zuerst die [erste USB-Bestandsaufnahme](../../README.md#install-and-run-your-fir
 
 Erst Belege sichern, dann erklären; Unbekanntes ausdrücklich kennzeichnen. Ein bestandener Test ausgewählter Abläufe bedeutet keine vollständige Gleichwertigkeit der Apps. Reproduzierbare Fehler, Tests, UI-Skripte und Übersetzungen sind willkommen. Keine IPAs, Zugangsdaten oder rohen Sandbox-Daten einchecken. Siehe [Beitragsleitfaden](../../CONTRIBUTING.md).
 
-Bislang wurde das iPhone XR mit iOS 16.1.1 geprüft; iOS 17 und 26 sind noch ungetestet. Die Dokumentationssprache ändert weder CLI noch Berichtssprache.
+Geprüft wurden das iPhone XR mit iOS 16.1.1 sowie ausgewählte Analyse- und Nachbauabläufe auf dem iPhone 14 mit iOS 17.3.1 (Relaxin/RootHide); iOS 26 ist noch ungetestet. Einzelheiten stehen im [Testumfang](../../README.md). Die Dokumentationssprache ändert weder CLI noch Berichtssprache.

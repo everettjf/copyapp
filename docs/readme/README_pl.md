@@ -25,4 +25,4 @@ Najpierw wykonaj [pierwszą inspekcję USB](../../README.md#install-and-run-your
 
 Najpierw zapisuj dowody, potem je interpretuj, wyraźnie oznaczając niewiadome. Sprawdzenie wybranych scenariuszy nie oznacza pełnej równoważności aplikacji. Mile widziane są odtwarzalne błędy, testy, skrypty UI i tłumaczenia. Nie dodawaj do Git plików IPA, danych logowania ani surowych danych piaskownicy. Zobacz [przewodnik współtworzenia](../../CONTRIBUTING.md).
 
-Zweryfikowano iPhone'a XR z iOS 16.1.1; iOS 17 i 26 jeszcze nie testowano. Język dokumentacji nie zmienia języka CLI ani raportów.
+Zweryfikowano iPhone'a XR z iOS 16.1.1 oraz wybrany przebieg analizy i odtworzenia na iPhonie 14 z iOS 17.3.1 (Relaxin/RootHide); iOS 26 nie testowano. Szczegóły opisuje [zakres wsparcia](../../README.md). Język dokumentacji nie zmienia języka CLI ani raportów.

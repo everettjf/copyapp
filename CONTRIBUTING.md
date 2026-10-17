@@ -37,4 +37,4 @@ Do not commit raw IPAs, device screenshots, sandbox exports, pairing records, cr
 
 ## Translation notes
 
-English `README.md` and `README.zh-CN.md` contain detailed setup instructions. The other localized README pages should accurately describe the same capabilities and tested scope, retain the links to the full setup and contribution guide, and avoid claiming that iOS 17 or 26 has been validated. Translation-only changes do not require a connected phone; check links, code blocks and technical names.
+English `README.md` and `README.zh-CN.md` contain detailed setup instructions. The other localized README pages should accurately describe the same capabilities and tested scope, retain the links to the full setup and contribution guide, and state the bounded iPhone 14 / iOS 17.3.1 Relaxin/RootHide validation without claiming that every iOS 17 configuration works. iOS 26 remains untested. Translation-only changes do not require a connected phone; check links, code blocks and technical names.

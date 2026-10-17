@@ -25,4 +25,4 @@ sh scripts/bootstrap-macos.sh
 
 先保存證據，再解釋功能；明確指出未知部分。驗證選定流程不代表整個 App 等價。歡迎提交可重現的問題、測試、介面腳本和翻譯；請勿提交原始 IPA、憑證或手機沙盒資料。請參閱[貢獻指南](../../CONTRIBUTING.md)。
 
-目前已驗證 iOS 16.1.1 的 iPhone XR；iOS 17 與 26 尚待測試。文件語言不會改變 CLI 或報告語言。
+目前已驗證 iPhone XR / iOS 16.1.1，以及 iPhone 14 / iOS 17.3.1（Relaxin/RootHide）的選定分析與復刻流程；iOS 26 尚未測試。詳細範圍見[英文相容性表](../../README.md)。文件語言不會改變 CLI 或報告語言。

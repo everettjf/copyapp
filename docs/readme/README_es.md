@@ -25,4 +25,4 @@ Completa primero la [inspección inicial por USB](../../README.md#install-and-ru
 
 Primero se conserva la evidencia; después se interpreta, indicando lo que sigue siendo desconocido. Verificar unos flujos no demuestra equivalencia completa. Se agradecen errores reproducibles, pruebas, guiones de UI y traducciones. No incluyas IPA, credenciales ni datos sin procesar del sandbox en Git. Consulta la [guía de contribución](../../CONTRIBUTING.md).
 
-Se ha verificado el iPhone XR con iOS 16.1.1. iOS 17 y 26 aún no se han probado. El idioma de la documentación no cambia el idioma de la CLI ni de los informes.
+Se ha verificado el iPhone XR con iOS 16.1.1 y un flujo seleccionado de análisis y reconstrucción en el iPhone 14 con iOS 17.3.1 (Relaxin/RootHide). iOS 26 aún no se ha probado. Consulte el [alcance de compatibilidad](../../README.md). El idioma de la documentación no cambia el idioma de la CLI ni de los informes.

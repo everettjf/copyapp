@@ -20,7 +20,7 @@
 
 ## 对产品流程的结论
 
-XR 上已证明 **Xcode 27 构建 iOS 16 部署目标 → USB 传输 → TrollStore 安装 → iOS MCP 观察与点击 → 沙盒内容核对 → Frida 定向轨迹 → 导出二进制的 REA/Ghidra 函数分析** 能连成一条无需手机输入命令的路径。REA/Hopper 也已对 XR 导出的分享扩展完成函数反编译。`copyapp report` 将这些证据和 agent 审阅的结论组装为 [可验证的深入报告](../cases/fixture-xr-deep-report-v6-20261015/report.md)，附函数伪代码、动态实验和复刻规格；原始案例仍在本地 Git 忽略的 `cases/`。基础 `copyapp analyze` 仍只自动输出采集与静态索引，功能解释由 agent 撰写。iCTRL 已在 XR 上完成配对、加密 UI 调用和 Compass 点击验证；iOS 17 和 iOS 26 两台设备尚未连接验证。夹具验证不能替代对第三方 App 的盲测，也不能说明已具备自动完整复刻能力。
+XR 上已证明 **Xcode 27 构建 iOS 16 部署目标 → USB 传输 → TrollStore 安装 → iOS MCP 观察与点击 → 沙盒内容核对 → Frida 定向轨迹 → 导出二进制的 REA/Ghidra 函数分析** 能连成一条无需手机输入命令的路径。REA/Hopper 也已对 XR 导出的分享扩展完成函数反编译。`copyapp report` 将这些证据和 agent 审阅的结论组装为 [可验证的深入报告](../cases/fixture-xr-deep-report-v6-20261015/report.md)，附函数伪代码、动态实验和复刻规格；原始案例仍在本地 Git 忽略的 `cases/`。基础 `copyapp analyze` 仍只自动输出采集与静态索引，功能解释由 agent 撰写。iCTRL 已在 XR 上完成配对、加密 UI 调用和 Compass 点击验证；本夹具案例没有在其他系统运行。后续 [iPhone 14 / iOS 17.3.1 实测](relaxin-roothide-iphone14.md)验证了另一组 App 和选定流程，iOS 26 尚未实测。夹具验证不能替代对第三方 App 的盲测，也不能说明已具备自动完整复刻能力。
 
 新 `sandbox-diff` 在 XR 上围绕 Notes 的一次 iOS MCP playbook 实测：页面 `Saved notes: 4 → 5`，同一 App 数据容器的 `Documents/fixture-notes.sqlite` 与 `Documents` 目录修改时间在操作后变化。两份只读索引、完整 UI 脚本和差异均保存在 [沙盒对照案例](../cases/fixture-sandbox-diff-with-action-20261015/report.md)，并通过 `copyapp verify`；报告 v6 也导入并重新核算了这一差异。元数据不证明 SQLite 内容的具体变化；先前导出的四行数据库副本属于另一时间点。
 

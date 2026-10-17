@@ -4,7 +4,15 @@ English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_
 
 Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app on a jailbroken iPhone and rebuilding selected behavior as an independent, runnable iOS app. It acquires package and sandbox evidence, inspects native code, captures UI and runtime behavior, produces a cited report and feature specification, then builds and compares a clone on the same device.
 
-The workflow verifies evidence identity and selected UI flows. It does **not** claim complete equivalence to an arbitrary app. The iPhone XR running iOS 16.1.1 is the tested deep-workflow device. An [iPhone 14 running iOS 17.3.1 with Relaxin/RootHide](docs/relaxin-roothide-iphone14.md) passed USB and SSH Calculator collection, development-signed clone installation, paired `7 + 8 = 15` flows through both iOS MCP and iCTRL, full encrypted-package recovery for Remoboard's main App and keyboard extension, and original Calculator tracing through an isolated Frida 17 sidecar. iOS 26 has not been tested.
+**Tested support:** The first-release core stages are verified on both iPhone XR / iOS 16.1.1 (rootless) and [iPhone 14 / iOS 17.3.1 (Relaxin/RootHide)](docs/relaxin-roothide-iphone14.md). Support here means the tested device setup can collect evidence, produce a reviewed report, install an independent App and verify named behavior on the same phone. It does not promise every App, jailbreak configuration or feature will work. iOS 26 has not been tested.
+
+| Device status | Verified scope | Device-specific setup |
+| --- | --- | --- |
+| iPhone XR · iOS 16.1.1 · rootless | Deep analysis and selected-flow rebuilds, including encrypted App recovery | Rootless iOS MCP, SSH, host-matched Frida; TrollStore or valid signing for installation |
+| iPhone 14 · iOS 17.3.1 · Relaxin/RootHide | Calculator collection, runtime trace, reviewed report, signed clone installation and paired `7 + 8 = 15` check through iOS MCP and iCTRL; encrypted Remoboard main App and keyboard-extension recovery | RootHide iOS MCP with ElleKit, mobile SSH, pinned Frida 17.23.3 sidecar, Apple Development signing for the clone |
+| iPhone 11 · iOS 26.0.1 | Not tested | No setup or compatibility claim yet |
+
+The iOS 17 Calculator clone source and IPA existed before its latest report, so that run verifies the report-to-check handoff and selected behavior, not fresh source generation from that report. Its installed RootHide Frida server cannot provide root `root-run`; the verified encrypted-package route uses mobile SSH. The [iOS 17 device record](docs/relaxin-roothide-iphone14.md) gives exact evidence and limits.
 
 A [standalone Codex CLI trial on the XR](docs/external-codex-xr-trial.md) completed a source-linked Calculator report, independent build and installation, and three paired behavior checks. It reused verified discovery scripts and earlier clone source; see the trial note for the exact scope.
 

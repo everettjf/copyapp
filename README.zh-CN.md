@@ -4,9 +4,17 @@
 
 在已越狱的 iPhone XR（iOS 16.1.1）上，[Translate 完整案例](docs/translate-xr-workflow.zh-CN.md)（[English](docs/translate-xr-workflow.md)）已经从新写的发现脚本走通到[审阅报告](cases/translate-current-workflow-20261016/analysis-agent/reviewed-report/report.md)、[独立 UIKit 工程](rebuild/TranslateFreshProbe)、真机安装与三组原版/复刻版对照。六张截图逐张审阅，均有轻微图标或间距差异。范围限于文字输入但不提交翻译、Favorites 空状态和 Conversation 待机导航；翻译结果、语音和相机能力仍未实现或验证。
 
-第一版正在实现“分析 → 复刻 → 真机对照”流程。Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 只读导出包和索引数据沙盒；本地解析 Mach-O。iOS MCP 的截图、前台识别、App 启动和点击已在 iPhone XR 上验收。原版 Compass 的关键交互已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展也已在 XR 上自动恢复为完整可分析 IPA。[iPhone 14 / iOS 17.3.1 / Relaxin 与 RootHide](docs/relaxin-roothide-iphone14.md) 已完成 Calculator 的 USB 与 SSH 采集、开发证书签名复刻版安装，并用 iOS MCP、iCTRL 两套后端完成原版/复刻版 `7 + 8 = 15` 同机对照；Remoboard 的主程序和键盘扩展也完成整包解密与校验。独立运行的 Frida 17 服务已完成系统 Calculator 原版的逐次点击方法跟踪。iOS 26 尚未实测。
+**已验证支持：**第一版“分析 → 复刻 → 真机对照”的核心阶段已在 iPhone XR / iOS 16.1.1（普通 rootless）和 [iPhone 14 / iOS 17.3.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone14.md)上通过真机验证。这里的“支持”指在已测配置上完成证据采集、审阅报告、独立 App 安装及同机选定行为核验，不代表任意 App、越狱配置或全部功能都可用。iOS 26 尚未实测。
 
-iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)也通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。复刻版源码和 IPA 早于本报告存在，因此此轮没有验证从这份报告自动生成源码；Calculator 全功能等价也未验证。
+| 设备状态 | 已验证范围 | 设备专属配置 |
+| --- | --- | --- |
+| iPhone XR · iOS 16.1.1 · rootless | 深度分析、选定流程复刻与加密 App 恢复 | rootless iOS MCP、SSH、版本匹配的 Frida；安装使用 TrollStore 或有效签名 |
+| iPhone 14 · iOS 17.3.1 · Relaxin/RootHide | Calculator 采集、运行时跟踪、审阅报告、签名复刻版安装，以及 iOS MCP 与 iCTRL 的 `7 + 8 = 15` 同机对照；Remoboard 主程序及键盘扩展恢复 | ElleKit 与 RootHide iOS MCP、mobile SSH、固定版本 Frida 17.23.3 独立服务、复刻版的 Apple Development 签名 |
+| iPhone 11 · iOS 26.0.1 | 未测试 | 暂无配置或兼容性结论 |
+
+Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 导出包和索引数据沙盒；本地解析 Mach-O。XR 上的 Compass 已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展已恢复为可分析 IPA。iPhone 14 上的 Frida 17 独立服务已对原版 Calculator 完成逐次点击跟踪。
+
+iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。复刻版源码和 IPA 早于本报告存在，因此此轮没有验证从这份报告自动生成源码；Calculator 全功能等价也未验证。现有 RootHide Frida 服务不能提供 root `root-run`；已验证的加密包恢复路径使用 mobile SSH。
 
 [独立 Codex CLI 的 XR 实测](docs/external-codex-xr-trial.zh-CN.md)已完成 Calculator 的有来源报告、新 App 构建与安装、三条原版/复刻版行为对照。此次沿用已验证的发现脚本和既有复刻源码，具体范围见实测记录。
 
@@ -214,7 +222,7 @@ UI 脚本还支持有界[文本输入](docs/ui-text-playbooks.zh-CN.md)（[Engli
 
 旧 REA 命令和 provider 桥接已删除。深入函数分析可选 Copy APP 直连 Ghidra 或 `--provider hopper-direct`（顶层 `copy` 使用 `--analysis-provider hopper-direct`）；后者也提供 `hopper-function` 和 `hopper-queue`，支持 `--hopper-app <Hopper.app>` 指定安装路径。Hopper 需要在正常 macOS 用户会话中安装并完成许可激活；受限会话可能无法通过 Spotlight 启动。iOS 16.1.1 XR 上的[集成调查案例](cases/fixture-counter-hopper-investigation-v2-20261016/manifest.json)已跑通 UI 重放、Frida 跟踪、候选绑定和 Hopper 反编译，并导入[来源校验报告](cases/fixture-counter-hopper-integrated-report-20261016/report.md)。启动时 Instruments 失败会在有界等待后回退到 iCTRL 终止并重启 App。选定流程的 `copy` 分析到复刻真机交付已在 XR 验证；任意 App 的完整复刻尚未验证。旧案例仍可校验已保存的 REA 证据。见[Hopper 接入说明](docs/rea-hopper-integration.zh-CN.md)与[独立运行边界](docs/rea-independence.md)。
 
-当前最完整的真实 App 示例是 XR 上的 [DeepSeek 综合逆向报告](cases/deepseek-comprehensive-xr-20261015/report.md)：以 `copyapp report-portfolio` 核对同设备、同 App 版本及同一解密主程序，汇合三条登录页的 UI/函数/网络分析和另一次沙盒/SQLite 结构分析。报告保留两轮证据的各自时点；原始数据库和 IPA 仍在忽略的本地 `cases/` 中。登录后功能、从零自动生成完整复刻和 iOS 17/26 仍未验收。
+当前最完整的真实 App 示例是 XR 上的 [DeepSeek 综合逆向报告](cases/deepseek-comprehensive-xr-20261015/report.md)：以 `copyapp report-portfolio` 核对同设备、同 App 版本及同一解密主程序，汇合三条登录页的 UI/函数/网络分析和另一次沙盒/SQLite 结构分析。报告保留两轮证据的各自时点；原始数据库和 IPA 仍在忽略的本地 `cases/` 中。该 DeepSeek 案例的登录后功能、从零自动生成完整复刻，以及在 iOS 17/26 上的运行仍未验收。
 
 一个新的无账号系统 App 试点也在 XR 上完整经过三条流程发现、无 REA 包与函数分析、正式报告、独立源码、TrollStore 安装和同机对照：[Clock 报告](cases/clock-three-flow-no-rea-reviewed-report-v3-20261015/report.md) → [复刻任务](cases/clock-three-flow-rebuild-preparation-v4-20261015/task/TASK.md) → [Copy Clock 源码](rebuild/ClockClone) → [交付核验 v9](cases/clock-three-flow-agent-delivery-v9-20261015/report.md)。世界时钟城市选择、未保存闹钟编辑和计时器铃声选择的 3/3 条脚本及末端 UIKit 断言通过；9 对截图均已逐张审阅，没有重大视觉差异，三个流程仍有轻微差异。首屏截图曾在 UIKit 尚未完成绘制时采集到缺失的导航栏，重放器现在对启动、底部标签切换和稳定截图增加就绪等待。该阶段尚未实现 Clock 的倒计时，也没有证明独立终端的一命令 Agent 流程。
 
