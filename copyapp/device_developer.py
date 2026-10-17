@@ -14,6 +14,36 @@ from pathlib import Path
 from pymobiledevice3.services.screenshot import ScreenshotService
 from pymobiledevice3.services.dvt.instruments.dvt_provider import DvtProvider
 from pymobiledevice3.services.dvt.instruments.process_control import ProcessControl
+from pymobiledevice3.services.dvt.instruments.device_info import DeviceInfo
+
+
+async def list_directory(device, udid: str, ios_version: str, path: str) -> tuple[list[str], str]:
+    """List a device directory through the developer transport for this iOS release."""
+    major = int(ios_version.split(".", 1)[0]) if re.match(r"^\d+", ios_version) else 0
+    if major < 17 or sys.platform != "darwin":
+        async with DvtProvider(device) as dvt, DeviceInfo(dvt) as info:
+            return await info.ls(path), "lockdown"
+    if not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", udid):
+        raise ValueError("invalid USB device UDID")
+    if not path.startswith("/") or "\n" in path or "\r" in path:
+        raise ValueError("invalid absolute device path")
+    command = [sys.executable, "-m", "pymobiledevice3", "developer", "dvt",
+               "ls", "--native", "--udid", udid, path]
+    process = await asyncio.create_subprocess_exec(
+        *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+    try:
+        stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=45)
+    except asyncio.TimeoutError as exc:
+        process.kill()
+        await process.communicate()
+        raise RuntimeError("native RSD directory listing timed out") from exc
+    if process.returncode != 0:
+        raise RuntimeError("native RSD directory listing failed: " +
+                           stderr.decode(errors="replace").strip()[-250:])
+    entries = stdout.decode(errors="replace").splitlines()
+    if any(not item.startswith(path.rstrip("/") + "/") for item in entries):
+        raise RuntimeError("native RSD returned a path outside the requested directory")
+    return entries, "native_rsd"
 
 
 async def take_screenshot(device, udid: str, ios_version: str) -> tuple[bytes, str]:

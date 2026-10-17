@@ -20,6 +20,7 @@ from typing import Any, Dict, Iterator, Optional, Tuple
 from zipfile import ZipFile
 
 from pymobiledevice3.lockdown import create_using_usbmux
+from pymobiledevice3.services.installation_proxy import InstallationProxyService
 
 from copyapp.ictrl import ICtrlClient, DEFAULT_CLIENT
 from copyapp.install import _installed_app, install_trollstore_ipa
@@ -55,6 +56,18 @@ async def _device(udid: str) -> Dict[str, str]:
         await device.close()
 
 
+async def _install_usb_ipa(udid: str, ipa: Path) -> None:
+    """Install a properly signed runner through the exact device's USB service."""
+    device = await create_using_usbmux(serial=udid, connection_type="USB", autopair=False)
+    try:
+        if (await device.get_value()).get("UniqueDeviceID") != udid:
+            raise RuntimeError("USB installation target identity does not match --udid")
+        async with InstallationProxyService(device) as proxy:
+            await proxy.install_from_local(ipa)
+    finally:
+        await device.close()
+
+
 async def _stop_runner(udid: str, bundle: str) -> None:
     """Stop a running runner before installing or launching its replacement."""
     from pymobiledevice3.services.dvt.instruments.dvt_provider import DvtProvider
@@ -62,6 +75,32 @@ async def _stop_runner(udid: str, bundle: str) -> None:
 
     device = await create_using_usbmux(serial=udid, connection_type="USB", autopair=False)
     try:
+        values = await device.get_value()
+        if values.get("UniqueDeviceID") != udid:
+            raise RuntimeError("USB runner target identity does not match --udid")
+        if sys.platform == "darwin" and int(str(values.get("ProductVersion", "0")).split(".")[0]) >= 17:
+            command = [sys.executable, "-m", "pymobiledevice3", "developer", "dvt",
+                       "process-id-for-bundle-id", "--native", "--udid", udid, bundle]
+            result = await asyncio.create_subprocess_exec(
+                *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            stdout, stderr = await asyncio.wait_for(result.communicate(), timeout=45)
+            if result.returncode:
+                raise RuntimeError("native runner process lookup failed: " +
+                                   stderr.decode(errors="replace").strip()[-250:])
+            pid_text = stdout.decode().strip()
+            if not pid_text.isdigit():
+                raise RuntimeError("native runner process lookup returned invalid PID")
+            if int(pid_text):
+                command = [sys.executable, "-m", "pymobiledevice3", "developer", "dvt",
+                           "signal", "--native", "--udid", udid, pid_text, "9"]
+                result = await asyncio.create_subprocess_exec(
+                    *command, stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE)
+                _, stderr = await asyncio.wait_for(result.communicate(), timeout=45)
+                if result.returncode:
+                    raise RuntimeError("native runner stop failed: " +
+                                       stderr.decode(errors="replace").strip()[-250:])
+            return
         async with DvtProvider(device) as provider, ProcessControl(provider) as control:
             pid = await control.process_identifier_for_bundle_identifier(bundle)
             if pid:
@@ -296,14 +335,21 @@ def setup_ictrl(udid: str, output: Path, ssh_port: int = 22222,
             state["runner_minimum_ios"] = minimum
             state["runner_bundle_id"] = bundle
             state["stages"].append("runner_built_or_supplied")
-            if not ssh_identity.is_file() or not ssh_known_hosts.is_file():
-                raise FileNotFoundError("TrollStore installation needs Copy APP's SSH identity and pinned host key")
-            with _usb_forward(udid, 22, ssh_port, reuse_existing=True):
-                install_trollstore_ipa(udid, ipa, output / "install", ssh_port,
-                                       ssh_identity, ssh_known_hosts)
+            try:
+                asyncio.run(_install_usb_ipa(udid, ipa))
+                state["stages"].append("runner_usb_installed")
+            except Exception as usb_exc:
+                if not ssh_identity.is_file() or not ssh_known_hosts.is_file():
+                    raise RuntimeError("USB installation failed (" +
+                                       f"{type(usb_exc).__name__}: {str(usb_exc)[:180]}); " +
+                                       "TrollStore fallback needs an SSH identity and pinned host key") from usb_exc
+                with _usb_forward(udid, 22, ssh_port, reuse_existing=True):
+                    install_trollstore_ipa(udid, ipa, output / "install", ssh_port,
+                                           ssh_identity, ssh_known_hosts)
+                state["stages"].append("runner_trollstore_installed")
             installed = asyncio.run(_installed_app(udid, bundle))
             if not installed:
-                raise RuntimeError("runner is absent after TrollStore installation")
+                raise RuntimeError("runner is absent after installation")
             if previous_bundle and (previous_bundle != bundle or reinstall):
                 asyncio.run(_stop_runner(udid, previous_bundle))
                 state["stages"].append("previous_runner_stopped")

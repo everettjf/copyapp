@@ -13,9 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, Tuple
 
 from pymobiledevice3.lockdown import create_using_usbmux
-from pymobiledevice3.services.dvt.instruments.dvt_provider import DvtProvider
-from pymobiledevice3.services.dvt.instruments.device_info import DeviceInfo
-from copyapp.device_developer import take_screenshot
+from copyapp.device_developer import take_screenshot, list_directory
 
 from copyapp.ictrl import ICtrlClient, DEFAULT_CLIENT
 from copyapp.ios_mcp import IOSMCPClient
@@ -56,19 +54,20 @@ async def _usb_probes(udid: str, output: Path, probes: Dict[str, Any],
         except Exception as exc:
             probes["usb_screenshot"] = _error(exc)
         try:
-            async with DvtProvider(device) as dvt, DeviceInfo(dvt) as fs:
-                await fs.ls("/")
-                probes["dvt_filesystem"] = {"status": "available"}
-                try:
-                    names = {entry.rsplit("/", 1)[-1] for entry in await fs.ls("/var/jb")}
-                    probes["rootless_marker"] = {
-                        "status": "observed", "var_jb_readable": True,
-                        "dopamine_marker": ".installed_dopamine" in names,
-                        "procursus_marker": ".procursus_strapped" in names,
-                        "note": "Filesystem markers alone do not prove active jailbreak privileges.",
-                    }
-                except Exception as exc:
-                    probes["rootless_marker"] = _error(exc)
+            version = str(values.get("ProductVersion", ""))
+            _, route = await list_directory(device, udid, version, "/")
+            probes["dvt_filesystem"] = {"status": "available", "route": route}
+            try:
+                names = {entry.rsplit("/", 1)[-1] for entry in
+                         (await list_directory(device, udid, version, "/var/jb"))[0]}
+                probes["rootless_marker"] = {
+                    "status": "observed", "var_jb_readable": True,
+                    "dopamine_marker": ".installed_dopamine" in names,
+                    "procursus_marker": ".procursus_strapped" in names,
+                    "note": "Filesystem markers alone do not prove active jailbreak privileges.",
+                }
+            except Exception as exc:
+                probes["rootless_marker"] = _error(exc)
         except Exception as exc:
             probes["dvt_filesystem"] = _error(exc)
             probes["rootless_marker"] = {"status": "not_probed", "reason": "DVT unavailable"}

@@ -74,13 +74,15 @@ def ictrl_runner_bundle(udid: str) -> str:
 
 async def _launch_ictrl_runner(udid: str) -> None:
     from pymobiledevice3.lockdown import create_using_usbmux
-    from pymobiledevice3.services.dvt.instruments.dvt_provider import DvtProvider
-    from pymobiledevice3.services.dvt.instruments.process_control import ProcessControl
+    from copyapp.device_developer import launch_app
 
     device = await create_using_usbmux(serial=udid, connection_type="USB", autopair=False)
     try:
-        async with DvtProvider(device) as provider, ProcessControl(provider) as control:
-            await control.launch(ictrl_runner_bundle(udid), kill_existing=False)
+        values = await device.get_value()
+        if values.get("UniqueDeviceID") != udid:
+            raise RuntimeError("USB runner target identity does not match requested UDID")
+        await launch_app(device, udid, str(values.get("ProductVersion", "")),
+                         ictrl_runner_bundle(udid))
     finally:
         await device.close()
 

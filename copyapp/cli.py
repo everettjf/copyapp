@@ -20,7 +20,7 @@ from pymobiledevice3.services.springboard import SpringBoardServicesService
 from pymobiledevice3.usbmux import list_devices
 
 from copyapp.ipa import analyze_ipa, write_ipa_report
-from copyapp.device_developer import launch_app, take_screenshot
+from copyapp.device_developer import launch_app, take_screenshot, list_directory
 from copyapp.acquire import acquire_bundle
 from copyapp.ssh_acquire import acquire_bundle_ssh
 from copyapp.ios_mcp import IOSMCPClient
@@ -138,33 +138,36 @@ async def sandbox_top_level(device, bundle: str) -> Dict[str, Any]:
         return {"scope": "app data container, top level only", "entries": entries}
 
 
-async def bundle_index(device, app_path: Optional[str]) -> Dict[str, Any]:
+async def bundle_index(device, udid: str, ios_version: str,
+                       app_path: Optional[str]) -> Dict[str, Any]:
     if not app_path:
         return {"status": "安装路径未返回", "entries": []}
     entries = []
-    async with DvtProvider(device) as dvt, DeviceInfo(dvt) as info:
-        root_items = await info.ls(app_path)
-        entries.extend(root_items[:500])
-        for directory in ("Frameworks", "PlugIns", "Library"):
-            subpath = app_path.rstrip("/") + "/" + directory
-            if subpath in root_items:
-                try:
-                    entries.extend((await info.ls(subpath))[:500])
-                except Exception:
-                    pass
+    root_items, route = await list_directory(device, udid, ios_version, app_path)
+    entries.extend(root_items[:500])
+    for directory in ("Frameworks", "PlugIns", "Library"):
+        subpath = app_path.rstrip("/") + "/" + directory
+        if subpath in root_items:
+            try:
+                children, _ = await list_directory(device, udid, ios_version, subpath)
+                entries.extend(children[:500])
+            except Exception:
+                pass
     return {
         "status": "已采集",
         "scope": "bundle root and Frameworks/PlugIns/Library direct children",
+        "route": route,
         "entries": sorted(set(entries)),
     }
 
 
-async def jailbreak_markers(device) -> Dict[str, Any]:
+async def jailbreak_markers(device, udid: str, ios_version: str) -> Dict[str, Any]:
     try:
-        async with DvtProvider(device) as dvt, DeviceInfo(dvt) as info:
-            names = {path.rsplit("/", 1)[-1] for path in await info.ls("/var/jb")}
+        entries, route = await list_directory(device, udid, ios_version, "/var/jb")
+        names = {path.rsplit("/", 1)[-1] for path in entries}
         return {
             "var_jb_readable": True,
+            "route": route,
             "dopamine_marker": ".installed_dopamine" in names,
             "procursus_marker": ".procursus_strapped" in names,
         }
@@ -304,13 +307,16 @@ async def command_survey(udid: str, bundle: str, output: Path, launch: bool,
             await asyncio.sleep(2)
 
         try:
-            bundle_data = await bundle_index(device, app.get("Path"))
+            bundle_data = await bundle_index(device, udid,
+                                             str(device_info.get("ProductVersion", "")),
+                                             app.get("Path"))
             capabilities["bundle_index"] = True
         except Exception as exc:
             bundle_data = {"status": f"不可用：{type(exc).__name__}", "entries": []}
             capabilities["bundle_index"] = False
         evidence.append(save_evidence(output, "bundle.json", bundle_data, "json"))
-        markers = await jailbreak_markers(device)
+        markers = await jailbreak_markers(device, udid,
+                                           str(device_info.get("ProductVersion", "")))
         evidence.append(save_evidence(output, "jailbreak.json", markers, "json"))
 
         try:
