@@ -46,3 +46,5 @@ iOS 16.1.1 的 iPhone XR 已完成 Clock 三流程的当前 Agent 父案例：�
 参见 [中文 README](../README.zh-CN.md)、[英文 README](../README.md) 和 [详细试验记录](../PLAN.md)。
 
 对于会修改本地数据的选定流程，还应在操作前后用 `copyapp sandbox-file` 采集已索引的数据文件，在本地限定范围检查内容并与原版比较；该命令会自行建立精确设备 SSH 转发。界面计数相同不足以证明数据库正文相同。[v0.1.2 夹具核验](releases/v0.1.2.zh-CN.md)曾据此发现并修复复刻版 Notes 正文缺少时间戳的问题。
+
+此前的 iOS 17 Calculator 交付沿用既有复刻版；另一次[从报告重新编写源码的一流程试验](ios17-calculator-fresh-from-report.zh-CN.md)现在已在 iPhone 14 上通过签名安装、同机成对断言和两组截图审阅。此结果仍不代表陌生 App 的零样本自主复刻或 Calculator 全功能等价。

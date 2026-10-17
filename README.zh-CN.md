@@ -9,12 +9,12 @@
 | 设备状态 | 已验证范围 | 设备专属配置 |
 | --- | --- | --- |
 | iPhone XR · iOS 16.1.1 · rootless | 深度分析、加密 App 恢复、夹具三流程原版/复刻版对照及五组截图审阅；新版复刻版三流程与原版/复刻版 SQLite 行内容对照通过 | rootless iOS MCP、SSH、版本匹配的 Frida；安装使用 TrollStore 或有效签名 |
-| iPhone 14 · iOS 17.3.1 · Relaxin/RootHide | Calculator 审阅报告、跟踪与同机对照；Remoboard 主程序及扩展恢复；夹具三流程经两种界面后端重放，签名复刻版安装、正式对照、五组截图审阅及原版/复刻版 SQLite 行内容对照通过 | ElleKit 与 RootHide iOS MCP、mobile SSH、固定版本 Frida 17.23.3 独立服务、复刻版的 Apple Development 签名 |
+| iPhone 14 · iOS 17.3.1 · Relaxin/RootHide | Calculator 审阅报告、跟踪、同机对照及新写源码的一流程工程；Remoboard 加密包恢复；夹具三流程经两种界面后端重放，签名复刻版与五组截图审阅及原版/复刻版 SQLite 行内容对照通过 | ElleKit 与 RootHide iOS MCP、mobile SSH、固定版本 Frida 17.23.3 独立服务、复刻版的 Apple Development 签名 |
 | iPhone 11 · iOS 26.0.1 | 未测试 | 暂无配置或兼容性结论 |
 
 Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 导出包和索引数据沙盒；本地解析 Mach-O。XR 上的 Compass 已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展已恢复为可分析 IPA。iPhone 14 上的 Frida 17 独立服务已对原版 Calculator 完成逐次点击跟踪。
 
-iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。复刻版源码和 IPA 早于本报告存在，因此此轮没有验证从这份报告自动生成源码；Calculator 全功能等价也未验证。现有 RootHide Frida 服务不能提供 root `root-run`；已验证的加密包恢复路径使用 mobile SSH。
+iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。此前交付的复刻版源码和 IPA 早于本报告存在；另一次[从报告新写源码的一流程试验](docs/ios17-calculator-fresh-from-report.zh-CN.md)已完成构建、签名、安装和同机对照。Calculator 全功能等价仍未验证。现有 RootHide Frida 服务不能提供 root `root-run`；已验证的加密包恢复路径使用 mobile SSH。
 
 [v0.1.2 双机发布验收](docs/releases/v0.1.2.zh-CN.md)列出了 iOS 16/17 设备矩阵、复刻版 SQLite 行内容修复与剩余边界。夹具覆盖 SwiftUI、UIKit、SQLite 和独立 Framework 的三条已知源码流程；Calculator 与加密 App 案例覆盖不同路径。
 
