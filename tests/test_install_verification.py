@@ -8,12 +8,59 @@ import unittest
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from copyapp.install import (_stop_stale_mobile_processes, install_trollstore_ipa,
+from copyapp.install import (_install_trollstore_ipa_via_ssh,
+                             _stop_stale_mobile_processes, install_trollstore_ipa,
                              install_usb_ipa)
 from copyapp.verify import sha256_file, verify_case
 
 
 class InstallationVerificationTest(unittest.TestCase):
+    def test_trollstore_timeout_records_observed_old_version_without_retry(self):
+        udid = "00008020-000D650434B8003A"
+        bundle = "com.copyapp.example"
+        helper = ("/var/containers/Bundle/Application/"
+                  "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA/TrollStore.app/trollstorehelper")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            ipa = root / "app.ipa"
+            ipa.write_bytes(b"new package")
+            package = {"ipa_sha256": sha256_file(ipa), "bundle_id": bundle,
+                       "version": "2.0", "build": "2", "executable": "Example"}
+
+            def run(argv, **_kwargs):
+                command = argv[-1]
+                if command == "deviceinfo uniqueid":
+                    return subprocess.CompletedProcess(argv, 0, (udid + "\n").encode())
+                if command.startswith("find "):
+                    return subprocess.CompletedProcess(argv, 0, (helper + "\n").encode())
+                if command.startswith("sha256sum "):
+                    return subprocess.CompletedProcess(argv, 0,
+                                                       (package["ipa_sha256"] + "  app.ipa\n").encode())
+                if command.startswith("rm -f ") or argv[0] == "scp":
+                    return subprocess.CompletedProcess(argv, 0, b"")
+                raise AssertionError(command)
+
+            with patch("copyapp.install.analyze_ipa", return_value=package), \
+                 patch("copyapp.install._ssh_argv", return_value=["ssh"]), \
+                 patch("copyapp.install._stop_running_app", return_value={"status": "requested"}), \
+                 patch("copyapp.install._stop_stale_mobile_processes",
+                       return_value={"status": "clear", "count": 0}), \
+                 patch("copyapp.install.subprocess.run", side_effect=run), \
+                 patch("copyapp.install.run_root_command",
+                       side_effect=TimeoutError("helper uncertain")) as helper_run, \
+                 patch("copyapp.install._installed_app", new=AsyncMock(return_value={
+                     "CFBundleShortVersionString": "1.0", "CFBundleVersion": "1",
+                     "Path": "/Applications/Example.app"})):
+                with self.assertRaises(TimeoutError):
+                    _install_trollstore_ipa_via_ssh(udid, ipa, root / "install", 22316,
+                                                   root / "identity", root / "known_hosts")
+            record = json.loads((root / "install/install.json").read_text())
+            self.assertEqual(record["status"], "failed")
+            self.assertEqual(record["installed_after_timeout"]["version"], "1.0")
+            self.assertEqual(record["installed_after_timeout"]["build"], "1")
+            self.assertTrue((root / "install/input.ipa").is_file())
+            helper_run.assert_called_once()
+
     def test_stale_process_cleanup_checks_each_bundle_id_before_killing(self):
         suffix = "/CopyAppClock.app/CopyAppClock"
         app_a = "/var/containers/Bundle/Application/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA" + suffix

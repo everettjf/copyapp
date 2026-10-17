@@ -160,8 +160,24 @@ def _install_trollstore_ipa_via_ssh(udid: str, ipa: Path, output: Path,
         record["staged_sha256"] = remote_hash
         if remote_hash != package["ipa_sha256"]:
             raise RuntimeError("staged IPA hash mismatch")
-        run = run_root_command(udid, [helpers[0], "install", "custom", remote_ipa],
-                               output / "device-run", ssh_port, identity, known_hosts, timeout=120)
+        try:
+            run = run_root_command(udid, [helpers[0], "install", "custom", remote_ipa],
+                                   output / "device-run", ssh_port, identity, known_hosts,
+                                   timeout=120)
+        except TimeoutError:
+            try:
+                observed = asyncio.run(asyncio.wait_for(
+                    _installed_app(udid, bundle_id), timeout=15))
+                record["installed_after_timeout"] = {
+                    "present": bool(observed),
+                    "version": observed.get("CFBundleShortVersionString"),
+                    "build": observed.get("CFBundleVersion"),
+                    "path": observed.get("Path"),
+                }
+            except Exception as probe_error:
+                record["installed_after_timeout_error"] = (
+                    f"{type(probe_error).__name__}: {str(probe_error)[:180]}")
+            raise
         record["helper_exit_code"] = run["exit_code"]
         if run["exit_code"] != 0:
             raise RuntimeError(f"TrollStore helper exited {run['exit_code']}; inspect device-run/output.txt")

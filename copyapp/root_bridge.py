@@ -127,11 +127,45 @@ def run_root_command(udid: str, command: List[str], output: Path, ssh_port: int,
                 break
             time.sleep(0.25)
         if exit_code is None:
+            stop_requested = False
+            stop_error = None
             try:
                 device.kill(pid)
-            except Exception:
-                pass
-            raise TimeoutError(f"root command exceeded {timeout}s; process {pid} stopped")
+                stop_requested = True
+            except Exception as exc:
+                stop_error = f"{type(exc).__name__}: {str(exc)[:180]}"
+            output.mkdir(parents=True, exist_ok=True)
+            log_error = None
+            try:
+                log_result = subprocess.run(
+                    ssh + ["head -c " + str(MAX_OUTPUT + 1) + " " + shlex.quote(log)],
+                    capture_output=True, timeout=15, check=False)
+                captured = log_result.stdout
+                if log_result.returncode:
+                    log_error = f"remote log read exited {log_result.returncode}"
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                captured = b""
+                log_error = f"{type(exc).__name__}: {str(exc)[:180]}"
+            (output / "output.txt").write_bytes(captured[:MAX_OUTPUT])
+            timeout_record = {
+                "schema_version": 1,
+                "device_id": udid,
+                "transport": "named USB Frida spawn; paired mobile SSH result retrieval",
+                "command": command,
+                "pid": pid,
+                "status": "timed_out",
+                "exit_code": None,
+                "process_stop_requested": stop_requested,
+                "output_truncated": len(captured) > MAX_OUTPUT,
+                "remote_log": log,
+                "remote_status": status,
+            }
+            if stop_error:
+                timeout_record["process_stop_error"] = stop_error
+            if log_error:
+                timeout_record["log_capture_error"] = log_error
+            (output / "result.json").write_text(json.dumps(timeout_record, indent=2) + "\n")
+            raise TimeoutError(f"root command exceeded {timeout}s; process {pid} stop requested")
 
         captured = subprocess.run(
             ssh + ["head -c " + str(MAX_OUTPUT + 1) + " " + shlex.quote(log)],

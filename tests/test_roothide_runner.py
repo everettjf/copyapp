@@ -1,16 +1,55 @@
 import json
 import shlex
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from copyapp.decrypt_package import _run_roothide_helper
-from copyapp.root_bridge import _spawned_effective_uid, resolve_jailbreak_executable
+from copyapp.root_bridge import (_spawned_effective_uid, resolve_jailbreak_executable,
+                                 run_root_command)
 
 
 class RootHideRunnerTest(unittest.TestCase):
+    def test_root_timeout_keeps_bounded_log_and_does_not_claim_stopped(self):
+        udid = "00008020-000D650434B8003A"
+        device = MagicMock(id=udid, type="usb")
+        device.spawn.return_value = 4242
+        frida = MagicMock()
+        frida.get_device_manager.return_value.get_device.return_value = device
+
+        def run(argv, **_kwargs):
+            command = argv[-1]
+            if command == "deviceinfo uniqueid":
+                return subprocess.CompletedProcess(argv, 0, (udid + "\n").encode())
+            if command.startswith("head -c "):
+                return subprocess.CompletedProcess(argv, 0, b"helper reached install phase\n")
+            if command.startswith("rm -f "):
+                return subprocess.CompletedProcess(argv, 0, b"")
+            raise AssertionError(command)
+
+        with tempfile.TemporaryDirectory() as root, \
+             patch.dict(sys.modules, {"frida": frida}), \
+             patch("copyapp.root_bridge._ssh_argv", return_value=["ssh"]), \
+             patch("copyapp.root_bridge.resolve_jailbreak_executable",
+                   return_value="/var/jb/bin/sh"), \
+             patch("copyapp.root_bridge._spawned_effective_uid", return_value=0), \
+             patch("copyapp.root_bridge.subprocess.run", side_effect=run), \
+             patch("copyapp.root_bridge.time.monotonic", side_effect=[100, 102]):
+            output = Path(root) / "device-run"
+            with self.assertRaisesRegex(TimeoutError, "stop requested"):
+                run_root_command(udid, ["/helper", "install"], output, 22316,
+                                 Path("identity"), Path("known_hosts"), timeout=1)
+            result = json.loads((output / "result.json").read_text())
+            self.assertEqual(result["status"], "timed_out")
+            self.assertEqual(result["exit_code"], None)
+            self.assertTrue(result["process_stop_requested"])
+            self.assertEqual((output / "output.txt").read_bytes(),
+                             b"helper reached install phase\n")
+            device.kill.assert_called_once_with(4242)
+
     def test_spawned_uid_comes_from_suspended_frida_child(self):
         class Script:
             def on(self, name, callback):
