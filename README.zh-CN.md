@@ -24,7 +24,7 @@ Podcasts 在两机上分别完成了[审阅报告与全新独立 UIKit 复刻工
 
 [v0.1.10 双机发布验收](docs/releases/v0.1.10.zh-CN.md)新增[Clock 复刻版停止态与运行态重启验证](docs/clock-clone-two-device.zh-CN.md)，并通过两台手机运行中升级检查。发布后又完成[复刻版双机约一分钟后台计时检查](docs/clock-background-two-device.zh-CN.md)，两机返回后均继续显示增长的秒表。[v0.1.9 发布](docs/releases/v0.1.9.zh-CN.md)确立跨设备基线并记录当时的状态丢失缺口。[v0.1.8 发布](docs/releases/v0.1.8.zh-CN.md)记录首次使用引导诊断和 Translate/Clock 四路检查。
 
-[双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)又在两台手机上，用**同一脚本**分别经 iOS MCP 与 iCTRL 验证 Calculator `98→9` 左滑和 Safari 地址栏的合成文本输入，并在 iOS 17 上跑通一条 `hopper-direct` 分析到复刻父工作流。这些有界结果不代表所有输入框、手势或 App 都相同。
+[双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)又在两台手机上，用**同一脚本**分别经 iOS MCP 与 iCTRL 验证 Calculator `98→9` 左滑和 Safari 地址栏的合成文本输入，并在 iOS 17 上跑通一条 `hopper-direct` 分析到复刻父工作流。这些有界结果不代表所有输入框、手势或 App 都相同。[v0.1.15](docs/releases/v0.1.15.zh-CN.md)修复了独立安装 wheel 对可选源码工具的定位；设置 `COPYAPP_SOURCE_ROOT` 后，同一条 Calculator iCTRL 脚本在两机通过。10 月 17 日 XR 开发者文件服务握手失败，重挂开发者镜像后仍未恢复；SSH、Frida、iOS MCP 和 iCTRL 当时可用，不能把这次 `doctor` 说成全部通过。
 
 新的 v0.1.10 `doctor` 案例确认两机已测设备通道全部可用；已发布的 v0.1.10 wheel 重新下载后与发布哈希一致，并通过隔离安装检查。[首次使用引导检查](docs/ios17-first-use-gates.zh-CN.md)发现，iOS 17 Translate 与 Clock 启动报错时，SpringBoard 实际显示欢迎页；完成引导后两者都进入自身前台进程。**同一份** Translate 输入和 Clock 秒表脚本又分别经 iOS MCP、iCTRL 在两机通过。XR 上旧的 `(207,320)` 点击仍无法显示输入，而点击提示附近 `(100,201)` 会显示键盘并成功输入。同脚本 URLSession 观察在两机附加后记录到零条任务启动事件；另一条 App Store Search 标签对照则在两机捕获到正事件。Translate 的零事件不能证明它没有网络请求。具体案例和边界见[矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
@@ -101,6 +101,8 @@ sh scripts/bootstrap-macos.sh
 ```
 
 脚本创建或复用 `.venv/`，安装 Copy APP，并打印引导式设置命令。要求 macOS 和 Python 3.9 或更新版本。开始运行时追踪时，再运行 `sh scripts/bootstrap-macos.sh --trace` 安装 Mac 端 Frida。已测 RootHide/iOS 17 手机需将 Mac Frida 固定为 `17.23.3`，再用 `copyapp setup frida-roothide` 经已配对 SSH 自动部署独立服务；原有 RootHide Frida 16.1.4 不被替换，具体命令见[实测记录](docs/relaxin-roothide-iphone14.md)。RootHide 的已验证整包恢复路径使用 mobile SSH，不要求 Mac Frida。需要 Xcode 设备服务或复刻版编译时，用 `xcode-select -p` 检查开发者目录指向**完整 Xcode**，不能只有 Command Line Tools。`.venv/` 与 `cases/` 都不提交到 Git。
+
+若不运行上述引导脚本、而是安装发布页的 wheel，也要保留 Copy APP 源码目录，用于可选的 iCTRL 客户端、RootHide Frida 配置和 Mac 辅助脚本。在运行 wheel 的终端设置 `COPYAPP_SOURCE_ROOT=/源码目录的绝对路径`。wheel 只包含 Python 命令行，不包含 Theos、Xcode SDK、上游构建输入或设备密钥；显式路径若不是 Copy APP 源码目录会直接报错。
 
 ### 2. 连接并检查手机
 

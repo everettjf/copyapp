@@ -10,13 +10,15 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from copyapp.source_root import source_root
+
 
 ICTRL_UI_METHODS = frozenset({
     "logs", "device_info", "page_source", "screen_text", "find_element",
     "tap", "swipe", "long_press", "double_tap", "type", "launch_app",
     "terminate_app", "home", "screenshot",
 })
-DEFAULT_CLIENT = Path(__file__).resolve().parents[1] / "toolchains" / "ictrl-macos"
+DEFAULT_CLIENT = source_root() / "toolchains" / "ictrl-macos"
 
 
 class ICtrlError(RuntimeError):

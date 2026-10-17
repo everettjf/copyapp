@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+from copyapp.source_root import source_root
 from copyapp.verify import sha256_file, verify_case
 
 
@@ -128,7 +129,7 @@ def run_agent_task(task_case: Path, output: Path, provider: str = "codex",
         raise FileExistsError(f"agent run output is not empty: {output}")
     if type(timeout_seconds) is not int or not 30 <= timeout_seconds <= 24 * 3600:
         raise ValueError("agent timeout must be 30 seconds to 24 hours")
-    workspace = (workspace or Path(__file__).resolve().parents[1]).resolve(strict=True)
+    workspace = (workspace or source_root()).resolve(strict=True)
     task_case = task_case.resolve(strict=True)
     task_file = task_case / "task.json"
     brief = task_case / "TASK.md"

@@ -6,8 +6,10 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict
 
+from copyapp.source_root import source_root
 
-OCR_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "ocr-image.swift"
+
+OCR_SCRIPT = source_root() / "scripts" / "ocr-image.swift"
 
 
 def recognize_screenshot(image: bytes) -> Dict[str, Any]:

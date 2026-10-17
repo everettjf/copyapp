@@ -12,6 +12,7 @@ from copyapp.discover_check import accepted_playbooks
 from copyapp.discovery_agent import run_discovery_agent
 from copyapp.prepare_app import prepare_app
 from copyapp.prepare_rebuild import prepare_rebuild
+from copyapp.source_root import source_root
 from copyapp.verify import sha256_file, verify_case
 
 
@@ -256,7 +257,7 @@ async def copy_app(udid: str, bundle: str, scripts: list[Path], project: Path,
     Failed Agent runs are not automatically repeated: they may have changed App or
     device state. Start a new workflow case after inspecting their saved output.
     """
-    workspace = (workspace or Path(__file__).resolve().parents[1]).resolve(strict=True)
+    workspace = (workspace or source_root()).resolve(strict=True)
     output = output.resolve()
     project = project.resolve()
     if (not workspace.is_dir() or not output.is_relative_to(workspace) or

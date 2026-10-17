@@ -16,6 +16,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from copyapp.source_root import source_root
+
 
 VERSION = "17.23.3"
 PACKAGE_SHA256 = "6bf24760fe29fdeb786af71ec689dac333f7dda8aa1fe93ed3dff594bf23531b"
@@ -23,7 +25,7 @@ PACKAGE_URL = ("https://github.com/frida/frida/releases/download/" + VERSION +
                "/frida_" + VERSION + "_iphoneos-arm64.deb")
 DEVICE_PORT = 27043
 REMOTE_DIR = "/rootfs/var/mobile/Media/copyapp-frida-" + VERSION
-CONFIG = Path(__file__).resolve().parents[1] / "toolchains" / "frida-sidecars.json"
+CONFIG = source_root() / "toolchains" / "frida-sidecars.json"
 _forwards: Dict[str, subprocess.Popen] = {}
 _devices: Dict[str, Any] = {}
 

@@ -14,6 +14,7 @@ from typing import Iterator, Optional
 
 from copyapp.ios_mcp import IOSMCPClient
 from copyapp.ictrl import ICtrlClient, DEFAULT_CLIENT
+from copyapp.source_root import source_root
 
 
 @contextmanager
@@ -76,7 +77,7 @@ def exact_ssh_tunnel(udid: str, port: int, identity: Path,
 
 def configured_ictrl_runner_bundle(udid: str) -> Optional[str]:
     """Read the Bundle ID installed by setup for this exact device."""
-    config = Path(__file__).resolve().parents[1] / "toolchains" / "ictrl-runners.json"
+    config = source_root() / "toolchains" / "ictrl-runners.json"
     if config.is_file():
         try:
             value = json.loads(config.read_text()).get(udid)

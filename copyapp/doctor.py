@@ -17,6 +17,7 @@ from copyapp.device_developer import take_screenshot, list_directory
 
 from copyapp.ictrl import ICtrlClient, DEFAULT_CLIENT
 from copyapp.ios_mcp import IOSMCPClient
+from copyapp.source_root import source_root
 from copyapp.ssh_acquire import _ssh_argv
 from copyapp.usb_tunnel import ictrl_tunnel, ios_mcp_tunnel, ssh_tunnel
 
@@ -184,7 +185,7 @@ def _host_probes() -> Dict[str, Any]:
     except (OSError, subprocess.TimeoutExpired) as exc:
         result["xcode"] = _error(exc)
     theos = Path(os.environ["THEOS"]).expanduser() if os.environ.get("THEOS") else (
-        Path(__file__).resolve().parents[1] / "toolchains" / "theos")
+        source_root() / "toolchains" / "theos")
     result["theos"] = {"status": "available" if theos.is_dir() else "not_configured",
                        "path": str(theos) if theos.is_dir() else None}
     return result

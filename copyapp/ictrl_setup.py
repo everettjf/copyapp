@@ -24,10 +24,11 @@ from pymobiledevice3.services.installation_proxy import InstallationProxyService
 
 from copyapp.ictrl import ICtrlClient, DEFAULT_CLIENT
 from copyapp.install import _installed_app, install_trollstore_ipa
+from copyapp.source_root import source_root
 from copyapp.usb_tunnel import configured_ictrl_runner_bundle, ictrl_xcuitest_session
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = source_root()
 SOURCE = ROOT / "vendor" / "ictrl"
 REVISION = "d88bbf0b3a5addead31b4298d605d7ac7a87d6e7"
 
@@ -140,6 +141,10 @@ def _save_bundle(udid: str, bundle: str) -> None:
 
 
 def _build_client() -> Path:
+    if not (ROOT / "scripts" / "build-ictrl-client.sh").is_file():
+        raise FileNotFoundError(
+            "Copy APP source checkout is required for iCTRL setup; "
+            "set COPYAPP_SOURCE_ROOT when running from a wheel")
     subprocess.run(["sh", str(ROOT / "scripts" / "build-ictrl-client.sh")],
                    cwd=ROOT, check=True, timeout=90)
     if not DEFAULT_CLIENT.is_file():
