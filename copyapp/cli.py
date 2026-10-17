@@ -14,14 +14,13 @@ from pymobiledevice3.lockdown import create_using_usbmux
 from pymobiledevice3.services.accessibilityaudit import AccessibilityAudit
 from pymobiledevice3.services.dvt.instruments.dvt_provider import DvtProvider
 from pymobiledevice3.services.dvt.instruments.device_info import DeviceInfo
-from pymobiledevice3.services.dvt.instruments.process_control import ProcessControl
 from pymobiledevice3.services.house_arrest import HouseArrestService
 from pymobiledevice3.services.installation_proxy import InstallationProxyService
-from pymobiledevice3.services.screenshot import ScreenshotService
 from pymobiledevice3.services.springboard import SpringBoardServicesService
 from pymobiledevice3.usbmux import list_devices
 
 from copyapp.ipa import analyze_ipa, write_ipa_report
+from copyapp.device_developer import launch_app, take_screenshot
 from copyapp.acquire import acquire_bundle
 from copyapp.ssh_acquire import acquire_bundle_ssh
 from copyapp.ios_mcp import IOSMCPClient
@@ -187,6 +186,10 @@ def report_text(manifest: Dict[str, Any], app: Dict[str, Any], sandbox: Dict[str
     extensions = sorted(name for name in bundle_names if name.endswith(".appex"))
     backup_name = str(app.get("CFBundleExecutable", "")) + "_TROLLSTORE_BACKUP"
     persistence_helper = ".TrollStorePersistenceHelper" in bundle_names and backup_name in bundle_names
+    markers = manifest["jailbreak_markers"]
+    marker_summary = (f"`/var/jb` 可列出：{markers['var_jb_readable']}；Dopamine 标记：{markers.get('dopamine_marker', False)}"
+                      if markers.get("var_jb_readable") else
+                      "普通开发者文件服务无法读取越狱目录；不能据此判断越狱状态或类型")
     lines = [
         "# " + name + " · Copy APP 初步采集报告", "",
         "> 本报告只陈述本次设备采集能证实的内容；尚未取得的 IPA、类、方法和运行轨迹标为未采集。", "",
@@ -194,7 +197,7 @@ def report_text(manifest: Dict[str, Any], app: Dict[str, Any], sandbox: Dict[str
         f"- Bundle ID：`{manifest['bundle_id']}`",
         f"- App 版本：{app.get('CFBundleShortVersionString', '未知')}（构建 {app.get('CFBundleVersion', '未知')}）",
         f"- 设备：{manifest['device']['ProductType']} / iOS {manifest['device']['ProductVersion']}",
-        f"- `/var/jb` 可列出：{manifest['jailbreak_markers'].get('var_jb_readable', False)}；Dopamine 标记：{manifest['jailbreak_markers'].get('dopamine_marker', False)}",
+        f"- 越狱目录：{marker_summary}",
         f"- 采集时间：{manifest['created_at']}", "",
         "## 安装包线索", "",
         f"- 主程序：`{app.get('CFBundleExecutable', '未知')}`",
@@ -258,8 +261,11 @@ async def command_apps(udid: str, include_system: bool = False) -> int:
 async def usb_screenshot(udid: str) -> bytes:
     device = await create_using_usbmux(serial=udid, connection_type="USB", autopair=False)
     try:
-        async with ScreenshotService(device) as screen:
-            return await screen.take_screenshot()
+        values = await device.get_value()
+        if values.get("UniqueDeviceID") != udid:
+            raise RuntimeError("lockdown device identity does not match requested UDID")
+        picture, _ = await take_screenshot(device, udid, str(values.get("ProductVersion", "")))
+        return picture
     finally:
         await device.close()
 
@@ -274,6 +280,8 @@ async def command_survey(udid: str, bundle: str, output: Path, launch: bool,
     device = await create_using_usbmux(serial=udid, connection_type="USB", autopair=False)
     try:
         values = await device.get_value()
+        if values.get("UniqueDeviceID") != udid:
+            raise RuntimeError("lockdown device identity does not match requested UDID")
         device_info = {field: values.get(field) for field in DEVICE_FIELDS}
         apps = await installed_apps(device, bundle)
         if bundle not in apps:
@@ -292,8 +300,7 @@ async def command_survey(udid: str, bundle: str, output: Path, launch: bool,
             if mcp is not None:
                 mcp.call_ui("launch_app", {"bundle_id": bundle})
             else:
-                async with DvtProvider(device) as dvt, ProcessControl(dvt) as control:
-                    await control.launch(bundle, kill_existing=False)
+                await launch_app(device, udid, str(device_info.get("ProductVersion", "")), bundle)
             await asyncio.sleep(2)
 
         try:
@@ -338,10 +345,10 @@ async def command_survey(udid: str, bundle: str, output: Path, launch: bool,
                 ui = {"status": f"不可用：{type(exc).__name__}", "elements": []}
         else:
             try:
-                async with ScreenshotService(device) as screen:
-                    screenshot = await screen.take_screenshot()
+                screenshot, route = await take_screenshot(
+                    device, udid, str(device_info.get("ProductVersion", "")))
                 evidence.append(save_evidence(output, "screenshot.png", screenshot, "binary"))
-                capabilities["screenshot"] = "已采集"
+                capabilities["screenshot"] = "已采集（" + route + "）"
             except Exception as exc:
                 capabilities["screenshot"] = f"不可用：{type(exc).__name__}"
             try:

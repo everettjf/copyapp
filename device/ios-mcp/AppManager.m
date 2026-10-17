@@ -2,7 +2,7 @@
 #import "AccessibilityManager.h"
 #import "MCPProcessUtil.h"
 #import "SpringBoardPrivate.h"
-#include <roothide.h>
+#include "CopyAppJailbreakPath.h"
 #import <Security/Security.h>
 #import <UIKit/UIKit.h>
 #import <objc/runtime.h>

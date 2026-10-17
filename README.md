@@ -4,7 +4,7 @@ English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_
 
 Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app on a jailbroken iPhone and rebuilding selected behavior as an independent, runnable iOS app. It acquires package and sandbox evidence, inspects native code, captures UI and runtime behavior, produces a cited report and feature specification, then builds and compares a clone on the same device.
 
-The workflow verifies evidence identity and selected UI flows. It does **not** claim complete equivalence to an arbitrary app. The iPhone XR running iOS 16.1.1 is the tested device; iOS 17 and 26 testing is deferred at the user's request.
+The workflow verifies evidence identity and selected UI flows. It does **not** claim complete equivalence to an arbitrary app. The iPhone XR running iOS 16.1.1 is the tested deep-workflow device. An [iPhone 14 running iOS 17.3.1 with Relaxin/RootHide](docs/relaxin-roothide-iphone14.md) passed an initial USB Calculator survey; privileged acquisition and rebuild remain unverified there. iOS 26 has not been tested.
 
 A [standalone Codex CLI trial on the XR](docs/external-codex-xr-trial.md) completed a source-linked Calculator report, independent build and installation, and three paired behavior checks. It reused verified discovery scripts and earlier clone source; see the trial note for the exact scope.
 
@@ -31,7 +31,7 @@ flowchart LR
   L --> M[Verified delivery + explicit gaps]
 ```
 
-The device services have separate jobs. **OpenSSH** acquires the installed package and bounded sandbox evidence. **Frida** observes selected calls and can support the verified package recovery path. **iOS MCP** is the rootless tweak used for foreground identity, UI structure, screenshots and gestures; **iCTRL** is an optional XCTest-based UI backend. One backend performs a playbook's touches at a time. Ghidra and Hopper run on the Mac when selected; REA is not a runtime dependency. See the [workflow guide](docs/copy-workflow.md) for each stage and its inputs.
+The device services have separate jobs. **OpenSSH** acquires the installed package and bounded sandbox evidence. **Frida** observes selected calls and can support the verified package recovery path. **iOS MCP** is the device tweak used for foreground identity, UI structure, screenshots and gestures; **iCTRL** is an optional XCTest-based UI backend. One backend performs a playbook's touches at a time. Ghidra and Hopper run on the Mac when selected; REA is not a runtime dependency. See the [workflow guide](docs/copy-workflow.md) for each stage and its inputs.
 
 ```mermaid
 flowchart LR
@@ -123,7 +123,7 @@ The full pipeline needs the following channels on the **same UDID**:
 | Copy APP iOS MCP tweak | Build and install [`device/ios-mcp`](device/ios-mcp/README.md), then reload SpringBoard. | Foreground identity, UI tree, screenshots and gestures over a USB-forwarded localhost service. |
 | iCTRL runner and paired Mac client | Run `copyapp setup ictrl --udid <UDID> --out cases/ictrl-setup` after SSH and Xcode setup, then approve the phone's pairing prompt. | Optional UI backend and fallback for an Instruments fresh-launch failure. |
 
-For the tweak, the source build requires a complete Xcode, Theos, the iPhoneOS 16.5 SDK and `ldid`; the SDK and Theos are **not** vendored here. From the repository root, after installing those tools, run `THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules make -C device/ios-mcp package`. Install the resulting `.deb` from `device/ios-mcp/packages/` with the phone's package manager or Filza, then reload SpringBoard. The XR/iOS 16 package is tested; do not assume that build works unchanged on iOS 17 or 26. The optional iCTRL source is pinned in [`vendor/ictrl`](vendor/ictrl/UPSTREAM.md) with its Apache 2.0 license and NOTICE; generated signing files, large build dependencies and pairing keys stay local.
+For the tweak, the source build requires a complete Xcode, Theos, the iPhoneOS 16.5 SDK and `ldid`; the SDK and Theos are **not** vendored here. From the repository root, after installing those tools, run `THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules make -C device/ios-mcp package`. Install the resulting `.deb` from `device/ios-mcp/packages/` with the phone's package manager or Filza, then reload SpringBoard. The XR/iOS 16 rootless package is tested. RootHide needs its own Theos fork and `THEOS_PACKAGE_SCHEME=roothide`; [the iPhone 14 status note](docs/relaxin-roothide-iphone14.md) separates prepared source from verified deployment. The optional iCTRL source is pinned in [`vendor/ictrl`](vendor/ictrl/UPSTREAM.md) with its Apache 2.0 license and NOTICE; generated signing files, large build dependencies and pairing keys stay local.
 
 Copy APP expects a dedicated `mobile` SSH key at `cases/ssh/id_ed25519` (created by `onboard` if absent), a pinned host-key file at `cases/ssh-known-hosts`, and an SSH USB forward from Mac port `22222` to phone port `22`. In a separate terminal, one Copy APP command keeps both the SSH and iOS MCP forwards running:
 
@@ -262,7 +262,7 @@ Formal reports now render a bounded Assets.car name list and a metadata-only san
 
 `copyapp verify` checks recorded source links and file hashes. For a standalone `install.json` directory, it also rechecks the saved IPA hash, Bundle ID and version; that does not prove the App is still installed now. A matching hash does not prove that a decompiler interpretation is correct or that an app is functionally equivalent. Store raw IPA files, screenshots, sandbox snapshots, traces and credentials only in ignored local `cases/`. Reports should distinguish direct observations, inferences and unknown behavior.
 
-The current gaps are general discovery and independent implementation across unfamiliar apps, a real Claude CLI end-to-end run, broader app behavior and backend semantics, full sandbox and network interpretation, and cross-version validation. iOS 17 and 26 devices have not been run through this workflow.
+The current gaps are general discovery and independent implementation across unfamiliar apps, a real Claude CLI end-to-end run, broader app behavior and backend semantics, full sandbox and network interpretation, and cross-version validation. The iOS 17.3.1 iPhone 14 has passed only the initial USB survey; its RootHide deep-analysis and rebuild paths are pending. iOS 26 remains untested.
 
 ## Documentation
 

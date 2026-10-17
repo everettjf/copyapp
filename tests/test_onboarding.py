@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-from copyapp.doctor import _next_steps
+from copyapp.doctor import _frida_probe, _next_steps
 from copyapp.onboarding import _choose_device, _prepare_ssh_key, run_onboarding
 from copyapp.tunnels import run_tunnels
 
@@ -61,6 +61,21 @@ class OnboardingTest(unittest.TestCase):
             steps = _next_steps(UDID, probes, host, identity, known_hosts)
             self.assertEqual(len(steps), 1)
             self.assertIn("different phone", steps[0]["action"])
+
+    def test_frida_inventory_does_not_claim_jailed_access_is_ready(self):
+        device = SimpleNamespace(id=UDID, type="usb",
+                                 query_system_parameters=lambda: {"access": "jailed"},
+                                 enumerate_processes=lambda **kwargs: ["SpringBoard"])
+        manager = SimpleNamespace(enumerate_devices=lambda: [device])
+        with patch("frida.get_device_manager", return_value=manager):
+            result = _frida_probe(UDID)
+        self.assertEqual(result["status"], "unavailable")
+        self.assertEqual(result["access"], "jailed")
+        device.query_system_parameters = lambda: {"access": "full"}
+        with patch("frida.get_device_manager", return_value=manager):
+            result = _frida_probe(UDID)
+        self.assertEqual(result["status"], "available")
+        self.assertEqual(result["access"], "full")
 
     def test_tunnel_rejects_colliding_ports_before_spawning(self):
         with self.assertRaisesRegex(ValueError, "must differ"):

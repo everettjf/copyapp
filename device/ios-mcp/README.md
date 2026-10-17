@@ -11,12 +11,14 @@ package installers, Settings bundle, OCR worker, or third-party models.
 
 Local changes:
 
-- Build only a rootless SpringBoard tweak for arm64 and arm64e.
+- Build the tested rootless SpringBoard tweak for arm64 and arm64e; a RootHide
+  arm64e source build is prepared but not yet built or installed on a device.
 - Bind its HTTP listener to `127.0.0.1:8090` for USB port forwarding.
 - Advertise and accept only UI observation, gesture, text input, and App launch tools.
 - Return 404 for `/upload_file` and `/download_file`.
 - Use a separate Copy APP preferences domain and package identity.
-- Provide a rootless compatibility header for upstream `jbroot` path calls.
+- Use a fixed `/var/jb` compatibility helper for the tested rootless build;
+  select the real RootHide SDK header for `THEOS_PACKAGE_SCHEME=roothide`.
 - Refuse in-process Vision OCR inside SpringBoard. On XR/iOS 16.1.1 the
   detector crashed SpringBoard twice, including with `usesCPUOnly`; the Mac
   adapter now runs Vision against a USB screenshot instead.
@@ -27,6 +29,10 @@ Build with a complete Xcode installation, Theos, its iPhoneOS16.5 SDK, and
 ```sh
 THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules make package
 ```
+
+For Relaxin/RootHide, use [roothide/theos](https://github.com/roothide/theos)
+and `make THEOS_PACKAGE_SCHEME=roothide package`. This RootHide build has **not**
+been compiled or deployed yet; see the [iPhone 14 validation note](../../docs/relaxin-roothide-iphone14.md).
 
 The resulting `.deb` is under `packages/`. Before deploying a new build,
 inspect its archive paths and confirm that it contains only the tweak,

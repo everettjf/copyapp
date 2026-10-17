@@ -15,7 +15,7 @@ from typing import Any, Dict, Tuple
 from pymobiledevice3.lockdown import create_using_usbmux
 from pymobiledevice3.services.dvt.instruments.dvt_provider import DvtProvider
 from pymobiledevice3.services.dvt.instruments.device_info import DeviceInfo
-from pymobiledevice3.services.screenshot import ScreenshotService
+from copyapp.device_developer import take_screenshot
 
 from copyapp.ictrl import ICtrlClient, DEFAULT_CLIENT
 from copyapp.ios_mcp import IOSMCPClient
@@ -48,13 +48,11 @@ async def _usb_probes(udid: str, output: Path, probes: Dict[str, Any],
         )}
         probes["usb_lockdown"] = {"status": "available", "identity_verified": True}
         try:
-            async with ScreenshotService(device) as screen:
-                picture = await screen.take_screenshot()
-            if not picture:
-                raise RuntimeError("empty screenshot")
+            picture, route = await take_screenshot(device, udid, str(values.get("ProductVersion", "")))
             suffix = ".png" if picture.startswith(b"\x89PNG\r\n\x1a\n") else ".jpg"
             evidence.append(_record(output, "screenshot" + suffix, picture, "image"))
-            probes["usb_screenshot"] = {"status": "available", "bytes": len(picture)}
+            probes["usb_screenshot"] = {"status": "available", "bytes": len(picture),
+                                        "route": route}
         except Exception as exc:
             probes["usb_screenshot"] = _error(exc)
         try:
@@ -104,9 +102,16 @@ def _frida_probe(udid: str) -> Dict[str, Any]:
         device = next((item for item in devices if item.id == udid and item.type == "usb"), None)
         if device is None:
             return {"status": "unavailable", "reason": "exact USB UDID absent from Frida inventory"}
+        access = device.query_system_parameters().get("access")
+        if access != "full":
+            return {"status": "unavailable", "identity_verified": True,
+                    "access": access or "unknown", "host_frida_version": frida.__version__,
+                    "reason": "Frida sees this iPhone through jailed developer services; "
+                              "install and start a compatible frida-server inside the active jailbreak"}
         processes = device.enumerate_processes(scope="minimal")
         return {"status": "available", "identity_verified": True,
-                "host_frida_version": frida.__version__, "process_count": len(processes)}
+                "access": access, "host_frida_version": frida.__version__,
+                "process_count": len(processes)}
     except Exception as exc:
         return _error(exc)
 
@@ -188,7 +193,8 @@ def _next_steps(udid: str, probes: Dict[str, Any], host: Dict[str, Any],
                           "as shown in README.md."})
         else:
             steps.append({"for": "ssh_mobile", "action":
-                          "Install/start rootless OpenSSH on the phone; check mobile key login "
+                          "Install/start OpenSSH built for the phone's jailbreak (RootHide needs "
+                          "a RootHide package); check mobile key login "
                           f"and the pinned host key with ssh -p {ssh_port} -i {identity} "
                           f"-o UserKnownHostsFile={known_hosts} -o StrictHostKeyChecking=yes "
                           "mobile@127.0.0.1 'deviceinfo uniqueid'. See README.md for the "
@@ -220,8 +226,8 @@ def _next_steps(udid: str, probes: Dict[str, Any], host: Dict[str, Any],
     if (probes["ios_mcp"]["status"] != "available" and
             host["theos"]["status"] != "available"):
         steps.append({"for": "theos_tweak", "action":
-                      "For building the optional iOS MCP tweak, install Theos and the matching "
-                      "iPhoneOS SDK; set THEOS when building."})
+                      "For the optional iOS MCP tweak, install Theos and the matching iPhoneOS "
+                      "SDK. RootHide requires roothide/theos and THEOS_PACKAGE_SCHEME=roothide."})
     return steps
 
 
@@ -280,7 +286,7 @@ def run_doctor(udid: str, output: Path, ssh_port: int = 22222,
                  for index, item in enumerate(next_steps, 1))
     if not next_steps:
         lines.append("The probed channels are ready. Choose an App with `copyapp apps --udid <UDID> --all`.")
-    lines += ["", "A green probe covers only this run; rootless file markers alone do not prove tool compatibility.", ""]
+    lines += ["", "A green probe covers only this run; file markers alone do not prove jailbreak privileges or tool compatibility.", ""]
     evidence.append(_record(output, "report.md", "\n".join(lines).encode(), "text"))
     manifest = {"schema_version": 1,
                 "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

@@ -1,5 +1,5 @@
 #import "MCPProcessUtil.h"
-#include <roothide.h>
+#include "CopyAppJailbreakPath.h"
 #import <dispatch/dispatch.h>
 #import <errno.h>
 #import <fcntl.h>
