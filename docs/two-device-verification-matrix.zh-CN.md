@@ -6,7 +6,7 @@
 
 | 能力 | XR / iOS 16 | iPhone 14 / iOS 17 | 边界 |
 | --- | --- | --- | --- |
-| USB、截图、开发者文件系统、固定主机密钥的 mobile SSH、Frida、iOS MCP、已配对 iCTRL | 最新 `cases/ios16-v018-doctor-20261017/` 全部可用 | 最新 `cases/ios17-v018-doctor-20261017/` 全部可用 | 各代表一台手机的当前配置；能力探针通过不等于 App 行为通过。两份新案例通过 `copyapp verify`。 |
+| USB、截图、开发者文件系统、固定主机密钥的 mobile SSH、Frida、iOS MCP、已配对 iCTRL | `cases/ios16-v0110-doctor-20261017/` 全部可用 | `cases/ios17-v0110-doctor-20261017/` 全部可用 | 各代表一台手机的当前配置；能力探针通过不等于 App 行为通过。两份 v0.1.10 案例通过 `copyapp verify`。 |
 | 包、静态与有界沙盒证据 | Calculator 当前 Agent 父案例 `cases/calculator-current-auto-workflow-20261016/` 完成 | Calculator 父案例 `cases/ios17-calculator-current-parent-20261017/` 完成 | 只覆盖该构建及选定路径，未取得整个实时数据容器的一致性快照。 |
 | 加密 App 分析 | XR 发布记录中的 DeepSeek/Kimi 整包恢复 | [iPhone 14 记录](relaxin-roothide-iphone14.md)中的 Remoboard 主 App 与键盘扩展恢复 | 分析 IPA 不保留原签名；其他保护手段未覆盖。 |
 | 选定报告 → 独立 App → 同机对照 | Calculator 父案例 3/3 结果、三对截图审阅 | Calculator 父案例 4/4 结果、五对截图审阅 | 两份独立源码均早于所引用的父案例；未证明整 App 等价或零样本生成。 |
@@ -15,6 +15,8 @@
 | 两种界面后端：Safari 文本输入 | **同一提交脚本** `playbooks/ios17-safari-synthetic-address-input.json` 在 Safari 地址栏通过两个后端显示 `copyapp-fixture-hello`：`cases/ios16-safari-text-{iosmcp,ictrl}-20261017/` | 同脚本、同可见文字：`cases/ios17-safari-text-{iosmcp,ictrl}-20261017/` | 未提交搜索；其他输入框仍需逐一验证聚焦及可见结果。 |
 | 两种界面后端：Translate 文本输入 | **同一提交脚本** `playbooks/ios17-translate-synthetic-input.json` 在两个后端都显示 `copyappfixture` 和键盘：`cases/ios16-translate-text-{iosmcp,ictrl}-20261017/` | 同脚本、同精确原文：`cases/ios17-translate-text-{iosmcp,ictrl}-20261017/`；自动出现翻译结果 | 仅一段合成文字。未按提交键；没有评估 iOS 17 自动翻译结果的语义质量。四份案例均通过校验。 |
 | 两种界面后端：Clock 秒表 | **同一提交脚本** `playbooks/ios17-clock-stopwatch-start-stop.json` 经两个后端启动、停止非零秒表：`cases/ios16-clock-stopwatch-{iosmcp,ictrl}-20261017/` | 同脚本、同可见启停：`cases/ios17-clock-stopwatch-{iosmcp,ictrl}-20261017/` | 每个后端各一次短时前台运行，保存停止态截图和 UIKit 文字；未覆盖后台计时、闹钟与通知。四份案例均通过校验。 |
+| URLSession 观察与 Translate 输入 | `cases/ios16-translate-network-v0110-20261017/` 完成同一输入脚本并附加 8 个任务启动 hook | `cases/ios17-translate-network-v0110-20261017/` 完成同一脚本，经 RootHide Frida 独立服务附加 7 个 hook | 两份案例通过校验，均记录到**零条**任务启动事件。仅证明限定窗口内 hook 附加与界面重放成功；不能据此推断没有网络流量。其他网络 API、进程和时间窗口不在观察范围内。 |
+| URLSession 正事件对照：App Store Search 标签 | 一次启动失败和单独成功启动调查保留后，同一提交脚本 `playbooks/ios17-appstore-search-network-control.json` 捕获 21 条事件，其中 6 条落在点击窗口：`cases/ios16-appstore-search-network-retry-v0110-20261017/` | 同脚本捕获 12 条事件，其中 3 条落在点击窗口：`cases/ios17-appstore-search-network-v0110-20261017/` | 两份完成案例均通过校验。证明这些 App Store 进程和窗口内可采集任务启动元数据；时间相邻不证明每条请求均由点击引起。XR 首次失败案例保留。未执行搜索、安装或购买。 |
 | 同一独立 Clock 复刻项目跨系统 | 复刻版通过秒表成对对照、停止态与运行态重启检查、iCTRL 回归和运行中升级至构建 4；构建 4 的 TrollStore 升级经核对后重试一次才成功 | 同一源码通过成对对照、停止态与运行态重启检查、iCTRL 回归及签名后运行中升级至构建 4 | [双机记录](clock-clone-two-device.zh-CN.md)。当前安装案例保存 IPA 快照。v0.1.9 的状态丢失已修复；计时值、标签文案和样式仍有差异，长时间后台计时及 Clock 全功能未验证。 |
 | 已知源码夹具分享扩展 | [v0.1.5](releases/v0.1.5.zh-CN.md)中的固定文本接收与 Counter/Notes/Catalog 回归 | 相同 | 仅一种纯文本输入；其他内容类型和无关扩展未验证。 |
 
@@ -22,6 +24,6 @@ XR 旧 Translate 脚本点击 `(207,320)`，iOS MCP 虽返回字符派发成功�
 
 iOS 17 的 Translate 和 Clock 尚未完成首次使用引导时，iOS MCP 与原生 RSD 的启动请求报错；iCTRL 启动 Translate 也报错。但屏幕实际显示 SpringBoard 的对应 App **Welcome / Accept & Continue** 页面，因此不能把这些报错当作 App 未安装或损坏的证据。测试手机上的 Translate 随后完成首次使用设置：无线数据选 WLAN Only、可选 Siri/听写音频分享选 Not Now；Clock 欢迎页也已完成。两个 App 此后进入各自进程，通过上表的选定流程；重新运行的 `cases/ios17-{translate,clock}-post-onboarding-survey-20261017/` 也通过校验，采集前后的前台 Bundle ID 均与目标一致。失败尝试保留在 `cases/ios17-translate-{entry-survey,native-survey,ictrl-launch-probe}-20261017/` 与 `cases/ios17-clock-{entry-survey,native-survey}-20261017/`。首次使用选择属于设备状态，提交脚本以能够进入正常界面为前提。
 
-v0.1.7 发布后，XR 的 Calculator 和 Translate 父案例、iOS 17 的四流程 Calculator 和一流程 Hopper 父案例再次通过 `copyapp verify`。从正式发布页下载的 wheel 与已记载的 SHA-256 一致，并从独立 `/tmp` 安装目录加载版本与 CLI 帮助。这些是产物及证据完整性检查，不是重新执行所有原版/复刻版流程，也不能证明无关 App 行为。
+v0.1.7 发布后，XR 的 Calculator 和 Translate 父案例、iOS 17 的四流程 Calculator 和一流程 Hopper 父案例再次通过 `copyapp verify`。v0.1.10 正式发布页下载的 wheel 与发布 SHA-256 一致，并从独立 `/tmp` 安装目录加载版本与 CLI 入口；两机新建的 doctor 和 Translate 网络观察案例也通过 `copyapp verify`。这些是产物、通道及证据完整性检查，不是重新执行所有原版/复刻版流程，也不能证明无关 App 行为。
 
-仍需解决的产品级门槛包括：陌生 App 的自主发现和全新源码生成、独立 Claude CLI 运行、更广的 App 状态与服务端行为及完整沙盒解释。这些不能由绿色设备探针、选定流程通过或发布标签推出。iOS 26 不在此双机矩阵内。
+仍需解决的产品级门槛包括：陌生 App 的自主发现和全新源码生成、独立 Claude CLI 运行、更广的 App 状态与服务端行为、Clock 长时间计时、TrollStore 升级首次成功率，以及完整沙盒与网络解释。App Store 的正事件只覆盖一个进程和有界时间窗口，不能解释全部请求或服务端行为。更宽的结论不能由绿色设备探针、选定流程通过或发布标签推出。iOS 26 不在此双机矩阵内。

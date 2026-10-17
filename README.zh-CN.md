@@ -20,7 +20,7 @@ iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-
 
 [双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)又在两台手机上，用**同一脚本**分别经 iOS MCP 与 iCTRL 验证 Calculator `98→9` 左滑和 Safari 地址栏的合成文本输入，并在 iOS 17 上跑通一条 `hopper-direct` 分析到复刻父工作流。这些有界结果不代表所有输入框、手势或 App 都相同。
 
-新的 v0.1.8 `doctor` 案例确认两机已测设备通道全部可用；已发布的 v0.1.7 wheel 从隔离目录加载，四份已保存的分析到复刻父案例再次通过证据校验。[首次使用引导检查](docs/ios17-first-use-gates.zh-CN.md)发现，iOS 17 Translate 与 Clock 启动报错时，SpringBoard 实际显示欢迎页；完成引导后两者都进入自身前台进程。**同一份** Translate 输入和 Clock 秒表脚本又分别经 iOS MCP、iCTRL 在两机通过。XR 上旧的 `(207,320)` 点击仍无法显示输入，而点击提示附近 `(100,201)` 会显示键盘并成功输入。具体案例和边界见[矩阵](docs/two-device-verification-matrix.zh-CN.md)。
+新的 v0.1.10 `doctor` 案例确认两机已测设备通道全部可用；已发布的 v0.1.10 wheel 重新下载后与发布哈希一致，并通过隔离安装检查。[首次使用引导检查](docs/ios17-first-use-gates.zh-CN.md)发现，iOS 17 Translate 与 Clock 启动报错时，SpringBoard 实际显示欢迎页；完成引导后两者都进入自身前台进程。**同一份** Translate 输入和 Clock 秒表脚本又分别经 iOS MCP、iCTRL 在两机通过。XR 上旧的 `(207,320)` 点击仍无法显示输入，而点击提示附近 `(100,201)` 会显示键盘并成功输入。同脚本 URLSession 观察在两机附加后记录到零条任务启动事件；另一条 App Store Search 标签对照则在两机捕获到正事件。Translate 的零事件不能证明它没有网络请求。具体案例和边界见[矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
 [独立 Codex CLI 的 XR 实测](docs/external-codex-xr-trial.zh-CN.md)已完成 Calculator 的有来源报告、新 App 构建与安装、三条原版/复刻版行为对照。此次沿用已验证的发现脚本和既有复刻源码，具体范围见实测记录。
 
