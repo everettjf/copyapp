@@ -148,7 +148,7 @@ This does not block the verified RootHide package recovery route. App Store
 encryption and protection schemes can vary, so this Remoboard result is one
 package-level compatibility test.
 
-The updated known-source fixture 0.1.1 (2) also passed a real system share-sheet invocation of its packaged `FixtureShare.appex` on this iPhone 14. Its extension UI and the original Counter, Notes and Catalog regressions were observed through iOS MCP; see the [two-device share-extension record](fixture-share-extension-two-device.md). This validates the fixture entry, not generic third-party extension behavior.
+The updated known-source fixture 0.1.2 (3) passed a real system share-sheet invocation of its packaged `FixtureShare.appex` on this iPhone 14 and displayed the exact synthetic text received from the host App. Its extension UI and prior original Counter, Notes and Catalog regressions were observed through iOS MCP; see the [two-device share-extension record](fixture-share-extension-two-device.md). This validates one fixture text path, not generic third-party extension behavior.
 
 Sources: [Relaxin](https://github.com/owngoal-dev/Relaxin),
 [RootHide developer instructions](https://github.com/roothide/Developer),

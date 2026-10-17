@@ -6,7 +6,7 @@ Copy APP treats “analyze” and “rebuild” as one resumable, evidence-gated
 
 The core stages are validated on iPhone XR / iOS 16.1.1 (rootless) and on [iPhone 14 / iOS 17.3.1 (Relaxin/RootHide)](relaxin-roothide-iphone14.md). The earlier iOS 17 run reused an existing clone; a separate [new-source four-flow pilot](ios17-calculator-fresh-from-report.md) now validates report-guided implementation and real-device comparison. See the [support table](../README.md) for device setup and limits.
 
-The known-source fixture's packaged share extension has also been [opened through the system share sheet on both phones](fixture-share-extension-two-device.md). This verifies invocation and visible UI for that extension; shared-item processing remains outside the fixture's implementation.
+The known-source fixture's packaged share extension has also been [opened through the system share sheet on both phones](fixture-share-extension-two-device.md). Its current version reads and displays the exact synthetic plain-text item on both devices; other item types and extensions remain outside this check.
 
 For a new Mac and phone, run `sh scripts/bootstrap-macos.sh`, then `.venv/bin/copyapp onboard --stage rebuild` (add `--udid` when several devices are connected). It saves a device and Mac capability report with ordered repairs. Once the required phone services and pinned SSH key are ready, the analysis and copy workflows open their own exact-device SSH and UI forwards. Keep `.venv/bin/copyapp tunnel --udid <UDID>` open only when doing the one-time host-key check or interactive UI work. SSH host-key fingerprint comparison and phone pairing prompts remain explicit one-time steps.
 

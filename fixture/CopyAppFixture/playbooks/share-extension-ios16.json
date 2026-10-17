@@ -14,7 +14,7 @@
     {"action": "observe", "contains": "Suggestions"},
     {"action": "screenshot", "stable": true, "ready_contains": "Suggestions"},
     {"action": "tap", "x": 176, "y": 481},
-    {"action": "observe", "wait_ms": 500, "contains": "Copy APP Fixture Share Extension"},
-    {"action": "screenshot", "stable": true, "ready_contains": "Copy APP Fixture Share Extension"}
+    {"action": "observe", "wait_ms": 500, "contains": ["Copy APP Fixture Share Extension", "Received: Copy APP fixture sample text"]},
+    {"action": "screenshot", "stable": true, "ready_contains": "Received: Copy APP fixture sample text"}
   ]
 }

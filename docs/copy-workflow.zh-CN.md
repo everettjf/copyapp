@@ -49,4 +49,4 @@ iOS 16.1.1 的 iPhone XR 已完成 Clock 三流程的当前 Agent 父案例：�
 
 此前的 iOS 17 Calculator 交付沿用既有复刻版；另一次[从报告重新编写源码并扩展四流程的试验](ios17-calculator-fresh-from-report.zh-CN.md)现在已在 iPhone 14 上通过签名安装、四流程同机成对断言和五组截图审阅。此结果仍不代表陌生 App 的零样本自主复刻或 Calculator 全功能等价。
 
-已知源码夹具的[分享扩展用户入口](fixture-share-extension-two-device.zh-CN.md)现也在 iOS 16/17 两台手机上通过系统分享菜单实际打开；验证覆盖入口和可见页面，不包含分享内容处理。
+已知源码夹具的[分享扩展](fixture-share-extension-two-device.zh-CN.md)现也在 iOS 16/17 两台手机上通过系统分享菜单实际打开并显示收到的精确合成文本；其他内容类型和扩展不在此项验证内。
