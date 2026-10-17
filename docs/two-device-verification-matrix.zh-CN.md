@@ -25,6 +25,7 @@
 | 陌生 App 入口与三条界面路径：Apple Podcasts | 完成新功能页后，`cases/ios16-podcasts-main-survey-20261017/` 确认 Podcasts 处于前台；`cases/ios16-podcasts-discovery-20261017/` 的资料库、搜索、现在收听 3/3 通过。 | 初次启动失败时屏幕显示 SpringBoard 的 Podcasts 欢迎页。完成引导、选择 WLAN Only 并越过新功能页后，`cases/ios17-podcasts-main-survey-20261017/` 确认 Podcasts 处于前台；`cases/ios17-podcasts-discovery-20261017/` 的同三个目的页 3/3 通过。 | 四份完成案例均通过 `copyapp verify`；六张末端截图已逐张查看。两机资料库数据不同，坐标脚本也分别编写。此处只验证进入 App、导航与可见终态；未验证砸壳、深度报告、生成源码、播放或整 App 等价。 |
 | Podcasts 审阅报告与内嵌 Framework 跟踪 | XR 的报告及分析交付各验证三条有来源流程；在搜索点击窗口，内嵌 `PodcastsStoreUI` 的 `SearchLandingCell::initWithFrame:` 当前 IMP 与静态偏移各记录 12 次命中。 | iOS 17 的报告与分析交付同样验证三条流程；该 Framework 静态 hook 成功附加，但本次搜索点击窗口中初始化方法为零次，标签控制器布局方法记录一次。 | [完整记录](podcasts-two-device-report-rebuild.zh-CN.md)。时间相邻不证明点击因果或类的完整行为；Hopper 只解释选定入口，没有恢复原始源码或服务端实现。 |
 | 全新编写的 Podcasts UIKit 复刻版 | `cases/ios16-podcasts-fresh-install-20261017/`、成对检查和交付验证 3/3 页面标题；三对截图均审阅，搜索插画有重大差异。 | `cases/ios17-podcasts-fresh-install-20261017/`、成对检查和交付验证 3/3 页面标题；三对截图均有重大差异，包括缺少账号相关节目内容。 | 源码见 [PodcastsFreshProbe](../rebuild/PodcastsFreshProbe/README.md)，写于报告之后。两机交付状态均为 `selected_behavior_verified_visual_gap`；导航可用不代表视觉或功能完整等价。 |
+| Podcasts 复刻版递增版本升级与回归 | 旧 shell 启动的 TrollStore 路径在 build 2 超时两次、build 4 超时一次，检查时旧版仍在。build 4 超时前，无参数 helper 启动探测曾通过。独立的直接启动诊断装上 build 4；新版 root Frida 直接 helper 路径首次装上 build 5 和 6，安装案例均通过校验。build 5 的资料库、搜索、现在收听脚本通过，build 6 启动采集通过。 | Apple Development 签名 USB 路径的 build 2、3、4、5、6 更新均首次成功；build 5 的同三条复刻版脚本通过，build 6 启动采集通过。 | [v0.1.14 发布记录](releases/v0.1.14.zh-CN.md)。直接路径核验 root UID、helper 进程退出及安装服务中的准确版本/构建号；无法取得 helper 退出码和标准输出。两次正式 XR 升级不能保证长期首次成功率，也不代表 Podcasts 功能完整等价。 |
 
 XR 旧 Translate 脚本点击 `(207,320)`，iOS MCP 虽返回字符派发成功，界面却无文字。同一旧脚本在 `cases/ios16-translate-old-tap-control-20261017/` 再次失败，截图有光标而无键盘。新共享脚本点击可见输入提示 `(100,201)`，键盘出现，两机两后端都通过。这证明该界面存在随点击及聚焦状态变化的差异，不能据此推断 XR 整机的 iOS MCP 文本输入失败。
 
@@ -34,4 +35,4 @@ Podcasts 在 iOS 17 上重现相同的首次启动现象：第一次 `survey --l
 
 v0.1.7 发布后，XR 的 Calculator 和 Translate 父案例、iOS 17 的四流程 Calculator 和一流程 Hopper 父案例再次通过 `copyapp verify`。v0.1.10 正式发布页下载的 wheel 与发布 SHA-256 一致，并从独立 `/tmp` 安装目录加载版本与 CLI 入口；两机新建的 doctor 和 Translate 网络观察案例也通过 `copyapp verify`。这些是产物、通道及证据完整性检查，不是重新执行所有原版/复刻版流程，也不能证明无关 App 行为。
 
-仍需解决的产品级门槛包括：陌生 App 的完全自主发现及源码生成（Podcasts 源码由当前 Agent 编写）、独立 Claude CLI 运行、更广的 App 状态与服务端行为、Clock 数小时或受系统事件干扰的计时、TrollStore 升级首次成功率，以及完整沙盒与网络解释。App Store 的正事件只覆盖一个进程和有界时间窗口，不能解释全部请求或服务端行为。更宽的结论不能由绿色设备探针、选定流程通过或发布标签推出。iOS 26 不在此双机矩阵内。
+仍需解决的产品级门槛包括：陌生 App 的完全自主发现及源码生成（Podcasts 源码由当前 Agent 编写）、独立 Claude CLI 运行、更广的 App 状态与服务端行为、Clock 数小时或受系统事件干扰的计时、新版 TrollStore 直接路径的长期可靠性，以及完整沙盒与网络解释。App Store 的正事件只覆盖一个进程和有界时间窗口，不能解释全部请求或服务端行为。更宽的结论不能由绿色设备探针、选定流程通过或发布标签推出。iOS 26 不在此双机矩阵内。

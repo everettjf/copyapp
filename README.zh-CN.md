@@ -16,7 +16,7 @@ Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱�
 
 iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。此前交付的复刻版源码和 IPA 早于本报告存在；另一次[从报告新写源码并扩展四流程的试验](docs/ios17-calculator-fresh-from-report.zh-CN.md)已完成构建、签名、安装和同机对照。Calculator 全功能等价仍未验证。现有 RootHide Frida 服务不能提供 root `root-run`；已验证的加密包恢复路径使用 mobile SSH。
 
-[v0.1.13 发布](docs/releases/v0.1.13.zh-CN.md)新增精确的内嵌 Framework 静态跟踪，并在两机上验证了 Podcasts 的新源码分析到复刻流程。[v0.1.12 发布](docs/releases/v0.1.12.zh-CN.md)此前让独立的 `acquire` 和 `sandbox` 命令自行管理精确设备 SSH 转发；更早版本记录了 Clock 复刻版升级与 TrollStore 超时诊断。
+[v0.1.14 发布](docs/releases/v0.1.14.zh-CN.md)把 XR 上的 TrollStore 安装改为由 root Frida 直接启动指定 helper，再通过安装服务核对版本与构建号。XR 以此路径完成两次递增版本升级，iPhone 14 的对应签名 USB 升级也通过。[v0.1.13 发布](docs/releases/v0.1.13.zh-CN.md)此前加入内嵌 Framework 跟踪与两机 Podcasts 新源码复刻试验。
 
 Podcasts 在两机上分别完成了[审阅报告与全新独立 UIKit 复刻工程](docs/podcasts-two-device-report-rebuild.zh-CN.md)。资料库、搜索和现在收听的同机页面标题检查均为 3/3 通过；逐图审阅发现重大视觉差异，尤其是分类插画与 iOS 17 账号相关内容，因此**不能宣称完整视觉或功能复刻**。iOS 17 首次启动需先完成 SpringBoard 引导。[证据与边界见矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
@@ -454,7 +454,7 @@ RootHide 的 iPhone 14 使用同一个固定 helper 和相同的逐字节审计�
 
 两个 XR 试点可运行 `sh scripts/compose-pilot-report.sh compass cases/<NEW_CASE>` 或 `sh scripts/compose-pilot-report.sh fixture cases/<NEW_CASE>` 重建，脚本会在生成后调用 `copyapp verify`。报告器已用 DeepSeek 的已解密案例核对：优先展示解密后主程序和类索引，同时保留磁盘快照索引；没有账号会话时，登录后行为仍标记未知。单独导入的截图或数据文件只由报告器校验内容哈希，设备和 App 归属须从其采集记录另行确认。
 
-`install` 默认将本地 IPA 经指定设备的 USB SSH 传输、校验 SHA-256、调用现有的 TrollStore helper，然后用安装服务核对 Bundle ID 与版本；手机上的暂存 IPA 在结束时删除，Mac 端案例则保存 `input.ipa` 快照，避免后续构建覆盖证据。该路径已在 XR 上用测试夹具实测更新并启动。对于 Apple Development 签名的 IPA，可用 `--transport usb` 直接通过安装服务安装，无需 TrollStore 或 SSH；iPhone 14/iOS 17.3.1 的 Calculator 复刻版已成功安装，安装案例核对了设备 UDID、IPA 哈希、版本和有效签名配置。已配置配对 iCTRL 时，安装前会请求结束**目标 Bundle ID** 的旧进程；XR TrollStore 路径还会核对 Frida 进程路径及设备端 `Info.plist`，再清理同 Bundle ID 的残留 mobile 进程。升级前请保存目标 App 的未保存内容。两机已实测旧版运行时升级 Clock；XR 经 TrollStore 重装完全相同的版本/构建号曾两次超时，另一次递增版本升级首次超时、核对安装数据库后用保留 IPA 重试成功。TrollStore helper 超时后，案例会保存有界的 `device-run/output.txt`、进程停止请求状态，并在 `install.json` 的 `installed_after_timeout` 中记录安装数据库的即时观察；重试前先检查这些记录。发出停止请求不等于证明 helper 及其子进程已退出。更新时应递增构建号，结果不明时先查安装数据库。复刻版随后启动并通过一条同机运算流程。例如：
+`install` 默认将本地 IPA 经指定设备的 USB SSH 传输并校验 SHA-256，再用 XR 上已有的 TrollStore helper 安装；Mac 端案例保存 `input.ipa` 快照。新版直接由 root Frida 启动指定 helper，核验 UID 0、该进程退出，以及安装服务中的准确 Bundle ID、版本和构建号。结果写入 `device-run/result.json`；直接启动无法获取旧 shell 路径的 `output.txt` 或退出码。若超时，`install.json` 会记录 `installed_after_timeout` 和停止请求；人工重试前应检查两份记录及手机现状。旧 shell 路径多次卡满 120 秒，一次甚至在无参数启动探测成功后仍卡住。新版 XR 连续两次递增版本升级首次成功，iPhone 14 两次相应的签名 USB 升级也首次成功；这些有界样本不能保证任意更新首次成功。已配对 iCTRL 时会请求结束目标 Bundle ID；XR 还按 Frida 路径及设备端 `Info.plist` 核查同一 App 的残留 mobile 进程。升级前先保存 App 中未保存内容并递增构建号。`--transport usb` 可直接安装有效 Apple Development 签名 IPA，无需 TrollStore 或 SSH。安装成功仍需启动与原版/复刻版界面流程验证。例如：
 
 ```sh
 .venv/bin/copyapp install --udid <UDID> --ipa <LOCAL_IPA> --out cases/<INSTALL_CASE>

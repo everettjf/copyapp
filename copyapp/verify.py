@@ -65,7 +65,14 @@ def install_transport_complete(record: dict) -> bool:
     """Check the saved installation method without conflating USB and TrollStore."""
     transport = record.get("transport", "trollstore")
     if transport == "trollstore":
-        return (record.get("helper_exit_code") == 0 and
+        legacy = record.get("helper_exit_code") == 0
+        direct = (record.get("helper_run_status") == "process_exited" and
+                  record.get("helper_effective_uid") == 0 and
+                  record.get("helper_install_verified") is True and
+                  isinstance(record.get("installed_path"), str) and
+                  record["installed_path"].startswith("/") and
+                  record["installed_path"].endswith(".app"))
+        return ((legacy or direct) and
                 record.get("staged_sha256") == record.get("ipa_sha256"))
     if transport == "usb":
         return (record.get("usb_install_completed") is True and
@@ -92,6 +99,16 @@ def verify_install(directory: Path) -> bool:
         if (not ipa.is_file() or ipa.is_symlink() or
                 sha256_file(ipa) != record["ipa_sha256"]):
             return False
+        if record.get("transport") == "trollstore" and record.get("helper_install_verified") is True:
+            run = json.loads((directory / "device-run/result.json").read_text(encoding="utf-8"))
+            command = run.get("command")
+            if (run.get("device_id") != record["device_id"] or
+                    run.get("status") != "process_exited" or
+                    run.get("effective_uid") != 0 or
+                    not isinstance(run.get("pid"), int) or run["pid"] <= 0 or
+                    not isinstance(command, list) or len(command) != 4 or
+                    command[:3] != [record.get("helper"), "install", "custom"]):
+                return False
         package = analyze_ipa(ipa)
         ok = (package.get("bundle_id") == record.get("bundle_id") and
               package.get("version") == record.get("version") and

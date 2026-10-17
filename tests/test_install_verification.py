@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from copyapp.install import (_install_trollstore_ipa_via_ssh,
+                             _run_trollstore_helper_direct,
                              _stop_stale_mobile_processes, install_trollstore_ipa,
                              install_usb_ipa)
 from copyapp.verify import sha256_file, verify_case
@@ -46,7 +47,7 @@ class InstallationVerificationTest(unittest.TestCase):
                  patch("copyapp.install._stop_stale_mobile_processes",
                        return_value={"status": "clear", "count": 0}), \
                  patch("copyapp.install.subprocess.run", side_effect=run), \
-                 patch("copyapp.install.run_root_command",
+                 patch("copyapp.install._run_trollstore_helper_direct",
                        side_effect=TimeoutError("helper uncertain")) as helper_run, \
                  patch("copyapp.install._installed_app", new=AsyncMock(return_value={
                      "CFBundleShortVersionString": "1.0", "CFBundleVersion": "1",
@@ -60,6 +61,48 @@ class InstallationVerificationTest(unittest.TestCase):
             self.assertEqual(record["installed_after_timeout"]["build"], "1")
             self.assertTrue((root / "install/input.ipa").is_file())
             helper_run.assert_called_once()
+
+    def test_direct_helper_waits_for_exact_process_exit(self):
+        udid = "00008020-000D650434B8003A"
+        helper = "/var/containers/Bundle/Application/TrollStore.app/trollstorehelper"
+        device = MagicMock(id=udid, type="usb")
+        device.spawn.return_value = 42
+        device.enumerate_processes.side_effect = [[MagicMock(pid=42)], []]
+        frida = MagicMock()
+        frida.get_device_manager.return_value.get_device.return_value = device
+        with tempfile.TemporaryDirectory() as directory, \
+             patch.dict(sys.modules, {"frida": frida}), \
+             patch("copyapp.install._spawned_effective_uid", return_value=0), \
+             patch("copyapp.install.time.sleep"):
+            output = Path(directory) / "run"
+            result = _run_trollstore_helper_direct(
+                udid, helper, "/var/mobile/Media/example.ipa", output)
+            self.assertEqual(result["status"], "process_exited")
+            self.assertEqual(json.loads((output / "result.json").read_text()), result)
+        device.spawn.assert_called_once_with([
+            helper, "install", "custom", "/var/mobile/Media/example.ipa"])
+        device.resume.assert_called_once_with(42)
+        device.kill.assert_not_called()
+
+    def test_direct_helper_timeout_records_stop_request(self):
+        udid = "00008020-000D650434B8003A"
+        device = MagicMock(id=udid, type="usb")
+        device.spawn.return_value = 42
+        device.enumerate_processes.return_value = [MagicMock(pid=42)]
+        frida = MagicMock()
+        frida.get_device_manager.return_value.get_device.return_value = device
+        with tempfile.TemporaryDirectory() as directory, \
+             patch.dict(sys.modules, {"frida": frida}), \
+             patch("copyapp.install._spawned_effective_uid", return_value=0), \
+             patch("copyapp.install.time.monotonic", side_effect=[0, 121]):
+            output = Path(directory) / "run"
+            with self.assertRaises(TimeoutError):
+                _run_trollstore_helper_direct(
+                    udid, "/helper", "/var/mobile/Media/example.ipa", output)
+            result = json.loads((output / "result.json").read_text())
+            self.assertEqual(result["status"], "timed_out")
+            self.assertTrue(result["process_stop_requested"])
+        device.kill.assert_called_once_with(42)
 
     def test_stale_process_cleanup_checks_each_bundle_id_before_killing(self):
         suffix = "/CopyAppClock.app/CopyAppClock"
@@ -124,6 +167,36 @@ class InstallationVerificationTest(unittest.TestCase):
             with patch("copyapp.ipa.analyze_ipa", return_value=package):
                 self.assertTrue(verify_case(case))
                 ipa.write_bytes(b"changed package")
+                self.assertFalse(verify_case(case))
+
+    def test_direct_helper_install_verifies_saved_process_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            case = root / "install"
+            (case / "device-run").mkdir(parents=True)
+            ipa = case / "input.ipa"
+            ipa.write_bytes(b"saved package")
+            digest = sha256_file(ipa)
+            udid = "00008020-000D650434B8003A"
+            helper = "/var/containers/Bundle/Application/TrollStore.app/trollstorehelper"
+            record = {"schema_version": 1, "transport": "trollstore",
+                      "status": "installed", "device_id": udid, "ipa": str(ipa),
+                      "ipa_sha256": digest, "staged_sha256": digest,
+                      "bundle_id": "com.copyapp.example", "version": "2.0", "build": "2",
+                      "helper": helper, "helper_run_status": "process_exited",
+                      "helper_effective_uid": 0, "helper_install_verified": True,
+                      "installed_path": "/Applications/Example.app"}
+            run = {"device_id": udid, "status": "process_exited", "effective_uid": 0,
+                   "pid": 42, "command": [helper, "install", "custom",
+                                          "/var/mobile/Media/example.ipa"]}
+            (case / "install.json").write_text(json.dumps(record))
+            result = case / "device-run/result.json"
+            result.write_text(json.dumps(run))
+            package = {"bundle_id": "com.copyapp.example", "version": "2.0", "build": "2"}
+            with patch("copyapp.ipa.analyze_ipa", return_value=package):
+                self.assertTrue(verify_case(case))
+                run["effective_uid"] = 501
+                result.write_text(json.dumps(run))
                 self.assertFalse(verify_case(case))
 
     def test_usb_install_checks_exact_device_and_profile(self):

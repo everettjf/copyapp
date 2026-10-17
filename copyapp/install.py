@@ -18,7 +18,7 @@ from pymobiledevice3.services.installation_proxy import InstallationProxyService
 
 from copyapp.ipa import analyze_ipa
 from copyapp.ictrl import DEFAULT_CLIENT, ICtrlClient
-from copyapp.root_bridge import run_root_command
+from copyapp.root_bridge import _spawned_effective_uid
 from copyapp.ssh_acquire import _ssh_argv
 from copyapp.usb_tunnel import (configured_ictrl_runner_bundle, exact_ssh_tunnel,
                                 ictrl_tunnel)
@@ -106,6 +106,46 @@ def _snapshot_ipa(ipa: Path, output: Path) -> Tuple[Path, Path]:
     return saved.resolve(strict=True), source
 
 
+def _run_trollstore_helper_direct(udid: str, helper: str, remote_ipa: str,
+                                  output: Path, timeout: int = 120) -> Dict[str, Any]:
+    """Spawn the exact helper as root, without a shell that can stall before exec."""
+    import frida
+
+    device = frida.get_device_manager().get_device(udid, timeout=5)
+    if device.id != udid or device.type != "usb":
+        raise RuntimeError("Frida did not resolve the named USB device")
+    output.mkdir(parents=True, exist_ok=False)
+    command = [helper, "install", "custom", remote_ipa]
+    pid = device.spawn(command)
+    record: Dict[str, Any] = {
+        "schema_version": 1, "device_id": udid, "transport": "Frida direct root spawn",
+        "command": command, "pid": pid, "status": "started",
+        "exit_code": None, "output_unavailable": True,
+    }
+    try:
+        uid = _spawned_effective_uid(device, pid)
+        record["effective_uid"] = uid
+        if uid != 0:
+            raise RuntimeError(f"Frida helper effective UID {uid}; expected root")
+        device.resume(pid)
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if pid not in {process.pid for process in device.enumerate_processes(scope="full")}:
+                record["status"] = "process_exited"
+                return record
+            time.sleep(0.25)
+        record["status"] = "timed_out"
+        raise TimeoutError(f"TrollStore helper process {pid} exceeded {timeout}s")
+    finally:
+        if record["status"] != "process_exited":
+            try:
+                device.kill(pid)
+                record["process_stop_requested"] = True
+            except Exception as exc:
+                record["process_stop_error"] = f"{type(exc).__name__}: {str(exc)[:180]}"
+        (output / "result.json").write_text(json.dumps(record, indent=2) + "\n")
+
+
 def _install_trollstore_ipa_via_ssh(udid: str, ipa: Path, output: Path,
                                    ssh_port: int, identity: Path,
                                    known_hosts: Path) -> Path:
@@ -118,6 +158,7 @@ def _install_trollstore_ipa_via_ssh(udid: str, ipa: Path, output: Path,
         raise ValueError("IPA has no valid bundle ID")
     record: Dict[str, Any] = {
         "schema_version": 1,
+        "transport": "trollstore",
         "started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "device_id": udid,
         "ipa": str(saved_ipa),
@@ -161,9 +202,8 @@ def _install_trollstore_ipa_via_ssh(udid: str, ipa: Path, output: Path,
         if remote_hash != package["ipa_sha256"]:
             raise RuntimeError("staged IPA hash mismatch")
         try:
-            run = run_root_command(udid, [helpers[0], "install", "custom", remote_ipa],
-                                   output / "device-run", ssh_port, identity, known_hosts,
-                                   timeout=120)
+            run = _run_trollstore_helper_direct(
+                udid, helpers[0], remote_ipa, output / "device-run", timeout=120)
         except TimeoutError:
             try:
                 observed = asyncio.run(asyncio.wait_for(
@@ -178,16 +218,22 @@ def _install_trollstore_ipa_via_ssh(udid: str, ipa: Path, output: Path,
                 record["installed_after_timeout_error"] = (
                     f"{type(probe_error).__name__}: {str(probe_error)[:180]}")
             raise
-        record["helper_exit_code"] = run["exit_code"]
-        if run["exit_code"] != 0:
-            raise RuntimeError(f"TrollStore helper exited {run['exit_code']}; inspect device-run/output.txt")
-        installed = asyncio.run(_installed_app(udid, bundle_id))
+        record["helper_run_status"] = run["status"]
+        record["helper_effective_uid"] = run["effective_uid"]
+        installed = {}
+        for _ in range(10):
+            installed = asyncio.run(_installed_app(udid, bundle_id))
+            if (str(installed.get("CFBundleShortVersionString")) == str(package.get("version")) and
+                    str(installed.get("CFBundleVersion")) == str(package.get("build"))):
+                break
+            time.sleep(1)
         if not installed:
-            raise RuntimeError("installer returned success but app is absent from InstallationProxy")
+            raise RuntimeError("TrollStore helper exited but app is absent from InstallationProxy")
         if (str(installed.get("CFBundleShortVersionString")) != str(package.get("version")) or
                 str(installed.get("CFBundleVersion")) != str(package.get("build"))):
             raise RuntimeError("installed app version/build does not match the IPA")
         record["installed_path"] = installed.get("Path")
+        record["helper_install_verified"] = True
         record["status"] = "installed"
     except Exception as exc:
         record["error"] = {"type": type(exc).__name__, "message": str(exc)[:400]}
