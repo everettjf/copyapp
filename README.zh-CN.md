@@ -12,6 +12,19 @@
 | iPhone 14 · iOS 17.3.1 · Relaxin/RootHide | 完成四流程 `copyapp copy` 父案例：Calculator 审阅报告、原版按键跟踪、独立签名复刻版、四条末端断言和五组截图审阅；Remoboard 加密包恢复；夹具流程、SQLite 核对及分享扩展收到固定文本；原版 Translate 输入与 Clock 秒表的选定流程经两种界面后端通过 | ElleKit 与 RootHide iOS MCP、mobile SSH、固定版本 Frida 17.23.3 独立服务、复刻版的 Apple Development 签名；Translate/Clock 首次使用引导已完成 |
 | iPhone 11 · iOS 26.0.1 | 未测试 | 暂无配置或兼容性结论 |
 
+### v0.1.15 阶段性状态
+
+双机选定流程验收及 [v0.1.15 正式发布](https://github.com/everettjf/copyapp/releases/tag/v0.1.15)后，开发暂时收尾。发布 wheel 已重新下载并核对 SHA-256；修复独立 wheel 的 iCTRL 定位后，同一条九步 Calculator `7 + 8 = 15` 脚本在两机通过；321 项单测通过。完整证据与边界见[双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)。
+
+| 配置差异 | iPhone XR / iOS 16.1.1 | iPhone 14 / iOS 17.3.1 |
+| --- | --- | --- |
+| 越狱及设备服务 | Dopamine rootless；普通 rootless iOS MCP | Relaxin/RootHide；RootHide iOS MCP 需要 ElleKit |
+| Frida 与加密包恢复 | 与 Mac 版本匹配的 Frida 和已验证的 root helper 路径；测过 DeepSeek/Kimi | RootHide 自带 Frida 16.1.4 附加原版 Calculator 失败，隔离的 17.23.3 服务可用；Remoboard 主 App 与键盘扩展经 mobile SSH 恢复，通用 `root-run` 不可用 |
+| 复刻版安装 | root Frida 启动 TrollStore helper，并核对安装版本及构建号 | Apple Development 签名 IPA 经 USB InstallationProxy 安装 |
+| 最新开发者文件探针 | 重挂开发者镜像后，文件列表仍报 `ConnectionTerminatedError`；SSH、Frida、iOS MCP、iCTRL 可用 | 文件列表和其他已测通道可用 |
+
+**后续工作：**恢复并复测 XR 开发者文件服务；在全新 Mac 验证环境搭建及更长期的设备、安装可靠性；证明无需预置脚本的陌生 App 自主发现和新源码生成；扩展 App 状态、网络与视觉覆盖。独立 Claude CLI 全流程、Clock 数小时或受系统事件干扰的行为、iOS 26 均未验证。目前交付的是对选定流程做过衡量的独立 App，不能称为任意 App 的完整复刻。
+
 Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 导出包和索引数据沙盒；本地解析 Mach-O。XR 上的 Compass 已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展已恢复为可分析 IPA。iPhone 14 上的 Frida 17 独立服务已对原版 Calculator 完成逐次点击跟踪。
 
 iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。此前交付的复刻版源码和 IPA 早于本报告存在；另一次[从报告新写源码并扩展四流程的试验](docs/ios17-calculator-fresh-from-report.zh-CN.md)已完成构建、签名、安装和同机对照。Calculator 全功能等价仍未验证。现有 RootHide Frida 服务不能提供 root `root-run`；已验证的加密包恢复路径使用 mobile SSH。
