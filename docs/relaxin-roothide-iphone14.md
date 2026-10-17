@@ -122,9 +122,12 @@ RootHide's mobile SSH shell sees the shared device Media directory at
 `/var/mobile/Media`. Copy APP now maps these paths and runs the pinned helper
 as the paired mobile user with a 120-second device timeout. The ordinary
 rootless route continues to use Frida for its bounded root command. The
-generic `root-run` command has **not** passed on this RootHide phone: a no-op
-shell process spawned through Frida but produced no completion marker. This
-does not block the verified RootHide package recovery route. App Store
+generic `root-run` command is **not available** through the installed RootHide
+Frida server: an instrumented, suspended shell child reported effective UID
+`501` (`mobile`). Copy APP now checks the child's effective UID before resuming
+it and rejects this case promptly rather than waiting for a completion marker
+or claiming root execution. Its CLI also owns the exact-device SSH forward.
+This does not block the verified RootHide package recovery route. App Store
 encryption and protection schemes can vary, so this Remoboard result is one
 package-level compatibility test.
 

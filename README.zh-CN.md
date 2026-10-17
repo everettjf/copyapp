@@ -380,7 +380,7 @@ Clock 随后扩展到四个主标签：[四流程分析报告](cases/clock-four-
 
 `decrypt-package` 是 XR 已验证的完整路径。先运行 `sh scripts/prepare-ipadecrypt-helper.sh` 获取固定提交的设备 helper；普通 rootless 路径检查本机和设备端的 helper SHA-256、USB Frida 与 SSH 指向同一 UDID、原包版本/构建号及传输哈希。它限时启动 helper，恢复主程序和扩展；再逐一检查包内 Mach-O，并确认每个原加密二进制只有加密区和 `cryptid` 字段发生变化。Mac 端还核对归档成员及未加密文件字节，只允许省略 `SC_Info` 收据，并用原包的 ZIP 元数据重组分析 IPA，避免设备端时间戳影响内容哈希。成功后自动生成解密后的 IPA 静态索引和主程序 Objective-C 类/方法索引，并写出可用 `copyapp verify <DECRYPT_CASE>` 再次审计的独立案例；[XR 实跑结果](cases/deepseek-verifiable-decrypt-live-20261015/manifest.json)已通过。输出仍是**分析 IPA**，不保证可安装。`decrypt-extension` 提供已运行扩展的直接 Frida 读取接口；XR 上对 Kimi/DeepSeek 分享扩展的附加均超时，因此当前正式整包路径使用 `decrypt-package`。`assemble-ipa` 的 `--recovered` 可重复提供已验证的主程序与扩展案例。
 
-RootHide 的 iPhone 14 使用同一个固定 helper 和相同的逐字节审计，但设备端改由已配对的 mobile SSH 在限定时间内执行，不依赖 Frida root spawn。SSH 中的共享目录为 `/rootfs/var/mobile/Media`，helper 写入时使用真实 `/var/mobile/Media`。Remoboard 主程序与键盘扩展的 `cryptid=1` 均恢复为 0，[独立案例](cases/iphone14-remotekb-roothide-decrypt-20261017/manifest.json)和[一命令 `analyze --decrypt` 案例](cases/iphone14-remotekb-full-analyze-20261017/analysis.md)检查 3 个 Mach-O、恢复 2 个加密二进制，均通过 `copyapp verify`。该案例没有启动 App，采集到的界面归属是 SpringBoard；通用 `root-run` 在 RootHide 上仍未验收。
+RootHide 的 iPhone 14 使用同一个固定 helper 和相同的逐字节审计，但设备端改由已配对的 mobile SSH 在限定时间内执行，不依赖 Frida root spawn。SSH 中的共享目录为 `/rootfs/var/mobile/Media`，helper 写入时使用真实 `/var/mobile/Media`。Remoboard 主程序与键盘扩展的 `cryptid=1` 均恢复为 0，[独立案例](cases/iphone14-remotekb-roothide-decrypt-20261017/manifest.json)和[一命令 `analyze --decrypt` 案例](cases/iphone14-remotekb-full-analyze-20261017/analysis.md)检查 3 个 Mach-O、恢复 2 个加密二进制，均通过 `copyapp verify`。该案例没有启动 App，采集到的界面归属是 SpringBoard。现有 RootHide Frida 服务启动的 shell 有效 UID 为 501，`root-run` 会在执行前识别并拒绝，不能把它当作 root 通道。
 
 无需 REA 的反编译入口包括单函数 `copyapp ghidra-function --file <MACHO> --sha256 <SHA256> --address 0xADDRESS --ghidra-dir <GHIDRA_INSTALL_DIR> --out cases/<CASE>`、按已验证候选排序的 `copyapp ghidra-queue --candidates cases/<CANDIDATES> --ghidra-dir <GHIDRA_INSTALL_DIR> --java-home <JDK_HOME> --out cases/<QUEUE>`，以及整条调查的 `--provider ghidra-direct`。Copy APP 自带最小 Ghidra headless 脚本，保存函数伪代码、来源哈希、脚本与日志；正式报告可用 `--evidence ghidra.queue=cases/<QUEUE>` 导入。它仍需要外部 Ghidra 和 JDK。默认 `prepare-app` 的方法筛选与汇编路径可独立运行；显式选择 `ghidra-direct` 时将候选队列接入调查和 Agent 审阅任务，且无需 REA。XR Calculator 百分比候选的[直连案例](cases/calculator-direct-ghidra-percent-20261015/report.md)、加法的[候选队列](cases/calculator-direct-ghidra-queue-addition-v3-20261015/queue.json)及[一命令真机准备任务](cases/calculator-prepare-app-ghidra-direct-live-20261015/preparation/draft/TASK.md)均已运行并通过来源校验。完整边界见[无 REA 分析路径](docs/no-rea-analysis.md)。
 
@@ -440,7 +440,7 @@ RootHide 的 iPhone 14 使用同一个固定 helper 和相同的逐字节审计�
 .venv/bin/copyapp verify cases/<USB_INSTALL_CASE>
 ```
 
-`root-run` 用于已安装 root Frida 服务及已配对 mobile SSH 的越狱机。它只对精确匹配的 USB UDID 启动命令，确认 SSH 也指向同一设备，保存命令、输出和退出码到指定本地案例目录，最多保存 1 MiB 输出并清理手机上的临时日志。指定的可执行文件必须是绝对路径；需要限制长任务时，在设备命令前加 `/var/jb/usr/bin/timeout`。该入口具有 root 权限，只应在可信的本机工作区使用。
+`root-run` 用于已安装 root Frida 服务及已配对 mobile SSH 的越狱机。它只对精确匹配的 USB UDID 启动命令，确认 SSH 也指向同一设备，并在恢复执行前核查子进程的有效 UID 为 0；否则立即停止。成功时保存命令、输出和退出码到指定本地案例目录，最多保存 1 MiB 输出并清理手机上的临时日志。指定的可执行文件必须是绝对路径；需要限制长任务时，在设备命令前加 `/var/jb/usr/bin/timeout`。此入口要求真正具有 root 权限的 Frida 服务，只应在可信的本机工作区使用。
 
 `trace` 和 `experiment` 需要可选依赖 `pip install -e '.[trace]'` 和设备上的 Frida 服务；它们只计数指定 Objective-C 实例方法在观察窗口内的调用，不保存参数或返回值。成功附加但计数为零仅代表窗口内没观察到调用；附加失败会写入错误证据并返回非零状态。`experiment` 还需要已安装的 iOS MCP 设备服务；默认按 `--udid` 自动建立并回收独立 USB 转发，无需预先开转发终端。截图可能包含位置等私人信息，默认保存在 Git 忽略的 `cases/` 下。XR 上原版 Compass 的方位盘和地图跳转实验已采到真实方法调用，见 `docs/compass-xr-analysis.md`。
 

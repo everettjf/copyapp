@@ -7,10 +7,41 @@ from pathlib import Path
 from unittest.mock import patch
 
 from copyapp.decrypt_package import _run_roothide_helper
-from copyapp.root_bridge import resolve_jailbreak_executable
+from copyapp.root_bridge import _spawned_effective_uid, resolve_jailbreak_executable
 
 
 class RootHideRunnerTest(unittest.TestCase):
+    def test_spawned_uid_comes_from_suspended_frida_child(self):
+        class Script:
+            def on(self, name, callback):
+                self.callback = callback
+
+            def load(self):
+                self.callback({"type": "send", "payload": 501}, None)
+
+        class Session:
+            def __init__(self):
+                self.detached = False
+
+            def create_script(self, source):
+                self.source = source
+                return Script()
+
+            def detach(self):
+                self.detached = True
+
+        class Device:
+            def attach(self, pid):
+                self.pid = pid
+                self.session = Session()
+                return self.session
+
+        device = Device()
+        self.assertEqual(_spawned_effective_uid(device, 17), 501)
+        self.assertEqual(device.pid, 17)
+        self.assertIn("geteuid", device.session.source)
+        self.assertTrue(device.session.detached)
+
     def test_resolved_executable_rejects_untrusted_device_path(self):
         with patch("copyapp.root_bridge.subprocess.run", return_value=
                    subprocess.CompletedProcess([], 0, b"/tmp/../bin/sh\n")):

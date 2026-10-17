@@ -24,7 +24,7 @@ from copyapp.device_developer import launch_app, take_screenshot, list_directory
 from copyapp.acquire import acquire_bundle
 from copyapp.ssh_acquire import acquire_bundle_ssh
 from copyapp.ios_mcp import IOSMCPClient
-from copyapp.usb_tunnel import ios_mcp_tunnel
+from copyapp.usb_tunnel import exact_ssh_tunnel, ios_mcp_tunnel
 from copyapp.sandbox import index_sandbox_ssh
 from copyapp.sandbox_capture import capture_sandbox_files
 from copyapp.sandbox_diff import compare_sandbox
@@ -1263,8 +1263,10 @@ def main() -> None:
             code = 0
         elif args.command == "root-run":
             command = args.argv[1:] if args.argv and args.argv[0] == "--" else args.argv
-            result = run_root_command(args.udid, command, args.out, args.ssh_port,
-                                      args.ssh_identity, args.ssh_known_hosts, args.timeout)
+            with exact_ssh_tunnel(args.udid, args.ssh_port, args.ssh_identity,
+                                  args.ssh_known_hosts):
+                result = run_root_command(args.udid, command, args.out, args.ssh_port,
+                                          args.ssh_identity, args.ssh_known_hosts, args.timeout)
             print(args.out / "result.json")
             code = 0 if result["exit_code"] == 0 else 1
         elif args.command == "install":

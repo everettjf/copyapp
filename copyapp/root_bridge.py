@@ -8,6 +8,7 @@ import json
 import re
 import shlex
 import subprocess
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -17,6 +18,36 @@ from copyapp.ssh_acquire import _ssh_argv
 
 
 MAX_OUTPUT = 1024 * 1024
+
+
+def _spawned_effective_uid(device: Any, pid: int) -> int:
+    """Verify privilege in the suspended child before calling it a root command."""
+    observed: Dict[str, Any] = {}
+    ready = threading.Event()
+
+    def on_message(message: Dict[str, Any], _data: Any) -> None:
+        if message.get("type") == "send" and isinstance(message.get("payload"), int):
+            observed["uid"] = message["payload"]
+        else:
+            observed["error"] = message.get("description", "invalid Frida UID response")
+        ready.set()
+
+    session = device.attach(pid)
+    try:
+        script = session.create_script(
+            "const symbol = Module.getGlobalExportByName ? "
+            "Module.getGlobalExportByName('geteuid') : "
+            "Module.getExportByName(null, 'geteuid'); "
+            "send((new NativeFunction(symbol, 'uint', []))());")
+        script.on("message", on_message)
+        script.load()
+        if not ready.wait(3):
+            raise RuntimeError("Frida child did not report its effective UID")
+        if "error" in observed:
+            raise RuntimeError("Frida child UID probe failed: " + str(observed["error"]))
+        return observed["uid"]
+    finally:
+        session.detach()
 
 
 def resolve_jailbreak_executable(ssh: List[str], logical_path: str) -> str:
@@ -68,6 +99,18 @@ def run_root_command(udid: str, command: List[str], output: Path, ssh_port: int,
              f'"$@" > {shlex.quote(log)} 2>&1; code=$?; '
              f'printf "%s\\n" "$code" > {shlex.quote(status)}')
     pid = device.spawn([shell_path, "-c", shell, "copyapp-root"] + command)
+    try:
+        effective_uid = _spawned_effective_uid(device, pid)
+        if effective_uid != 0:
+            raise RuntimeError(
+                f"Frida spawned effective UID {effective_uid}; root-run requires UID 0. "
+                "Use a root-capable Frida server; the mobile RootHide server is insufficient.")
+    except Exception:
+        try:
+            device.kill(pid)
+        except Exception:
+            pass
+        raise
     device.resume(pid)
 
     deadline = time.monotonic() + timeout
