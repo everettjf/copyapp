@@ -295,7 +295,8 @@ def _record(output: Path, state: Dict[str, Any]) -> None:
 def setup_ictrl(udid: str, output: Path, ssh_port: int = 22222,
                 ssh_identity: Path = Path("cases/ssh/id_ed25519"),
                 ssh_known_hosts: Path = Path("cases/ssh-known-hosts"),
-                runner_ipa: Optional[Path] = None, reinstall: bool = False) -> Tuple[Path, bool]:
+                runner_ipa: Optional[Path] = None, reinstall: bool = False,
+                auto_approve_first_pair: bool = False) -> Tuple[Path, bool]:
     if not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", udid):
         raise ValueError("invalid device UDID")
     if output.exists() and any(output.iterdir()):
@@ -366,7 +367,8 @@ def setup_ictrl(udid: str, output: Path, ssh_port: int = 22222,
         with _usb_forward(udid, 8200) as port:
             native_test = (_version(ios_version)[0] >= 17 and
                            (runner_installed_now or not _runner_ready(port)))
-            runner_session = (ictrl_xcuitest_session(udid, bundle, output / "xcuitest.log") if native_test
+            runner_session = (ictrl_xcuitest_session(udid, bundle, output / "xcuitest.log",
+                                                    auto_approve_first_pair) if native_test
                               else nullcontext(None))
             with runner_session as test_process:
                 if test_process is None:

@@ -1,81 +1,63 @@
 # Relaxin / RootHide on iPhone 14 (iOS 17.3.1)
 
-This is a **partial, real-device validation** dated 2026-10-17. The connected
-device was an iPhone 14 (`iPhone14,7`, iOS 17.3.1, arm64e). The user identified
-its active jailbreak as Relaxin with RootHide. Copy APP has not independently
-verified the jailbreak installation or obtained privileged access on this phone.
+This is a **partial, real-device validation** dated 2026-10-17. The exact USB
+device was an iPhone 14 (`iPhone14,7`, iOS 17.3.1, arm64e) running Relaxin
+0.5.5 with a RootHide bootstrap. These results do not establish full Copy APP
+support on iOS 17 or on other RootHide configurations.
 
-## What ran
+## Verified on the phone
 
 | Capability | Observation |
 | --- | --- |
-| Exact-device USB lockdown | Available; the requested UDID matched the connected phone. |
-| Installed App listing | Available; Calculator resolved to `com.apple.calculator`. |
-| Developer Disk Image | Mounted successfully with `pymobiledevice3 mounter auto-mount`. |
-| App launch | Calculator launched through `pymobiledevice3 developer dvt launch --native`. |
-| Screenshot | Native RSD screenshot captured; the earlier lockdown screenshot service returned `InvalidService`. |
-| Accessibility survey | 33 elements returned after launch; the screenshot was visually reviewed as Calculator. |
-| Case integrity | `copyapp verify` passed for the Calculator USB survey. |
-| App bundle index | Native RSD listed 56 Calculator bundle paths; the updated survey case passed `copyapp verify`. This is a directory index, not file export. |
-| iCTRL package | The existing development-signed Copy APP iCTRL XCTest IPA installed through USB InstallationProxy. The test process started after the phone's one-time XCTest passcode approval. `copyapp setup ictrl` started a native XCTest session but timed out waiting for `/whoami` while the notification permission alert remained visible. Its control server and pairing are not verified. |
-| RootHide tweak build | RootHide Theos produced a `com.copyapp.mcp` `iphoneos-arm64e` package. USB AFC staged it under `/var/mobile/Media/`; the read-back SHA-256 matched. It was not installed. |
-| Rebuilt Calculator IPA | The independent clone built for arm64. Direct USB installation rejected the original IPA for missing an app bundle signature and a fully ad hoc signed variant for an invalid signature. No clone was installed. |
+| USB identity and developer services | The requested UDID matched the connected phone. Native RSD launched Calculator and captured a screenshot; the USB accessibility survey returned 33 elements. The survey and bundle-index cases passed `copyapp verify`. |
+| iCTRL | The development-signed Copy APP runner installed, its XCTest session started, encrypted pairing completed, and UI observation and taps worked. A Calculator `7 + 5 = 12` playbook passed its first seven steps, including the result assertion. Its final screenshot step returned an empty HTTP response; a separate screenshot call worked. UI transport stability remains open. |
+| OpenSSH | RootHide's `openssh-server`, `openssh-client` and `openssh-sftp-server` 9.2p1 installed. A dedicated, pinned `mobile` public-key login worked over a USB-only port forward. No password is stored in the repository. |
+| App acquisition | Over SSH, Copy APP copied the installed Calculator bundle (15 files), made a 472 KB analysis snapshot, and generated a static Mach-O/Objective-C report with 17 indexed classes. The main executable has no encryption load command. The static case passed `copyapp verify`; the repacked snapshot is not asserted to be an installable Apple IPA. |
+| Sandbox | A bounded SSH index captured 20 entries and seven files in Calculator's data container. This is an index, not an atomic copy of live app data. |
+| Frida | RootHide's `re.frida.server` 16.1.4 runs. A same-version isolated Mac client enumerated processes and apps, but attaching to Calculator and Fila failed with `ProcessNotRespondingError` and produced `EXC_GUARD / GUARD_TYPE_MACH_PORT` app crashes at `task_swap_exception_ports`. Runtime tracing is **not** verified. The main Mac environment's Frida 17.23.3 is also version-mismatched with the phone server. |
+| Copy APP iOS MCP | The arm64e RootHide package built and installed as `com.copyapp.mcp` 0.1.4-4. Its dylib and SpringBoard filter are present, and SpringBoard restarted, but port 8090 did not become reachable. No ElleKit or MobileSubstrate package is installed. Whether SpringBoard loaded this dylib is unverified; the missing standard tweak loader is the leading explanation, not yet a proven cause. |
+| Rebuilt App | A Calculator clone IPA built, but direct USB installation rejected both unsigned and ad hoc signed attempts. No clone installation or paired original/clone comparison passed on this phone. |
 
-Copy APP now selects the native RSD route for macOS/iOS 17+ screenshot and App
-launch, while retaining the validated lockdown route for iOS 16. The local
-survey case is under `cases/iphone14-relaxin-calculator-survey-20261017/` and
-is Git-ignored because it contains device evidence. Its screenshot and UI
-elements do not have a verified foreground Bundle ID; the report says so.
+The local evidence lives in Git-ignored `cases/iphone14-*20261017/`, especially
+`iphone14-after-roothide-openssh`, `iphone14-calculator-acquire-attempt`,
+`iphone14-calculator-ictrl-playbook-v4`, `iphone14-calculator-sandbox`,
+`iphone14-frida-crashes`, and `iphone14-after-respring`. The phone was locked
+at the end of this session, so no further app UI installation was attempted.
 
-## What is still missing
+## RootHide tweak dependency and next validation
 
-- The USB-forwarded SSH connection closed before login. No package or sandbox
-  acquisition through SSH has been validated on this phone.
-- Frida could enumerate processes, but its actual access mode was `jailed`.
-  Attaching to an App failed. Copy APP's doctor now requires `full` Frida access
-  before marking runtime tracing available. RootHide's own package index lists
-  a `re.frida.server` `iphoneos-arm64e` package at 16.1.4; that older listing
-  does not establish compatibility with this iOS build or host Frida 17.
-- The Copy APP iOS MCP tweak has been built and staged but not installed. The
-  iCTRL runner installed and XCTest began, but the control server was not
-  reachable during the run. UI control and pairing remain unverified.
-- The standard DVT filesystem service was unavailable through lockdown. Native
-  RSD can index bundle paths but cannot export the package or sandbox. The
-  survey therefore has no IPA, decrypted binary or native-code analysis.
-- The current root command bridge still assumes `/var/jb/bin/sh`, and the
-  deep acquisition path needs a validated RootHide path and process launch.
-
-These are explicit blockers to the detailed analysis and rebuild stages. A
-passing USB survey does **not** establish full Copy APP support for Relaxin.
-
-## RootHide package preparation
-
-RootHide uses a randomized jailbreak root rather than a fixed `/var/jb` path.
-Its tweak builds require the RootHide Theos fork, `THEOS_PACKAGE_SCHEME=roothide`
-and the real `roothide.h` path API. Copy APP's iOS MCP source accepts that build
-scheme, chooses arm64e, links the RootHide library and excludes its old
-rootless-only header. The generic `iphoneos-arm` control field lets the selected
-Theos package scheme set the package architecture. The build completed with the
-RootHide Theos fork and iPhoneOS 16.5 SDK. The resulting package contains the
-MobileSubstrate dylib and filter plist, and its archive architecture is
-`iphoneos-arm64e`. Package creation and byte transfer do not prove that the
-tweak loads correctly on this phone.
-
-The build command was:
+RootHide uses a randomized jailbreak root. The device service uses the
+[RootHide Theos fork](https://github.com/roothide/theos),
+`THEOS_PACKAGE_SCHEME=roothide`, arm64e, and the real `roothide.h` path API:
 
 ```sh
 THEOS=/path/to/roothide-theos make -C device/ios-mcp THEOS_PACKAGE_SCHEME=roothide package
 ```
 
-The built package SHA-256 is
-`1cda335795ef7785b50c6bd8070f601d92bce7d55ca9445ece09e3d3bf991686`.
-The RootHide OpenSSH and Frida packages must also match this jailbreak; a
-normal rootless `.deb` is not a substitute. After installing the tweak, rerun
-`copyapp onboard --stage analyze` and validate privileged file access, Frida
-attach, iOS MCP health and UI tools, and an actual App acquisition before
-claiming deep support.
+The first package required `mobilesubstrate`, which this phone lacked. A
+temporary build incorrectly allowed the `roothide` core package to satisfy
+that dependency; it installed but its service did not start. The corrected
+0.1.4-5 package again requires `mobilesubstrate`. The official RootHide
+`ellekit` 1.2-1 package declares `Provides: mobilesubstrate (= 99)` and is the
+standard loader. Its repository archive was downloaded and matched the package
+index SHA-256 `50f1b2d60e029592238d80737b32ccc019e74ce9611390c30ffebba75097b41c`.
+The corrected Copy APP package SHA-256 is
+`69b38f19c0d85fa7f8b124a27f9d6a4a5f1324bf9cbb479e77832f69a72aab48`.
+Both archives were staged in the phone's Media directory over pinned USB SSH;
+neither ElleKit nor the corrected Copy APP package has been installed yet.
+The configured APT source did not authenticate ElleKit, so the source and
+recorded hash remain explicit in this test record.
+
+After the phone is unlocked, the remaining device check is to install the
+verified ElleKit archive and corrected Copy APP package through the normal
+phone package UI, restart SpringBoard, then verify the loopback health
+endpoint and bounded UI tools. Keep iCTRL as the already working UI backend
+until that succeeds. Frida attach needs a compatible RootHide server/client
+combination validated against this exact iOS build; process enumeration alone
+does not count. The clone also still needs a valid installation route and
+same-device comparison. Do not infer those results from the iOS 16 XR pilot.
 
 Sources: [Relaxin](https://github.com/owngoal-dev/Relaxin),
 [RootHide developer instructions](https://github.com/roothide/Developer),
-[RootHide path model](https://github.com/roothide/Developer/blob/main/roothide.md),
-[RootHide package index](https://github.com/roothide/roothide.github.io/blob/main/Packages).
+[RootHide package index](https://github.com/roothide/roothide.github.io/blob/main/Packages),
+[RootHide Bootstrap injection model](https://github.com/roothide/Bootstrap).

@@ -88,14 +88,18 @@ async def _ios_version(udid: str) -> str:
 
 @contextmanager
 def ictrl_xcuitest_session(udid: str, bundle: str,
-                          log_path: Optional[Path] = None) -> Iterator[subprocess.Popen]:
+                          log_path: Optional[Path] = None,
+                          auto_approve_first_pair: bool = False) -> Iterator[subprocess.Popen]:
     """Keep iOS 17+ testmanagerd attached while the iCTRL service is in use."""
     if not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", udid):
         raise ValueError("invalid device UDID")
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", bundle):
         raise ValueError("invalid runner Bundle ID")
     command = [sys.executable, "-m", "pymobiledevice3", "developer", "dvt",
-               "xcuitest", "--native", "--udid", udid, bundle]
+               "xcuitest", "--native", "--udid", udid]
+    if auto_approve_first_pair:
+        command.extend(["--env", "ICTRL_ALLOW_AUTH_ONCE=1"])
+    command.append(bundle)
     log_file = log_path.open("w+b") if log_path is not None else tempfile.TemporaryFile(mode="w+b")
     with log_file as log:
         process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)

@@ -424,6 +424,8 @@ def main() -> None:
                        help="use an already signed runner IPA instead of building it")
     setup.add_argument("--reinstall", action="store_true",
                        help="reinstall the runner even when its Bundle ID is already installed")
+    setup.add_argument("--auto-approve-first-pair", action="store_true",
+                       help="on iOS 17+, let the development runner approve one local USB pairing")
     setup.add_argument("--ssh-port", type=int, default=22222)
     setup.add_argument("--ssh-identity", type=Path, default=Path("cases/ssh/id_ed25519"))
     setup.add_argument("--ssh-known-hosts", type=Path, default=Path("cases/ssh-known-hosts"))
@@ -997,7 +999,8 @@ def main() -> None:
         elif args.command == "setup":
             path, ready = setup_ictrl(args.udid, args.out, args.ssh_port,
                                       args.ssh_identity, args.ssh_known_hosts,
-                                      args.runner_ipa, args.reinstall)
+                                      args.runner_ipa, args.reinstall,
+                                      args.auto_approve_first_pair)
             print(path)
             code = 0 if ready else 1
         elif args.command == "doctor":

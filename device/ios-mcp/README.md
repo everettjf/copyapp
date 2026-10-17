@@ -11,8 +11,9 @@ package installers, Settings bundle, OCR worker, or third-party models.
 
 Local changes:
 
-- Build the tested rootless SpringBoard tweak for arm64 and arm64e; a RootHide
-  arm64e source build is prepared but not yet built or installed on a device.
+- Build the tested rootless SpringBoard tweak for arm64 and arm64e; the RootHide
+  arm64e package has been built and installed on an iPhone 14, but its service
+  is not yet running. That phone lacks the standard tweak injection loader.
 - Bind its HTTP listener to `127.0.0.1:8090` for USB port forwarding.
 - Advertise and accept only UI observation, gesture, text input, and App launch tools.
 - Return 404 for `/upload_file` and `/download_file`.
@@ -31,8 +32,10 @@ THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules 
 ```
 
 For Relaxin/RootHide, use [roothide/theos](https://github.com/roothide/theos)
-and `make THEOS_PACKAGE_SCHEME=roothide package`. This RootHide build has **not**
-been compiled or deployed yet; see the [iPhone 14 validation note](../../docs/relaxin-roothide-iphone14.md).
+and `make THEOS_PACKAGE_SCHEME=roothide package`. The package requires a real
+tweak loader (`mobilesubstrate`, provided by RootHide ElleKit). Merely having
+the `roothide` core package does not satisfy this runtime requirement. See the
+[iPhone 14 validation note](../../docs/relaxin-roothide-iphone14.md).
 
 The resulting `.deb` is under `packages/`. Before deploying a new build,
 inspect its archive paths and confirm that it contains only the tweak,
@@ -46,7 +49,8 @@ marker, clearing it and using the standard `ldrestart` command, the 0.1.2
 service recovered. Version 0.1.3 now removes direct OCR from its exposed UI
 tools and rejects OCR requests inside `describe_screen`; these guards passed
 live XR checks. The screenshot-to-Mac OCR route passed on Compass. See
-`docs/xr-ocr-validation.md`. Other device/OS combinations remain untested.
+`docs/xr-ocr-validation.md`. The iPhone 14 RootHide installation is documented
+separately; its iOS MCP runtime remains unverified.
 
 Version 0.1.4 exposes `swipe_screen`, `long_press`, and `double_tap` to the
 restricted UI tool list. Its inspected rootless package was transferred over

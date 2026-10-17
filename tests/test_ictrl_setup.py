@@ -8,10 +8,11 @@ from contextlib import contextmanager
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from zipfile import ZipFile
 
 from copyapp.ictrl_setup import _bundle_from_ipa, _pair, setup_ictrl
+from copyapp.usb_tunnel import ictrl_xcuitest_session
 from copyapp.verify import verify_case
 
 
@@ -41,6 +42,16 @@ def make_ipa(path: Path, minimum: str) -> None:
 
 
 class ICtrlSetupTest(unittest.TestCase):
+    def test_xcuitest_one_shot_pairing_is_explicit(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        with patch("copyapp.usb_tunnel.subprocess.Popen", return_value=process) as launch:
+            with ictrl_xcuitest_session(UDID, BUNDLE, auto_approve_first_pair=True):
+                pass
+        command = launch.call_args.args[0]
+        self.assertEqual(command[-3:], ["--env", "ICTRL_ALLOW_AUTH_ONCE=1", BUNDLE])
+        process.terminate.assert_called_once()
+
     def test_pair_shows_only_fingerprint(self):
         with tempfile.TemporaryDirectory() as directory:
             fake = Path(directory) / "ictrl"
