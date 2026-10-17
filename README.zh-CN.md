@@ -20,6 +20,8 @@ iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-
 
 Podcasts 在两机上分别完成了[审阅报告与全新独立 UIKit 复刻工程](docs/podcasts-two-device-report-rebuild.zh-CN.md)。资料库、搜索和现在收听的同机页面标题检查均为 3/3 通过；逐图审阅发现重大视觉差异，尤其是分类插画与 iOS 17 账号相关内容，因此**不能宣称完整视觉或功能复刻**。iOS 17 首次启动需先完成 SpringBoard 引导。[证据与边界见矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
+发布后又完成[原版 Clock 与独立复刻版的双机五分钟后台秒表检查](docs/clock-five-minute-two-device.zh-CN.md)。12 份启动／返回／停止脚本案例均通过校验，四组可见计时增量与保存的观察间隔在一秒时间戳精度内相符；新版 v0.1.13 设备探针也通过。数小时挂起、锁屏或重启、闹钟和通知仍不在此结果范围内。
+
 [v0.1.10 双机发布验收](docs/releases/v0.1.10.zh-CN.md)新增[Clock 复刻版停止态与运行态重启验证](docs/clock-clone-two-device.zh-CN.md)，并通过两台手机运行中升级检查。发布后又完成[复刻版双机约一分钟后台计时检查](docs/clock-background-two-device.zh-CN.md)，两机返回后均继续显示增长的秒表。[v0.1.9 发布](docs/releases/v0.1.9.zh-CN.md)确立跨设备基线并记录当时的状态丢失缺口。[v0.1.8 发布](docs/releases/v0.1.8.zh-CN.md)记录首次使用引导诊断和 Translate/Clock 四路检查。
 
 [双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)又在两台手机上，用**同一脚本**分别经 iOS MCP 与 iCTRL 验证 Calculator `98→9` 左滑和 Safari 地址栏的合成文本输入，并在 iOS 17 上跑通一条 `hopper-direct` 分析到复刻父工作流。这些有界结果不代表所有输入框、手势或 App 都相同。
