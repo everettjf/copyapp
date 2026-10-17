@@ -8,7 +8,7 @@
 | --- | --- | --- | --- |
 | USB、截图、开发者文件系统、固定主机密钥的 mobile SSH、Frida、iOS MCP、已配对 iCTRL | `cases/ios16-v0110-doctor-20261017/` 全部可用 | `cases/ios17-v0110-doctor-20261017/` 全部可用 | 各代表一台手机的当前配置；能力探针通过不等于 App 行为通过。两份 v0.1.10 案例通过 `copyapp verify`。 |
 | 包、静态与有界沙盒证据 | Calculator 当前 Agent 父案例 `cases/calculator-current-auto-workflow-20261016/` 完成 | Calculator 父案例 `cases/ios17-calculator-current-parent-20261017/` 完成 | 只覆盖该构建及选定路径，未取得整个实时数据容器的一致性快照。 |
-| 新目标 Apple Podcasts 的包与静态采集 | `cases/ios16-podcasts-analysis-20261017/` 校验了 153 个文件的包快照、13 个二进制索引及有界沙盒索引；修复精确设备 SSH 转发后，独立 `acquire` 与 `sandbox` 也完成。 | `cases/ios17-podcasts-analysis-20261017/` 校验了 152 个文件的包快照、12 个二进制索引及有界沙盒索引；修复后两个独立命令也完成。 | 两机主程序均无加密加载命令，此目标没有检验砸壳。独立采集案例可校验；独立 `sandbox` 输出是 JSON 索引，不是 `copyapp verify` 案例。尚未产出语义代码报告或解释服务端行为。 |
+| 新目标 Apple Podcasts 的包与静态采集 | `cases/ios16-podcasts-analysis-20261017/` 校验了 153 个文件的包快照、13 个二进制索引及有界沙盒索引；修复精确设备 SSH 转发后，独立 `acquire` 与 `sandbox` 也完成。 | `cases/ios17-podcasts-analysis-20261017/` 校验了 152 个文件的包快照、12 个二进制索引及有界沙盒索引；修复后两个独立命令也完成。 | 两机主程序均无加密加载命令，此目标没有检验砸壳。独立采集案例可校验；独立 `sandbox` 输出是 JSON 索引，不是 `copyapp verify` 案例。选定语义结论见下方审阅报告；服务端行为仍未知。 |
 | 加密 App 分析 | XR 发布记录中的 DeepSeek/Kimi 整包恢复 | [iPhone 14 记录](relaxin-roothide-iphone14.md)中的 Remoboard 主 App 与键盘扩展恢复 | 分析 IPA 不保留原签名；其他保护手段未覆盖。 |
 | 选定报告 → 独立 App → 同机对照 | Calculator 父案例 3/3 结果、三对截图审阅 | Calculator 父案例 4/4 结果、五对截图审阅 | 两份独立源码均早于所引用的父案例；未证明整 App 等价或零样本生成。 |
 | 可选 Hopper 直连反编译 | `cases/fixture-counter-hopper-investigation-v2-20261016/` 将夹具 UI、Frida、候选与 Hopper 调查贯通并导入报告 | `cases/ios17-hopper-current-parent-20261017/` 完成 `--analysis-provider hopper-direct` 的 Calculator `copy` 父案例，包含一条原版跟踪、Hopper 伪代码、审阅报告、签名独立复刻版、一条通过的成对结果及两对截图审阅 | 仅一条入口和流程。源码早于父案例；伪代码不是原始源码或完整算法。 |
@@ -22,6 +22,8 @@
 | 复刻版秒表后台约一分钟 | 离开 App 70.2 秒后，运行值从 `00:01.25` 增至 `01:31.80`；启动、返回、停止案例均通过校验 | 离开 App 76.8 秒后从 `00:01.25` 增至 `01:36.55`；对应三份案例均通过校验 | [后台记录](clock-background-two-device.zh-CN.md)。每机仅一次；未核对原版 Clock、数小时挂起、设备重启、系统时间变化或精确计时误差。 |
 | 已知源码夹具分享扩展 | [v0.1.5](releases/v0.1.5.zh-CN.md)中的固定文本接收与 Counter/Notes/Catalog 回归 | 相同 | 仅一种纯文本输入；其他内容类型和无关扩展未验证。 |
 | 陌生 App 入口与三条界面路径：Apple Podcasts | 完成新功能页后，`cases/ios16-podcasts-main-survey-20261017/` 确认 Podcasts 处于前台；`cases/ios16-podcasts-discovery-20261017/` 的资料库、搜索、现在收听 3/3 通过。 | 初次启动失败时屏幕显示 SpringBoard 的 Podcasts 欢迎页。完成引导、选择 WLAN Only 并越过新功能页后，`cases/ios17-podcasts-main-survey-20261017/` 确认 Podcasts 处于前台；`cases/ios17-podcasts-discovery-20261017/` 的同三个目的页 3/3 通过。 | 四份完成案例均通过 `copyapp verify`；六张末端截图已逐张查看。两机资料库数据不同，坐标脚本也分别编写。此处只验证进入 App、导航与可见终态；未验证砸壳、深度报告、生成源码、播放或整 App 等价。 |
+| Podcasts 审阅报告与内嵌 Framework 跟踪 | XR 的报告及分析交付各验证三条有来源流程；在搜索点击窗口，内嵌 `PodcastsStoreUI` 的 `SearchLandingCell::initWithFrame:` 当前 IMP 与静态偏移各记录 12 次命中。 | iOS 17 的报告与分析交付同样验证三条流程；该 Framework 静态 hook 成功附加，但本次搜索点击窗口中初始化方法为零次，标签控制器布局方法记录一次。 | [完整记录](podcasts-two-device-report-rebuild.zh-CN.md)。时间相邻不证明点击因果或类的完整行为；Hopper 只解释选定入口，没有恢复原始源码或服务端实现。 |
+| 全新编写的 Podcasts UIKit 复刻版 | `cases/ios16-podcasts-fresh-install-20261017/`、成对检查和交付验证 3/3 页面标题；三对截图均审阅，搜索插画有重大差异。 | `cases/ios17-podcasts-fresh-install-20261017/`、成对检查和交付验证 3/3 页面标题；三对截图均有重大差异，包括缺少账号相关节目内容。 | 源码见 [PodcastsFreshProbe](../rebuild/PodcastsFreshProbe/README.md)，写于报告之后。两机交付状态均为 `selected_behavior_verified_visual_gap`；导航可用不代表视觉或功能完整等价。 |
 
 XR 旧 Translate 脚本点击 `(207,320)`，iOS MCP 虽返回字符派发成功，界面却无文字。同一旧脚本在 `cases/ios16-translate-old-tap-control-20261017/` 再次失败，截图有光标而无键盘。新共享脚本点击可见输入提示 `(100,201)`，键盘出现，两机两后端都通过。这证明该界面存在随点击及聚焦状态变化的差异，不能据此推断 XR 整机的 iOS MCP 文本输入失败。
 
@@ -31,4 +33,4 @@ Podcasts 在 iOS 17 上重现相同的首次启动现象：第一次 `survey --l
 
 v0.1.7 发布后，XR 的 Calculator 和 Translate 父案例、iOS 17 的四流程 Calculator 和一流程 Hopper 父案例再次通过 `copyapp verify`。v0.1.10 正式发布页下载的 wheel 与发布 SHA-256 一致，并从独立 `/tmp` 安装目录加载版本与 CLI 入口；两机新建的 doctor 和 Translate 网络观察案例也通过 `copyapp verify`。这些是产物、通道及证据完整性检查，不是重新执行所有原版/复刻版流程，也不能证明无关 App 行为。
 
-仍需解决的产品级门槛包括：陌生 App 的自主发现和全新源码生成、独立 Claude CLI 运行、更广的 App 状态与服务端行为、Clock 更长时间及受系统事件干扰的计时、TrollStore 升级首次成功率，以及完整沙盒与网络解释。App Store 的正事件只覆盖一个进程和有界时间窗口，不能解释全部请求或服务端行为。更宽的结论不能由绿色设备探针、选定流程通过或发布标签推出。iOS 26 不在此双机矩阵内。
+仍需解决的产品级门槛包括：陌生 App 的完全自主发现及源码生成（Podcasts 源码由当前 Agent 编写）、独立 Claude CLI 运行、更广的 App 状态与服务端行为、Clock 更长时间及受系统事件干扰的计时、TrollStore 升级首次成功率，以及完整沙盒与网络解释。App Store 的正事件只覆盖一个进程和有界时间窗口，不能解释全部请求或服务端行为。更宽的结论不能由绿色设备探针、选定流程通过或发布标签推出。iOS 26 不在此双机矩阵内。

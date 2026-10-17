@@ -132,9 +132,10 @@ definitions.forEach((item, index) => {
     }});
 });
 staticTargets.forEach((target) => {
+    const relativePath = target.relative_path || target.binary_name;
     const matches = Process.enumerateModules().filter(module =>
         module.name === target.binary_name &&
-        module.path.endsWith('/' + target.app_dir + '/' + target.binary_name));
+        module.path.endsWith('/' + target.app_dir + '/' + relativePath));
     if (matches.length !== 1) throw new Error('expected one loaded app image for static entry');
     const module = matches[0];
     if (!Number.isSafeInteger(target.offset) || target.offset < 0 || target.offset >= module.size)
@@ -155,9 +156,10 @@ staticTargets.forEach((target) => {
 });
 if (branchOffsets.length > 0) {
     const target = staticTargets[0];
+    const relativePath = target.relative_path || target.binary_name;
     const matches = Process.enumerateModules().filter(module =>
         module.name === target.binary_name &&
-        module.path.endsWith('/' + target.app_dir + '/' + target.binary_name));
+        module.path.endsWith('/' + target.app_dir + '/' + relativePath));
     if (matches.length !== 1) throw new Error('expected one loaded app image for branch entries');
     const module = matches[0];
     branchOffsets.forEach((offset, index) => {

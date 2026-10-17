@@ -10,6 +10,7 @@ from unittest.mock import patch
 from copyapp.investigate_flow import _resolve_target, investigate_flow
 from copyapp.report import _validate_investigation
 from copyapp.experiment import _static_targets
+from copyapp.trace import trace_script
 from copyapp.method_scout import refine_scout_with_view_tree, scout_methods
 from copyapp.verify import sha256_file, verify_case
 
@@ -428,6 +429,26 @@ class InvestigateFlowTest(unittest.TestCase):
                                           [("View", "buttonPressed:")])
         self.assertEqual(digest, self.digest)
         self.assertEqual(targets[0]["offset"], 0x1000)
+
+    def test_embedded_framework_method_binds_to_full_app_relative_path(self):
+        framework = self.binary.parent / "Frameworks" / "StoreUI.framework" / "StoreUI"
+        framework.parent.mkdir(parents=True)
+        framework.write_bytes(minimal_macho())
+        index = self.root / "storeui-objc-index.json"
+        index.write_text(json.dumps({
+            "schema_version": 1, "binary_sha256": sha256_file(framework),
+            "image_base": "0x100000000", "classes": [{
+                "name": "SearchCell", "instance_methods": [{
+                    "selector": "initWithFrame:", "imp": "0x100001000"}]}],
+        }))
+        _, targets = _static_targets(framework, index,
+                                     [("SearchCell", "initWithFrame:")])
+        self.assertEqual(targets[0]["app_dir"], "App.app")
+        self.assertEqual(targets[0]["relative_path"],
+                         "Frameworks/StoreUI.framework/StoreUI")
+        script = trace_script([("SearchCell", "initWithFrame:")],
+                              static_targets=targets)
+        self.assertIn("target.relative_path || target.binary_name", script)
 
     def test_unrelated_duplicate_index_method_does_not_block_selected_target(self):
         self.save_index([("View", "buttonPressed:", "0x100001000"),

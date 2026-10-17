@@ -22,6 +22,7 @@ vendor/ictrl/*.ipa
 rebuild/*/build/
 rebuild/*/*.xcodeproj/project.xcworkspace/xcuserdata/
 rebuild/*/*.xcodeproj/xcuserdata/
+rebuild/PodcastsFreshProbe/*.xcodeproj/
 rebuild/CompassClone/build/
 rebuild/CompassClone/CopyAppCompass.xcodeproj/project.xcworkspace/xcuserdata/
 fixture/CopyAppFixture/build/

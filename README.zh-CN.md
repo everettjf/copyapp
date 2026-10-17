@@ -16,9 +16,9 @@ Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱�
 
 iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。此前交付的复刻版源码和 IPA 早于本报告存在；另一次[从报告新写源码并扩展四流程的试验](docs/ios17-calculator-fresh-from-report.zh-CN.md)已完成构建、签名、安装和同机对照。Calculator 全功能等价仍未验证。现有 RootHide Frida 服务不能提供 root `root-run`；已验证的加密包恢复路径使用 mobile SSH。
 
-[v0.1.12 发布验收](docs/releases/v0.1.12.zh-CN.md)让独立的 `acquire` 和 `sandbox` 命令自行建立并核验精确设备的 SSH 转发；Apple Podcasts 的包与静态采集、沙盒索引及三条界面导航在两机通过。此前的 [v0.1.11 发布](docs/releases/v0.1.11.zh-CN.md)记录了 TrollStore 超时诊断和两机 Clock 构建 5 升级；较早的超时尝试仍计为失败。
+[v0.1.13 发布](docs/releases/v0.1.13.zh-CN.md)新增精确的内嵌 Framework 静态跟踪，并在两机上验证了 Podcasts 的新源码分析到复刻流程。[v0.1.12 发布](docs/releases/v0.1.12.zh-CN.md)此前让独立的 `acquire` 和 `sandbox` 命令自行管理精确设备 SSH 转发；更早版本记录了 Clock 复刻版升级与 TrollStore 超时诊断。
 
-iOS 17 的 Podcasts 初次启动先出现 SpringBoard 欢迎页，完成引导后正常进入 App。选定流程尚不能证明 Podcasts 深度报告或复刻 App；[证据与边界见矩阵](docs/two-device-verification-matrix.zh-CN.md)。
+Podcasts 在两机上分别完成了[审阅报告与全新独立 UIKit 复刻工程](docs/podcasts-two-device-report-rebuild.zh-CN.md)。资料库、搜索和现在收听的同机页面标题检查均为 3/3 通过；逐图审阅发现重大视觉差异，尤其是分类插画与 iOS 17 账号相关内容，因此**不能宣称完整视觉或功能复刻**。iOS 17 首次启动需先完成 SpringBoard 引导。[证据与边界见矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
 [v0.1.10 双机发布验收](docs/releases/v0.1.10.zh-CN.md)新增[Clock 复刻版停止态与运行态重启验证](docs/clock-clone-two-device.zh-CN.md)，并通过两台手机运行中升级检查。发布后又完成[复刻版双机约一分钟后台计时检查](docs/clock-background-two-device.zh-CN.md)，两机返回后均继续显示增长的秒表。[v0.1.9 发布](docs/releases/v0.1.9.zh-CN.md)确立跨设备基线并记录当时的状态丢失缺口。[v0.1.8 发布](docs/releases/v0.1.8.zh-CN.md)记录首次使用引导诊断和 Translate/Clock 四路检查。
 

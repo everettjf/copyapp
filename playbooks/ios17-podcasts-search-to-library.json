@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "scenario_id": "ios17-podcasts-search-to-library",
+  "bundle_id": "com.apple.podcasts",
+  "fresh_launch": true,
+  "steps": [
+    {"action": "observe", "contains": ["Browse", "Library", "Search"]},
+    {"action": "tap", "x": 342, "y": 786},
+    {"action": "observe", "wait_ms": 400, "contains": ["Top Charts"]},
+    {"action": "tap", "x": 244, "y": 786},
+    {"action": "observe", "wait_ms": 400, "contains": ["Recently Updated"]},
+    {"action": "screenshot", "stable": true, "ready_contains": "Recently Updated"}
+  ]
+}

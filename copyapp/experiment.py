@@ -232,8 +232,11 @@ def _bounded_cleanup(label: str, callback, timeout: float = 2.0) -> str:
 
 def _static_targets(binary: Path, objc_index: Path, methods: List[Tuple[str, str]]) -> Tuple[str, List[dict]]:
     binary = binary.resolve(strict=True)
-    if not binary.parent.name.endswith(".app"):
+    app_dir = next((parent for parent in binary.parents
+                    if parent.name.endswith(".app")), None)
+    if app_dir is None:
         raise ValueError("selected binary must be inside an .app bundle")
+    relative_path = binary.relative_to(app_dir).as_posix()
     index = json.loads(objc_index.read_text(encoding="utf-8"))
     digest = sha256_file(binary)
     image_base = MachOImage(binary.read_bytes()).base
@@ -260,7 +263,8 @@ def _static_targets(binary: Path, objc_index: Path, methods: List[Tuple[str, str
             raise ValueError(f"instance method missing from selected binary: {key}")
         targets.append({"index": position, "class": key[0], "selector": key[1],
                         "offset": address - image_base,
-                        "app_dir": binary.parent.name, "binary_name": binary.name})
+                        "app_dir": app_dir.name, "binary_name": binary.name,
+                        "relative_path": relative_path})
     return digest, targets
 
 
