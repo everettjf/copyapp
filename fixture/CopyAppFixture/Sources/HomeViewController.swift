@@ -22,6 +22,7 @@ final class HomeViewController: UIViewController {
         addButton("Counter · UserDefaults", action: #selector(showCounter))
         addButton("Notes · SQLite", action: #selector(showNotes))
         addButton("Catalog · Framework", action: #selector(showCatalog))
+        addButton("Share sample text", action: #selector(shareSampleText))
     }
 
     private func addButton(_ title: String, action: Selector) {
@@ -44,5 +45,14 @@ final class HomeViewController: UIViewController {
 
     @objc private func showCatalog() {
         navigationController?.pushViewController(CatalogViewController(), animated: true)
+    }
+
+    @objc private func shareSampleText(_ sender: UIButton) {
+        let sheet = UIActivityViewController(activityItems: ["Copy APP fixture sample text"], applicationActivities: nil)
+        if let popover = sheet.popoverPresentationController {
+            popover.sourceView = sender
+            popover.sourceRect = sender.bounds
+        }
+        present(sheet, animated: true)
     }
 }

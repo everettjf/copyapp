@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "scenario_id": "fixture-share-extension-ios17",
+  "bundle_id": "dev.copyapp.fixture",
+  "fresh_launch": true,
+  "steps": [
+    {"action": "observe", "contains": "Share sample text"},
+    {"action": "tap_label", "label": "Share sample text"},
+    {"action": "observe", "wait_ms": 1000, "contains": "Copy APP fixture sample text"},
+    {"action": "swipe", "from_x": 330, "from_y": 520, "to_x": 55, "to_y": 520, "duration_ms": 350, "steps": 20},
+    {"action": "swipe", "from_x": 330, "from_y": 520, "to_x": 45, "to_y": 520, "duration_ms": 350, "steps": 20},
+    {"action": "swipe", "from_x": 330, "from_y": 520, "to_x": 45, "to_y": 520, "duration_ms": 350, "steps": 20},
+    {"action": "observe", "wait_ms": 1000, "contains": "More"},
+    {"action": "screenshot", "stable": true, "ready_contains": "More"},
+    {"action": "tap", "x": 343, "y": 525},
+    {"action": "observe", "contains": "Copy APP Fixture"},
+    {"action": "screenshot", "stable": true, "ready_contains": "Copy APP Fixture"},
+    {"action": "tap", "x": 170, "y": 423},
+    {"action": "observe", "wait_ms": 500, "contains": "Copy APP Fixture Share Extension"},
+    {"action": "screenshot", "stable": true, "ready_contains": "Copy APP Fixture Share Extension"}
+  ]
+}
