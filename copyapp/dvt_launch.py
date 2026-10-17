@@ -16,10 +16,30 @@ async def launch(udid: str, bundle: str) -> None:
 
     device = await create_using_usbmux(serial=udid, connection_type="USB", autopair=False)
     try:
+        values = await device.get_value()
+        if values.get("UniqueDeviceID") != udid:
+            raise RuntimeError("lockdown device identity does not match requested UDID")
+        version = str(values.get("ProductVersion", ""))
+        major = version.split(".", 1)[0]
+        if sys.platform == "darwin" and major.isdigit() and int(major) >= 17:
+            # Lockdown DVT is unavailable on iOS 17+. Use the exact device's
+            # native RSD transport and retain kill-existing fresh-launch semantics.
+            await device.close()
+            device = None
+            process = await asyncio.create_subprocess_exec(
+                sys.executable, "-m", "pymobiledevice3", "developer", "dvt",
+                "launch", "--native", "--udid", udid, "--kill-existing", bundle,
+                stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            stdout, stderr = await process.communicate()
+            if process.returncode:
+                detail = (stderr or stdout).decode(errors="replace").strip()[-300:]
+                raise RuntimeError(f"native RSD fresh launch failed: {detail}")
+            return
         async with DvtProvider(device) as provider, ProcessControl(provider) as control:
             await control.launch(bundle, kill_existing=True)
     finally:
-        await device.close()
+        if device is not None:
+            await device.close()
 
 
 if __name__ == "__main__":

@@ -11,9 +11,9 @@ package installers, Settings bundle, OCR worker, or third-party models.
 
 Local changes:
 
-- Build the tested rootless SpringBoard tweak for arm64 and arm64e; the RootHide
-  arm64e package has been built and installed on an iPhone 14, but its service
-  is not yet running. That phone lacks the standard tweak injection loader.
+- Build the tested rootless SpringBoard tweak for arm64 and arm64e. The RootHide
+  arm64e package and ElleKit 1.2-1 are installed on an iPhone 14; its service
+  passed USB-forwarded health, foreground, accessibility and screenshot checks.
 - Bind its HTTP listener to `127.0.0.1:8090` for USB port forwarding.
 - Advertise and accept only UI observation, gesture, text input, and App launch tools.
 - Return 404 for `/upload_file` and `/download_file`.
@@ -49,8 +49,8 @@ marker, clearing it and using the standard `ldrestart` command, the 0.1.2
 service recovered. Version 0.1.3 now removes direct OCR from its exposed UI
 tools and rejects OCR requests inside `describe_screen`; these guards passed
 live XR checks. The screenshot-to-Mac OCR route passed on Compass. See
-`docs/xr-ocr-validation.md`. The iPhone 14 RootHide installation is documented
-separately; its iOS MCP runtime remains unverified.
+`docs/xr-ocr-validation.md`. The iPhone 14 RootHide runtime and one paired
+Calculator UI flow are documented in the [device validation note](../../docs/relaxin-roothide-iphone14.md).
 
 Version 0.1.4 exposes `swipe_screen`, `long_press`, and `double_tap` to the
 restricted UI tool list. Its inspected rootless package was transferred over

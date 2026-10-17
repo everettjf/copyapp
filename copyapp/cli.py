@@ -24,6 +24,7 @@ from copyapp.device_developer import launch_app, take_screenshot, list_directory
 from copyapp.acquire import acquire_bundle
 from copyapp.ssh_acquire import acquire_bundle_ssh
 from copyapp.ios_mcp import IOSMCPClient
+from copyapp.usb_tunnel import ios_mcp_tunnel
 from copyapp.sandbox import index_sandbox_ssh
 from copyapp.sandbox_capture import capture_sandbox_files
 from copyapp.sandbox_diff import compare_sandbox
@@ -275,6 +276,15 @@ async def usb_screenshot(udid: str) -> bytes:
 
 async def command_survey(udid: str, bundle: str, output: Path, launch: bool,
                          ui_backend: str = "usb") -> int:
+    if ui_backend == "ios-mcp":
+        with ios_mcp_tunnel(udid) as port:
+            return await _command_survey(udid, bundle, output, launch,
+                                         ui_backend, IOSMCPClient(port=port))
+    return await _command_survey(udid, bundle, output, launch, ui_backend, None)
+
+
+async def _command_survey(udid: str, bundle: str, output: Path, launch: bool,
+                          ui_backend: str, mcp: Optional[IOSMCPClient]) -> int:
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", bundle):
         raise ValueError("invalid bundle id")
     if output.exists() and any(output.iterdir()):
@@ -295,9 +305,7 @@ async def command_survey(udid: str, bundle: str, output: Path, launch: bool,
         evidence = [save_evidence(output, "app.json", app, "json")]
         capabilities: Dict[str, Any] = {}
 
-        mcp = None
-        if ui_backend == "ios-mcp":
-            mcp = IOSMCPClient()
+        if mcp is not None:
             mcp.initialize()
         if launch:
             if mcp is not None:

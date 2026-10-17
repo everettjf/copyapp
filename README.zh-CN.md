@@ -4,7 +4,7 @@
 
 在已越狱的 iPhone XR（iOS 16.1.1）上，[Translate 完整案例](docs/translate-xr-workflow.zh-CN.md)（[English](docs/translate-xr-workflow.md)）已经从新写的发现脚本走通到[审阅报告](cases/translate-current-workflow-20261016/analysis-agent/reviewed-report/report.md)、[独立 UIKit 工程](rebuild/TranslateFreshProbe)、真机安装与三组原版/复刻版对照。六张截图逐张审阅，均有轻微图标或间距差异。范围限于文字输入但不提交翻译、Favorites 空状态和 Conversation 待机导航；翻译结果、语音和相机能力仍未实现或验证。
 
-第一版正在实现“分析 → 复刻 → 真机对照”流程。Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 只读导出包和索引数据沙盒；本地解析 Mach-O。iOS MCP 的截图、前台识别、App 启动和点击已在 iPhone XR 上验收。原版 Compass 的关键交互已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展也已在 XR 上自动恢复为完整可分析 IPA。[iPhone 14 / iOS 17.3.1 / Relaxin 与 RootHide](docs/relaxin-roothide-iphone14.md) 已完成 Calculator 的 USB 调查、iCTRL 配对与操作、SSH 包和沙盒采集，并安装了开发证书签名的复刻版；Frida 挂钩、iOS MCP 服务和原版/复刻版界面对照仍未验收。iOS 26 尚未实测。
+第一版正在实现“分析 → 复刻 → 真机对照”流程。Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 只读导出包和索引数据沙盒；本地解析 Mach-O。iOS MCP 的截图、前台识别、App 启动和点击已在 iPhone XR 上验收。原版 Compass 的关键交互已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展也已在 XR 上自动恢复为完整可分析 IPA。[iPhone 14 / iOS 17.3.1 / Relaxin 与 RootHide](docs/relaxin-roothide-iphone14.md) 已完成 Calculator 的 USB 与 SSH 采集、iOS MCP 界面操作、开发证书签名复刻版安装，以及原版和复刻版各一次原生重新启动后的 `7 + 8 = 15` 同机对照；Frida 跟踪仍不稳定。iOS 26 尚未实测。
 
 [独立 Codex CLI 的 XR 实测](docs/external-codex-xr-trial.zh-CN.md)已完成 Calculator 的有来源报告、新 App 构建与安装、三条原版/复刻版行为对照。此次沿用已验证的发现脚本和既有复刻源码，具体范围见实测记录。
 
@@ -123,7 +123,7 @@ sh scripts/bootstrap-macos.sh
 | Copy APP iOS MCP tweak | 按 [手机端说明](device/ios-mcp/README.zh-CN.md)编译安装，随后重新载入 SpringBoard。 | 经 USB 本地服务读取前台 App、界面树、截图并执行手势。 |
 | iCTRL runner 与配对 Mac 客户端 | 完成 Xcode 签名配置后运行 `copyapp setup ictrl --udid <UDID> --out cases/ictrl-setup`，再批准手机上的配对提示。 | 可选界面后端，以及 Instruments 启动失败时的终止/重启回退。 |
 
-iOS MCP tweak 编译需要完整 Xcode、Theos、iPhoneOS 16.5 SDK 和 `ldid`；本仓库**不提供** Theos 与 SDK。安装好后，在仓库根目录运行 `THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules make -C device/ios-mcp package`，再用手机包管理器或 Filza 安装 `device/ios-mcp/packages/` 生成的 `.deb`，重新载入 SpringBoard。XR/iOS 16 的普通 rootless 包已验证；RootHide 需要 `roothide/theos`、`THEOS_PACKAGE_SCHEME=roothide` 和 ElleKit 等真正的 tweak 注入器。iPhone 14 的 RootHide 包已编译和安装，但该机缺少注入器，服务还未启动；见 [状态记录](docs/relaxin-roothide-iphone14.md)。可选的 iCTRL 源码及 Apache 2.0 许可、NOTICE 已固定在 [`vendor/ictrl`](vendor/ictrl/UPSTREAM.md)；生成的签名文件、大型构建依赖及配对密钥只保存在本地。
+iOS MCP tweak 编译需要完整 Xcode、Theos、iPhoneOS 16.5 SDK 和 `ldid`；本仓库**不提供** Theos 与 SDK。安装好后，在仓库根目录运行 `THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules make -C device/ios-mcp package`，再用手机包管理器或 Filza 安装 `device/ios-mcp/packages/` 生成的 `.deb`，重新载入 SpringBoard。XR/iOS 16 的普通 rootless 包已验证；RootHide 需要 `roothide/theos`、`THEOS_PACKAGE_SCHEME=roothide` 和 ElleKit 等真正的 tweak 注入器。iPhone 14 已安装 ElleKit 与 RootHide 包，界面服务通过真机验证；见 [状态记录](docs/relaxin-roothide-iphone14.md)。可选的 iCTRL 源码及 Apache 2.0 许可、NOTICE 已固定在 [`vendor/ictrl`](vendor/ictrl/UPSTREAM.md)；生成的签名文件、大型构建依赖及配对密钥只保存在本地。
 
 Mac 端专用 SSH 私钥位于 `cases/ssh/id_ed25519`（`onboard` 在缺少时创建），已核对的设备主机公钥位于 `cases/ssh-known-hosts`，端口 `22222` 从 Mac 转发到手机 SSH 端口 `22`。另开一个终端，用一条命令同时保持 SSH 与 iOS MCP 转发：
 
@@ -428,7 +428,7 @@ Clock 随后扩展到四个主标签：[四流程分析报告](cases/clock-four-
 
 两个 XR 试点可运行 `sh scripts/compose-pilot-report.sh compass cases/<NEW_CASE>` 或 `sh scripts/compose-pilot-report.sh fixture cases/<NEW_CASE>` 重建，脚本会在生成后调用 `copyapp verify`。报告器已用 DeepSeek 的已解密案例核对：优先展示解密后主程序和类索引，同时保留磁盘快照索引；没有账号会话时，登录后行为仍标记未知。单独导入的截图或数据文件只由报告器校验内容哈希，设备和 App 归属须从其采集记录另行确认。
 
-`install` 默认将本地 IPA 经指定设备的 USB SSH 传输、校验 SHA-256、调用现有的 TrollStore helper，然后用安装服务核对 Bundle ID 与版本；暂存 IPA 在结束时删除。该路径已在 XR 上用测试夹具实测更新并启动。对于 Apple Development 签名的 IPA，可用 `--transport usb` 直接通过安装服务安装，无需 TrollStore 或 SSH；iPhone 14/iOS 17.3.1 的 Calculator 复刻版已成功安装，安装案例核对了设备 UDID、IPA 哈希、版本和有效签名配置，但尚未在解锁界面实测启动和对照。例如：
+`install` 默认将本地 IPA 经指定设备的 USB SSH 传输、校验 SHA-256、调用现有的 TrollStore helper，然后用安装服务核对 Bundle ID 与版本；暂存 IPA 在结束时删除。该路径已在 XR 上用测试夹具实测更新并启动。对于 Apple Development 签名的 IPA，可用 `--transport usb` 直接通过安装服务安装，无需 TrollStore 或 SSH；iPhone 14/iOS 17.3.1 的 Calculator 复刻版已成功安装，安装案例核对了设备 UDID、IPA 哈希、版本和有效签名配置。复刻版随后启动并通过一条同机运算流程。例如：
 
 ```sh
 .venv/bin/copyapp install --udid <UDID> --ipa <LOCAL_IPA> --out cases/<INSTALL_CASE>
