@@ -4,7 +4,7 @@
 
 在已越狱的 iPhone XR（iOS 16.1.1）上，[Translate 完整案例](docs/translate-xr-workflow.zh-CN.md)（[English](docs/translate-xr-workflow.md)）已经从新写的发现脚本走通到[审阅报告](cases/translate-current-workflow-20261016/analysis-agent/reviewed-report/report.md)、[独立 UIKit 工程](rebuild/TranslateFreshProbe)、真机安装与三组原版/复刻版对照。六张截图逐张审阅，均有轻微图标或间距差异。范围限于文字输入但不提交翻译、Favorites 空状态和 Conversation 待机导航；翻译结果、语音和相机能力仍未实现或验证。
 
-第一版正在实现“分析 → 复刻 → 真机对照”流程。Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 只读导出包和索引数据沙盒；本地解析 Mach-O。iOS MCP 的截图、前台识别、App 启动和点击已在 iPhone XR 上验收。原版 Compass 的关键交互已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展也已在 XR 上自动恢复为完整可分析 IPA。[iPhone 14 / iOS 17.3.1 / Relaxin 与 RootHide](docs/relaxin-roothide-iphone14.md) 已完成 Calculator 的 USB 调查、iCTRL 配对与操作、SSH 包和沙盒采集；Frida 挂钩、iOS MCP 服务和完整复刻仍未验收。iOS 26 尚未实测。
+第一版正在实现“分析 → 复刻 → 真机对照”流程。Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 只读导出包和索引数据沙盒；本地解析 Mach-O。iOS MCP 的截图、前台识别、App 启动和点击已在 iPhone XR 上验收。原版 Compass 的关键交互已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展也已在 XR 上自动恢复为完整可分析 IPA。[iPhone 14 / iOS 17.3.1 / Relaxin 与 RootHide](docs/relaxin-roothide-iphone14.md) 已完成 Calculator 的 USB 调查、iCTRL 配对与操作、SSH 包和沙盒采集，并安装了开发证书签名的复刻版；Frida 挂钩、iOS MCP 服务和原版/复刻版界面对照仍未验收。iOS 26 尚未实测。
 
 [独立 Codex CLI 的 XR 实测](docs/external-codex-xr-trial.zh-CN.md)已完成 Calculator 的有来源报告、新 App 构建与安装、三条原版/复刻版行为对照。此次沿用已验证的发现脚本和既有复刻源码，具体范围见实测记录。
 
@@ -68,7 +68,7 @@ Copy APP 由 **Mac 命令行程序和越狱 iPhone 上的服务**组成。先安
 | --- | --- |
 | 初步采集 | Mac 引导脚本、USB 连接和手机信任。 |
 | 详尽分析 | 再加手机 OpenSSH、Frida 和界面控制；文档中的 XR 流程使用 iOS MCP，iCTRL 可选。Ghidra 和 Hopper 可选。 |
-| 可运行复刻 | 再加 Xcode 签名和 TrollStore 等可用安装路径。 |
+| 可运行复刻 | 再加 Xcode 签名和可用安装路径：TrollStore，或开发证书签名 IPA 的 USB 安装。 |
 
 ### 1. 安装 Mac 端
 
@@ -157,7 +157,7 @@ ssh -p 22222 -i cases/ssh/id_ed25519 \
   -o StrictHostKeyChecking=yes mobile@127.0.0.1 'deviceinfo uniqueid'
 ```
 
-可选接入 iCTRL 界面后端：安装 `xcodegen`（`brew install xcodegen`），并在 Xcode 配好 Apple Development 签名团队。手机需已安装 TrollStore，使用上面的 SSH 密钥安装 runner。`setup` 会从仓库固定源码编译 Mac 客户端和已签名 XCTest runner；对 Xcode 27/iOS 16，在上游签名步骤前自动修正外层 runner 的最低系统版本；随后安装、打开临时 USB 转发并配对。首次构建会下载约 215 MB 的固定版 IDevice 框架。手机出现配对提示时，核对指纹并批准；配对令牌不会写入 `cases/`：
+可选接入 iCTRL 界面后端：安装 `xcodegen`（`brew install xcodegen`），并在 Xcode 配好 Apple Development 签名团队。优先通过 USB 安装 runner；只有 USB 安装失败时才使用已配置的 SSH/TrollStore 回退。`setup` 会从仓库固定源码编译 Mac 客户端和已签名 XCTest runner；对 Xcode 27/iOS 16，在上游签名步骤前自动修正外层 runner 的最低系统版本；随后安装、打开临时 USB 转发并配对。首次构建会下载约 215 MB 的固定版 IDevice 框架。手机出现配对提示时，核对指纹并批准；配对令牌不会写入 `cases/`：
 
 ```sh
 .venv/bin/copyapp setup ictrl --udid <UDID> --out cases/first-ictrl-setup
@@ -428,10 +428,12 @@ Clock 随后扩展到四个主标签：[四流程分析报告](cases/clock-four-
 
 两个 XR 试点可运行 `sh scripts/compose-pilot-report.sh compass cases/<NEW_CASE>` 或 `sh scripts/compose-pilot-report.sh fixture cases/<NEW_CASE>` 重建，脚本会在生成后调用 `copyapp verify`。报告器已用 DeepSeek 的已解密案例核对：优先展示解密后主程序和类索引，同时保留磁盘快照索引；没有账号会话时，登录后行为仍标记未知。单独导入的截图或数据文件只由报告器校验内容哈希，设备和 App 归属须从其采集记录另行确认。
 
-`install` 将本地 IPA 经指定 XR 的 USB SSH 传输、校验 SHA-256、调用该设备现有的 TrollStore helper，然后用安装服务核对 Bundle ID 与版本；暂存 IPA 在结束时删除。已在 XR 上用测试夹具实测更新并启动，完整记录在 `cases/fixture-cli-install-20261015/install.json`。例如：
+`install` 默认将本地 IPA 经指定设备的 USB SSH 传输、校验 SHA-256、调用现有的 TrollStore helper，然后用安装服务核对 Bundle ID 与版本；暂存 IPA 在结束时删除。该路径已在 XR 上用测试夹具实测更新并启动。对于 Apple Development 签名的 IPA，可用 `--transport usb` 直接通过安装服务安装，无需 TrollStore 或 SSH；iPhone 14/iOS 17.3.1 的 Calculator 复刻版已成功安装，安装案例核对了设备 UDID、IPA 哈希、版本和有效签名配置，但尚未在解锁界面实测启动和对照。例如：
 
 ```sh
 .venv/bin/copyapp install --udid <UDID> --ipa <LOCAL_IPA> --out cases/<INSTALL_CASE>
+.venv/bin/copyapp install --transport usb --udid <UDID> --ipa <SIGNED_IPA> --out cases/<USB_INSTALL_CASE>
+.venv/bin/copyapp verify cases/<USB_INSTALL_CASE>
 ```
 
 `root-run` 用于已安装 root Frida 服务及已配对 mobile SSH 的越狱机。它只对精确匹配的 USB UDID 启动命令，确认 SSH 也指向同一设备，保存命令、输出和退出码到指定本地案例目录，最多保存 1 MiB 输出并清理手机上的临时日志。指定的可执行文件必须是绝对路径；需要限制长任务时，在设备命令前加 `/var/jb/usr/bin/timeout`。该入口具有 root 权限，只应在可信的本机工作区使用。

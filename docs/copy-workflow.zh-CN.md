@@ -33,12 +33,12 @@ Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组
 
 ## 3. 实现与真机对照
 
-再次续跑后，`prepare-rebuild` 生成关联报告的复刻任务，并停在 `rebuild-agent/TASK.md`。在指定的 `--project` 编写独立 Xcode 工程，在绑定设备上安装并保存证据；使用 `rebuild-task-check` 在同一 UI 后端对照原版与复刻版选定流程。逐张审阅截图，保存 `visual-review`，最后运行不带 `--run` 的 `agent-delivery`。父流程要求每条选定流程通过行为或末端视图断言、全部图片已审且无重大差异；轻微差异仍需记录。
+再次续跑后，`prepare-rebuild` 生成关联报告的复刻任务，并停在 `rebuild-agent/TASK.md`。在指定的 `--project` 编写独立 Xcode 工程，在绑定设备上安装并保存证据。开发证书签名的 IPA 可用 `copyapp install --transport usb --udid <UDID> --ipa <IPA> --out <案例>`；现有 TrollStore 安装路径仍是默认值。校验安装案例后，使用 `rebuild-task-check` 在同一 UI 后端对照原版与复刻版选定流程。逐张审阅截图，保存 `visual-review`，最后运行不带 `--run` 的 `agent-delivery`。父流程要求每条选定流程通过行为或末端视图断言、全部图片已审且无重大差异；轻微差异仍需记录。
 
 最后一次 `--resume` 仅在所有子案例和来源关联通过时将父案例标为完成。`copyapp verify cases/<案例>` 可以重验哈希，但不能证明语义解释正确，也不能证明未测功能等价。已处于 Coding Agent 会话时不要嵌套启动 `copyapp agent-run` 或另一个 Codex/Claude 进程。
 
 ## 当前验收边界
 
-iOS 16.1.1 的 iPhone XR 已完成 Clock 三流程的当前 Agent 父案例：正式报告、独立 App 源码、安装、3/3 行为与末端视图断言及 10 对逐张审阅的截图，截图均有轻微差异。另一个[Clock 自动发现父案例](../cases/clock-current-auto-workflow-20261016/manifest.json)使用三条先前编写的脚本，在同一案例内完成发现、报告、独立工程、安装和三流程真机交付；父案例 517 项证据文件通过校验，源码改自既有独立实现。新的[Calculator 父案例](../cases/calculator-current-auto-workflow-20261016/manifest.json)由当前 Agent 根据 XR 实际界面新写三条脚本并从空工程编写 UIKit 复刻版；三条运算流程的双端行为与末端视图断言均通过，三对截图均已审为轻微差异、无重大差异，交付与父案例通过核验。外部进程试验仍使用固定脚本。陌生 App 的普适发现、真实外部 CLI 自主闭环、全功能等价以及 iOS 17/26 兼容性尚未验证；后两台手机按用户要求暂缓。
+iOS 16.1.1 的 iPhone XR 已完成 Clock 三流程的当前 Agent 父案例：正式报告、独立 App 源码、安装、3/3 行为与末端视图断言及 10 对逐张审阅的截图，截图均有轻微差异。另一个[Clock 自动发现父案例](../cases/clock-current-auto-workflow-20261016/manifest.json)使用三条先前编写的脚本，在同一案例内完成发现、报告、独立工程、安装和三流程真机交付；父案例 517 项证据文件通过校验，源码改自既有独立实现。新的[Calculator 父案例](../cases/calculator-current-auto-workflow-20261016/manifest.json)由当前 Agent 根据 XR 实际界面新写三条脚本并从空工程编写 UIKit 复刻版；三条运算流程的双端行为与末端视图断言均通过，三对截图均已审为轻微差异、无重大差异，交付与父案例通过核验。外部进程试验仍使用固定脚本。陌生 App 的普适发现、真实外部 CLI 自主闭环和全功能等价尚未验证。iPhone 14/iOS 17.3.1 已验证 USB、iCTRL、SSH 采集及开发证书签名复刻版的安装；Frida 挂钩、iOS MCP 服务和成对界面对照仍待完成。iOS 26 尚未实测。
 
 参见 [中文 README](../README.zh-CN.md)、[英文 README](../README.md) 和 [详细试验记录](../PLAN.md)。

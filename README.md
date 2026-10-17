@@ -4,7 +4,7 @@ English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_
 
 Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app on a jailbroken iPhone and rebuilding selected behavior as an independent, runnable iOS app. It acquires package and sandbox evidence, inspects native code, captures UI and runtime behavior, produces a cited report and feature specification, then builds and compares a clone on the same device.
 
-The workflow verifies evidence identity and selected UI flows. It does **not** claim complete equivalence to an arbitrary app. The iPhone XR running iOS 16.1.1 is the tested deep-workflow device. An [iPhone 14 running iOS 17.3.1 with Relaxin/RootHide](docs/relaxin-roothide-iphone14.md) passed USB Calculator survey, iCTRL pairing and UI actions, and SSH bundle/sandbox collection. Frida attach, iOS MCP runtime and a rebuilt App install remain unverified there. iOS 26 has not been tested.
+The workflow verifies evidence identity and selected UI flows. It does **not** claim complete equivalence to an arbitrary app. The iPhone XR running iOS 16.1.1 is the tested deep-workflow device. An [iPhone 14 running iOS 17.3.1 with Relaxin/RootHide](docs/relaxin-roothide-iphone14.md) passed USB Calculator survey, iCTRL pairing and UI actions, SSH bundle/sandbox collection, and development-signed clone installation. Frida attach, iOS MCP runtime and paired clone behavior remain unverified there. iOS 26 has not been tested.
 
 A [standalone Codex CLI trial on the XR](docs/external-codex-xr-trial.md) completed a source-linked Calculator report, independent build and installation, and three paired behavior checks. It reused verified discovery scripts and earlier clone source; see the trial note for the exact scope.
 
@@ -68,7 +68,7 @@ If Codex or Claude Code is open in this repository, you can ask it: **“Set up 
 | --- | --- |
 | First survey | Mac bootstrap, USB cable and phone trust. |
 | Detailed analysis | Add phone OpenSSH and Frida, plus UI control. The documented XR path uses iOS MCP; iCTRL is optional. Ghidra and Hopper are optional. |
-| Runnable rebuild | Add Xcode signing and a working install path such as TrollStore. |
+| Runnable rebuild | Add Xcode signing and a working install path: TrollStore, or USB InstallationProxy for a development-signed IPA. |
 
 ### 1. Install the Mac CLI
 
@@ -192,7 +192,14 @@ For a first package/UI/sandbox analysis, open the target App or let the command 
 
 Read `cases/first-analysis/analysis.md`. It is a collection index, so a detailed functional report still needs controlled UI flows, function review and `copyapp report`. For an App Store binary with encrypted Mach-O files, prepare the pinned helper with `sh scripts/prepare-ipadecrypt-helper.sh` and add `--decrypt` to `analyze` or use the default full `copy` path; the helper is downloaded outside this repository under `../toolchains/`. Decrypted output is an **analysis IPA**, not an installable signed App. An App you compiled locally may already have `cryptid=0` and need no decryption. See [full-package recovery](docs/full-package-decryption.md).
 
-Direct Ghidra or Hopper pseudocode is optional and requires a separately installed tool. Choose `--analysis-provider ghidra-direct --ghidra-dir <DIR> --java-home <JDK_HOME>` or `--analysis-provider hopper-direct` in the full workflow. Hopper also needs a licensed GUI session. For the rebuilt App, Xcode and a working signing/install path are required; the tested XR path uses an existing TrollStore installation. Start the staged `copy` job below only after the required `doctor` channels work. The [workflow guide](docs/copy-workflow.md) explains every pause, report and device check.
+Direct Ghidra or Hopper pseudocode is optional and requires a separately installed tool. Choose `--analysis-provider ghidra-direct --ghidra-dir <DIR> --java-home <JDK_HOME>` or `--analysis-provider hopper-direct` in the full workflow. Hopper also needs a licensed GUI session. For the rebuilt App, Xcode and a working signing/install path are required; the tested XR path uses an existing TrollStore installation. On iOS 17.3.1, an Apple Development signed Calculator clone installed through `copyapp install --transport usb`, with exact UDID, IPA hash, version/build and validated profile recorded in a verified case. Build the App with your Xcode development team, package its signed `.app` under `Payload/` in an IPA, then run:
+
+```sh
+.venv/bin/copyapp install --transport usb --udid <UDID> --ipa <SIGNED_IPA> --out cases/clone-install
+.venv/bin/copyapp verify cases/clone-install
+```
+
+The USB route does not need TrollStore or SSH. A successful install does not yet establish that the App launched or matched the original; run paired UI flows afterward. Start the staged `copy` job below only after its required `doctor` channels work. The [workflow guide](docs/copy-workflow.md) explains every pause, report and device check.
 
 | If setup stops here | Check |
 | --- | --- |
@@ -262,7 +269,7 @@ Formal reports now render a bounded Assets.car name list and a metadata-only san
 
 `copyapp verify` checks recorded source links and file hashes. For a standalone `install.json` directory, it also rechecks the saved IPA hash, Bundle ID and version; that does not prove the App is still installed now. A matching hash does not prove that a decompiler interpretation is correct or that an app is functionally equivalent. Store raw IPA files, screenshots, sandbox snapshots, traces and credentials only in ignored local `cases/`. Reports should distinguish direct observations, inferences and unknown behavior.
 
-The current gaps are general discovery and independent implementation across unfamiliar apps, a real Claude CLI end-to-end run, broader app behavior and backend semantics, full sandbox and network interpretation, and cross-version validation. The iOS 17.3.1 iPhone 14 has passed USB, iCTRL and SSH/static acquisition, while RootHide Frida attach, iOS MCP service startup and rebuilt-App installation are pending. iOS 26 remains untested.
+The current gaps are general discovery and independent implementation across unfamiliar apps, a real Claude CLI end-to-end run, broader app behavior and backend semantics, full sandbox and network interpretation, and cross-version validation. The iOS 17.3.1 iPhone 14 has passed USB, iCTRL, SSH/static acquisition and development-signed clone installation; RootHide Frida attach, iOS MCP service startup and paired original/clone behavior remain pending. iOS 26 remains untested.
 
 ## Documentation
 

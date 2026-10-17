@@ -57,7 +57,7 @@ from copyapp.prepare_analysis import prepare_analysis
 from copyapp.prepare_app import prepare_app
 from copyapp.copy_workflow import copy_app
 from copyapp.prepare_rebuild import prepare_rebuild
-from copyapp.install import install_trollstore_ipa
+from copyapp.install import install_trollstore_ipa, install_usb_ipa
 from copyapp.report import compose_report
 from copyapp.report_portfolio import create_report_portfolio
 from copyapp.host_ocr import recognize_screenshot
@@ -832,10 +832,12 @@ def main() -> None:
     root.add_argument("--ssh-identity", type=Path, default=Path("cases/ssh/id_ed25519"))
     root.add_argument("--ssh-known-hosts", type=Path, default=Path("cases/ssh-known-hosts"))
     root.add_argument("argv", nargs=argparse.REMAINDER, help="-- /absolute/executable [arguments...] ")
-    install = sub.add_parser("install", help="install a local IPA via the named USB device's existing TrollStore")
+    install = sub.add_parser("install", help="install a local IPA through USB signing or TrollStore")
     install.add_argument("--udid", required=True)
     install.add_argument("--ipa", required=True, type=Path)
     install.add_argument("--out", required=True, type=Path)
+    install.add_argument("--transport", choices=("trollstore", "usb"), default="trollstore",
+                         help="use USB InstallationProxy for a development-signed IPA")
     install.add_argument("--ssh-port", type=int, default=22222)
     install.add_argument("--ssh-identity", type=Path, default=Path("cases/ssh/id_ed25519"))
     install.add_argument("--ssh-known-hosts", type=Path, default=Path("cases/ssh-known-hosts"))
@@ -1249,8 +1251,11 @@ def main() -> None:
             print(args.out / "result.json")
             code = 0 if result["exit_code"] == 0 else 1
         elif args.command == "install":
-            print(install_trollstore_ipa(args.udid, args.ipa, args.out, args.ssh_port,
-                                         args.ssh_identity, args.ssh_known_hosts))
+            if args.transport == "usb":
+                print(install_usb_ipa(args.udid, args.ipa, args.out))
+            else:
+                print(install_trollstore_ipa(args.udid, args.ipa, args.out, args.ssh_port,
+                                             args.ssh_identity, args.ssh_known_hosts))
             code = 0
         elif args.command == "assemble-ipa":
             print(assemble_analysis_ipa(args.snapshot, args.recovered, args.out))

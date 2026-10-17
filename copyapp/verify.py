@@ -61,6 +61,21 @@ def verify_acquisition(directory: Path) -> bool:
     return compare(directory, records)
 
 
+def install_transport_complete(record: dict) -> bool:
+    """Check the saved installation method without conflating USB and TrollStore."""
+    transport = record.get("transport", "trollstore")
+    if transport == "trollstore":
+        return (record.get("helper_exit_code") == 0 and
+                record.get("staged_sha256") == record.get("ipa_sha256"))
+    if transport == "usb":
+        return (record.get("usb_install_completed") is True and
+                record.get("installed_profile_validated") is True and
+                isinstance(record.get("installed_path"), str) and
+                record["installed_path"].startswith("/") and
+                record["installed_path"].endswith(".app"))
+    return False
+
+
 def verify_install(directory: Path) -> bool:
     """Recheck saved IPA identity; this cannot prove the phone still has it installed."""
     try:
@@ -68,8 +83,7 @@ def verify_install(directory: Path) -> bool:
         record = json.loads((directory / "install.json").read_text(encoding="utf-8"))
         ipa_name = record.get("ipa")
         if (record.get("schema_version") != 1 or record.get("status") != "installed" or
-                record.get("helper_exit_code") != 0 or
-                record.get("staged_sha256") != record.get("ipa_sha256") or
+                not install_transport_complete(record) or
                 not isinstance(record.get("device_id"), str) or
                 not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", record["device_id"]) or
                 not isinstance(ipa_name, str) or not ipa_name):

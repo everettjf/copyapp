@@ -16,12 +16,13 @@ support on iOS 17 or on other RootHide configurations.
 | Sandbox | A bounded SSH index captured 20 entries and seven files in Calculator's data container. This is an index, not an atomic copy of live app data. |
 | Frida | RootHide's `re.frida.server` 16.1.4 runs. A same-version isolated Mac client enumerated processes and apps, but attaching to Calculator and Fila failed with `ProcessNotRespondingError` and produced `EXC_GUARD / GUARD_TYPE_MACH_PORT` app crashes at `task_swap_exception_ports`. Runtime tracing is **not** verified. The main Mac environment's Frida 17.23.3 is also version-mismatched with the phone server. |
 | Copy APP iOS MCP | The arm64e RootHide package built and installed as `com.copyapp.mcp` 0.1.4-4. Its dylib and SpringBoard filter are present, and SpringBoard restarted, but port 8090 did not become reachable. No ElleKit or MobileSubstrate package is installed. Whether SpringBoard loaded this dylib is unverified; the missing standard tweak loader is the leading explanation, not yet a proven cause. |
-| Rebuilt App | A Calculator clone IPA built, but direct USB installation rejected both unsigned and ad hoc signed attempts. No clone installation or paired original/clone comparison passed on this phone. |
+| Rebuilt App | Direct USB installation rejected unsigned and ad hoc signed attempts. An Apple Development signed Calculator clone then built with a profile containing this device and installed through USB InstallationProxy. The `copyapp install --transport usb` case verified exact UDID, IPA hash, version/build and `ProfileValidated=true`. Launch and paired original/clone comparison remain unverified while the phone is locked. |
 
 The local evidence lives in Git-ignored `cases/iphone14-*20261017/`, especially
 `iphone14-after-roothide-openssh`, `iphone14-calculator-acquire-attempt`,
 `iphone14-calculator-ictrl-playbook-v4`, `iphone14-calculator-sandbox`,
-`iphone14-frida-crashes`, and `iphone14-after-respring`. The phone was locked
+`iphone14-frida-crashes`, `iphone14-calculator-usb-install`, and
+`iphone14-after-respring`. The phone was locked
 at the end of this session, so no further app UI installation was attempted.
 
 ## RootHide tweak dependency and next validation
@@ -54,8 +55,9 @@ phone package UI, restart SpringBoard, then verify the loopback health
 endpoint and bounded UI tools. Keep iCTRL as the already working UI backend
 until that succeeds. Frida attach needs a compatible RootHide server/client
 combination validated against this exact iOS build; process enumeration alone
-does not count. The clone also still needs a valid installation route and
-same-device comparison. Do not infer those results from the iOS 16 XR pilot.
+does not count. The signed clone is installed, but its launch, selected behavior
+and same-device comparison still need verification. Do not infer those results
+from the iOS 16 XR pilot.
 
 Sources: [Relaxin](https://github.com/owngoal-dev/Relaxin),
 [RootHide developer instructions](https://github.com/roothide/Developer),

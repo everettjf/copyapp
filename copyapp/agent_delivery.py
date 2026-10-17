@@ -14,7 +14,7 @@ from typing import Optional
 from copyapp.agent_run import _source_files, _source_tree_hash
 from copyapp.gestures import GESTURE_ACTIONS
 from copyapp.text_actions import TYPE_ACTION
-from copyapp.verify import checked_path, sha256_file, verify_case
+from copyapp.verify import checked_path, install_transport_complete, sha256_file, verify_case
 
 
 def _read(path: Path) -> dict:
@@ -142,8 +142,7 @@ def create_agent_delivery(task_case: Path, install_record: Path,
             check.get("status") != "complete" or
             install.get("schema_version") != 1 or
             install.get("status") != "installed" or
-            install.get("helper_exit_code") != 0 or
-            install.get("staged_sha256") != install.get("ipa_sha256") or
+            not install_transport_complete(install) or
             install.get("bundle_id") != task.get("rebuilt_bundle_id")):
         raise ValueError("task, installation or rebuild check is incomplete")
     ipa = Path(install["ipa"]).resolve(strict=True)

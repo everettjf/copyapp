@@ -1,4 +1,4 @@
-"""Install a local IPA on a named jailbroken iPhone via its existing TrollStore."""
+"""Install a local IPA on an exact USB iPhone via signing or TrollStore."""
 
 import asyncio
 import json
@@ -104,5 +104,67 @@ def install_trollstore_ipa(udid: str, ipa: Path, output: Path, ssh_port: int,
         except (OSError, subprocess.TimeoutExpired):
             record["cleanup_warning"] = "staged IPA removal was not confirmed"
         record["finished_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        result_path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+    return result_path
+
+
+def install_usb_ipa(udid: str, ipa: Path, output: Path) -> Path:
+    """Install a development-signed IPA through USB InstallationProxy."""
+    if not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", udid):
+        raise ValueError("invalid device UDID")
+    if output.exists() and any(output.iterdir()):
+        raise FileExistsError(f"output directory is not empty: {output}")
+    package = analyze_ipa(ipa)
+    bundle_id = package.get("bundle_id")
+    if not isinstance(bundle_id, str) or not re.fullmatch(r"[A-Za-z0-9_.-]+", bundle_id):
+        raise ValueError("IPA has no valid bundle ID")
+    output.mkdir(parents=True, exist_ok=True)
+    record: Dict[str, Any] = {
+        "schema_version": 1,
+        "transport": "usb",
+        "started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "device_id": udid,
+        "ipa": str(ipa.resolve(strict=True)),
+        "ipa_sha256": package["ipa_sha256"],
+        "bundle_id": bundle_id,
+        "version": package.get("version"),
+        "build": package.get("build"),
+        "usb_install_completed": False,
+        "status": "failed",
+    }
+
+    async def install() -> Dict[str, Any]:
+        device = await create_using_usbmux(serial=udid, connection_type="USB", autopair=False)
+        try:
+            values = await device.get_value()
+            if values.get("UniqueDeviceID") != udid:
+                raise RuntimeError("USB installation target identity does not match --udid")
+            async with InstallationProxyService(device) as proxy:
+                await proxy.install_from_local(ipa)
+                apps = await proxy.get_apps(application_type="Any",
+                                            bundle_identifiers=[bundle_id])
+            return apps.get(bundle_id) or {}
+        finally:
+            await device.close()
+
+    try:
+        installed = asyncio.run(install())
+        record["usb_install_completed"] = True
+        if not installed:
+            raise RuntimeError("InstallationProxy completed but app is absent from its database")
+        if (str(installed.get("CFBundleShortVersionString")) != str(package.get("version")) or
+                str(installed.get("CFBundleVersion")) != str(package.get("build"))):
+            raise RuntimeError("installed app version/build does not match the IPA")
+        if installed.get("ProfileValidated") is not True:
+            raise RuntimeError("installed app profile is not validated")
+        record["installed_path"] = installed.get("Path")
+        record["installed_profile_validated"] = True
+        record["status"] = "installed"
+    except Exception as exc:
+        record["error"] = {"type": type(exc).__name__, "message": str(exc)[:400]}
+        raise
+    finally:
+        record["finished_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        result_path = output / "install.json"
         result_path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
     return result_path

@@ -89,6 +89,17 @@ class AgentDeliveryTest(unittest.TestCase):
             self.ipa.write_bytes(b"later-build")
             self.assertTrue(verify_case(report.parent))
 
+    def test_accepts_verified_usb_install_record(self):
+        self.install_data.pop("helper_exit_code")
+        self.install_data.pop("staged_sha256")
+        self.install_data.update({"transport": "usb", "usb_install_completed": True,
+                                  "installed_profile_validated": True,
+                                  "installed_path": "/Applications/Clone.app"})
+        write(self.install, self.install_data)
+        report = self._create()
+        self.assertEqual(json.loads((report.parent / "delivery.json").read_text())["status"],
+                         "selected_behavior_verified_visual_unreviewed")
+
     def test_explicit_review_records_differences_separately_from_script_checks(self):
         review_case = self.root / "review"
         write(review_case / "review.json", {
