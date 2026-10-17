@@ -263,7 +263,8 @@ def verify_case(directory: Path) -> bool:
                                                 "needs_semantic_review") and
                     manifest.get("ui_backend") in ("usb", "ios-mcp") and
                     manifest.get("investigation_backend") in ("ios-mcp", "ictrl") and
-                    manifest.get("provider") in ("none", "ghidra-direct", "ghidra", "hopper") and
+                    manifest.get("provider") in ("none", "ghidra-direct", "hopper-direct",
+                                                 "ghidra", "hopper") and
                     state.get("bundle_id") == manifest.get("bundle_id") and
                     state.get("device_id_sha256_prefix") ==
                     manifest.get("device_id_sha256_prefix") and

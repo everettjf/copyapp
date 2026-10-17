@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "scenario_id": "ios17-calculator-delete-last-digit",
+  "bundle_id": "com.apple.calculator",
+  "fresh_launch": true,
+  "steps": [
+    {"action": "observe", "contains": ["all clear", "9", "8", "equals"]},
+    {"action": "tap_label", "label": "all clear"},
+    {"action": "tap_label", "label": "9"},
+    {"action": "tap_label", "label": "8"},
+    {"action": "screenshot", "stable": true, "ready_contains": "equals"},
+    {"action": "swipe", "from_x": 338, "from_y": 260, "to_x": 122, "to_y": 260, "duration_ms": 350, "steps": 20},
+    {"action": "observe", "wait_ms": 350, "contains": ["Result", "equals"]},
+    {"action": "screenshot", "stable": true, "ready_contains": "equals"}
+  ]
+}

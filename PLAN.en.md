@@ -4,6 +4,8 @@
 
 The [Chinese plan](PLAN.md) contains the original full architecture, acceptance criteria and chronological experiment log. This English plan describes the current product contract and remaining work. For exact commands and handoffs, read the [workflow guide](docs/copy-workflow.md).
 
+**Current two-device status:** The [iOS 16/17 verification matrix](docs/two-device-verification-matrix.md) records fresh capability checks, same-script Calculator gesture and Safari text input through iOS MCP and iCTRL on both phones, selected analysis-to-rebuild deliveries, and a one-flow iOS 17 `hopper-direct` parent. These are verified paths on the named devices; whole-App equivalence, unfamiliar-App autonomy and iOS 26 remain open.
+
 **Latest XR milestone:** An [independent Codex CLI trial](docs/external-codex-xr-trial.md) completed the Calculator analyze → rebuild chain on iOS 16.1.1. Three selected behavior assertions passed and three screenshot pairs were reviewed with minor differences. Previously verified discovery scripts and an earlier independent clone were reused, so autonomous discovery and unfamiliar-app implementation remain open. The [Translate workflow](docs/translate-xr-workflow.md) separately exercises a second UI stack.
 
 ## Product contract

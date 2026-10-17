@@ -58,7 +58,7 @@ class PrepareAppTest(unittest.IsolatedAsyncioTestCase):
             "decrypt_requested": False}))
         return True
 
-    def _prepare(self, udid, analysis, scripts, output, *args):
+    def _prepare(self, udid, analysis, scripts, output, *args, **kwargs):
         self.prepare_calls.append(args[-1])
         output.mkdir(exist_ok=True)
         (output / "manifest.json").write_text(json.dumps({
@@ -88,6 +88,27 @@ class PrepareAppTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(self.analyze_calls, 1)
         self.assertEqual(self.prepare_calls, [False])
         self.assertEqual(json.loads(manifest.read_text())["status"], "needs_semantic_review")
+
+    async def test_hopper_direct_parent_verifies_and_resumes(self):
+        hopper_app = self.root / "Hopper.app"
+        hopper_app.mkdir()
+        with patch("copyapp.prepare_analysis._hopper_ready", side_effect=self._doctor), \
+             patch("copyapp.prepare_app.analyze_case", side_effect=self._analyze), \
+             patch("copyapp.prepare_app.prepare_analysis", side_effect=self._prepare), \
+             patch("copyapp.prepare_app.verify_case", return_value=True):
+            manifest, ready = await prepare_app(
+                self.udid, self.bundle, [self.script], self.output, self._survey,
+                provider="hopper-direct", hopper_app=hopper_app)
+            self.assertTrue(ready, manifest.read_text())
+            with patch("copyapp.verify._verify_silent", return_value=True):
+                self.assertTrue(verify_case(self.output))
+            manifest, ready = await prepare_app(
+                self.udid, self.bundle, [self.script], self.output, self._survey,
+                provider="hopper-direct", hopper_app=hopper_app, resume=True)
+            self.assertTrue(ready)
+            self.assertEqual(self.analyze_calls, 1)
+        self.assertEqual(json.loads(manifest.read_text())["status"],
+                         "needs_semantic_review")
 
     async def test_changed_playbook_rejected_before_device_work(self):
         with patch("copyapp.prepare_app._ghidra_ready", side_effect=self._doctor), \

@@ -12,7 +12,7 @@ Copy APP 的正式分析与复刻链路不要求安装 REA。手机端采集、�
 | --- | --- | --- |
 | Ghidra 函数伪代码与分析器配置 | `ghidra-function`、`ghidra-queue`、`ghidra-indirect` 和 `--provider ghidra-direct` 已独立实现并在 XR 案例验证 | 保持直接实现，无需复制整个 REA 桥接层 |
 | 函数调用关系、交叉引用、字符串引用、基本块 | `function-facts.json` v2 输出有界调用者、被调用者、签名、静态基本块和指令引用；可识别的字符串值只保留短预览。已在 XR 导出的 FixtureShare 二进制上由真实 Ghidra 运行并验证；原生汇编队列另提供有界直接调用跟随 | 针对具体 App 继续补动态分支验证；静态引用不能证明运行时命中 |
-| Hopper 函数资料 | `hopper-function`、`hopper-queue` 和 `--provider hopper-direct` 独立实现；XR 导出夹具的真实函数与报告导入已验证 | 目前输出函数签名和伪代码，调用关系与间接目标跟随仍用 Ghidra；完整 Hopper 一命令真机流程尚未验收 |
+| Hopper 函数资料 | `hopper-function`、`hopper-queue` 和 `--provider hopper-direct` 独立实现；XR 夹具集成调查及 iOS 17 Calculator 一流程 `copy --analysis-provider hopper-direct` 父案例均已验证 | 目前输出函数签名和伪代码，调用关系与间接目标跟随仍用 Ghidra；不代表完整算法或整 App 等价 |
 | 通用 MCP 会话、其他平台反编译器、跨平台进程管理 | Copy APP 没有这些通用需求 | 不整体搬入，避免把 REA 的通用产品复杂度带进 iOS 专用流程 |
 
 移植的验收标准是：干净环境不安装 REA，也能从越狱机采集目标、生成经校验的分析报告和复刻任务、构建独立 App，并在同一设备执行对照。已有 Calculator 与 DeepSeek 的限定流程完成过该链路；这不代表任意 App 的所有页面和逻辑都已自动复刻。报告中的代码仍是反编译推断，运行时分支和 UI 结果需单独取证。

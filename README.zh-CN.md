@@ -16,7 +16,9 @@ Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱�
 
 iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。此前交付的复刻版源码和 IPA 早于本报告存在；另一次[从报告新写源码并扩展四流程的试验](docs/ios17-calculator-fresh-from-report.zh-CN.md)已完成构建、签名、安装和同机对照。Calculator 全功能等价仍未验证。现有 RootHide Frida 服务不能提供 root `root-run`；已验证的加密包恢复路径使用 mobile SSH。
 
-[v0.1.6 双机发布验收](docs/releases/v0.1.6.zh-CN.md)记录两台已连接手机的新设备能力检查和 iOS 17 Calculator 四流程 `copyapp copy` 完整案例。[v0.1.5 分享扩展验收](docs/releases/v0.1.5.zh-CN.md)证明两机的已知源码扩展收到精确合成文本；其他内容类型和其他扩展仍未验证。
+[v0.1.7 双机发布验收](docs/releases/v0.1.7.zh-CN.md)记录同脚本跨设备/后端的手势与文本检查，并修复 Hopper provider 案例校验。[v0.1.6 发布记录](docs/releases/v0.1.6.zh-CN.md)已确立两机新设备能力基线和 iOS 17 Calculator 四流程 `copyapp copy` 案例。[v0.1.5 分享扩展验收](docs/releases/v0.1.5.zh-CN.md)证明两机的已知源码扩展收到精确合成文本。
+
+[双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)又在两台手机上，用**同一脚本**分别经 iOS MCP 与 iCTRL 验证 Calculator `98→9` 左滑和 Safari 地址栏的合成文本输入，并在 iOS 17 上跑通一条 `hopper-direct` 分析到复刻父工作流。这些有界结果不代表所有输入框、手势或 App 都相同。
 
 [独立 Codex CLI 的 XR 实测](docs/external-codex-xr-trial.zh-CN.md)已完成 Calculator 的有来源报告、新 App 构建与安装、三条原版/复刻版行为对照。此次沿用已验证的发现脚本和既有复刻源码，具体范围见实测记录。
 
@@ -220,11 +222,11 @@ Copy APP 的 iCTRL 默认使用按签名团队区分的 ID：可选设置 App �
 
 UI 脚本现可通过 iOS MCP 和 iCTRL 执行有界滑动、长按与双击；语法、后端差异及 XR 实测见[中文手势指南](docs/ui-gesture-playbooks.zh-CN.md)（[English](docs/ui-gesture-playbooks.md)）。XR 已安装 iOS MCP 0.1.4 并列出三种操作。Calculator 显示区输入 `98` 后左滑变成 `9` 的行为也在独立复刻版上通过；新版复刻版重新通过原先三条运算流程。长按和双击仅验证调用可用，未断定具体 App 功能结果。
 
-UI 脚本还支持有界[文本输入](docs/ui-text-playbooks.zh-CN.md)（[English](docs/ui-text-playbooks.md)）。XR 上的 [Translate 三流程发现案例](cases/translate-xr-discovery-20261016/manifest.json)通过 iCTRL 验收，其中包含合成词 `hello` 的输入。iOS MCP 在该 App 报告字符已派发，但界面未显示，因此这台设备已验证的文本流程使用 iCTRL 并检查可见结果。
+UI 脚本还支持有界[文本输入](docs/ui-text-playbooks.zh-CN.md)（[English](docs/ui-text-playbooks.md)）。XR 上的 [Translate 三流程发现案例](cases/translate-xr-discovery-20261016/manifest.json)通过 iCTRL 验收，其中包含合成词 `hello` 的输入。iOS MCP 在该 Translate 输入框报告字符已派发，但界面未显示，因此这条 Translate 流程使用 iCTRL；另一次 Safari 对照已在两机的两种后端都确认合成文字可见，详见[矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
 正式报告现在会把 `Assets.car` 的资源名称及沙盒的只读文件元数据摘要直接写入人可读附录，完整索引仍保留证据链接。进一步的 [Calculator 深入报告](cases/calculator-ui-deep-report-20261016/report.md)和[来源关联的分析交付](cases/calculator-ui-deep-analysis-delivery-20261016/report.md)已通过核验，还加入 Copy APP 直连 Ghidra 对根视图组装、键盘按钮 frame 布局和结果视图手势装配的同二进制函数证据。资源名或数据库/偏好文件名只提供调查线索，不能单独证明某个功能实际读取它们；本次三条运算流程也未测试显示区手势。
 
-旧 REA 命令和 provider 桥接已删除。深入函数分析可选 Copy APP 直连 Ghidra 或 `--provider hopper-direct`（顶层 `copy` 使用 `--analysis-provider hopper-direct`）；后者也提供 `hopper-function` 和 `hopper-queue`，支持 `--hopper-app <Hopper.app>` 指定安装路径。Hopper 需要在正常 macOS 用户会话中安装并完成许可激活；受限会话可能无法通过 Spotlight 启动。iOS 16.1.1 XR 上的[集成调查案例](cases/fixture-counter-hopper-investigation-v2-20261016/manifest.json)已跑通 UI 重放、Frida 跟踪、候选绑定和 Hopper 反编译，并导入[来源校验报告](cases/fixture-counter-hopper-integrated-report-20261016/report.md)。启动时 Instruments 失败会在有界等待后回退到 iCTRL 终止并重启 App。选定流程的 `copy` 分析到复刻真机交付已在 XR 验证；任意 App 的完整复刻尚未验证。旧案例仍可校验已保存的 REA 证据。见[Hopper 接入说明](docs/rea-hopper-integration.zh-CN.md)与[独立运行边界](docs/rea-independence.md)。
+旧 REA 命令和 provider 桥接已删除。深入函数分析可选 Copy APP 直连 Ghidra 或 `--provider hopper-direct`（顶层 `copy` 使用 `--analysis-provider hopper-direct`）；后者也提供 `hopper-function` 和 `hopper-queue`，支持 `--hopper-app <Hopper.app>` 指定安装路径。Hopper 需要在正常 macOS 用户会话中安装并完成许可激活；受限会话可能无法通过 Spotlight 启动。iOS 16.1.1 XR 上的[集成调查案例](cases/fixture-counter-hopper-investigation-v2-20261016/manifest.json)已跑通 UI 重放、Frida 跟踪、候选绑定和 Hopper 反编译，并导入[来源校验报告](cases/fixture-counter-hopper-integrated-report-20261016/report.md)。启动时 Instruments 失败会在有界等待后回退到 iCTRL 终止并重启 App。iOS 17.3.1 的[一流程 Hopper `copy` 父案例](cases/ios17-hopper-current-parent-20261017/manifest.json)也已完成审阅报告、签名独立 App 安装及同机对照；任意 App 的完整复刻尚未验证。旧案例仍可校验已保存的 REA 证据。见[Hopper 接入说明](docs/rea-hopper-integration.zh-CN.md)与[独立运行边界](docs/rea-independence.md)。
 
 当前最完整的真实 App 示例是 XR 上的 [DeepSeek 综合逆向报告](cases/deepseek-comprehensive-xr-20261015/report.md)：以 `copyapp report-portfolio` 核对同设备、同 App 版本及同一解密主程序，汇合三条登录页的 UI/函数/网络分析和另一次沙盒/SQLite 结构分析。报告保留两轮证据的各自时点；原始数据库和 IPA 仍在忽略的本地 `cases/` 中。该 DeepSeek 案例的登录后功能、从零自动生成完整复刻，以及在 iOS 17/26 上的运行仍未验收。
 

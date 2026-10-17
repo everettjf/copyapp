@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "scenario_id": "ios17-safari-synthetic-address-input",
+  "bundle_id": "com.apple.mobilesafari",
+  "fresh_launch": true,
+  "steps": [
+    {"action": "observe", "contains": ["Address"]},
+    {"action": "tap_label", "label": "Address"},
+    {"action": "type_text", "text": "copyapp-fixture-hello"},
+    {"action": "observe", "wait_ms": 400, "contains": ["copyapp-fixture-hello"]},
+    {"action": "screenshot", "stable": true, "ready_contains": "copyapp-fixture-hello"}
+  ]
+}

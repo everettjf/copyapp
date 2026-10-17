@@ -2,6 +2,8 @@
 
 **语言：** [English](PLAN.en.md) | 简体中文
 
+**当前双机状态：** [iOS 16/17 验证矩阵](docs/two-device-verification-matrix.zh-CN.md)记录两机新能力检查、同脚本分别经 iOS MCP 与 iCTRL 完成的 Calculator 手势和 Safari 文本输入、选定流程的分析到复刻交付，以及 iOS 17 的一流程 `hopper-direct` 父案例。结论只限于已测设备与流程；整 App 等价、陌生 App 自主生成和 iOS 26 仍待验证。
+
 **最新 XR 进展：** [独立 Codex CLI 实测](docs/external-codex-xr-trial.zh-CN.md)已在 iOS 16.1.1 上完成 Calculator 的分析、复刻、安装和三条真机对照流程，三条行为断言通过，三对截图为轻微差异。此次沿用已验证的发现脚本及既有独立复刻源码，因此陌生 App 的自主发现和从零实现仍是下一阶段目标。[Translate 完整流程](docs/translate-xr-workflow.zh-CN.md)另行覆盖第二种界面技术栈。
 
 状态：已进入实施。本文确定产品范围、架构、验收标准和实施顺序；当前可运行原型与实机结果见 `README.md` 和本地 `cases/`。
