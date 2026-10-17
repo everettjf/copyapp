@@ -20,10 +20,13 @@
 | 同一独立 Clock 复刻项目跨系统 | 复刻版通过秒表成对对照、停止态与运行态重启检查、iCTRL 回归和运行中升级至构建 5；构建 4 经核对后重试成功，构建 5 首次通过 | 同一源码通过成对对照、停止态与运行态重启检查、iCTRL 回归及签名后运行中升级至构建 5 | [双机记录](clock-clone-two-device.zh-CN.md)。构建 5 的两机安装及停止态重启案例通过校验；安装案例保存 IPA 快照。v0.1.9 的状态丢失已修复；计时值、标签文案和样式仍有差异，长时间后台计时及 Clock 全功能未验证。 |
 | 复刻版秒表后台约一分钟 | 离开 App 70.2 秒后，运行值从 `00:01.25` 增至 `01:31.80`；启动、返回、停止案例均通过校验 | 离开 App 76.8 秒后从 `00:01.25` 增至 `01:36.55`；对应三份案例均通过校验 | [后台记录](clock-background-two-device.zh-CN.md)。每机仅一次；未核对原版 Clock、数小时挂起、设备重启、系统时间变化或精确计时误差。 |
 | 已知源码夹具分享扩展 | [v0.1.5](releases/v0.1.5.zh-CN.md)中的固定文本接收与 Counter/Notes/Catalog 回归 | 相同 | 仅一种纯文本输入；其他内容类型和无关扩展未验证。 |
+| 陌生 App 入口与三条界面路径：Apple Podcasts | 完成新功能页后，`cases/ios16-podcasts-main-survey-20261017/` 确认 Podcasts 处于前台；`cases/ios16-podcasts-discovery-20261017/` 的资料库、搜索、现在收听 3/3 通过。 | 初次启动失败时屏幕显示 SpringBoard 的 Podcasts 欢迎页。完成引导、选择 WLAN Only 并越过新功能页后，`cases/ios17-podcasts-main-survey-20261017/` 确认 Podcasts 处于前台；`cases/ios17-podcasts-discovery-20261017/` 的同三个目的页 3/3 通过。 | 四份完成案例均通过 `copyapp verify`；六张末端截图已逐张查看。两机资料库数据不同，坐标脚本也分别编写。此处只验证进入 App、导航与可见终态；未验证砸壳、深度报告、生成源码、播放或整 App 等价。 |
 
 XR 旧 Translate 脚本点击 `(207,320)`，iOS MCP 虽返回字符派发成功，界面却无文字。同一旧脚本在 `cases/ios16-translate-old-tap-control-20261017/` 再次失败，截图有光标而无键盘。新共享脚本点击可见输入提示 `(100,201)`，键盘出现，两机两后端都通过。这证明该界面存在随点击及聚焦状态变化的差异，不能据此推断 XR 整机的 iOS MCP 文本输入失败。
 
 iOS 17 的 Translate 和 Clock 尚未完成首次使用引导时，iOS MCP 与原生 RSD 的启动请求报错；iCTRL 启动 Translate 也报错。但屏幕实际显示 SpringBoard 的对应 App **Welcome / Accept & Continue** 页面，因此不能把这些报错当作 App 未安装或损坏的证据。测试手机上的 Translate 随后完成首次使用设置：无线数据选 WLAN Only、可选 Siri/听写音频分享选 Not Now；Clock 欢迎页也已完成。两个 App 此后进入各自进程，通过上表的选定流程；重新运行的 `cases/ios17-{translate,clock}-post-onboarding-survey-20261017/` 也通过校验，采集前后的前台 Bundle ID 均与目标一致。失败尝试保留在 `cases/ios17-translate-{entry-survey,native-survey,ictrl-launch-probe}-20261017/` 与 `cases/ios17-clock-{entry-survey,native-survey}-20261017/`。首次使用选择属于设备状态，提交脚本以能够进入正常界面为前提。
+
+Podcasts 在 iOS 17 上重现相同的首次启动现象：第一次 `survey --launch` 失败，随后单独采到 SpringBoard 的欢迎页。完成欢迎页、无线数据选择后，两机均进入 Podcasts 并通过各自的三流程发现验收。XR 还出现了单独的资料库介绍页。这些引导操作只在测试机上执行；提交的导航脚本从正常标签栏开始。iOS 17 截图含已关注节目，XR 资料库为空，因此脚本按设备状态断言就绪内容，不把账号数据当作跨机相同输出。
 
 v0.1.7 发布后，XR 的 Calculator 和 Translate 父案例、iOS 17 的四流程 Calculator 和一流程 Hopper 父案例再次通过 `copyapp verify`。v0.1.10 正式发布页下载的 wheel 与发布 SHA-256 一致，并从独立 `/tmp` 安装目录加载版本与 CLI 入口；两机新建的 doctor 和 Translate 网络观察案例也通过 `copyapp verify`。这些是产物、通道及证据完整性检查，不是重新执行所有原版/复刻版流程，也不能证明无关 App 行为。
 

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "scenario_id": "ios16-podcasts-listen-now",
+  "bundle_id": "com.apple.podcasts",
+  "fresh_launch": true,
+  "steps": [
+    {"action": "observe", "contains": ["Browse", "Library", "Search"]},
+    {"action": "tap", "x": 52, "y": 838},
+    {"action": "observe", "wait_ms": 500, "contains": ["Account Settings"]},
+    {"action": "screenshot", "stable": true, "ready_contains": "Account Settings"}
+  ]
+}

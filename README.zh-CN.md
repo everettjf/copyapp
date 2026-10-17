@@ -18,6 +18,8 @@ iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-
 
 [v0.1.11 发布验收](docs/releases/v0.1.11.zh-CN.md)增加 XR TrollStore 超时时的有界 helper 输出与安装数据库版本记录；随后构建 5 在两机升级成功并保留完全相同的停止态秒表值。较早的超时尝试仍计为失败。
 
+此版本发布后，又以 Apple Podcasts 作为新的导航目标：两机分别通过资料库、搜索、现在收听三条 `discover-check` 流程，案例校验通过，六张末端截图已查看。iOS 17 初次启动先出现 SpringBoard 欢迎页，完成引导后正常进入 App。此次验证覆盖界面入口与导航，不包含 Podcasts 深度报告或复刻 App；[证据与边界见矩阵](docs/two-device-verification-matrix.zh-CN.md)。
+
 [v0.1.10 双机发布验收](docs/releases/v0.1.10.zh-CN.md)新增[Clock 复刻版停止态与运行态重启验证](docs/clock-clone-two-device.zh-CN.md)，并通过两台手机运行中升级检查。发布后又完成[复刻版双机约一分钟后台计时检查](docs/clock-background-two-device.zh-CN.md)，两机返回后均继续显示增长的秒表。[v0.1.9 发布](docs/releases/v0.1.9.zh-CN.md)确立跨设备基线并记录当时的状态丢失缺口。[v0.1.8 发布](docs/releases/v0.1.8.zh-CN.md)记录首次使用引导诊断和 Translate/Clock 四路检查。
 
 [双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)又在两台手机上，用**同一脚本**分别经 iOS MCP 与 iCTRL 验证 Calculator `98→9` 左滑和 Safari 地址栏的合成文本输入，并在 iOS 17 上跑通一条 `hopper-direct` 分析到复刻父工作流。这些有界结果不代表所有输入框、手势或 App 都相同。
