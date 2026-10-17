@@ -16,6 +16,7 @@ from pymobiledevice3.services.installation_proxy import InstallationProxyService
 from copyapp.ipa import analyze_ipa
 from copyapp.root_bridge import run_root_command
 from copyapp.ssh_acquire import _ssh_argv
+from copyapp.usb_tunnel import exact_ssh_tunnel
 
 
 async def _installed_app(udid: str, bundle_id: str) -> Dict[str, Any]:
@@ -30,6 +31,15 @@ async def _installed_app(udid: str, bundle_id: str) -> Dict[str, Any]:
 
 def install_trollstore_ipa(udid: str, ipa: Path, output: Path, ssh_port: int,
                            identity: Path, known_hosts: Path) -> Path:
+    """Install through a verified, short-lived SSH forward to the selected USB phone."""
+    with exact_ssh_tunnel(udid, ssh_port, identity, known_hosts):
+        return _install_trollstore_ipa_via_ssh(udid, ipa, output, ssh_port,
+                                                identity, known_hosts)
+
+
+def _install_trollstore_ipa_via_ssh(udid: str, ipa: Path, output: Path,
+                                   ssh_port: int, identity: Path,
+                                   known_hosts: Path) -> Path:
     if not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", udid):
         raise ValueError("invalid device UDID")
     if output.exists() and any(output.iterdir()):

@@ -4,11 +4,26 @@ import unittest
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from copyapp.install import install_usb_ipa
+from copyapp.install import install_trollstore_ipa, install_usb_ipa
 from copyapp.verify import sha256_file, verify_case
 
 
 class InstallationVerificationTest(unittest.TestCase):
+    def test_trollstore_install_owns_exact_device_forward(self):
+        udid = "00008020-000D650434B8003A"
+        ipa = Path("fixture.ipa")
+        out = Path("install")
+        identity = Path("id_ed25519")
+        known_hosts = Path("xr_known_hosts")
+        with patch("copyapp.install.exact_ssh_tunnel") as tunnel, \
+             patch("copyapp.install._install_trollstore_ipa_via_ssh",
+                   return_value=out / "install.json") as install:
+            result = install_trollstore_ipa(udid, ipa, out, 22316,
+                                            identity, known_hosts)
+        tunnel.assert_called_once_with(udid, 22316, identity, known_hosts)
+        install.assert_called_once_with(udid, ipa, out, 22316, identity, known_hosts)
+        self.assertEqual(result, out / "install.json")
+
     def test_rechecks_ipa_bytes_and_recorded_identity(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

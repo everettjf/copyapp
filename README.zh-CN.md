@@ -16,7 +16,7 @@ Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱�
 
 iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。复刻版源码和 IPA 早于本报告存在，因此此轮没有验证从这份报告自动生成源码；Calculator 全功能等价也未验证。现有 RootHide Frida 服务不能提供 root `root-run`；已验证的加密包恢复路径使用 mobile SSH。
 
-[v0.1.0 双机发布验收](docs/releases/v0.1.0.md)列出了本轮 iOS 16/17 设备矩阵、安装时发现并修复的问题与剩余边界。夹具覆盖 SwiftUI、UIKit、SQLite 和独立 Framework 的三条已知源码流程；Calculator 与加密 App 案例覆盖不同路径。
+[v0.1.1 双机发布验收](docs/releases/v0.1.1.zh-CN.md)列出了 iOS 16/17 设备矩阵、TrollStore 直接安装修复与剩余边界。夹具覆盖 SwiftUI、UIKit、SQLite 和独立 Framework 的三条已知源码流程；Calculator 与加密 App 案例覆盖不同路径。
 
 [独立 Codex CLI 的 XR 实测](docs/external-codex-xr-trial.zh-CN.md)已完成 Calculator 的有来源报告、新 App 构建与安装、三条原版/复刻版行为对照。此次沿用已验证的发现脚本和既有复刻源码，具体范围见实测记录。
 

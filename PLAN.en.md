@@ -13,7 +13,7 @@ Copy APP has two consecutive jobs:
 1. **Analyze:** On a specified jailbroken iPhone, acquire and verify an installed app's package, selected sandbox/UI/runtime evidence and relevant native code. Deliver a readable, cited report and a machine-readable `feature-spec.json`.
 2. **Rebuild:** Implement selected behavior in an independent, runnable iOS app. Install it on the specified real device, replay paired flows and deliver explicit behavior and visual differences.
 
-A passing case proves only the selected, observed flows. It cannot recover the original source code, unseen server implementation or arbitrary untested app behavior. The first-version acceptance target is a three-flow analysis-to-rebuild loop for one real app, followed by reuse on a second technology stack. The original plan also specifies iOS 16/17/26 validation. The [v0.1.0 two-device run](docs/releases/v0.1.0.md) verifies selected paths on iOS 16 and 17; iOS 26 remains untested.
+A passing case proves only the selected, observed flows. It cannot recover the original source code, unseen server implementation or arbitrary untested app behavior. The first-version acceptance target is a three-flow analysis-to-rebuild loop for one real app, followed by reuse on a second technology stack. The original plan also specifies iOS 16/17/26 validation. The [v0.1.1 two-device run](docs/releases/v0.1.1.md) verifies selected paths on iOS 16 and 17; iOS 26 remains untested.
 
 ## Architecture
 
