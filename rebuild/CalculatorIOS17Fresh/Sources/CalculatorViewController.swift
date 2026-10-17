@@ -174,7 +174,7 @@ final class CalculatorViewController: UIViewController {
     }
 
     private func render() {
-        display.text = displayText
+        display.text = displayText.hasPrefix("-") ? "−" + displayText.dropFirst() : displayText
         let clearTitle = displayText == "0" && storedValue == nil && !justEvaluated ? "AC" : "C"
         clearButton?.setTitle(clearTitle, for: .normal)
         clearButton?.accessibilityLabel = clearTitle == "AC" ? "all clear" : "clear"

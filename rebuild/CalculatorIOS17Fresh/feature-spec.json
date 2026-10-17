@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "target_bundle_id": "com.apple.calculator",
+  "rebuilt_bundle_id": "dev.copyapp.calculator.ios17fresh",
+  "reference_device": "iPhone14,7 / iOS 17.3.1, portrait 390 x 844 points, ios-mcp",
+  "review_status": "reviewed",
+  "scope": "Four selected iOS 17 portrait arithmetic flows. Basic addition derives from the reviewed Calculator report; decimal, negative and percent are added from current-device UI observations only.",
+  "flows": [
+    {
+      "id": "calculator-basic-addition",
+      "entry": "Fresh-launch Calculator on the named iPhone 14 and enter 7 + 8 = after clearing.",
+      "actions": [
+        "fresh_launch com.apple.calculator",
+        "observe all clear, 7, 8, add and equals",
+        "tap_label all clear",
+        "tap_label 7",
+        "tap_label add",
+        "tap_label 8",
+        "tap_label equals",
+        "observe foreground and current result",
+        "capture stable screenshot and UIKit view tree"
+      ],
+      "expected": [
+        "Calculator remains frontmost during saved observations.",
+        "The final upper result UILabel contains exactly 15.",
+        "The final portrait screen retains the basic keypad and equals control."
+      ],
+      "failure_state": "Fail if a labelled control is missing, the foreground Bundle ID changes, the upper result is not exactly 15, or the keypad is absent.",
+      "boundary": "Other arithmetic, repeated equals, intermediate display values, saved history, scientific mode and locale formatting are not covered.",
+      "evidence": [
+        "app.all"
+      ],
+      "source_script_sha256": "69cef9af652c0d17b8da579cf0f27f22c8dd1ca60241af1b8070c635c5d2fa52",
+      "verification": "Replay the pinned original playbook and the same actions against a signed clone on this device. Assert foreground ownership, exact final UIKit result 15 and keypad presence; inspect paired screenshots for layout differences.",
+      "final_view": {
+        "text": "15",
+        "region_points": [
+          0,
+          50,
+          390,
+          320
+        ]
+      }
+    },
+    {
+      "id": "decimal-addition",
+      "entry": "ios17fresh-decimal-addition",
+      "expected": [
+        "The final upper UIKit label contains exactly 0.3."
+      ],
+      "verification": "Replay the same labelled actions on the named original and newly authored clone; inspect final UIKit text and screenshots.",
+      "evidence": [
+        "ios17-calculator-fresh-decimal-original-ui-20261017"
+      ],
+      "source_script_sha256": "28b11afd3104bd08fc937f4d9d119ee732a4770bdd111615f2bf335f7fbb2dd3",
+      "final_view": {
+        "text": "0.3",
+        "region_points": [
+          0,
+          50,
+          390,
+          320
+        ]
+      },
+      "boundary": "UI behavior only; no new runtime or static implementation claim."
+    },
+    {
+      "id": "negative-addition",
+      "entry": "ios17fresh-negative-addition",
+      "expected": [
+        "The final upper UIKit label contains exactly −7."
+      ],
+      "verification": "Replay the same labelled actions on the named original and newly authored clone; inspect final UIKit text and screenshots.",
+      "evidence": [
+        "ios17-calculator-fresh-negative-original-flow-20261017"
+      ],
+      "source_script_sha256": "087be4550b19407ea0bea82c38356727bef4181926751da821083ab2e9ed828e",
+      "final_view": {
+        "text": "−7",
+        "region_points": [
+          0,
+          50,
+          390,
+          320
+        ]
+      },
+      "boundary": "UI behavior only; no new runtime or static implementation claim."
+    },
+    {
+      "id": "percent-of-fifty",
+      "entry": "ios17fresh-percent-of-fifty",
+      "expected": [
+        "The final upper UIKit label contains exactly 0.5."
+      ],
+      "verification": "Replay the same labelled actions on the named original and newly authored clone; inspect final UIKit text and screenshots.",
+      "evidence": [
+        "ios17-calculator-fresh-percent-original-flow-20261017"
+      ],
+      "source_script_sha256": "62dcd3da31e8397982cadb8029667bc94f58770eb62ac9b24895de32331d9990",
+      "final_view": {
+        "text": "0.5",
+        "region_points": [
+          0,
+          50,
+          390,
+          320
+        ]
+      },
+      "boundary": "UI behavior only; no new runtime or static implementation claim."
+    }
+  ],
+  "unknowns": [
+    "Indirect dispatch branch bodies and full arithmetic state machine",
+    "History and persistence",
+    "Other operations, locales and screen modes"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "scenario_id": "ios17fresh-percent-of-fifty",
+  "bundle_id": "dev.copyapp.calculator.ios17fresh",
+  "fresh_launch": true,
+  "steps": [
+    {
+      "action": "observe",
+      "contains": [
+        "all clear",
+        "equals"
+      ]
+    },
+    {
+      "action": "tap_label",
+      "label": "all clear"
+    },
+    {
+      "action": "tap_label",
+      "label": "5"
+    },
+    {
+      "action": "tap_label",
+      "label": "0"
+    },
+    {
+      "action": "tap_label",
+      "label": "percent"
+    },
+    {
+      "action": "observe",
+      "wait_ms": 350
+    },
+    {
+      "action": "screenshot",
+      "stable": true,
+      "ready_contains": "equals"
+    }
+  ]
+}

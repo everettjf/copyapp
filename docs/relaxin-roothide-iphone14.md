@@ -152,3 +152,7 @@ Sources: [Relaxin](https://github.com/owngoal-dev/Relaxin),
 [RootHide developer instructions](https://github.com/roothide/Developer),
 [RootHide package index](https://github.com/roothide/roothide.github.io/blob/main/Packages),
 [RootHide Bootstrap injection model](https://github.com/roothide/Bootstrap).
+
+## New-source Calculator comparison
+
+A separate [UIKit Calculator project](../rebuild/CalculatorIOS17Fresh) was written after the reviewed report. Its first arithmetic flow derives from that report; three additional flows derive from current-device UI observations. After a Unicode minus display correction, the signed build 0.1.1 (2) passed four paired final-view assertions (`15`, `0.3`, `−7`, `0.5`) through iOS MCP on this phone. All five saved screenshot pairs were manually reviewed with minor font and system-label differences. See the [bilingual pilot record](ios17-calculator-fresh-from-report.md) for provenance and limits; this check does not establish full Calculator equivalence.
