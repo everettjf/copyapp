@@ -1332,9 +1332,11 @@ def main() -> None:
             )))
             code = 0
         elif args.command == "sandbox-file":
-            print(asyncio.run(capture_sandbox_files(
-                args.udid, args.analysis, args.path, args.out, args.ssh_port,
-                args.ssh_identity, args.ssh_known_hosts, args.ssh_user)))
+            with exact_ssh_tunnel(args.udid, args.ssh_port, args.ssh_identity,
+                                  args.ssh_known_hosts, args.ssh_user):
+                print(asyncio.run(capture_sandbox_files(
+                    args.udid, args.analysis, args.path, args.out, args.ssh_port,
+                    args.ssh_identity, args.ssh_known_hosts, args.ssh_user)))
             code = 0
         elif args.command == "sandbox-diff":
             print(compare_sandbox(args.before, args.after, args.out, args.action))

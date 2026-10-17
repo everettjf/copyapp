@@ -41,8 +41,12 @@ final class NoteStore {
             guard sqlite3_prepare_v2(database, "INSERT INTO notes (text) VALUES (?)", -1,
                                      &statement, nil) == SQLITE_OK else { return nil }
             defer { sqlite3_finalize(statement) }
-            guard sqlite3_bind_text(statement, 1, "Sample note", -1,
-                                    unsafeBitCast(-1, to: sqlite3_destructor_type.self)) == SQLITE_OK else {
+            let note = "Sample note \(Int(Date().timeIntervalSince1970))"
+            let bound = note.withCString { pointer in
+                sqlite3_bind_text(statement, 1, pointer, -1,
+                                  unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+            }
+            guard bound == SQLITE_OK else {
                 return nil
             }
             return sqlite3_step(statement) == SQLITE_DONE
