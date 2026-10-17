@@ -53,6 +53,27 @@ def ssh_tunnel(udid: str, port: int = 22222) -> Iterator[int]:
                 process.wait(timeout=2)
 
 
+@contextmanager
+def exact_ssh_tunnel(udid: str, port: int, identity: Path,
+                     known_hosts: Path, user: str = "mobile") -> Iterator[int]:
+    """Reuse or open an SSH forward only after authenticating the exact phone."""
+    from copyapp.ssh_acquire import _ssh_argv
+
+    try:
+        with socket.create_connection(("127.0.0.1", port), timeout=0.3):
+            occupied = True
+    except OSError:
+        occupied = False
+    context = nullcontext(port) if occupied else ssh_tunnel(udid, port)
+    with context as active_port:
+        result = subprocess.run(_ssh_argv(active_port, identity, known_hosts, user) +
+                                ["deviceinfo uniqueid"], capture_output=True, text=True,
+                                timeout=15)
+        if result.returncode or result.stdout.strip() != udid:
+            raise RuntimeError("SSH forward does not authenticate the requested USB device")
+        yield active_port
+
+
 def configured_ictrl_runner_bundle(udid: str) -> Optional[str]:
     """Read the Bundle ID installed by setup for this exact device."""
     config = Path(__file__).resolve().parents[1] / "toolchains" / "ictrl-runners.json"

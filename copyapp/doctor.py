@@ -94,9 +94,37 @@ def _ssh_probe(udid: str, port: int, identity: Path, known_hosts: Path) -> Dict[
         return _error(exc)
 
 
+def _roothide_marker_probe(port: int, identity: Path,
+                           known_hosts: Path) -> Dict[str, Any]:
+    """Check RootHide's SSH namespace when native DVT cannot read /var/jb."""
+    try:
+        argv = _ssh_argv(port, identity, known_hosts, "mobile")
+        result = subprocess.run(argv + ["command -v jbroot; jbroot; test -d /rootfs/var/mobile/Media"],
+                                capture_output=True, text=True, timeout=15)
+        lines = result.stdout.splitlines()
+        if result.returncode == 0 and len(lines) >= 2 and lines[0].endswith("/jbroot"):
+            return {"status": "observed", "roothide_namespace": True,
+                    "jbroot_path": lines[1],
+                    "note": "SSH namespace markers alone do not prove every jailbreak capability."}
+    except Exception:
+        pass
+    return {"status": "unavailable", "reason": "RootHide namespace marker not observed over SSH"}
+
+
 def _frida_probe(udid: str) -> Dict[str, Any]:
     try:
         import frida
+        from copyapp.frida_sidecar import configured_sidecar, sidecar_device
+
+        sidecar = configured_sidecar(udid)
+        if sidecar is not None:
+            device = sidecar_device(udid)
+            access = device.query_system_parameters().get("access")
+            processes = device.enumerate_processes(scope="minimal")
+            return {"status": "available" if access == "full" else "unavailable",
+                    "identity_verified": True, "transport": "usb_roothide_sidecar",
+                    "access": access or "unknown", "host_frida_version": frida.__version__,
+                    "server_version": sidecar["version"], "process_count": len(processes)}
         devices = frida.get_device_manager().enumerate_devices()
         device = next((item for item in devices if item.id == udid and item.type == "usb"), None)
         if device is None:
@@ -202,6 +230,13 @@ def _next_steps(udid: str, probes: Dict[str, Any], host: Dict[str, Any],
         steps.append({"for": "frida_usb", "action":
                       "Run sh scripts/bootstrap-macos.sh --trace, then install/start a compatible "
                       "root-capable Frida server on the phone."})
+    if (probes.get("rootless_marker", {}).get("roothide_namespace") and
+            probes["frida_usb"].get("transport") != "usb_roothide_sidecar"):
+        steps.append({"for": "frida_roothide", "action":
+                      "For the tested iOS 17 RootHide runtime path, install host frida==17.23.3 "
+                      f"and run .venv/bin/copyapp setup frida-roothide --udid {udid} "
+                      "--out cases/frida-roothide-setup with the pinned mobile SSH key. "
+                      "A Frida process inventory alone does not prove system-App attach."})
     if probes["ios_mcp"]["status"] != "available":
         steps.append({"for": "ios_mcp", "action":
                       "Build and install device/ios-mcp with Theos on this jailbreak, then "
@@ -255,6 +290,12 @@ def run_doctor(udid: str, output: Path, ssh_port: int = 22222,
             with tunnel as active_port:
                 probes["ssh_mobile"] = _ssh_probe(udid, active_port,
                                                    ssh_identity, ssh_known_hosts)
+                if (probes["ssh_mobile"]["status"] == "available" and
+                        probes.get("rootless_marker", {}).get("status") != "observed"):
+                    marker = _roothide_marker_probe(active_port, ssh_identity,
+                                                    ssh_known_hosts)
+                    if marker["status"] == "observed":
+                        probes["rootless_marker"] = marker
         except Exception as exc:
             probes["ssh_mobile"] = _error(exc)
         probes["frida_usb"] = _frida_probe(udid)

@@ -4,7 +4,7 @@
 
 Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组织为可续跑、按证据验收的流程。`current` 模式供已经打开的 Codex 或 Claude Code 会话执行；独立终端也可选择外部 Agent CLI，但真实模型从头到尾自主完成的路径尚未验收。
 
-新 Mac 和手机先运行 `sh scripts/bootstrap-macos.sh`，再运行 `.venv/bin/copyapp onboard --stage rebuild`；同时连着多台设备时加 `--udid`。它保存 Mac 与手机能力报告及有序修复步骤。手机端服务就绪后，在一个终端持续运行 `.venv/bin/copyapp tunnel --udid <UDID>`，同时提供完整流程所需的 SSH 与 iOS MCP 转发。首次 SSH 主机指纹核对和手机配对弹窗仍需明确完成。
+新 Mac 和手机先运行 `sh scripts/bootstrap-macos.sh`，再运行 `.venv/bin/copyapp onboard --stage rebuild`；同时连着多台设备时加 `--udid`。它保存 Mac 与手机能力报告及有序修复步骤。手机端服务和固定的 SSH 主机密钥就绪后，分析与复刻流程会自行打开精确设备的 SSH 和 UI 转发；仅首次核对主机指纹或交互式界面操作需要单独保持 `.venv/bin/copyapp tunnel --udid <UDID>`。首次 SSH 主机指纹核对和手机配对弹窗仍需明确完成。
 
 [Translate XR 完整案例](translate-xr-workflow.zh-CN.md)（[English](translate-xr-workflow.md)）展示了不依赖 REA 的三流程实测：iCTRL 文字输入、审阅报告、独立 UIKit 复刻、原版/复刻版真机对照以及逐张截图审阅。案例明确标出已经覆盖的行为和剩余差异。
 
@@ -39,6 +39,6 @@ Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组
 
 ## 当前验收边界
 
-iOS 16.1.1 的 iPhone XR 已完成 Clock 三流程的当前 Agent 父案例：正式报告、独立 App 源码、安装、3/3 行为与末端视图断言及 10 对逐张审阅的截图，截图均有轻微差异。另一个[Clock 自动发现父案例](../cases/clock-current-auto-workflow-20261016/manifest.json)使用三条先前编写的脚本，在同一案例内完成发现、报告、独立工程、安装和三流程真机交付；父案例 517 项证据文件通过校验，源码改自既有独立实现。新的[Calculator 父案例](../cases/calculator-current-auto-workflow-20261016/manifest.json)由当前 Agent 根据 XR 实际界面新写三条脚本并从空工程编写 UIKit 复刻版；三条运算流程的双端行为与末端视图断言均通过，三对截图均已审为轻微差异、无重大差异，交付与父案例通过核验。外部进程试验仍使用固定脚本。陌生 App 的普适发现、真实外部 CLI 自主闭环和全功能等价尚未验证。iPhone 14/iOS 17.3.1 已验证 USB 与 SSH 采集、开发证书签名复刻版安装、iOS MCP 与 iCTRL 两套后端的原版/复刻版运算对照，以及一款加密 App 与扩展的整包恢复；Frida 跟踪可附加前台复刻版，但系统 Calculator 仍失败。iOS 26 尚未实测。
+iOS 16.1.1 的 iPhone XR 已完成 Clock 三流程的当前 Agent 父案例：正式报告、独立 App 源码、安装、3/3 行为与末端视图断言及 10 对逐张审阅的截图，截图均有轻微差异。另一个[Clock 自动发现父案例](../cases/clock-current-auto-workflow-20261016/manifest.json)使用三条先前编写的脚本，在同一案例内完成发现、报告、独立工程、安装和三流程真机交付；父案例 517 项证据文件通过校验，源码改自既有独立实现。新的[Calculator 父案例](../cases/calculator-current-auto-workflow-20261016/manifest.json)由当前 Agent 根据 XR 实际界面新写三条脚本并从空工程编写 UIKit 复刻版；三条运算流程的双端行为与末端视图断言均通过，三对截图均已审为轻微差异、无重大差异，交付与父案例通过核验。外部进程试验仍使用固定脚本。陌生 App 的普适发现、真实外部 CLI 自主闭环和全功能等价尚未验证。iPhone 14/iOS 17.3.1 已验证 USB 与 SSH 采集、开发证书签名复刻版安装、iOS MCP 与 iCTRL 两套后端的原版/复刻版运算对照，以及一款加密 App 与扩展的整包恢复；固定版本的 Frida 17.23.3 RootHide 独立服务已在原版 Calculator 完成五次点击的方法绑定跟踪；原有 16.1.4 服务附加该 App 仍失败。[正式深度报告](../cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)、报告派生任务、原版与复刻版最终显示 `15` 的断言、两张逐图审阅以及[选定流程交付](../cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)已通过校验。复刻版源码与 IPA 早于这份报告，因此尚未验证由新报告生成源码。iOS 26 尚未实测。
 
 参见 [中文 README](../README.zh-CN.md)、[英文 README](../README.md) 和 [详细试验记录](../PLAN.md)。

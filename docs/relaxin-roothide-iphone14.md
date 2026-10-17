@@ -15,9 +15,9 @@ support on iOS 17 or on other RootHide configurations.
 | App acquisition | Over SSH, Copy APP copied the installed Calculator bundle (15 files), made a 472 KB analysis snapshot, and generated a static Mach-O/Objective-C report with 17 indexed classes. The main executable has no encryption load command. The static case passed `copyapp verify`; the repacked snapshot is not asserted to be an installable Apple IPA. |
 | Encrypted package recovery | Remoboard's installed main executable and keyboard extension both had `cryptid=1`; its bundled framework had `cryptid=0`. The RootHide mobile SSH helper path recovered both encrypted executables. A standalone `decrypt-package` case and a full `analyze --decrypt` case each passed `copyapp verify`: three Mach-O headers are decrypted, and the two encrypted binaries changed only in their declared encrypted ranges and `cryptid` fields. The output is an analysis IPA with invalid original signatures. The phone-side temporary helper and archive were removed. |
 | Sandbox | A bounded SSH index captured 20 entries and seven files in Calculator's data container. This is an index, not an atomic copy of live app data. |
-| Frida | RootHide's `re.frida.server` 16.1.4 runs. A matching Mac client enumerated processes. Direct attach and a formal two-second `copyapp trace` succeeded on the **foreground clone**; a background clone attach timed out. Freshly foregrounded original Calculator still failed direct attach with `ProcessNotRespondingError / unexpected early end-of-stream`. Original-App runtime tracing is **not** verified. The main Mac environment's Frida 17.23.3 is version-mismatched with the phone server. |
+| Frida | RootHide's packaged 16.1.4 server still fails to attach to original Calculator, including with `--ignore-crashes`; the saved crash shows `EXC_GUARD` inside `task_swap_exception_ports`. An isolated, official Frida 17.23.3 server and matching Mac client, started with `-C` on a separate USB-forwarded port, attached to original Calculator and completed `copyapp trace`. A `flow-capture` run recorded one `CalculatorModel::buttonPressed:` hit for each of five selected taps; its trace and view-tree cases passed `copyapp verify`. This verifies that selected original-App runtime path on this phone, not general system-App support. |
 | Copy APP iOS MCP | Official RootHide ElleKit 1.2-1 and corrected `com.copyapp.mcp` 0.1.4-5 are installed. After a SpringBoard restart, a USB-forwarded `/health` response, UI tool inventory, foreground identity, accessibility elements and screenshot passed. A `copyapp survey --ui-backend ios-mcp --launch` case confirmed original Calculator as foreground. |
-| Rebuilt App | Direct USB installation rejected unsigned and ad hoc signed attempts. An Apple Development signed Calculator clone installed through USB InstallationProxy; `copyapp install --transport usb` verified exact UDID, IPA hash, version/build and `ProfileValidated=true`. Native RSD launched it. Both original and clone then completed the same nine-step `7 + 8 = 15` iOS MCP playbook after fresh launches. The paired comparison case passed hash verification; visual review found the same result and keypad layout, with small display and system chrome differences. This verifies one selected flow, not the whole App. |
+| Rebuilt App | Direct USB installation rejected unsigned and ad hoc signed attempts. An Apple Development signed Calculator clone installed through USB InstallationProxy; `copyapp install --transport usb` verified exact UDID, IPA hash, version/build and `ProfileValidated=true`. Native RSD launched it. Both original and clone completed the same nine-step `7 + 8 = 15` flow through iOS MCP and iCTRL. A later report-derived iOS MCP rebuild check asserted the exact final UIKit text `15` on both apps; two screenshot pairs received explicit minor-difference judgments. Its final `agent-delivery` case passed `copyapp verify` with status `selected_behavior_verified_visual_reviewed_with_differences`. This verifies one selected flow, not the whole App. |
 
 The local evidence lives in Git-ignored `cases/iphone14-*20261017/`, especially
 `iphone14-after-roothide-openssh`, `iphone14-calculator-acquire-attempt`,
@@ -33,6 +33,56 @@ case passed `copyapp verify` after a CLI repair made iOS MCP surveys open their
 own exact-device USB forward. Its survey screenshot was correctly attributed
 to the clone, which happened to be foreground; a separate original survey
 confirmed the original App's foreground identity.
+The Frida 17 cases are `iphone14-frida17-sidecar-setup-v3-20261017`,
+`iphone14-calculator-frida17-viewtree-20261017`, and
+`iphone14-calculator-frida17-flow-capture-20261017`. The sidecar was stopped and
+automatically restarted before another successful original Calculator trace.
+The subsequent `iphone14-frida17-doctor-v2-20261017` baseline passed
+`copyapp verify` and reported USB, DVT filesystem, RootHide namespace, pinned
+mobile SSH, Frida 17 sidecar, iOS MCP, and paired iCTRL available.
+`iphone14-calculator-frida17-prepare-app-20261017` then resumed a failed
+attempt caused by a missing fixed SSH forward. Copy APP now opens or checks an
+exact-device SSH forward for each acquisition stage; survey, bundle, and
+sandbox collection all completed, and the selected flow investigation chose
+`CalculatorModel::buttonPressed:`. The parent passed `copyapp verify` with
+status `needs_semantic_review`. A separately reviewed, source-linked
+`iphone14-calculator-frida17-deep-report-v3-20261017` and
+`iphone14-calculator-frida17-analysis-delivery-v2-20261017` then passed
+verification. The report explains the selected method's bounded assembly and
+records unknown branches rather than treating the generated draft as a report.
+The report-derived `iphone14-calculator-frida17-rebuild-check-v2-20261017`
+passed exact result checks on both apps. Two screenshots were reviewed in
+`iphone14-calculator-frida17-visual-review-20261017`; the final
+`iphone14-calculator-frida17-agent-delivery-20261017` passed verification with
+minor visual differences. The reused clone source and installed IPA existed
+before this report was written; the delivery proves the saved source and IPA
+identities and this selected behavior, not that the new report generated the
+clone from scratch.
+
+## Reproduce the RootHide Frida path
+
+Install host `frida==17.23.3` in `.venv`, then use the exact USB device and
+previously pinned mobile SSH key:
+
+```sh
+.venv/bin/python -m pip install 'frida==17.23.3'
+.venv/bin/copyapp setup frida-roothide \
+  --udid <UDID> --out cases/frida-roothide-setup \
+  --ssh-identity cases/ssh/id_ed25519 \
+  --ssh-known-hosts cases/ssh-known-hosts
+.venv/bin/copyapp verify cases/frida-roothide-setup
+```
+
+Setup downloads the official Rootless Frida 17.23.3 package and checks its
+pinned SHA-256 before extracting only the server and agent. It stages both in
+the phone's Media directory, runs them as `mobile` on a loopback-only port,
+and keeps the existing RootHide package intact. Its per-device configuration
+and the SSH paths stay in ignored `toolchains/`; Copy APP forwards the sidecar
+through the exact USB UDID, starts it again after a service restart, and uses
+it automatically for Frida-backed commands. The installed RootHide 16.1.4
+server remains available separately. Running setup again atomically replaces
+the staged binaries. This path requires the phone's OpenSSH service and a
+pinned mobile key; it was tested on this iPhone 14, not on every RootHide build.
 
 ## RootHide tweak dependency and next validation
 
@@ -60,15 +110,12 @@ explicit in this test record. The service started after restarting SpringBoard.
 
 For iOS 17, fresh App launches now use native RSD with `--kill-existing`;
 the older lockdown DVT route failed before this fix. Both sides of the final
-Calculator playbook used the repaired route. The next device work is to make
-original Calculator Frida attach work with a matching 16.1.4 host client, then run
-more selected flows and deliver a deep report. The declared `trace` extra now
-allows the phone's Frida 16.1.4, while the current main virtual environment
-still has Frida 17.23.3; use a matching isolated client for device tracing. A successful
-Frida process inventory or a clone attach does not establish system-App attach
-support. The installed server wrapper sets `CRYPTEX_MOUNT_PATH` to the RootHide
-root; its launch plist requests root, but this observation does not explain the
-Calculator-specific failure. iOS 26 is still untested.
+Calculator playbook used the repaired route. A selected-flow deep report and
+delivery now verify as recorded above. The next device work is to run more
+flows and other App types, while checking iCTRL transport stability and generic
+RootHide `root-run`. The 16.1.4 server crash is retained
+as evidence; the working 17.23.3 sidecar is isolated from that package.
+iOS 26 is still untested.
 
 RootHide's mobile SSH shell sees the shared device Media directory at
 `/rootfs/var/mobile/Media`, while the helper itself writes to

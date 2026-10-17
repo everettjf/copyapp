@@ -2,6 +2,7 @@ import json
 import hashlib
 import tempfile
 import unittest
+from contextlib import nullcontext
 from pathlib import Path
 from unittest.mock import patch
 
@@ -10,6 +11,12 @@ from copyapp.ui_evidence import ui_attribution
 
 
 class AnalyzeCaseTest(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        tunnel = patch("copyapp.analyze.exact_ssh_tunnel",
+                       side_effect=lambda _udid, port, *_args: nullcontext(port))
+        tunnel.start()
+        self.addCleanup(tunnel.stop)
+
     def test_resume_rejects_corrupted_derived_ui_and_static_indexes(self):
         with tempfile.TemporaryDirectory() as root:
             output = Path(root)

@@ -257,10 +257,8 @@ def decrypt_extension(udid: str, bundle: str, appex: str, output: Path,
         raise ValueError("encrypted range exceeds extension file or size limit")
     patch_offset = _cryptid_offset(disk)
 
-    import frida
-    device = frida.get_device_manager().get_device(udid, timeout=5)
-    if device.id != udid or device.type != "usb":
-        raise RuntimeError("Frida device does not match requested USB UDID")
+    from copyapp.frida_device import get_usb_device
+    device = get_usb_device(udid)
     norm = lambda path: path.removeprefix("/private")
     process = next((p for p in device.enumerate_processes(scope="full")
                     if norm(str((p.parameters or {}).get("path") or "")) == norm(remote_path)), None)

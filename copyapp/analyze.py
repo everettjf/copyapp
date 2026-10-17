@@ -15,6 +15,7 @@ from copyapp.ssh_acquire import acquire_bundle_ssh
 from copyapp.ui_evidence import ui_attribution
 from copyapp.decrypt_package import decrypt_package
 from copyapp.verify import verify_case
+from copyapp.usb_tunnel import exact_ssh_tunnel
 
 
 STAGE_PATHS = {
@@ -334,7 +335,12 @@ async def analyze_case(udid: str, bundle: str, output: Path, launch: bool,
                                 "attempt": attempt, "started_at": _now()}
         _save_state(output, state)
         try:
-            await collector()
+            if name == "survey":
+                await collector()
+            else:
+                with exact_ssh_tunnel(udid, ssh_port, ssh_identity,
+                                      ssh_known_hosts, ssh_user):
+                    await collector()
             key = output / STAGE_KEYS[name]
             if not key.is_file():
                 raise FileNotFoundError(f"{name} evidence manifest missing")
@@ -363,10 +369,12 @@ async def analyze_case(udid: str, bundle: str, output: Path, launch: bool,
                                                  "attempt": attempt, "started_at": _now()}
                 _save_state(output, state)
                 try:
-                    await asyncio.to_thread(
-                        decrypt_package, udid, bundle, output / "acquired" / "bundle-snapshot.ipa",
-                        decrypt_helper, output / "decrypted", ssh_port,
-                        ssh_identity, ssh_known_hosts)
+                    with exact_ssh_tunnel(udid, ssh_port, ssh_identity,
+                                          ssh_known_hosts, ssh_user):
+                        await asyncio.to_thread(
+                            decrypt_package, udid, bundle, output / "acquired" / "bundle-snapshot.ipa",
+                            decrypt_helper, output / "decrypted", ssh_port,
+                            ssh_identity, ssh_known_hosts)
                     key = output / STAGE_KEYS["decryption"]
                     if not key.is_file():
                         raise FileNotFoundError("decryption evidence manifest missing")

@@ -37,6 +37,7 @@ from copyapp.verify import verify_case
 from copyapp.ui_evidence import ui_attribution
 from copyapp.ictrl import ICtrlClient, DEFAULT_CLIENT
 from copyapp.ictrl_setup import setup_ictrl
+from copyapp.frida_sidecar import setup_roothide_sidecar
 from copyapp.trace import parse_branch_register, trace_methods
 from copyapp.experiment import trace_tap
 from copyapp.decrypt_verify import inspect_decrypted_ipa, write_decryption_check
@@ -425,11 +426,13 @@ def main() -> None:
     modes.add_argument("--ssh-only", action="store_true")
     modes.add_argument("--mcp-only", action="store_true")
     setup = sub.add_parser("setup", help="build, install and pair optional device tooling")
-    setup.add_argument("component", choices=("ictrl",))
+    setup.add_argument("component", choices=("ictrl", "frida-roothide"))
     setup.add_argument("--udid", required=True)
     setup.add_argument("--out", required=True, type=Path)
     setup.add_argument("--runner-ipa", type=Path,
                        help="use an already signed runner IPA instead of building it")
+    setup.add_argument("--frida-deb", type=Path,
+                       help="use the SHA-256 pinned official Frida package already downloaded")
     setup.add_argument("--reinstall", action="store_true",
                        help="reinstall the runner even when its Bundle ID is already installed")
     setup.add_argument("--auto-approve-first-pair", action="store_true",
@@ -1007,12 +1010,18 @@ def main() -> None:
             code = run_tunnels(args.udid, args.ssh_port, args.mcp_port,
                                args.ssh_only, args.mcp_only)
         elif args.command == "setup":
-            path, ready = setup_ictrl(args.udid, args.out, args.ssh_port,
-                                      args.ssh_identity, args.ssh_known_hosts,
-                                      args.runner_ipa, args.reinstall,
-                                      args.auto_approve_first_pair)
-            print(path)
-            code = 0 if ready else 1
+            if args.component == "frida-roothide":
+                print(setup_roothide_sidecar(args.udid, args.out,
+                                             args.ssh_identity, args.ssh_known_hosts,
+                                             args.frida_deb))
+                code = 0
+            else:
+                path, ready = setup_ictrl(args.udid, args.out, args.ssh_port,
+                                          args.ssh_identity, args.ssh_known_hosts,
+                                          args.runner_ipa, args.reinstall,
+                                          args.auto_approve_first_pair)
+                print(path)
+                code = 0 if ready else 1
         elif args.command == "doctor":
             path, connected = run_doctor(args.udid, args.out, args.ssh_port,
                                          args.ssh_identity, args.ssh_known_hosts,

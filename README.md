@@ -4,7 +4,7 @@ English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_
 
 Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app on a jailbroken iPhone and rebuilding selected behavior as an independent, runnable iOS app. It acquires package and sandbox evidence, inspects native code, captures UI and runtime behavior, produces a cited report and feature specification, then builds and compares a clone on the same device.
 
-The workflow verifies evidence identity and selected UI flows. It does **not** claim complete equivalence to an arbitrary app. The iPhone XR running iOS 16.1.1 is the tested deep-workflow device. An [iPhone 14 running iOS 17.3.1 with Relaxin/RootHide](docs/relaxin-roothide-iphone14.md) passed USB and SSH Calculator collection, development-signed clone installation, paired `7 + 8 = 15` flows through both iOS MCP and iCTRL, and full encrypted-package recovery for Remoboard's main App and keyboard extension. Frida attach to system Calculator remains unresolved. iOS 26 has not been tested.
+The workflow verifies evidence identity and selected UI flows. It does **not** claim complete equivalence to an arbitrary app. The iPhone XR running iOS 16.1.1 is the tested deep-workflow device. An [iPhone 14 running iOS 17.3.1 with Relaxin/RootHide](docs/relaxin-roothide-iphone14.md) passed USB and SSH Calculator collection, development-signed clone installation, paired `7 + 8 = 15` flows through both iOS MCP and iCTRL, full encrypted-package recovery for Remoboard's main App and keyboard extension, and original Calculator tracing through an isolated Frida 17 sidecar. iOS 26 has not been tested.
 
 A [standalone Codex CLI trial on the XR](docs/external-codex-xr-trial.md) completed a source-linked Calculator report, independent build and installation, and three paired behavior checks. It reused verified discovery scripts and earlier clone source; see the trial note for the exact scope.
 
@@ -78,7 +78,7 @@ cd copyapp
 sh scripts/bootstrap-macos.sh
 ```
 
-The script creates or reuses `.venv/`, installs Copy APP and prints the guided setup command. It requires macOS and Python 3.9 or newer. When you reach runtime tracing or encrypted App recovery, rerun `sh scripts/bootstrap-macos.sh --trace` to install host Frida. Match its version to the phone's server; the tested RootHide package on iOS 17 runs Frida 16.1.4, while the ordinary Mac environment may resolve a newer version. Check `xcode-select -p` if you plan to use Xcode device services or build a clone; select a **full Xcode**, rather than only Command Line Tools. Keep `.venv/` and `cases/` on the Mac; neither is committed.
+The script creates or reuses `.venv/`, installs Copy APP and prints the guided setup command. It requires macOS and Python 3.9 or newer. When you reach runtime tracing or encrypted App recovery, rerun `sh scripts/bootstrap-macos.sh --trace` to install host Frida. On the tested RootHide iOS 17 phone, run `copyapp setup frida-roothide` with pinned SSH credentials after installing host `frida==17.23.3`; it stages a matching official sidecar without replacing RootHide's Frida 16.1.4 package. See the [exact setup and limits](docs/relaxin-roothide-iphone14.md). Check `xcode-select -p` if you plan to use Xcode device services or build a clone; select a **full Xcode**, rather than only Command Line Tools. Keep `.venv/` and `cases/` on the Mac; neither is committed.
 
 ### 2. Connect and check one phone
 
@@ -119,13 +119,13 @@ The full pipeline needs the following channels on the **same UDID**:
 | Component | Setup | Used for |
 | --- | --- | --- |
 | OpenSSH on the jailbroken phone | Install a rootless-compatible OpenSSH server; keep it reachable through the USB port forward below. | Read-only App bundle and sandbox acquisition. |
-| Frida server on the phone | Install and start a server compatible with the host Frida version; the tested RootHide server is 16.1.4. | Runtime method tracing and the rootless full-package helper route. RootHide's verified package helper route runs through paired mobile SSH. |
+| Frida server on the phone | On ordinary rootless, install a host-matched server. On the tested RootHide/iOS 17 phone, use `copyapp setup frida-roothide` for the isolated 17.23.3 server. | Runtime method tracing and the ordinary rootless full-package helper route. RootHide's verified package helper route runs through paired mobile SSH. |
 | Copy APP iOS MCP tweak | Build and install [`device/ios-mcp`](device/ios-mcp/README.md), then reload SpringBoard. | Foreground identity, UI tree, screenshots and gestures over a USB-forwarded localhost service. |
 | iCTRL runner and paired Mac client | Run `copyapp setup ictrl --udid <UDID> --out cases/ictrl-setup` with a valid development-signed runner IPA or configured Xcode signing, then approve the phone's prompts. USB installation is tried first; TrollStore over SSH is the fallback. | Optional UI backend and fallback for an Instruments fresh-launch failure. |
 
 For the tweak, the source build requires a complete Xcode, Theos, the iPhoneOS 16.5 SDK and `ldid`; the SDK and Theos are **not** vendored here. From the repository root, after installing those tools, run `THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules make -C device/ios-mcp package`. Install the resulting `.deb` from `device/ios-mcp/packages/` with the phone's package manager or Filza, then reload SpringBoard. The XR/iOS 16 rootless package is tested. RootHide needs its own Theos fork, `THEOS_PACKAGE_SCHEME=roothide`, and an actual tweak loader such as ElleKit. [The iPhone 14 status note](docs/relaxin-roothide-iphone14.md) records a successful RootHide build, ElleKit installation and live UI service validation. The optional iCTRL source is pinned in [`vendor/ictrl`](vendor/ictrl/UPSTREAM.md) with its Apache 2.0 license and NOTICE; generated signing files, large build dependencies and pairing keys stay local.
 
-Copy APP expects a dedicated `mobile` SSH key at `cases/ssh/id_ed25519` (created by `onboard` if absent), a pinned host-key file at `cases/ssh-known-hosts`, and an SSH USB forward from Mac port `22222` to phone port `22`. In a separate terminal, one Copy APP command keeps both the SSH and iOS MCP forwards running:
+Copy APP expects a dedicated `mobile` SSH key at `cases/ssh/id_ed25519` (created by `onboard` if absent) and a pinned host-key file at `cases/ssh-known-hosts`. For the one-time host-key check or interactive UI work, one command keeps both USB forwards running:
 
 ```sh
 .venv/bin/copyapp tunnel --udid <UDID>
@@ -178,7 +178,7 @@ Then record a capability baseline:
 .venv/bin/copyapp verify cases/first-doctor
 ```
 
-Read `cases/first-doctor/report.md`. Before a full analysis, `usb_lockdown`, `ssh_mobile`, `frida_usb` and `ios_mcp` should be `available`. `ictrl` is optional until selected as a backend. `doctor` can exit successfully when USB works even if another probe is unavailable; inspect its individual rows and ordered **Next steps**. `doctor` opens a temporary SSH forward when port `22222` is not running. The single `copyapp tunnel` terminal above supplies both fixed ports for `analyze` and the full `copy` workflow; playbook replay opens its own short-lived UI tunnel. Rerun `onboard --udid <UDID> --stage analyze` into a new dated case after each setup stage.
+Read `cases/first-doctor/report.md`. Before a full analysis, `usb_lockdown`, `ssh_mobile`, `frida_usb` and `ios_mcp` should be `available`. `ictrl` is optional until selected as a backend. `doctor` can exit successfully when USB works even if another probe is unavailable; inspect its individual rows and ordered **Next steps**. `doctor` opens a temporary SSH forward when port `22222` is not running. `analyze`, `prepare-app`, and the full `copy` workflow open and authenticate an exact-device SSH forward themselves; playbook replay opens its own short-lived UI tunnel. Rerun `onboard --udid <UDID> --stage analyze` into a new dated case after each setup stage.
 
 ### 5. Run analysis, then choose decompilation and rebuild
 
@@ -206,7 +206,7 @@ The USB route does not need TrollStore or SSH. A successful install does not yet
 | `devices` lists nothing | Unlock the phone, accept USB trust, change the cable or USB port, and rerun `devices`. |
 | Screenshot or DVT is unavailable | Check Developer Mode, full Xcode selection and the device's Developer Disk Image; rerun `doctor` into a new directory. |
 | `ssh_mobile` is unavailable | Keep the `22222 → 22` forward alive, check the pinned host key and `mobile` key login, then compare `deviceinfo uniqueid` with the chosen UDID. |
-| `ios_mcp` is unavailable | Check that the rootless tweak loaded after SpringBoard reload. For `analyze`, also keep the separate `22223 → 8090` forward alive. |
+| `ios_mcp` is unavailable | Check that the rootless tweak loaded after SpringBoard reload. `analyze` opens its own exact-device UI forward; inspect `copyapp doctor` if the service remains unreachable. |
 | `frida_usb` is unavailable | Check that Frida server is running on that phone and matches the installed host Frida version. |
 | Fresh UI launch fails when Instruments is unavailable | Run `setup ictrl`, then check `doctor`'s `ictrl` row; on XR with Xcode 27, see the [iOS 16 compatibility trial](docs/ictrl-xr-validation.md). |
 
@@ -269,7 +269,7 @@ Formal reports now render a bounded Assets.car name list and a metadata-only san
 
 `copyapp verify` checks recorded source links and file hashes. For a standalone `install.json` directory, it also rechecks the saved IPA hash, Bundle ID and version; that does not prove the App is still installed now. A matching hash does not prove that a decompiler interpretation is correct or that an app is functionally equivalent. Store raw IPA files, screenshots, sandbox snapshots, traces and credentials only in ignored local `cases/`. Reports should distinguish direct observations, inferences and unknown behavior.
 
-The current gaps are general discovery and independent implementation across unfamiliar apps, a real Claude CLI end-to-end run, broader app behavior and backend semantics, full sandbox and network interpretation, and cross-version validation. The iOS 17.3.1 iPhone 14 has passed USB, iCTRL, SSH/static acquisition, iOS MCP service startup, development-signed clone installation, one paired Calculator flow and one encrypted Remoboard package recovery. RootHide Frida tracing works on the foreground clone but still fails on system Calculator. iOS 26 remains untested.
+The current gaps are general discovery and independent implementation across unfamiliar apps, a real Claude CLI end-to-end run, broader app behavior and backend semantics, full sandbox and network interpretation, and cross-version validation. The iOS 17.3.1 iPhone 14 has passed USB, iCTRL, SSH/static acquisition, iOS MCP service startup, development-signed clone installation, one encrypted Remoboard package recovery, and original Calculator Frida tracing through the version-pinned sidecar. A [reviewed iOS 17 Calculator report](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md) and [selected-flow delivery](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md) also verify: both apps displayed `15` after `7 + 8 =`, with two screenshot pairs reviewed as minor differences. The clone source and IPA predated this report, so this run does not establish report-to-source generation. Generic RootHide `root-run`, broader App coverage, and iOS 26 remain unverified.
 
 ## Documentation
 
