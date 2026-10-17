@@ -14,7 +14,7 @@ Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app 
 
 The earlier iOS 17 Calculator clone source and IPA existed before its report; a separate [new-source four-flow pilot](docs/ios17-calculator-fresh-from-report.md) now verifies report-guided implementation, signing, installation and paired comparison on that phone. Its installed RootHide Frida server cannot provide root `root-run`; the verified encrypted-package route uses mobile SSH. The [iOS 17 device record](docs/relaxin-roothide-iphone14.md) gives exact evidence and limits.
 
-The [v0.1.9 release validation](docs/releases/v0.1.9.md) adds [cross-device installation and comparison of one independent Clock clone](docs/clock-clone-two-device.md). The [v0.1.8 release](docs/releases/v0.1.8.md) records first-use gate diagnosis and four-way Translate/Clock checks. The [v0.1.7 release](docs/releases/v0.1.7.md) records same-script Calculator/Safari checks and the Hopper-provider verification fix.
+The [v0.1.10 release validation](docs/releases/v0.1.10.md) adds [stopped and running Clock state across relaunch on both phones](docs/clock-clone-two-device.md), plus in-use clone upgrades with exact-target preinstall termination. The [v0.1.9 release](docs/releases/v0.1.9.md) established the cross-device baseline and recorded the state-loss gap. The [v0.1.8 release](docs/releases/v0.1.8.md) records first-use gate diagnosis and four-way Translate/Clock checks.
 
 The [two-device verification matrix](docs/two-device-verification-matrix.md) now also records the **same** Calculator `98→9` swipe script and Safari synthetic text-entry script through both iOS MCP and iCTRL on each phone, plus a completed one-flow `hopper-direct` analysis-to-rebuild parent on iOS 17. These bounded outcomes do not imply every field, gesture or App behaves identically.
 
@@ -215,7 +215,7 @@ Direct Ghidra or Hopper pseudocode is optional and requires a separately install
 .venv/bin/copyapp verify cases/clone-install
 ```
 
-The USB route does not need TrollStore or SSH. A successful install does not yet establish that the App launched or matched the original; run paired UI flows afterward. Start the staged `copy` job below only after its required `doctor` channels work. The [workflow guide](docs/copy-workflow.md) explains every pause, report and device check.
+The USB route does not need TrollStore or SSH. `install` saves `input.ipa` inside its local case before transfer, so later builds cannot invalidate that case's package hash. When a paired iCTRL runner is configured, it requests termination of only the target Bundle ID; the XR TrollStore path also checks Frida process paths and each candidate's on-device `Info.plist` before stopping stale mobile processes. Save unsaved work in the target App before upgrading it. The two-phone tests cover versioned Clock upgrades while the old App was running. XR TrollStore timed out twice on an identical build and once on a versioned upgrade; the latter succeeded on retry from the saved IPA. Increment the App build number for an update and inspect InstallationProxy before retrying an uncertain result. A successful install does not yet establish that the App launched or matched the original; run paired UI flows afterward. Start the staged `copy` job below only after its required `doctor` channels work. The [workflow guide](docs/copy-workflow.md) explains every pause, report and device check.
 
 | If setup stops here | Check |
 | --- | --- |

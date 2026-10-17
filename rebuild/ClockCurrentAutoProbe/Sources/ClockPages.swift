@@ -224,6 +224,14 @@ final class AlarmEditorController: UITableViewController {
 }
 
 final class StopwatchController: UIViewController {
+    private struct Snapshot: Codable {
+        let elapsed: TimeInterval
+        let startedAt: Date?
+        let lapStartedAt: TimeInterval
+        let laps: [TimeInterval]
+    }
+
+    private static let snapshotKey = "copyapp.clock.stopwatch.snapshot.v1"
     private let timeLabel = UILabel()
     private let leftButton = UIButton(type: .system)
     private let rightButton = UIButton(type: .system)
@@ -307,6 +315,9 @@ final class StopwatchController: UIViewController {
             completedLapsStack.trailingAnchor.constraint(equalTo: bottomDivider.trailingAnchor),
             completedLapsStack.topAnchor.constraint(equalTo: lapDivider.bottomAnchor),
         ])
+        restoreState()
+        renderCompletedLaps()
+        if startedAt != nil { startTicker() }
         refresh()
     }
 
@@ -316,6 +327,33 @@ final class StopwatchController: UIViewController {
     }
 
     deinit { ticker?.invalidate() }
+
+    private func restoreState() {
+        guard let data = UserDefaults.standard.data(forKey: Self.snapshotKey),
+              let snapshot = try? PropertyListDecoder().decode(Snapshot.self, from: data),
+              snapshot.elapsed.isFinite, snapshot.elapsed >= 0,
+              snapshot.lapStartedAt.isFinite, snapshot.lapStartedAt >= 0,
+              snapshot.laps.count <= 200,
+              snapshot.laps.allSatisfy({ $0.isFinite && $0 >= 0 }) else { return }
+        elapsed = snapshot.elapsed
+        startedAt = snapshot.startedAt
+        lapStartedAt = snapshot.lapStartedAt
+        laps = snapshot.laps
+    }
+
+    private func saveState() {
+        let snapshot = Snapshot(elapsed: elapsed, startedAt: startedAt,
+                                lapStartedAt: lapStartedAt, laps: laps)
+        guard let data = try? PropertyListEncoder().encode(snapshot) else { return }
+        UserDefaults.standard.set(data, forKey: Self.snapshotKey)
+    }
+
+    private func startTicker() {
+        ticker?.invalidate()
+        ticker = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+            self?.refresh()
+        }
+    }
 
     private var total: TimeInterval {
         elapsed + (startedAt.map { Date().timeIntervalSince($0) } ?? 0)
@@ -402,10 +440,9 @@ final class StopwatchController: UIViewController {
             ticker = nil
         } else {
             startedAt = Date()
-            ticker = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
-                self?.refresh()
-            }
+            startTicker()
         }
+        saveState()
         refresh()
     }
 
@@ -419,6 +456,7 @@ final class StopwatchController: UIViewController {
             lapStartedAt = 0
             laps.removeAll()
         }
+        saveState()
         renderCompletedLaps()
         refresh()
     }

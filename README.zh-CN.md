@@ -16,7 +16,7 @@ Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱�
 
 iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。此前交付的复刻版源码和 IPA 早于本报告存在；另一次[从报告新写源码并扩展四流程的试验](docs/ios17-calculator-fresh-from-report.zh-CN.md)已完成构建、签名、安装和同机对照。Calculator 全功能等价仍未验证。现有 RootHide Frida 服务不能提供 root `root-run`；已验证的加密包恢复路径使用 mobile SSH。
 
-[v0.1.9 双机发布验收](docs/releases/v0.1.9.zh-CN.md)新增[同一独立 Clock 复刻项目的跨设备安装与对照](docs/clock-clone-two-device.zh-CN.md)。[v0.1.8 发布](docs/releases/v0.1.8.zh-CN.md)记录首次使用引导诊断和 Translate/Clock 四路检查。[v0.1.7 发布](docs/releases/v0.1.7.zh-CN.md)记录 Calculator/Safari 同脚本测试及 Hopper provider 校验修复。
+[v0.1.10 双机发布验收](docs/releases/v0.1.10.zh-CN.md)新增[Clock 复刻版停止态与运行态重启验证](docs/clock-clone-two-device.zh-CN.md)，并通过两台手机运行中升级检查。[v0.1.9 发布](docs/releases/v0.1.9.zh-CN.md)确立跨设备基线并记录当时的状态丢失缺口。[v0.1.8 发布](docs/releases/v0.1.8.zh-CN.md)记录首次使用引导诊断和 Translate/Clock 四路检查。
 
 [双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)又在两台手机上，用**同一脚本**分别经 iOS MCP 与 iCTRL 验证 Calculator `98→9` 左滑和 Safari 地址栏的合成文本输入，并在 iOS 17 上跑通一条 `hopper-direct` 分析到复刻父工作流。这些有界结果不代表所有输入框、手势或 App 都相同。
 
@@ -448,7 +448,7 @@ RootHide 的 iPhone 14 使用同一个固定 helper 和相同的逐字节审计�
 
 两个 XR 试点可运行 `sh scripts/compose-pilot-report.sh compass cases/<NEW_CASE>` 或 `sh scripts/compose-pilot-report.sh fixture cases/<NEW_CASE>` 重建，脚本会在生成后调用 `copyapp verify`。报告器已用 DeepSeek 的已解密案例核对：优先展示解密后主程序和类索引，同时保留磁盘快照索引；没有账号会话时，登录后行为仍标记未知。单独导入的截图或数据文件只由报告器校验内容哈希，设备和 App 归属须从其采集记录另行确认。
 
-`install` 默认将本地 IPA 经指定设备的 USB SSH 传输、校验 SHA-256、调用现有的 TrollStore helper，然后用安装服务核对 Bundle ID 与版本；暂存 IPA 在结束时删除。该路径已在 XR 上用测试夹具实测更新并启动。对于 Apple Development 签名的 IPA，可用 `--transport usb` 直接通过安装服务安装，无需 TrollStore 或 SSH；iPhone 14/iOS 17.3.1 的 Calculator 复刻版已成功安装，安装案例核对了设备 UDID、IPA 哈希、版本和有效签名配置。复刻版随后启动并通过一条同机运算流程。例如：
+`install` 默认将本地 IPA 经指定设备的 USB SSH 传输、校验 SHA-256、调用现有的 TrollStore helper，然后用安装服务核对 Bundle ID 与版本；手机上的暂存 IPA 在结束时删除，Mac 端案例则保存 `input.ipa` 快照，避免后续构建覆盖证据。该路径已在 XR 上用测试夹具实测更新并启动。对于 Apple Development 签名的 IPA，可用 `--transport usb` 直接通过安装服务安装，无需 TrollStore 或 SSH；iPhone 14/iOS 17.3.1 的 Calculator 复刻版已成功安装，安装案例核对了设备 UDID、IPA 哈希、版本和有效签名配置。已配置配对 iCTRL 时，安装前会请求结束**目标 Bundle ID** 的旧进程；XR TrollStore 路径还会核对 Frida 进程路径及设备端 `Info.plist`，再清理同 Bundle ID 的残留 mobile 进程。升级前请保存目标 App 的未保存内容。两机已实测旧版运行时升级 Clock；XR 经 TrollStore 重装完全相同的版本/构建号曾两次超时，另一次递增版本升级首次超时、核对安装数据库后用保留 IPA 重试成功。更新时应递增构建号，结果不明时先查安装数据库。复刻版随后启动并通过一条同机运算流程。例如：
 
 ```sh
 .venv/bin/copyapp install --udid <UDID> --ipa <LOCAL_IPA> --out cases/<INSTALL_CASE>

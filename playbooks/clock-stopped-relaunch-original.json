@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "scenario_id": "clock-stopped-relaunch",
+  "bundle_id": "com.apple.mobiletimer",
+  "fresh_launch": true,
+  "steps": [
+    {"action": "observe", "contains": ["Stopwatch"]},
+    {"action": "tap_label", "label": "Stopwatch"},
+    {"action": "observe", "contains": ["Reset"]},
+    {"action": "screenshot", "stable": true, "ready_contains": "Reset"}
+  ]
+}

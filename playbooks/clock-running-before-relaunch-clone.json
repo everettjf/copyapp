@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "scenario_id": "clock-running-before-relaunch",
+  "bundle_id": "com.copyapp.clock.currentauto",
+  "fresh_launch": true,
+  "steps": [
+    {"action": "observe", "contains": ["Stopwatch"]},
+    {"action": "tap_label", "label": "Stopwatch"},
+    {"action": "tap_label", "label": "Reset"},
+    {"action": "tap_label", "label": "Start"},
+    {"action": "observe", "wait_ms": 1200, "contains": ["Stop"]}
+  ]
+}
