@@ -4,7 +4,7 @@
 
 在已越狱的 iPhone XR（iOS 16.1.1）上，[Translate 完整案例](docs/translate-xr-workflow.zh-CN.md)（[English](docs/translate-xr-workflow.md)）已经从新写的发现脚本走通到[审阅报告](cases/translate-current-workflow-20261016/analysis-agent/reviewed-report/report.md)、[独立 UIKit 工程](rebuild/TranslateFreshProbe)、真机安装与三组原版/复刻版对照。六张截图逐张审阅，均有轻微图标或间距差异。范围限于文字输入但不提交翻译、Favorites 空状态和 Conversation 待机导航；翻译结果、语音和相机能力仍未实现或验证。
 
-第一版正在实现“分析 → 复刻 → 真机对照”流程。Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 只读导出包和索引数据沙盒；本地解析 Mach-O。iOS MCP 的截图、前台识别、App 启动和点击已在 iPhone XR 上验收。原版 Compass 的关键交互已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展也已在 XR 上自动恢复为完整可分析 IPA。[iPhone 14 / iOS 17.3.1 / Relaxin 与 RootHide](docs/relaxin-roothide-iphone14.md) 已完成 Calculator 的 USB 与 SSH 采集、iOS MCP 界面操作、开发证书签名复刻版安装，以及原版和复刻版各一次原生重新启动后的 `7 + 8 = 15` 同机对照；Frida 跟踪仍不稳定。iOS 26 尚未实测。
+第一版正在实现“分析 → 复刻 → 真机对照”流程。Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 只读导出包和索引数据沙盒；本地解析 Mach-O。iOS MCP 的截图、前台识别、App 启动和点击已在 iPhone XR 上验收。原版 Compass 的关键交互已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展也已在 XR 上自动恢复为完整可分析 IPA。[iPhone 14 / iOS 17.3.1 / Relaxin 与 RootHide](docs/relaxin-roothide-iphone14.md) 已完成 Calculator 的 USB 与 SSH 采集、iOS MCP 界面操作、开发证书签名复刻版安装，以及原版和复刻版各一次原生重新启动后的 `7 + 8 = 15` 同机对照；Remoboard 的主程序和键盘扩展也完成整包解密与校验。系统 Calculator 的 Frida 附加仍未解决。iOS 26 尚未实测。
 
 [独立 Codex CLI 的 XR 实测](docs/external-codex-xr-trial.zh-CN.md)已完成 Calculator 的有来源报告、新 App 构建与安装、三条原版/复刻版行为对照。此次沿用已验证的发现脚本和既有复刻源码，具体范围见实测记录。
 
@@ -78,7 +78,7 @@ cd copyapp
 sh scripts/bootstrap-macos.sh
 ```
 
-脚本创建或复用 `.venv/`，安装 Copy APP，并打印引导式设置命令。要求 macOS 和 Python 3.9 或更新版本。开始运行时追踪或加密 App 恢复时，再运行 `sh scripts/bootstrap-macos.sh --trace` 安装 Mac 端 Frida 17.x。需要 Xcode 设备服务或复刻版编译时，用 `xcode-select -p` 检查开发者目录指向**完整 Xcode**，不能只有 Command Line Tools。`.venv/` 与 `cases/` 都不提交到 Git。
+脚本创建或复用 `.venv/`，安装 Copy APP，并打印引导式设置命令。要求 macOS 和 Python 3.9 或更新版本。开始运行时追踪时，再运行 `sh scripts/bootstrap-macos.sh --trace` 安装 Mac 端 Frida，并使其版本与手机端匹配；已测 RootHide 服务端为 16.1.4。RootHide 的已验证整包恢复路径使用 mobile SSH，不要求 Mac Frida。需要 Xcode 设备服务或复刻版编译时，用 `xcode-select -p` 检查开发者目录指向**完整 Xcode**，不能只有 Command Line Tools。`.venv/` 与 `cases/` 都不提交到 Git。
 
 ### 2. 连接并检查手机
 
@@ -119,7 +119,7 @@ sh scripts/bootstrap-macos.sh
 | 组件 | 安装或配置 | 用途 |
 | --- | --- | --- |
 | 手机 OpenSSH | 安装适配 rootless 的 OpenSSH 服务端，通过下方 USB 端口转发访问。 | 只读获取 App 包和沙盒。 |
-| 手机 Frida server | 安装并启动有 root 能力、与 Mac 端版本匹配且能在目标系统挂钩的版本。 | 运行时函数跟踪与可选的整包恢复。 |
+| 手机 Frida server | 安装并启动与 Mac 端版本匹配且能在目标系统挂钩的版本。 | 运行时函数跟踪及普通 rootless 整包恢复；已测 RootHide 整包恢复走 mobile SSH。 |
 | Copy APP iOS MCP tweak | 按 [手机端说明](device/ios-mcp/README.zh-CN.md)编译安装，随后重新载入 SpringBoard。 | 经 USB 本地服务读取前台 App、界面树、截图并执行手势。 |
 | iCTRL runner 与配对 Mac 客户端 | 完成 Xcode 签名配置后运行 `copyapp setup ictrl --udid <UDID> --out cases/ictrl-setup`，再批准手机上的配对提示。 | 可选界面后端，以及 Instruments 启动失败时的终止/重启回退。 |
 
@@ -197,7 +197,7 @@ Copy APP 的 iCTRL 默认使用按签名团队区分的 ID：可选设置 App �
 | 截图或 DVT 不可用 | 检查开发者模式、完整 Xcode 选择和对应 Developer Disk Image；用新目录重跑 `doctor`。 |
 | `ssh_mobile` 不可用 | 保持 `22222 → 22` 转发，核对主机指纹及 `mobile` 密钥登录，再比较 `deviceinfo uniqueid`。 |
 | `ios_mcp` 不可用 | 检查 SpringBoard 重载后 tweak 是否载入；`analyze` 还需保持 `22223 → 8090` 转发。 |
-| `frida_usb` 不可用 | 检查该手机的 Frida server 是否运行、是否与 Mac 端 Frida 17.x 兼容。 |
+| `frida_usb` 不可用 | 检查该手机的 Frida server 是否运行、是否与 Mac 端 Frida 版本匹配。 |
 | Instruments 无法启动 App | 运行 `setup ictrl` 并检查 `doctor` 的 `ictrl` 项；XR + Xcode 27 的 iOS 16 适配见[实测记录](docs/ictrl-xr-validation.md)。 |
 
 案例失败时，先看清单与阶段日志。`analyze` 和分阶段 `copy` 可以带原参数加 `--resume`；失败的界面操作可能改变 App 状态，重放前先检查手机画面。
@@ -376,7 +376,9 @@ Clock 随后扩展到四个主标签：[四流程分析报告](cases/clock-four-
 
 `decrypt-main` 通过 USB SSH 获取目标主程序的磁盘文件，启动目标进程后由 Frida 读取对应运行时加密区；在写出分析副本前校验设备 UDID、模块身份、未加密头部、加密区边界和字节差异。当前只支持 thin arm64 主程序。`assemble-ipa` 要求原包快照与脱壳来源哈希一致，只替换主程序并检查包内全部 Mach-O；仍加密的扩展会让完整性检查失败。这两个命令输出的都是**分析副本**，签名已失效，不承诺可安装。
 
-`decrypt-package` 是 XR 已验证的完整路径。先运行 `sh scripts/prepare-ipadecrypt-helper.sh` 获取固定提交的设备 helper；命令检查本机和设备端的 helper SHA-256、USB Frida 与 SSH 指向同一 UDID、原包版本/构建号及传输哈希。它限时启动 helper，恢复主程序和扩展；再逐一检查包内 Mach-O，并确认每个原加密二进制只有加密区和 `cryptid` 字段发生变化。Mac 端还核对归档成员及未加密文件字节，只允许省略 `SC_Info` 收据，并用原包的 ZIP 元数据重组分析 IPA，避免设备端时间戳影响内容哈希。成功后自动生成解密后的 IPA 静态索引和主程序 Objective-C 类/方法索引，并写出可用 `copyapp verify <DECRYPT_CASE>` 再次审计的独立案例；[XR 实跑结果](cases/deepseek-verifiable-decrypt-live-20261015/manifest.json)已通过。输出仍是**分析 IPA**，不保证可安装。`decrypt-extension` 提供已运行扩展的直接 Frida 读取接口；XR 上对 Kimi/DeepSeek 分享扩展的附加均超时，因此当前正式整包路径使用 `decrypt-package`。`assemble-ipa` 的 `--recovered` 可重复提供已验证的主程序与扩展案例。
+`decrypt-package` 是 XR 已验证的完整路径。先运行 `sh scripts/prepare-ipadecrypt-helper.sh` 获取固定提交的设备 helper；普通 rootless 路径检查本机和设备端的 helper SHA-256、USB Frida 与 SSH 指向同一 UDID、原包版本/构建号及传输哈希。它限时启动 helper，恢复主程序和扩展；再逐一检查包内 Mach-O，并确认每个原加密二进制只有加密区和 `cryptid` 字段发生变化。Mac 端还核对归档成员及未加密文件字节，只允许省略 `SC_Info` 收据，并用原包的 ZIP 元数据重组分析 IPA，避免设备端时间戳影响内容哈希。成功后自动生成解密后的 IPA 静态索引和主程序 Objective-C 类/方法索引，并写出可用 `copyapp verify <DECRYPT_CASE>` 再次审计的独立案例；[XR 实跑结果](cases/deepseek-verifiable-decrypt-live-20261015/manifest.json)已通过。输出仍是**分析 IPA**，不保证可安装。`decrypt-extension` 提供已运行扩展的直接 Frida 读取接口；XR 上对 Kimi/DeepSeek 分享扩展的附加均超时，因此当前正式整包路径使用 `decrypt-package`。`assemble-ipa` 的 `--recovered` 可重复提供已验证的主程序与扩展案例。
+
+RootHide 的 iPhone 14 使用同一个固定 helper 和相同的逐字节审计，但设备端改由已配对的 mobile SSH 在限定时间内执行，不依赖 Frida root spawn。SSH 中的共享目录为 `/rootfs/var/mobile/Media`，helper 写入时使用真实 `/var/mobile/Media`。Remoboard 主程序与键盘扩展的 `cryptid=1` 均恢复为 0，[独立案例](cases/iphone14-remotekb-roothide-decrypt-20261017/manifest.json)和[一命令 `analyze --decrypt` 案例](cases/iphone14-remotekb-full-analyze-20261017/analysis.md)检查 3 个 Mach-O、恢复 2 个加密二进制，均通过 `copyapp verify`。该案例没有启动 App，采集到的界面归属是 SpringBoard；通用 `root-run` 在 RootHide 上仍未验收。
 
 无需 REA 的反编译入口包括单函数 `copyapp ghidra-function --file <MACHO> --sha256 <SHA256> --address 0xADDRESS --ghidra-dir <GHIDRA_INSTALL_DIR> --out cases/<CASE>`、按已验证候选排序的 `copyapp ghidra-queue --candidates cases/<CANDIDATES> --ghidra-dir <GHIDRA_INSTALL_DIR> --java-home <JDK_HOME> --out cases/<QUEUE>`，以及整条调查的 `--provider ghidra-direct`。Copy APP 自带最小 Ghidra headless 脚本，保存函数伪代码、来源哈希、脚本与日志；正式报告可用 `--evidence ghidra.queue=cases/<QUEUE>` 导入。它仍需要外部 Ghidra 和 JDK。默认 `prepare-app` 的方法筛选与汇编路径可独立运行；显式选择 `ghidra-direct` 时将候选队列接入调查和 Agent 审阅任务，且无需 REA。XR Calculator 百分比候选的[直连案例](cases/calculator-direct-ghidra-percent-20261015/report.md)、加法的[候选队列](cases/calculator-direct-ghidra-queue-addition-v3-20261015/queue.json)及[一命令真机准备任务](cases/calculator-prepare-app-ghidra-direct-live-20261015/preparation/draft/TASK.md)均已运行并通过来源校验。完整边界见[无 REA 分析路径](docs/no-rea-analysis.md)。
 

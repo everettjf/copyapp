@@ -19,7 +19,7 @@ from copyapp.decrypt import _cryptid_offset, _installed_main
 from copyapp.decrypt_verify import inspect_decrypted_ipa, write_decryption_check
 from copyapp.ipa import analyze_ipa, inspect_macho, write_ipa_report
 from copyapp.objc import ObjCIndexError, index_objc, write_objc_report
-from copyapp.root_bridge import run_root_command
+from copyapp.root_bridge import MAX_OUTPUT, run_root_command, resolve_jailbreak_executable
 from copyapp.ssh_acquire import _ssh_argv
 
 
@@ -39,6 +39,29 @@ def _hash_file(path: Path) -> str:
         for chunk in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _is_roothide_ssh(ssh: list) -> bool:
+    result = subprocess.run(ssh + ["test -d /rootfs/var/mobile/Media && "
+                                   "command -v jbroot >/dev/null 2>&1"],
+                            capture_output=True, timeout=10)
+    return result.returncode == 0
+
+
+def _run_roothide_helper(ssh: list, udid: str, command: list,
+                         output: Path) -> dict:
+    """Run the pinned helper from mobile's RootHide namespace, with a bound."""
+    process = subprocess.run(ssh + [shlex.join(command)], capture_output=True,
+                             timeout=140)
+    captured = process.stdout + process.stderr
+    output.mkdir(parents=True, exist_ok=True)
+    (output / "output.txt").write_bytes(captured[:MAX_OUTPUT])
+    result = {"schema_version": 1, "device_id": udid,
+              "transport": "named USB mobile SSH in RootHide namespace",
+              "command": command, "exit_code": process.returncode,
+              "output_truncated": len(captured) > MAX_OUTPUT}
+    (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+    return result
 
 
 def _verify_changed_binaries(snapshot: Path, result: Path, source_index: dict) -> list:
@@ -272,27 +295,36 @@ def decrypt_package(udid: str, bundle: str, snapshot: Path, helper: Path,
     nonce = uuid.uuid4().hex[:16]
     remote_helper = f"/var/mobile/Media/copyapp-helper-{nonce}"
     remote_ipa = f"/var/mobile/Media/copyapp-analysis-{nonce}.ipa"
+    roothide = _is_roothide_ssh(ssh)
+    ssh_helper = "/rootfs" + remote_helper if roothide else remote_helper
+    ssh_ipa = "/rootfs" + remote_ipa if roothide else remote_ipa
     output.mkdir(parents=True, exist_ok=True)
     try:
         scp = ["scp", "-P", str(ssh_port), "-i", str(identity),
                "-o", f"UserKnownHostsFile={known_hosts}",
                "-o", "StrictHostKeyChecking=yes", "-o", "BatchMode=yes"]
-        subprocess.run(scp + [str(helper), f"mobile@127.0.0.1:{remote_helper}"],
+        subprocess.run(scp + [str(helper), f"mobile@127.0.0.1:{ssh_helper}"],
                        capture_output=True, timeout=30, check=True)
-        remote_hash = subprocess.run(ssh + ["sha256sum " + shlex.quote(remote_helper)],
+        remote_hash = subprocess.run(ssh + ["sha256sum " + shlex.quote(ssh_helper)],
                                      capture_output=True, timeout=10, check=True).stdout.decode().split()[0]
         if remote_hash != PINNED_HELPER_SHA256:
             raise RuntimeError("staged helper hash mismatch")
-        command = ["/var/jb/usr/bin/timeout", "-s", "TERM", "120", remote_helper,
-                   "-v", "decrypt", bundle, app_root, remote_ipa]
-        run = run_root_command(udid, command, output / "device-run", ssh_port,
-                               identity, known_hosts, timeout=140)
+        if roothide:
+            command = ["/usr/bin/timeout", "-s", "TERM", "120", ssh_helper,
+                       "-v", "decrypt", bundle, app_root, remote_ipa]
+            run = _run_roothide_helper(ssh, udid, command, output / "device-run")
+        else:
+            timeout_executable = resolve_jailbreak_executable(ssh, "/usr/bin/timeout")
+            command = [timeout_executable, "-s", "TERM", "120", remote_helper,
+                       "-v", "decrypt", bundle, app_root, remote_ipa]
+            run = run_root_command(udid, command, output / "device-run", ssh_port,
+                                   identity, known_hosts, timeout=140)
         if run["exit_code"] != 0:
             raise RuntimeError(f"device helper exited {run['exit_code']}; inspect device-run/output.txt")
         candidate = (output / "analysis.ipa").resolve()
-        subprocess.run(scp + [f"mobile@127.0.0.1:{remote_ipa}", str(candidate)],
+        subprocess.run(scp + [f"mobile@127.0.0.1:{ssh_ipa}", str(candidate)],
                        capture_output=True, timeout=120, check=True)
-        remote_ipa_hash = subprocess.run(ssh + ["sha256sum " + shlex.quote(remote_ipa)],
+        remote_ipa_hash = subprocess.run(ssh + ["sha256sum " + shlex.quote(ssh_ipa)],
                                          capture_output=True, timeout=10, check=True).stdout.decode().split()[0]
         if _hash_file(candidate) != remote_ipa_hash:
             raise RuntimeError("analysis IPA transfer hash mismatch")
@@ -353,7 +385,7 @@ def decrypt_package(udid: str, bundle: str, snapshot: Path, helper: Path,
         return path
     finally:
         try:
-            subprocess.run(ssh + ["rm -f " + shlex.quote(remote_helper) + " " + shlex.quote(remote_ipa)],
+            subprocess.run(ssh + ["rm -f " + shlex.quote(ssh_helper) + " " + shlex.quote(ssh_ipa)],
                            capture_output=True, timeout=15)
         except (OSError, subprocess.TimeoutExpired):
             pass

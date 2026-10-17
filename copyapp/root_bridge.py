@@ -19,6 +19,23 @@ from copyapp.ssh_acquire import _ssh_argv
 MAX_OUTPUT = 1024 * 1024
 
 
+def resolve_jailbreak_executable(ssh: List[str], logical_path: str) -> str:
+    """Resolve one trusted tool in rootless or RootHide's randomized root."""
+    if not re.fullmatch(r"/[A-Za-z0-9_./-]+", logical_path) or ".." in logical_path.split("/"):
+        raise ValueError("invalid jailbreak executable path")
+    rootless = "/var/jb" + logical_path
+    script = (f"if test -x {shlex.quote(rootless)}; then printf '%s\\n' "
+              f"{shlex.quote(rootless)}; elif command -v jbroot >/dev/null 2>&1; "
+              f"then jbroot {shlex.quote(logical_path)}; else exit 1; fi")
+    result = subprocess.run(ssh + [script], capture_output=True, timeout=10,
+                            check=True)
+    path = result.stdout.decode().strip()
+    if (not re.fullmatch(r"/[A-Za-z0-9_./-]+", path) or
+            ".." in path.split("/") or "//" in path):
+        raise RuntimeError("device returned an invalid jailbreak executable path")
+    return path
+
+
 def run_root_command(udid: str, command: List[str], output: Path, ssh_port: int,
                      identity: Path, known_hosts: Path, timeout: int = 60) -> Dict[str, Any]:
     if not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", udid):
@@ -40,6 +57,7 @@ def run_root_command(udid: str, command: List[str], output: Path, ssh_port: int,
                                   timeout=10, check=True).stdout.decode().strip()
     if ssh_identity != udid:
         raise RuntimeError("SSH and Frida are connected to different devices")
+    shell_path = resolve_jailbreak_executable(ssh, "/bin/sh")
     nonce = uuid.uuid4().hex
     remote_base = f"/var/mobile/Media/copyapp-root-{nonce}"
     log = remote_base + ".log"
@@ -49,7 +67,7 @@ def run_root_command(udid: str, command: List[str], output: Path, ssh_port: int,
     shell = ("PATH=/var/jb/usr/bin:/var/jb/bin:/usr/bin:/bin; umask 022; "
              f'"$@" > {shlex.quote(log)} 2>&1; code=$?; '
              f'printf "%s\\n" "$code" > {shlex.quote(status)}')
-    pid = device.spawn(["/var/jb/bin/sh", "-c", shell, "copyapp-root"] + command)
+    pid = device.spawn([shell_path, "-c", shell, "copyapp-root"] + command)
     device.resume(pid)
 
     deadline = time.monotonic() + timeout
