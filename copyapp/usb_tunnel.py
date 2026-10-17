@@ -6,8 +6,9 @@ import re
 import socket
 import subprocess
 import sys
+import tempfile
 import time
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import Iterator, Optional
 
@@ -72,6 +73,44 @@ def ictrl_runner_bundle(udid: str) -> str:
     return bundle
 
 
+async def _ios_version(udid: str) -> str:
+    from pymobiledevice3.lockdown import create_using_usbmux
+
+    device = await create_using_usbmux(serial=udid, connection_type="USB", autopair=False)
+    try:
+        values = await device.get_value()
+        if values.get("UniqueDeviceID") != udid:
+            raise RuntimeError("USB runner target identity does not match requested UDID")
+        return str(values.get("ProductVersion", ""))
+    finally:
+        await device.close()
+
+
+@contextmanager
+def ictrl_xcuitest_session(udid: str, bundle: str,
+                          log_path: Optional[Path] = None) -> Iterator[subprocess.Popen]:
+    """Keep iOS 17+ testmanagerd attached while the iCTRL service is in use."""
+    if not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", udid):
+        raise ValueError("invalid device UDID")
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", bundle):
+        raise ValueError("invalid runner Bundle ID")
+    command = [sys.executable, "-m", "pymobiledevice3", "developer", "dvt",
+               "xcuitest", "--native", "--udid", udid, bundle]
+    log_file = log_path.open("w+b") if log_path is not None else tempfile.TemporaryFile(mode="w+b")
+    with log_file as log:
+        process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
+        try:
+            yield process
+        finally:
+            if process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=3)
+
+
 async def _launch_ictrl_runner(udid: str) -> None:
     from pymobiledevice3.lockdown import create_using_usbmux
     from copyapp.device_developer import launch_app
@@ -122,20 +161,27 @@ def ictrl_tunnel(udid: str, client: Path = DEFAULT_CLIENT) -> Iterator[int]:
                 ready = True
                 break
             time.sleep(0.2)
-        if not ready:
-            try:
-                subprocess.run([sys.executable, "-m", "copyapp.ictrl_runner_launch", udid],
-                               capture_output=True, text=True, check=True, timeout=30)
-            except subprocess.TimeoutExpired as exc:
-                raise TimeoutError("launching the iCTRL runner timed out") from exc
-        deadline = time.monotonic() + 15
-        while time.monotonic() < deadline:
-            if runner_ready():
-                break
-            time.sleep(0.3)
-        else:
-            raise TimeoutError("paired iCTRL runner did not become reachable on the named USB device")
-        yield port
+        version = asyncio.run(_ios_version(udid)) if not ready else ""
+        major = int(version.split(".", 1)[0]) if version[:1].isdigit() else 0
+        session = (ictrl_xcuitest_session(udid, ictrl_runner_bundle(udid))
+                   if not ready and major >= 17 else nullcontext(None))
+        with session as test_process:
+            if not ready and test_process is None:
+                try:
+                    subprocess.run([sys.executable, "-m", "copyapp.ictrl_runner_launch", udid],
+                                   capture_output=True, text=True, check=True, timeout=30)
+                except subprocess.TimeoutExpired as exc:
+                    raise TimeoutError("launching the iCTRL runner timed out") from exc
+            deadline = time.monotonic() + (60 if test_process is not None else 15)
+            while time.monotonic() < deadline:
+                if runner_ready():
+                    break
+                if test_process is not None and test_process.poll() is not None:
+                    raise RuntimeError("iCTRL XCTest session exited before its UI service became reachable")
+                time.sleep(0.3)
+            else:
+                raise TimeoutError("paired iCTRL runner did not become reachable on the named USB device")
+            yield port
     finally:
         if process.poll() is None:
             process.terminate()

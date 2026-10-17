@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 import urllib.request
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterator, Optional, Tuple
@@ -24,7 +24,7 @@ from pymobiledevice3.services.installation_proxy import InstallationProxyService
 
 from copyapp.ictrl import ICtrlClient, DEFAULT_CLIENT
 from copyapp.install import _installed_app, install_trollstore_ipa
-from copyapp.usb_tunnel import configured_ictrl_runner_bundle
+from copyapp.usb_tunnel import configured_ictrl_runner_bundle, ictrl_xcuitest_session
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -280,7 +280,8 @@ def _record(output: Path, state: Dict[str, Any]) -> None:
     records = [{"id": "setup", "path": "setup.json", "kind": "json",
                 "sha256": _hash(report)}]
     for relative, kind in (("iCTRLUITests-Runner.ipa", "ipa"),
-                           ("install/install.json", "json")):
+                           ("install/install.json", "json"),
+                           ("xcuitest.log", "text")):
         path = output / relative
         if path.is_file():
             records.append({"id": relative.replace("/", "-"), "path": relative,
@@ -359,13 +360,33 @@ def setup_ictrl(udid: str, output: Path, ssh_port: int = 22222,
         else:
             state["runner_bundle_id"] = bundle
             state["stages"].append("runner_already_installed")
+            if previous_bundle != bundle:
+                _save_bundle(udid, bundle)
+                state["stages"].append("runner_registered")
         with _usb_forward(udid, 8200) as port:
-            _launch_runner(udid, port, force=runner_installed_now)
-            state["stages"].append("runner_reachable")
-            if not _paired_health(port, client):
-                _pair(port, client)
-                state["stages"].append("pairing_approved")
-            state["stages"].append("authenticated_health_passed")
+            native_test = (_version(ios_version)[0] >= 17 and
+                           (runner_installed_now or not _runner_ready(port)))
+            runner_session = (ictrl_xcuitest_session(udid, bundle, output / "xcuitest.log") if native_test
+                              else nullcontext(None))
+            with runner_session as test_process:
+                if test_process is None:
+                    _launch_runner(udid, port, force=runner_installed_now)
+                else:
+                    state["stages"].append("xcuitest_session_started")
+                    deadline = time.monotonic() + 65
+                    while time.monotonic() < deadline:
+                        if _runner_ready(port):
+                            break
+                        if test_process.poll() is not None:
+                            raise RuntimeError("iCTRL XCTest session exited before /whoami was reachable")
+                        time.sleep(0.4)
+                    else:
+                        raise TimeoutError("iCTRL XCTest session did not expose /whoami")
+                state["stages"].append("runner_reachable")
+                if not _paired_health(port, client):
+                    _pair(port, client)
+                    state["stages"].append("pairing_approved")
+                state["stages"].append("authenticated_health_passed")
         state["status"] = "ready"
     except Exception as exc:
         state["error"] = {"type": type(exc).__name__, "message": str(exc)[:400]}

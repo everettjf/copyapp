@@ -24,6 +24,15 @@ def fake_forward(*args, **kwargs):
     yield 33224
 
 
+@contextmanager
+def fake_xcuitest(*args, **kwargs):
+    class Process:
+        def poll(self):
+            return None
+
+    yield Process()
+
+
 def make_ipa(path: Path, minimum: str) -> None:
     with ZipFile(path, "w") as archive:
         archive.writestr("Payload/iCTRLUITests-Runner.app/Info.plist",
@@ -77,6 +86,27 @@ class ICtrlSetupTest(unittest.TestCase):
             install.assert_not_called()
             pair.assert_not_called()
 
+    def test_existing_supplied_runner_is_registered_for_future_tunnels(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            client = root / "ictrl"
+            client.write_bytes(b"cli")
+            ipa = root / "runner.ipa"
+            make_ipa(ipa, "16.0")
+            with patch("copyapp.ictrl_setup._device", return_value={
+                    "ProductVersion": "16.1.1", "UniqueDeviceID": UDID}), \
+                 patch("copyapp.ictrl_setup.configured_ictrl_runner_bundle", return_value=None), \
+                 patch("copyapp.ictrl_setup._build_client", return_value=client), \
+                 patch("copyapp.ictrl_setup._installed_app", return_value={"Path": "/app"}), \
+                 patch("copyapp.ictrl_setup._usb_forward", side_effect=fake_forward), \
+                 patch("copyapp.ictrl_setup._launch_runner"), \
+                 patch("copyapp.ictrl_setup._paired_health", return_value=True), \
+                 patch("copyapp.ictrl_setup._save_bundle") as save:
+                path, ready = setup_ictrl(UDID, root / "case", runner_ipa=ipa)
+            self.assertTrue(ready)
+            self.assertIn("runner_registered", json.loads(path.read_text())["stages"])
+            save.assert_called_once_with(UDID, BUNDLE)
+
     def test_new_runner_installs_and_pairs_after_minimum_check(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -129,13 +159,15 @@ class ICtrlSetupTest(unittest.TestCase):
                  patch("copyapp.ictrl_setup._installed_app", side_effect=[{}, {"Path": "/app"}]), \
                  patch("copyapp.ictrl_setup._install_usb_ipa") as usb_install, \
                  patch("copyapp.ictrl_setup._usb_forward", side_effect=fake_forward), \
-                 patch("copyapp.ictrl_setup._launch_runner"), \
+                 patch("copyapp.ictrl_setup.ictrl_xcuitest_session", side_effect=fake_xcuitest), \
+                 patch("copyapp.ictrl_setup._runner_ready", return_value=True), \
                  patch("copyapp.ictrl_setup._paired_health", return_value=True), \
                  patch("copyapp.ictrl_setup._save_bundle"), \
                  patch("copyapp.ictrl_setup.install_trollstore_ipa") as trollstore_install:
                 path, ready = setup_ictrl(UDID, root / "case", runner_ipa=ipa)
             self.assertTrue(ready)
             self.assertIn("runner_usb_installed", json.loads(path.read_text())["stages"])
+            self.assertIn("xcuitest_session_started", json.loads(path.read_text())["stages"])
             usb_install.assert_awaited_once()
             trollstore_install.assert_not_called()
 

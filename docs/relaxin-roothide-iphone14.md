@@ -17,7 +17,7 @@ verified the jailbreak installation or obtained privileged access on this phone.
 | Accessibility survey | 33 elements returned after launch; the screenshot was visually reviewed as Calculator. |
 | Case integrity | `copyapp verify` passed for the Calculator USB survey. |
 | App bundle index | Native RSD listed 56 Calculator bundle paths; the updated survey case passed `copyapp verify`. This is a directory index, not file export. |
-| iCTRL package | The existing development-signed Copy APP iCTRL XCTest IPA installed through USB InstallationProxy. The test process started after the phone's one-time XCTest passcode approval. Its control server was not yet reachable during this run. |
+| iCTRL package | The existing development-signed Copy APP iCTRL XCTest IPA installed through USB InstallationProxy. The test process started after the phone's one-time XCTest passcode approval. `copyapp setup ictrl` started a native XCTest session but timed out waiting for `/whoami` while the notification permission alert remained visible. Its control server and pairing are not verified. |
 | RootHide tweak build | RootHide Theos produced a `com.copyapp.mcp` `iphoneos-arm64e` package. USB AFC staged it under `/var/mobile/Media/`; the read-back SHA-256 matched. It was not installed. |
 | Rebuilt Calculator IPA | The independent clone built for arm64. Direct USB installation rejected the original IPA for missing an app bundle signature and a fully ad hoc signed variant for an invalid signature. No clone was installed. |
 
