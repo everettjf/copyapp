@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-from copyapp.doctor import _frida_probe, _next_steps
+from copyapp.doctor import _frida_probe, _next_steps, _ssh_probe
 from copyapp.onboarding import _choose_device, _prepare_ssh_key, run_onboarding
 from copyapp.tunnels import run_tunnels
 
@@ -61,6 +61,29 @@ class OnboardingTest(unittest.TestCase):
             steps = _next_steps(UDID, probes, host, identity, known_hosts)
             self.assertEqual(len(steps), 1)
             self.assertIn("different phone", steps[0]["action"])
+
+    def test_doctor_distinguishes_another_phones_pinned_host_key(self):
+        with tempfile.TemporaryDirectory() as directory:
+            identity = Path(directory) / "id"
+            known_hosts = Path(directory) / "known_hosts"
+            identity.write_text("test key")
+            known_hosts.write_text("test host key")
+            failed = SimpleNamespace(returncode=255, stdout="",
+                                     stderr="REMOTE HOST IDENTIFICATION HAS CHANGED!")
+            with patch("copyapp.doctor._ssh_argv", return_value=["ssh"]), \
+                 patch("copyapp.doctor.subprocess.run", return_value=failed):
+                probe = _ssh_probe(UDID, 22316, identity, known_hosts)
+            self.assertEqual(probe["status"], "host_key_mismatch")
+            probes = {name: {"status": "available"} for name in
+                      ("usb_lockdown", "usb_screenshot", "frida_usb",
+                       "ios_mcp", "ictrl")}
+            probes["ssh_mobile"] = probe
+            host = {name: {"status": "available"} for name in
+                    ("xcode", "xcodegen", "ldid", "codex_cli")}
+            steps = _next_steps(UDID, probes, host, identity, known_hosts, 22316)
+            self.assertEqual(len(steps), 1)
+            self.assertIn("separate file", steps[0]["action"])
+            self.assertIn("22316", steps[0]["action"])
 
     def test_frida_inventory_does_not_claim_jailed_access_is_ready(self):
         device = SimpleNamespace(id=UDID, type="usb",

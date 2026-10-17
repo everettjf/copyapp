@@ -84,6 +84,9 @@ def _ssh_probe(udid: str, port: int, identity: Path, known_hosts: Path) -> Dict[
         result = subprocess.run(argv + ["deviceinfo uniqueid"], capture_output=True,
                                 text=True, timeout=15, check=False)
         if result.returncode:
+            if "REMOTE HOST IDENTIFICATION HAS CHANGED" in result.stderr:
+                return {"status": "host_key_mismatch",
+                        "reason": "pinned SSH host key differs from the selected USB phone"}
             return {"status": "unavailable", "exit_code": result.returncode,
                     "reason": result.stderr.strip()[:300]}
         actual = result.stdout.strip()
@@ -207,6 +210,13 @@ def _next_steps(udid: str, probes: Dict[str, Any], host: Dict[str, Any],
         steps.append({"for": "ssh_mobile", "action":
                       f"Stop the SSH forward on host port {ssh_port}; it reaches a different "
                       f"phone. Restart with .venv/bin/copyapp tunnel --udid {udid} --ssh-port {ssh_port}."})
+    elif probes["ssh_mobile"]["status"] == "host_key_mismatch":
+        steps.append({"for": "ssh_mobile", "action":
+                      f"The key in {known_hosts} belongs to a different SSH endpoint. "
+                      "Keep each phone's pinned host key in a separate file and use a "
+                      f"dedicated --ssh-port {ssh_port} when both phones are connected. Verify the new "
+                      f"fingerprint on the exact USB device {udid} before trusting it; "
+                      "do not replace the existing trusted key."})
     elif probes["ssh_mobile"]["status"] != "available":
         if not identity.is_file():
             steps.append({"for": "ssh_mobile", "action":

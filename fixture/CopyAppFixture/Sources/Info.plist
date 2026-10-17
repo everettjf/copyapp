@@ -39,6 +39,8 @@
 	</dict>
 	<key>UIRequiresFullScreen</key>
 	<true/>
+	<key>UILaunchScreen</key>
+	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

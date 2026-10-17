@@ -13,7 +13,7 @@ Copy APP has two consecutive jobs:
 1. **Analyze:** On a specified jailbroken iPhone, acquire and verify an installed app's package, selected sandbox/UI/runtime evidence and relevant native code. Deliver a readable, cited report and a machine-readable `feature-spec.json`.
 2. **Rebuild:** Implement selected behavior in an independent, runnable iOS app. Install it on the specified real device, replay paired flows and deliver explicit behavior and visual differences.
 
-A passing case proves only the selected, observed flows. It cannot recover the original source code, unseen server implementation or arbitrary untested app behavior. The first-version acceptance target is a three-flow analysis-to-rebuild loop for one real app, followed by reuse on a second technology stack. The original plan also specifies iOS 16/17/26 validation; the user has deferred the latter two devices for now.
+A passing case proves only the selected, observed flows. It cannot recover the original source code, unseen server implementation or arbitrary untested app behavior. The first-version acceptance target is a three-flow analysis-to-rebuild loop for one real app, followed by reuse on a second technology stack. The original plan also specifies iOS 16/17/26 validation. The [v0.1.0 two-device run](docs/releases/v0.1.0.md) verifies selected paths on iOS 16 and 17; iOS 26 remains untested.
 
 ## Architecture
 
@@ -28,8 +28,8 @@ The REA command and provider bridge has been removed. Copy APP uses its own boun
 
 | Milestone | Acceptance gate | Current state |
 | --- | --- | --- |
-| M0 Device baseline | Inventory and capability checks on all target phones | XR verified; iOS 17/26 deferred |
-| M1 Device control | Repeatable bounded UI flows, one active touch backend, recoverable failures | XR iOS MCP and selected iCTRL paths verified; cross-version work deferred |
+| M0 Device baseline | Inventory and capability checks on all target phones | XR/iOS 16 and iPhone 14/iOS 17 verified; iOS 26 untested |
+| M1 Device control | Repeatable bounded UI flows, one active touch backend, recoverable failures | Three fixture flows passed both backends on iOS 17 and a formal iCTRL paired check on XR; iOS 26 untested |
 | M2 Evidence acquisition | Package and encrypted Mach-O status, sandbox/runtime evidence with source checks | XR Kimi and DeepSeek full-package recovery, several app pilots and known-source fixture verified; broader protection strategies pending |
 | M3 Analysis report | Major selected-flow claims linked to UI, code and data evidence or marked unknown | Reviewed XR reports and direct Ghidra path available; arbitrary-app semantic interpretation remains Agent work |
 | M4 Real-app pilot | Reviewable deep report and executable feature specification | XR Compass, Calculator, DeepSeek and Clock selected-flow pilots exist; coverage varies by app |
@@ -55,6 +55,6 @@ The XR [Translate discovery case](cases/translate-xr-discovery-20261016/manifest
 1. Exercise independent CLI discovery and implementation on an unfamiliar app without reusing prior scripts or clone source; optionally repeat with Claude CLI.
 2. Extend fresh discovery and implementation to an unfamiliar app and different UI stack or protection state; quantify coverage and failures.
 3. Expand selected-flow implementations into more of each app's behavior, including persistence and backend boundaries, with new paired checks.
-4. When the user resumes those devices, test iOS 17 and 26 independently. Do not extrapolate from XR.
+4. Test iOS 26 independently if its jailbreak and device services are available. Do not extrapolate from XR or iOS 17.
 
 Keep credentials, IPA snapshots, screenshots and raw sandbox data in ignored local `cases/`. A hash proves consistency of saved bytes, not the correctness of an interpretation.

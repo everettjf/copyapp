@@ -8,13 +8,15 @@
 
 | 设备状态 | 已验证范围 | 设备专属配置 |
 | --- | --- | --- |
-| iPhone XR · iOS 16.1.1 · rootless | 深度分析、选定流程复刻与加密 App 恢复 | rootless iOS MCP、SSH、版本匹配的 Frida；安装使用 TrollStore 或有效签名 |
-| iPhone 14 · iOS 17.3.1 · Relaxin/RootHide | Calculator 采集、运行时跟踪、审阅报告、签名复刻版安装，以及 iOS MCP 与 iCTRL 的 `7 + 8 = 15` 同机对照；Remoboard 主程序及键盘扩展恢复 | ElleKit 与 RootHide iOS MCP、mobile SSH、固定版本 Frida 17.23.3 独立服务、复刻版的 Apple Development 签名 |
+| iPhone XR · iOS 16.1.1 · rootless | 深度分析、加密 App 恢复、夹具三流程原版/复刻版对照及五组截图审阅；新版夹具 IPA 也已安装并再次通过界面测试 | rootless iOS MCP、SSH、版本匹配的 Frida；安装使用 TrollStore 或有效签名 |
+| iPhone 14 · iOS 17.3.1 · Relaxin/RootHide | Calculator 审阅报告、跟踪与同机对照；Remoboard 主程序及扩展恢复；夹具三流程经两种界面后端重放，签名复刻版安装、正式对照及五组截图审阅通过 | ElleKit 与 RootHide iOS MCP、mobile SSH、固定版本 Frida 17.23.3 独立服务、复刻版的 Apple Development 签名 |
 | iPhone 11 · iOS 26.0.1 | 未测试 | 暂无配置或兼容性结论 |
 
 Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 导出包和索引数据沙盒；本地解析 Mach-O。XR 上的 Compass 已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展已恢复为可分析 IPA。iPhone 14 上的 Frida 17 独立服务已对原版 Calculator 完成逐次点击跟踪。
 
 iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。复刻版源码和 IPA 早于本报告存在，因此此轮没有验证从这份报告自动生成源码；Calculator 全功能等价也未验证。现有 RootHide Frida 服务不能提供 root `root-run`；已验证的加密包恢复路径使用 mobile SSH。
+
+[v0.1.0 双机发布验收](docs/releases/v0.1.0.md)列出了本轮 iOS 16/17 设备矩阵、安装时发现并修复的问题与剩余边界。夹具覆盖 SwiftUI、UIKit、SQLite 和独立 Framework 的三条已知源码流程；Calculator 与加密 App 案例覆盖不同路径。
 
 [独立 Codex CLI 的 XR 实测](docs/external-codex-xr-trial.zh-CN.md)已完成 Calculator 的有来源报告、新 App 构建与安装、三条原版/复刻版行为对照。此次沿用已验证的发现脚本和既有复刻源码，具体范围见实测记录。
 
@@ -188,6 +190,8 @@ Copy APP 的 iCTRL 默认使用按签名团队区分的 ID：可选设置 App �
 ```
 
 查看 `cases/first-doctor/report.md`：正式分析前，`usb_lockdown`、`ssh_mobile`、`frida_usb`、`ios_mcp` 应为 `available`；不用 iCTRL 时它可以未配置。`doctor` 即使只有 USB 正常也可能返回成功，因此要逐项看状态和有序的 **Next steps**。没有常驻 SSH 转发时，`doctor` 会临时打开一条；`analyze`、`prepare-app` 和完整 `copy` 工作流现会自行打开并验证精确 UDID 的 SSH 临时转发；界面重放也会自行打开短时转发。每完成一项手机端配置，可重新运行 `onboard --udid <UDID> --stage analyze`，获取新的检查报告。
+
+两台手机同时连接时，始终显式指定 `--udid`，并为每台手机使用独立的 `--ssh-known-hosts` 文件和不同的 `--ssh-port`。发现主机密钥不匹配时先核对 USB 转发的目标与手机指纹，不要用另一台手机的密钥覆盖原记录。`doctor` 现在会直接指出这种情况。
 
 ### 5. 进行首次分析
 
@@ -517,7 +521,7 @@ Mac 端 `copyapp ui --backend ictrl` 通过上游 iCTRL 的加密客户端调用
 .venv/bin/copyapp ui tap --backend ictrl --ref '<元素 ref>'
 ```
 
-上游客户端将配对密钥保存在用户的 `~/.ictrl/token.json`，不要放进案例或 Git。`copyapp ui` 只接 `127.0.0.1` 的 USB 转发端口；返回值带有后端名称和 UTC 时间。一次验证只允许一个界面后端发动作。iCTRL 的 `page_source`、元素 `ref` 和截图与 iOS MCP 的原始结果分别保存，不能假设两者元素 ID 相同。XR 已完成加密配对，`copyapp ui --backend ictrl` 的健康检查、观察、截图、启动和 Compass 方位锁定点击均在真机成功执行。iPhone 14/iOS 17.3.1 也已配对并执行 Calculator 操作，但一次脚本截图步骤返回空响应；iOS 26 尚未验收。
+上游客户端将配对密钥保存在用户的 `~/.ictrl/token.json`，不要放进案例或 Git。`copyapp ui` 只接 `127.0.0.1` 的 USB 转发端口；返回值带有后端名称和 UTC 时间。一次验证只允许一个界面后端发动作。iCTRL 的 `page_source`、元素 `ref` 和截图与 iOS MCP 的原始结果分别保存，不能假设两者元素 ID 相同。XR 已完成加密配对，`copyapp ui --backend ictrl` 的健康检查、观察、截图、启动和 Compass 方位锁定点击均在真机成功执行。iPhone 14/iOS 17.3.1 也已配对；早期一次截图返回空响应，后来夹具 Counter、Notes、Catalog 三条 iCTRL 脚本及截图均完成并通过证据校验。iOS 26 尚未验收。
 
 `copyapp experiment --backend ictrl` 和 `--backend ios-mcp` 共用同一套“启动目标 → 核对前台 → 截图 → Frida 挂钩 → 点击 → 再截图”实验逻辑。未传 `--port` 时，iCTRL 路径会在指定 USB 设备上启动已安装且已配对的 runner，并建立临时转发；两种后端的点击坐标均为屏幕点，截图保留各自原始分辨率。XR 的原版 Compass 同一坐标与方法已在两端实测调用 1 次，详见 [iCTRL 真机记录](docs/ictrl-xr-validation.md)。
 

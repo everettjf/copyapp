@@ -105,11 +105,30 @@ package UI, and verified with `dpkg -l`. The configured APT source did not
 authenticate ElleKit, so the package-index source and recorded hashes remain
 explicit in this test record. The service started after restarting SpringBoard.
 
+The v0.1.0 [two-device release run](releases/v0.1.0.md) adds an independent,
+known-source fixture on this phone. The original App (SwiftUI counter,
+UIKit/SQLite notes, framework-backed catalog and a packaged share extension)
+was development-signed and acquired with a static and sandbox index. iOS 17
+initially rejected its share extension because `CFBundleDisplayName` was
+missing; after that repair, the missing main-App `UILaunchScreen` exposed a
+letterboxed UI and offset tap coordinates. Both metadata entries are now in
+the source. The corrected original and a separately signed clone installed
+through USB. All three original flows passed both iOS MCP and iCTRL; the clone
+passed iOS MCP, and a formal three-flow paired check passed after existing
+counter and notes test data were aligned. Five screenshot pairs were reviewed
+as minor differences in system return-to-app labels. This is fixture coverage,
+not evidence that a new unknown App can be cloned automatically.
+
+The signed original's first in-place update stalled while the App was running;
+after iCTRL terminated it, the same IPA installed and its install case passed
+verification. The interrupted case is retained.
+
 For iOS 17, fresh App launches now use native RSD with `--kill-existing`;
 the older lockdown DVT route failed before this fix. Both sides of the final
 Calculator playbook used the repaired route. A selected-flow deep report and
-delivery now verify as recorded above. The next device work is to run more
-flows and other App types, while checking iCTRL transport stability. Generic
+delivery now verify as recorded above. The fixture adds three flows and a
+second technology stack, while unfamiliar-App coverage and iCTRL transport
+stability remain open. Generic
 RootHide `root-run` is unavailable with the installed mobile-privilege Frida
 server, as established below. The 16.1.4 server crash is retained
 as evidence; the working 17.23.3 sidecar is isolated from that package.
