@@ -2,6 +2,8 @@
 
 This is a **supported, real-device configuration for the first-release selected-flow workflow**, validated on 2026-10-17. The exact USB device was an iPhone 14 (`iPhone14,7`, iOS 17.3.1, arm64e) running Relaxin 0.5.5 with a RootHide bootstrap. The report, installation and paired behavior gates passed for the selected Calculator flow. This status does not extend to every iOS 17 device, RootHide build or App feature.
 
+After this baseline, [first-use setup](ios17-first-use-gates.md) let original Translate and Clock enter their own foreground processes. Their selected text-input and Stopwatch flows then passed through both UI backends; see the [two-device matrix](two-device-verification-matrix.md). These additional original-App checks do not add clone equivalence for either App on iOS 17.
+
 ## Verified on the phone
 
 | Capability | Observation |

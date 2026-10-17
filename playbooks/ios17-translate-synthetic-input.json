@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "scenario_id": "ios17-translate-synthetic-input",
+  "bundle_id": "com.apple.Translate",
+  "fresh_launch": true,
+  "steps": [
+    {"action": "observe", "contains": ["Enter text", "Translation"]},
+    {"action": "tap", "x": 100, "y": 201},
+    {"action": "observe"},
+    {"action": "type_text", "text": "copyappfixture"},
+    {"action": "observe", "wait_ms": 400, "contains": ["copyappfixture"]},
+    {"action": "screenshot", "stable": true, "ready_contains": "copyappfixture"}
+  ]
+}

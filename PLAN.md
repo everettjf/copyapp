@@ -2,7 +2,7 @@
 
 **语言：** [English](PLAN.en.md) | 简体中文
 
-**当前双机状态：** [iOS 16/17 验证矩阵](docs/two-device-verification-matrix.zh-CN.md)记录两机新能力检查、同脚本分别经 iOS MCP 与 iCTRL 完成的 Calculator 手势和 Safari 文本输入、选定流程的分析到复刻交付，以及 iOS 17 的一流程 `hopper-direct` 父案例。结论只限于已测设备与流程；整 App 等价、陌生 App 自主生成和 iOS 26 仍待验证。
+**当前双机状态：** [iOS 16/17 验证矩阵](docs/two-device-verification-matrix.zh-CN.md)记录两机新能力检查、同脚本分别经 iOS MCP 与 iCTRL 完成的 Calculator 手势、Safari/Translate 文本输入和 Clock 秒表、选定流程的分析到复刻交付，以及 iOS 17 的一流程 `hopper-direct` 父案例。iOS 17 的 Translate 与 Clock 需先完成[首次使用引导](docs/ios17-first-use-gates.zh-CN.md)才能正常启动。结论只限于已测设备与流程；整 App 等价、陌生 App 自主生成和 iOS 26 仍待验证。
 
 **最新 XR 进展：** [独立 Codex CLI 实测](docs/external-codex-xr-trial.zh-CN.md)已在 iOS 16.1.1 上完成 Calculator 的分析、复刻、安装和三条真机对照流程，三条行为断言通过，三对截图为轻微差异。此次沿用已验证的发现脚本及既有独立复刻源码，因此陌生 App 的自主发现和从零实现仍是下一阶段目标。[Translate 完整流程](docs/translate-xr-workflow.zh-CN.md)另行覆盖第二种界面技术栈。
 
@@ -385,7 +385,7 @@ XR 的严格秒表脚本又完成一次 iOS MCP 原版/复刻版成对对照：�
 
 随后用原版 Calculator 输入 `98`，XR 的 iCTRL 无障碍断言确认左滑后为 `9`。独立复刻版 0.1.1 (3) 加入显示区左滑删除末位与明确的无障碍结果值，同一脚本也通过 `98→9`；[成对对照](cases/calculator-gesture-swipelive-20261016/ictrl-delete-digit-comparison/report.md)保存末端画面，目视结果一致但仍有字形、颜色和状态栏差异。新版复刻版还重新完成[三条既有运算流程](cases/calculator-gesture-swipelive-20261016/clone-0.1.1-regression-check/manifest.json)，末端断言均通过；[三对截图审阅](cases/calculator-gesture-swipelive-20261016/clone-0.1.1-regression-visual-review/report.md)均记轻微差异。当前只验证这一条左滑状态，不推广到其他数字格式或完整 App。
 
-Translate 陌生 App 试点：XR 上采集了系统 Translate 1.0（构建 216.4）的首页与包线索；首次使用时选择了“不分享录音”。Playbook 新增 1–128 字符、最多 512 UTF-8 字节的 `type_text`，纳入发现、跟踪、对照和安全故障切换。iCTRL 在原版 Translate 中输入合成词 `hello` 后通过界面断言；iOS MCP 虽报告字符已派发，界面没有接受，故当前 XR 的已验证文本流程仅使用 iCTRL。[三流程发现案例](cases/translate-xr-discovery-20261016/manifest.json)将合成文本、Favorites 空状态、Conversation 待机界面逐条重放并通过来源核验。语义分析报告与独立复刻仍在后续阶段；边界和英文切换见[中文文本脚本指南](docs/ui-text-playbooks.zh-CN.md)。
+Translate 陌生 App 试点：XR 上采集了系统 Translate 1.0（构建 216.4）的首页与包线索；首次使用时选择了“不分享录音”。Playbook 新增 1–128 字符、最多 512 UTF-8 字节的 `type_text`，纳入发现、跟踪、对照和安全故障切换。iCTRL 在原版 Translate 中输入合成词 `hello` 后通过界面断言；旧 iOS MCP 脚本虽报告字符已派发，界面没有接受，所以当时的三流程发现案例仅采用 iCTRL。[三流程发现案例](cases/translate-xr-discovery-20261016/manifest.json)将合成文本、Favorites 空状态、Conversation 待机界面逐条重放并通过来源核验。此后完成了语义报告和独立复刻；再次对照发现旧脚本的较低点击点不显示键盘，改为点击可见输入提示后，两机两后端的原版文字输入均通过，见[双机矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
 2026-10-17 iPhone 14 / iOS 17.3.1 / Relaxin RootHide 实测更新：官方 ElleKit 1.2-1 与修正的 `com.copyapp.mcp` 0.1.4-5 已安装，USB 转发的 iOS MCP 健康、前台识别、无障碍与截图通过。`analyze` 的 iOS MCP survey 改为自动拥有精确 UDID 的临时 USB 转发，原先连接拒绝的 Calculator 整案续跑后通过 `copyapp verify`；当时前台恰为复刻版，界面归属被正确标记为非原版。另一次带 `--launch` 的原版 survey 验证了前台身份。iOS 17 的 fresh launch 改走 native RSD，原版和已签名安装的复刻版各自完成九步 `7 + 8 = 15` iOS MCP 脚本；同机[成对对照](cases/iphone14-calculator-basic-native-compare-20261017/report.md)通过哈希校验，末端截图目视均为 `15`，仍有显示字形、状态栏等小差异。这只证明一条选定流程。RootHide Frida 16.1.4 与同版 Mac 客户端曾在复刻版上完成一次直接附加与脚本消息，但后续原版 `copyapp trace` 附加失败、复刻版正式跟踪超时，稳定的运行时跟踪和该机脱壳仍未验收。完整证据边界见 [iPhone 14 记录](docs/relaxin-roothide-iphone14.md)；iOS 26 仍未实测。
 

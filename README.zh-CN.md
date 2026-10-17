@@ -8,17 +8,19 @@
 
 | 设备状态 | 已验证范围 | 设备专属配置 |
 | --- | --- | --- |
-| iPhone XR · iOS 16.1.1 · rootless | 深度分析、加密 App 恢复、夹具三流程原版/复刻版对照及五组截图审阅；新版复刻版三流程与原版/复刻版 SQLite 行内容对照通过；夹具分享扩展收到固定文本 | rootless iOS MCP、SSH、版本匹配的 Frida；安装使用 TrollStore 或有效签名 |
-| iPhone 14 · iOS 17.3.1 · Relaxin/RootHide | 完成四流程 `copyapp copy` 父案例：Calculator 审阅报告、原版按键跟踪、独立签名复刻版、四条末端断言和五组截图审阅；Remoboard 加密包恢复；夹具经两种界面后端重放、SQLite 行内容核对及分享扩展收到固定文本 | ElleKit 与 RootHide iOS MCP、mobile SSH、固定版本 Frida 17.23.3 独立服务、复刻版的 Apple Development 签名 |
+| iPhone XR · iOS 16.1.1 · rootless | 深度分析、加密 App 恢复、夹具三流程原版/复刻版对照及五组截图审阅；新版复刻版三流程与原版/复刻版 SQLite 行内容对照通过；夹具分享扩展收到固定文本；原版 Translate 输入与 Clock 秒表的选定流程经两种界面后端通过 | rootless iOS MCP、SSH、版本匹配的 Frida；安装使用 TrollStore 或有效签名 |
+| iPhone 14 · iOS 17.3.1 · Relaxin/RootHide | 完成四流程 `copyapp copy` 父案例：Calculator 审阅报告、原版按键跟踪、独立签名复刻版、四条末端断言和五组截图审阅；Remoboard 加密包恢复；夹具流程、SQLite 核对及分享扩展收到固定文本；原版 Translate 输入与 Clock 秒表的选定流程经两种界面后端通过 | ElleKit 与 RootHide iOS MCP、mobile SSH、固定版本 Frida 17.23.3 独立服务、复刻版的 Apple Development 签名；Translate/Clock 首次使用引导已完成 |
 | iPhone 11 · iOS 26.0.1 | 未测试 | 暂无配置或兼容性结论 |
 
 Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 导出包和索引数据沙盒；本地解析 Mach-O。XR 上的 Compass 已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展已恢复为可分析 IPA。iPhone 14 上的 Frida 17 独立服务已对原版 Calculator 完成逐次点击跟踪。
 
 iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。此前交付的复刻版源码和 IPA 早于本报告存在；另一次[从报告新写源码并扩展四流程的试验](docs/ios17-calculator-fresh-from-report.zh-CN.md)已完成构建、签名、安装和同机对照。Calculator 全功能等价仍未验证。现有 RootHide Frida 服务不能提供 root `root-run`；已验证的加密包恢复路径使用 mobile SSH。
 
-[v0.1.7 双机发布验收](docs/releases/v0.1.7.zh-CN.md)记录同脚本跨设备/后端的手势与文本检查，并修复 Hopper provider 案例校验。[v0.1.6 发布记录](docs/releases/v0.1.6.zh-CN.md)已确立两机新设备能力基线和 iOS 17 Calculator 四流程 `copyapp copy` 案例。[v0.1.5 分享扩展验收](docs/releases/v0.1.5.zh-CN.md)证明两机的已知源码扩展收到精确合成文本。
+[v0.1.8 双机发布验收](docs/releases/v0.1.8.zh-CN.md)新增首次使用引导诊断和 Translate/Clock 四路检查。[v0.1.7 发布](docs/releases/v0.1.7.zh-CN.md)记录 Calculator/Safari 同脚本测试及 Hopper provider 校验修复。[v0.1.6 发布记录](docs/releases/v0.1.6.zh-CN.md)确立两机新设备能力基线和 iOS 17 Calculator 四流程 `copyapp copy` 案例。
 
 [双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)又在两台手机上，用**同一脚本**分别经 iOS MCP 与 iCTRL 验证 Calculator `98→9` 左滑和 Safari 地址栏的合成文本输入，并在 iOS 17 上跑通一条 `hopper-direct` 分析到复刻父工作流。这些有界结果不代表所有输入框、手势或 App 都相同。
+
+新的 v0.1.8 `doctor` 案例确认两机已测设备通道全部可用；已发布的 v0.1.7 wheel 从隔离目录加载，四份已保存的分析到复刻父案例再次通过证据校验。[首次使用引导检查](docs/ios17-first-use-gates.zh-CN.md)发现，iOS 17 Translate 与 Clock 启动报错时，SpringBoard 实际显示欢迎页；完成引导后两者都进入自身前台进程。**同一份** Translate 输入和 Clock 秒表脚本又分别经 iOS MCP、iCTRL 在两机通过。XR 上旧的 `(207,320)` 点击仍无法显示输入，而点击提示附近 `(100,201)` 会显示键盘并成功输入。具体案例和边界见[矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
 [独立 Codex CLI 的 XR 实测](docs/external-codex-xr-trial.zh-CN.md)已完成 Calculator 的有来源报告、新 App 构建与安装、三条原版/复刻版行为对照。此次沿用已验证的发现脚本和既有复刻源码，具体范围见实测记录。
 
@@ -222,7 +224,7 @@ Copy APP 的 iCTRL 默认使用按签名团队区分的 ID：可选设置 App �
 
 UI 脚本现可通过 iOS MCP 和 iCTRL 执行有界滑动、长按与双击；语法、后端差异及 XR 实测见[中文手势指南](docs/ui-gesture-playbooks.zh-CN.md)（[English](docs/ui-gesture-playbooks.md)）。XR 已安装 iOS MCP 0.1.4 并列出三种操作。Calculator 显示区输入 `98` 后左滑变成 `9` 的行为也在独立复刻版上通过；新版复刻版重新通过原先三条运算流程。长按和双击仅验证调用可用，未断定具体 App 功能结果。
 
-UI 脚本还支持有界[文本输入](docs/ui-text-playbooks.zh-CN.md)（[English](docs/ui-text-playbooks.md)）。XR 上的 [Translate 三流程发现案例](cases/translate-xr-discovery-20261016/manifest.json)通过 iCTRL 验收，其中包含合成词 `hello` 的输入。iOS MCP 在该 Translate 输入框报告字符已派发，但界面未显示，因此这条 Translate 流程使用 iCTRL；另一次 Safari 对照已在两机的两种后端都确认合成文字可见，详见[矩阵](docs/two-device-verification-matrix.zh-CN.md)。
+UI 脚本还支持有界[文本输入](docs/ui-text-playbooks.zh-CN.md)（[English](docs/ui-text-playbooks.md)）。XR 上的 [Translate 三流程发现案例](cases/translate-xr-discovery-20261016/manifest.json)原先使用 iCTRL，因为较低位置的点击使 iOS MCP 输入不可见。新脚本点击可见输入提示后，两机的两种界面后端均显示键盘与精确合成文字；Safari 对照也全部通过，详见[矩阵](docs/two-device-verification-matrix.zh-CN.md)。仅有输入 RPC 成功仍不足以证明 App 接受了文字。
 
 正式报告现在会把 `Assets.car` 的资源名称及沙盒的只读文件元数据摘要直接写入人可读附录，完整索引仍保留证据链接。进一步的 [Calculator 深入报告](cases/calculator-ui-deep-report-20261016/report.md)和[来源关联的分析交付](cases/calculator-ui-deep-analysis-delivery-20261016/report.md)已通过核验，还加入 Copy APP 直连 Ghidra 对根视图组装、键盘按钮 frame 布局和结果视图手势装配的同二进制函数证据。资源名或数据库/偏好文件名只提供调查线索，不能单独证明某个功能实际读取它们；本次三条运算流程也未测试显示区手势。
 

@@ -28,8 +28,8 @@
 
 在仓库中执行 `sh rebuild/TranslateFreshProbe/package.sh` 可用 Xcode、XcodeGen 和 `ldid` 重建独立工程。执行 `.venv/bin/copyapp verify cases/translate-current-workflow-20261016` 可校验保存的父流程证据；真机重放仍需要已配对、已越狱的 XR 和对应 USB 服务。
 
-iCTRL 后端在这台 XR 上完成了可见文字输入；iOS MCP 曾返回文字事件成功，但 Translate 输入框没有显示文字，失败案例保留在本地 `cases/`。Playbook 在输入后检查实际画面，无文字就停止。运行器会复用已运行的 iCTRL 服务，并限制启动等待；Instruments 不可用时，iCTRL 通过 XCTest 结束并重新启动目标 App 来实现全新启动。
+原三流程交付通过 iCTRL 完成可见文字输入。较早的 XR iOS MCP 试验在较低位置 `(207,320)` 点击后返回字符派发成功，但界面没有文字；失败证据保留在本地 `cases/`。后来重放同一点击再次失败；新共享脚本点击可见输入提示 `(100,201)` 后，iOS 16 与 17 的 iOS MCP、iCTRL 都显示键盘和精确合成文字，见[双机矩阵](two-device-verification-matrix.zh-CN.md)。运行器会复用已运行的 iCTRL 服务，并限制启动等待；Instruments 不可用时，iCTRL 通过 XCTest 结束并重新启动目标 App 来实现全新启动。
 
 ## 后续范围
 
-提交文字与翻译结果、语言选择及下载、相机 OCR、语音权限与识别、音频播放、非空 Favorites、持久化写入、进一步的沙盒解释，以及外部 Codex/Claude CLI 全自主运行均未验证。按当前安排，本轮未测试 iOS 17 和 26 两台设备。
+对于原 XR 复刻版，提交文字与真实翻译结果、语言选择及下载、相机 OCR、语音权限与识别、音频播放、非空 Favorites、持久化写入、进一步的沙盒解释，以及外部 Codex/Claude CLI 全自主运行仍未验证。后来 iOS 17 的原版 App 合成文字输入测试自动显示结果，但未评估其语义质量，也未复刻这一结果。iOS 26 不在这轮验证范围内。
