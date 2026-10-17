@@ -39,6 +39,6 @@ Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组
 
 ## 当前验收边界
 
-iOS 16.1.1 的 iPhone XR 已完成 Clock 三流程的当前 Agent 父案例：正式报告、独立 App 源码、安装、3/3 行为与末端视图断言及 10 对逐张审阅的截图，截图均有轻微差异。另一个[Clock 自动发现父案例](../cases/clock-current-auto-workflow-20261016/manifest.json)使用三条先前编写的脚本，在同一案例内完成发现、报告、独立工程、安装和三流程真机交付；父案例 517 项证据文件通过校验，源码改自既有独立实现。新的[Calculator 父案例](../cases/calculator-current-auto-workflow-20261016/manifest.json)由当前 Agent 根据 XR 实际界面新写三条脚本并从空工程编写 UIKit 复刻版；三条运算流程的双端行为与末端视图断言均通过，三对截图均已审为轻微差异、无重大差异，交付与父案例通过核验。外部进程试验仍使用固定脚本。陌生 App 的普适发现、真实外部 CLI 自主闭环和全功能等价尚未验证。iPhone 14/iOS 17.3.1 已验证 USB、iCTRL、SSH 采集、iOS MCP 界面操作、开发证书签名复刻版安装、一条原版/复刻版同机运算流程，以及一款加密 App 与扩展的整包恢复；Frida 跟踪可附加前台复刻版，但系统 Calculator 仍失败。iOS 26 尚未实测。
+iOS 16.1.1 的 iPhone XR 已完成 Clock 三流程的当前 Agent 父案例：正式报告、独立 App 源码、安装、3/3 行为与末端视图断言及 10 对逐张审阅的截图，截图均有轻微差异。另一个[Clock 自动发现父案例](../cases/clock-current-auto-workflow-20261016/manifest.json)使用三条先前编写的脚本，在同一案例内完成发现、报告、独立工程、安装和三流程真机交付；父案例 517 项证据文件通过校验，源码改自既有独立实现。新的[Calculator 父案例](../cases/calculator-current-auto-workflow-20261016/manifest.json)由当前 Agent 根据 XR 实际界面新写三条脚本并从空工程编写 UIKit 复刻版；三条运算流程的双端行为与末端视图断言均通过，三对截图均已审为轻微差异、无重大差异，交付与父案例通过核验。外部进程试验仍使用固定脚本。陌生 App 的普适发现、真实外部 CLI 自主闭环和全功能等价尚未验证。iPhone 14/iOS 17.3.1 已验证 USB 与 SSH 采集、开发证书签名复刻版安装、iOS MCP 与 iCTRL 两套后端的原版/复刻版运算对照，以及一款加密 App 与扩展的整包恢复；Frida 跟踪可附加前台复刻版，但系统 Calculator 仍失败。iOS 26 尚未实测。
 
 参见 [中文 README](../README.zh-CN.md)、[英文 README](../README.md) 和 [详细试验记录](../PLAN.md)。

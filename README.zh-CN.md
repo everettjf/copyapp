@@ -4,7 +4,7 @@
 
 在已越狱的 iPhone XR（iOS 16.1.1）上，[Translate 完整案例](docs/translate-xr-workflow.zh-CN.md)（[English](docs/translate-xr-workflow.md)）已经从新写的发现脚本走通到[审阅报告](cases/translate-current-workflow-20261016/analysis-agent/reviewed-report/report.md)、[独立 UIKit 工程](rebuild/TranslateFreshProbe)、真机安装与三组原版/复刻版对照。六张截图逐张审阅，均有轻微图标或间距差异。范围限于文字输入但不提交翻译、Favorites 空状态和 Conversation 待机导航；翻译结果、语音和相机能力仍未实现或验证。
 
-第一版正在实现“分析 → 复刻 → 真机对照”流程。Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 只读导出包和索引数据沙盒；本地解析 Mach-O。iOS MCP 的截图、前台识别、App 启动和点击已在 iPhone XR 上验收。原版 Compass 的关键交互已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展也已在 XR 上自动恢复为完整可分析 IPA。[iPhone 14 / iOS 17.3.1 / Relaxin 与 RootHide](docs/relaxin-roothide-iphone14.md) 已完成 Calculator 的 USB 与 SSH 采集、iOS MCP 界面操作、开发证书签名复刻版安装，以及原版和复刻版各一次原生重新启动后的 `7 + 8 = 15` 同机对照；Remoboard 的主程序和键盘扩展也完成整包解密与校验。系统 Calculator 的 Frida 附加仍未解决。iOS 26 尚未实测。
+第一版正在实现“分析 → 复刻 → 真机对照”流程。Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 只读导出包和索引数据沙盒；本地解析 Mach-O。iOS MCP 的截图、前台识别、App 启动和点击已在 iPhone XR 上验收。原版 Compass 的关键交互已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展也已在 XR 上自动恢复为完整可分析 IPA。[iPhone 14 / iOS 17.3.1 / Relaxin 与 RootHide](docs/relaxin-roothide-iphone14.md) 已完成 Calculator 的 USB 与 SSH 采集、开发证书签名复刻版安装，并用 iOS MCP、iCTRL 两套后端完成原版/复刻版 `7 + 8 = 15` 同机对照；Remoboard 的主程序和键盘扩展也完成整包解密与校验。系统 Calculator 的 Frida 附加仍未解决。iOS 26 尚未实测。
 
 [独立 Codex CLI 的 XR 实测](docs/external-codex-xr-trial.zh-CN.md)已完成 Calculator 的有来源报告、新 App 构建与安装、三条原版/复刻版行为对照。此次沿用已验证的发现脚本和既有复刻源码，具体范围见实测记录。
 

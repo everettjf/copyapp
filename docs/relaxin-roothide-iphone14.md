@@ -10,7 +10,7 @@ support on iOS 17 or on other RootHide configurations.
 | Capability | Observation |
 | --- | --- |
 | USB identity and developer services | The requested UDID matched the connected phone. Native RSD launched Calculator and captured a screenshot; the USB accessibility survey returned 33 elements. The survey and bundle-index cases passed `copyapp verify`. |
-| iCTRL | The development-signed Copy APP runner installed, its XCTest session started, encrypted pairing completed, and UI observation and taps worked. A Calculator `7 + 5 = 12` playbook passed its first seven steps, including the result assertion. Its final screenshot step returned an empty HTTP response; a separate screenshot call worked. UI transport stability remains open. |
+| iCTRL | The development-signed Copy APP runner installed, its XCTest session started, and encrypted pairing completed. A new original/clone `7 + 8 = 15` nine-step playbook completed on both sides; `compare-playbooks` and `copyapp verify` passed. The first clone attempt returned a malformed HTTP response at the equals tap, so it was retained and a fresh case was run rather than repeating an uncertain tap. Transport stability remains open. |
 | OpenSSH | RootHide's `openssh-server`, `openssh-client` and `openssh-sftp-server` 9.2p1 installed. A dedicated, pinned `mobile` public-key login worked over a USB-only port forward. No password is stored in the repository. |
 | App acquisition | Over SSH, Copy APP copied the installed Calculator bundle (15 files), made a 472 KB analysis snapshot, and generated a static Mach-O/Objective-C report with 17 indexed classes. The main executable has no encryption load command. The static case passed `copyapp verify`; the repacked snapshot is not asserted to be an installable Apple IPA. |
 | Encrypted package recovery | Remoboard's installed main executable and keyboard extension both had `cryptid=1`; its bundled framework had `cryptid=0`. The RootHide mobile SSH helper path recovered both encrypted executables. A standalone `decrypt-package` case and a full `analyze --decrypt` case each passed `copyapp verify`: three Mach-O headers are decrypted, and the two encrypted binaries changed only in their declared encrypted ranges and `cryptid` fields. The output is an analysis IPA with invalid original signatures. The phone-side temporary helper and archive were removed. |
@@ -25,7 +25,8 @@ The local evidence lives in Git-ignored `cases/iphone14-*20261017/`, especially
 `iphone14-frida-crashes`, `iphone14-calculator-usb-install`,
 `iphone14-after-ellekit-matched-frida-20261017`,
 `iphone14-calculator-integrated-analyze-20261017`, and
-`iphone14-calculator-basic-native-compare-20261017`. The encrypted-App cases are
+`iphone14-calculator-basic-native-compare-20261017`. The second UI backend has
+`iphone14-calculator-basic-ictrl-compare-20261017`. The encrypted-App cases are
 `iphone14-remotekb-roothide-decrypt-20261017` and
 `iphone14-remotekb-full-analyze-20261017`. The integrated Calculator `analyze`
 case passed `copyapp verify` after a CLI repair made iOS MCP surveys open their
@@ -61,8 +62,9 @@ For iOS 17, fresh App launches now use native RSD with `--kill-existing`;
 the older lockdown DVT route failed before this fix. Both sides of the final
 Calculator playbook used the repaired route. The next device work is to make
 original Calculator Frida attach work with a matching 16.1.4 host client, then run
-more selected flows and deliver a deep report. Use an isolated Python target
-or pin the local `trace` extra to match the phone's Frida server; a successful
+more selected flows and deliver a deep report. The declared `trace` extra now
+allows the phone's Frida 16.1.4, while the current main virtual environment
+still has Frida 17.23.3; use a matching isolated client for device tracing. A successful
 Frida process inventory or a clone attach does not establish system-App attach
 support. The installed server wrapper sets `CRYPTEX_MOUNT_PATH` to the RootHide
 root; its launch plist requests root, but this observation does not explain the
