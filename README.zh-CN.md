@@ -2,7 +2,7 @@
 
 [English](README.md) · 简体中文 · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
-[项目网站](https://xnu.app/copyapp/) · [文档目录](docs/README.zh-CN.md) · [已发布版本](docs/releases/v0.1.0.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md)
+[项目网站](https://xnu.app/copyapp/) · [图文介绍](docs/articles/copyapp-overview.zh-CN.md) · [文档目录](docs/README.zh-CN.md) · [已发布版本](docs/releases/v0.1.0.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md)
 
 Copy APP 对越狱 iPhone 上已安装的 iOS App 取证分析，并协助 Coding Agent 创建**独立、可运行的 iOS App**，复现经过审阅的一组功能。它采集安装包、沙盒、界面和运行时证据，生成有来源引用的报告与功能规格，再在同一台手机上对照原版和新 App。当前正式发布版只有 **v0.1.0**；`main` 中已有后续开发成果，但尚未发布下一个版本。
 
@@ -35,23 +35,7 @@ sh scripts/bootstrap-macos.sh
 
 简单 App 可以设较完整的阶段目标。复杂 App 应先选定有用的功能范围；只有明确已知能力的分母，百分比才有意义。选定流程通过不代表整 App 等价。详见[覆盖目标方法](docs/coverage-targets.zh-CN.md)。
 
-```mermaid
-flowchart LR
-  A[Codex / Claude Code] --> B[Mac 上的 Copy APP CLI]
-  B --> C[精确 USB 设备与 Bundle ID]
-  C --> D[SSH：安装包和有界沙盒证据]
-  C --> E[iOS MCP 或 iCTRL：界面与截图]
-  C --> F[Frida：选定运行轨迹]
-  D --> G[本地可校验案例]
-  E --> G
-  F --> G
-  B --> H[Mach-O 索引与可选 Ghidra / Hopper]
-  H --> G
-  G --> I[审阅报告和功能规格]
-  I --> J[独立 Xcode 工程与签名 IPA]
-  J --> K[同机成对检查与逐图审阅]
-  K --> L[列明缺口的可校验交付]
-```
+![Copy APP 架构：Mac、越狱手机、证据与复刻流程](docs/assets/architecture-overview.svg)
 
 Mac 负责编排和构建。OpenSSH 采集文件，iOS MCP 提供越狱环境下的界面观察与控制，iCTRL 是可选的 XCTest 界面后端，Frida 用于有界运行时取证。Ghidra 和 Hopper 是可选的本机代码分析工具，**不依赖 REA 运行**。详见[架构说明](docs/architecture.zh-CN.md)。
 
@@ -65,7 +49,7 @@ Mac 负责编排和构建。OpenSSH 采集文件，iOS MCP 提供越狱环境下
 | iPhone 14 · iOS 17.3.1 | Relaxin/RootHide；原版 Calculator 采集、Frida 跟踪，以及经 iOS MCP 完成四条原版／独立 App 运算对照 | 额外的 iCTRL 复刻版多步重放返回 `malformed HTTP response`，稳定性仍待处理。 |
 | iPhone 11 · iOS 26.0.1 | Relaxin/RootHide；Calculator、Clock 原版分析、签名独立 App 和选定运算／秒表成对检查 | iOS MCP 新启动后可能得到黑帧；已观察的故障经有界返回主屏／重启恢复。 |
 
-尚未证明整 App 功能覆盖、无视觉差异、重新越狱后的长期稳定，或第二台实体 Mac 的全新配置。原始 IPA、截图、沙盒内容和凭据只保存在被 Git 忽略的本地 `cases/`，不作为发布附件。
+尚未证明整 App 功能覆盖、无视觉差异、重新越狱后的长期稳定，或第二台实体 Mac 的全新配置。原始 IPA、完整案例截图、沙盒内容和凭据只保存在被 Git 忽略的本地 `cases/`，不作为发布附件；文档中的少量 Calculator 示意画面经过单独筛选。
 
 ## 安装与首次概览
 

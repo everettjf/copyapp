@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">Calculator sandbox metadata evidence</title>
+  <desc id="desc">A designed tree of selected actual paths from a bounded, read-only SSH metadata inventory of the Calculator app sandbox. No file contents are shown.</desc>
+  <rect width="1400" height="650" fill="#111e1d"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <text x="54" y="52" fill="#9de5bd" font-size="18" font-weight="700" letter-spacing="3">SANDBOX / BOUNDED METADATA INVENTORY</text>
+    <text x="54" y="84" fill="#d8e9df" font-size="17">Calculator · read-only SSH listing through a USB tunnel · depth limit 8</text>
+    <rect x="54" y="121" width="840" height="442" rx="16" fill="#0b1717" stroke="#4b806e" stroke-width="2"/>
+    <rect x="54" y="121" width="840" height="49" rx="16" fill="#255344"/>
+    <rect x="54" y="155" width="840" height="15" fill="#255344"/>
+    <text x="82" y="154" fill="#f0fff7" font-size="17" font-weight="700">Container path withheld · relative paths only</text>
+    <g font-family="Menlo, Consolas, monospace" font-size="18">
+      <text x="81" y="209" fill="#fff">Calculator data container/</text>
+      <text x="111" y="254" fill="#9de5bd">├── Documents/</text>
+      <text x="111" y="297" fill="#9de5bd">├── Library/</text>
+      <text x="142" y="338" fill="#d7e8dd">├── Preferences/</text>
+      <text x="174" y="378" fill="#f3c986">└── com.apple.calculator.plist</text>
+      <text x="142" y="420" fill="#d7e8dd">├── Saved Application State/</text>
+      <text x="142" y="462" fill="#d7e8dd">└── SplashBoard/Snapshots/</text>
+      <text x="111" y="505" fill="#9de5bd">├── SystemData/</text>
+      <text x="111" y="545" fill="#9de5bd">└── tmp/</text>
+    </g>
+    <rect x="929" y="121" width="416" height="442" rx="16" fill="#1a3b36" stroke="#4b806e"/>
+    <text x="957" y="164" fill="#9de5bd" font-size="17" font-weight="700">WHAT THE CASE STORES</text>
+    <text x="957" y="208" fill="#fff" font-size="22" font-weight="700">Paths + type + size + time</text>
+    <text x="957" y="243" fill="#cee5d8" font-size="16">Each entry is tied to the selected</text>
+    <text x="957" y="268" fill="#cee5d8" font-size="16">device, app build and capture.</text>
+    <line x1="957" x2="1317" y1="301" y2="301" stroke="#6f9b88"/>
+    <text x="957" y="341" fill="#f3c986" font-size="17" font-weight="700">INTERPRETATION BOUNDARY</text>
+    <text x="957" y="377" fill="#cee5d8" font-size="16">A path is evidence of presence;</text>
+    <text x="957" y="403" fill="#cee5d8" font-size="16">it does not establish the app's</text>
+    <text x="957" y="429" fill="#cee5d8" font-size="16">internal data model or behavior.</text>
+    <text x="957" y="485" fill="#9de5bd" font-size="15">No file contents copied in this case.</text>
+    <text x="54" y="615" fill="#aac6b9" font-size="15">Based on calculator-prepare-app-live-20261015/analysis/sandbox-index.json · selected paths only · visualization of saved metadata</text>
+  </g>
+</svg>

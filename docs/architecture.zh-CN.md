@@ -2,25 +2,9 @@
 
 [English](architecture.md) · 简体中文 · [文档目录](README.zh-CN.md)
 
-Copy APP 有两项交付：带来源引用的分析报告，以及对选定流程给出可测覆盖的独立 iOS App。Coding Agent 负责语义解释与实现；CLI 负责采集、绑定和校验证据。Mac 负责编排、本机代码分析和构建，越狱手机提供已安装 App 文件与有界观察。
+Copy APP 有两项交付：带来源引用的分析报告，以及对选定流程给出可测覆盖的独立 iOS App。Coding Agent 负责语义解释与实现；CLI 负责采集、绑定和校验证据。Mac 负责编排、本机代码分析和构建，越狱手机提供已安装 App 文件与有界观察。下图展示当前组件分工；[图文介绍](articles/copyapp-overview.zh-CN.md)还给出了 Hopper 与沙盒证据示例。
 
-```mermaid
-flowchart TB
-  Agent[Codex / Claude Code / 其他 Coding Agent] --> CLI[Copy APP CLI]
-  CLI --> Identity[精确 UDID、Bundle ID 与 App 构建]
-  Identity --> SSH[USB 转发的 mobile SSH]
-  Identity --> UI[iOS MCP 或 iCTRL]
-  Identity --> Runtime[Frida]
-  SSH --> Evidence[本地案例：哈希、清单、来源 ID]
-  UI --> Evidence
-  Runtime --> Evidence
-  CLI --> Native[Mach-O 索引、可选 Ghidra 或 Hopper]
-  Native --> Evidence
-  Evidence --> Review[Agent 审阅报告与功能规格]
-  Review --> Project[独立 Xcode 工程]
-  Project --> Compare[同机成对脚本与逐图审阅]
-  Compare --> Delivery[可校验交付与列明的缺口]
-```
+![Copy APP Mac 与越狱 iPhone 架构](assets/architecture-overview.svg)
 
 ## 组件职责
 
@@ -38,6 +22,6 @@ flowchart TB
 
 ## 案例与信任边界
 
-命令把清单、来源身份、哈希、原始观察和派生报告写入 `cases/<case-id>/`。`copyapp verify` 核对案例结构与来源引用。`copy` 流程在 Agent 撰写发现脚本、正式报告和独立实现时暂停，并在每次续跑前校验交付。案例目录可能包含第三方二进制、截图、沙盒数据和凭据，因此被 Git 忽略。公开文档只总结结果与限制，不嵌入原始资源。
+命令把清单、来源身份、哈希、原始观察和派生报告写入 `cases/<case-id>/`。`copyapp verify` 核对案例结构与来源引用。`copy` 流程在 Agent 撰写发现脚本、正式报告和独立实现时暂停，并在每次续跑前校验交付。案例目录可能包含第三方二进制、截图、沙盒数据和凭据，因此被 Git 忽略。公开文档只总结结果与限制，使用经过单独筛选的示例和图示，不嵌入完整案例资源。
 
 恢复加密包得到的分析 IPA 用于研究，不是可安装的签名复刻版。复刻版是拥有独立 Bundle ID 的 Xcode 工程。`coverage-plan` 与 `coverage-delivery` 把已知能力目标、选定流程通过率和未观察行为分开。

@@ -2,7 +2,7 @@
 
 English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
-[Project website](https://xnu.app/copyapp/) · [Documentation](docs/README.md) · [Published release](docs/releases/v0.1.0.md) · [Contributing](CONTRIBUTING.md)
+[Project website](https://xnu.app/copyapp/) · [Illustrated overview (简体中文)](docs/articles/copyapp-overview.zh-CN.md) · [Documentation](docs/README.md) · [Published release](docs/releases/v0.1.0.md) · [Contributing](CONTRIBUTING.md)
 
 Copy APP analyzes an installed iOS app on a jailbroken iPhone and helps a coding agent build an **independent, runnable iOS app** that reproduces a reviewed set of behaviors. It collects package, sandbox, UI and runtime evidence; produces a source-linked report and feature specification; then checks the new app against the original on the same phone. The published release is **v0.1.0**. The current `main` branch contains additional work that has not been published as another version.
 
@@ -35,23 +35,7 @@ Read `cases/first-survey/report.md`. Use a fresh output directory for each attem
 
 A small app may justify a broad first milestone. A complex app needs a named slice of behavior; a percentage is meaningful only with an explicit known-capability denominator. A passing selected-flow check does not establish whole-app equivalence. See [coverage targets](docs/coverage-targets.md).
 
-```mermaid
-flowchart LR
-  A[Codex / Claude Code] --> B[Copy APP CLI on Mac]
-  B --> C[Exact USB device and Bundle ID]
-  C --> D[SSH: package and bounded sandbox evidence]
-  C --> E[iOS MCP or iCTRL: UI and screenshots]
-  C --> F[Frida: selected runtime traces]
-  D --> G[Local verifiable cases]
-  E --> G
-  F --> G
-  B --> H[Mach-O index and optional Ghidra / Hopper]
-  H --> G
-  G --> I[Reviewed report and feature spec]
-  I --> J[Independent Xcode project and signed IPA]
-  J --> K[Same-device paired checks and visual review]
-  K --> L[Verified delivery with explicit gaps]
-```
+![Copy APP architecture: Mac, jailbroken iPhone, evidence and rebuild flow](docs/assets/architecture-overview.svg)
 
 The Mac runs orchestration and builds. OpenSSH acquires files, iOS MCP provides jailbroken UI observation and control, iCTRL is an optional XCTest-based UI backend, and Frida provides bounded runtime evidence. Ghidra and Hopper are optional native-analysis tools. **REA is not required.** The [architecture guide](docs/architecture.md) explains the trust and evidence boundaries.
 
@@ -65,7 +49,7 @@ These are named-device, selected-flow results, not a compatibility promise for e
 | iPhone 14 · iOS 17.3.1 | Relaxin/RootHide; original Calculator acquisition, Frida trace and four original/independent-app arithmetic checks through iOS MCP | An additional iCTRL rebuilt-app multi-step replay returned `malformed HTTP response`; its reliability remains open. |
 | iPhone 11 · iOS 26.0.1 | Relaxin/RootHide; original Calculator and Clock analysis, signed independent apps and selected paired arithmetic/Stopwatch checks | iOS MCP can return a black frame after fresh launch; bounded Home/relaunch recovery passed observed runs. |
 
-Current limitations include incomplete app coverage, modest visual differences, unverified reboot/rejailbreak durability, and no end-to-end onboarding test on a second physical Mac. Raw IPAs, screenshots, sandbox contents and credentials stay in Git-ignored local `cases/` and are never release assets.
+Current limitations include incomplete app coverage, modest visual differences, unverified reboot/rejailbreak durability, and no end-to-end onboarding test on a second physical Mac. Raw IPAs, complete case screenshots, sandbox contents and credentials stay in Git-ignored local `cases/` and are never release assets; the few Calculator images in the docs were selected separately for publication.
 
 ## Install and run your first survey
 

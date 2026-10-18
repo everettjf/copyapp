@@ -8,6 +8,7 @@ Copy APP 当前正式发布版为 **v0.1.0**；`main` 已有尚未发布的后�
 | --- | --- |
 | 新 Mac 与手机 | [安装及首次概览](setup.zh-CN.md) |
 | 系统怎样协作 | [架构与证据模型](architecture.zh-CN.md) |
+| 带图的项目介绍 | [Copy APP：分析与复刻实验室](articles/copyapp-overview.zh-CN.md) |
 | 已测手机与限制 | [当前状态](current-status.zh-CN.md) |
 | 分析到复刻 | [工作流](copy-workflow.zh-CN.md) |
 | 确定可实现的目标 | [覆盖目标](coverage-targets.zh-CN.md) |

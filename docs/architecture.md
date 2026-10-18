@@ -2,25 +2,9 @@
 
 [English](architecture.md) · [简体中文](architecture.zh-CN.md) · [Documentation](README.md)
 
-Copy APP has two deliverables: a cited analysis report and an independent iOS app with measured selected-flow coverage. A coding agent supplies semantic interpretation and implementation; the CLI collects, binds and verifies the evidence. The Mac owns orchestration, native analysis and builds. The jailbroken phone supplies installed-app files and bounded observations.
+Copy APP has two deliverables: a cited analysis report and an independent iOS app with measured selected-flow coverage. A coding agent supplies semantic interpretation and implementation; the CLI collects, binds and verifies the evidence. The Mac owns orchestration, native analysis and builds. The jailbroken phone supplies installed-app files and bounded observations. The diagram shows the current component roles; [the illustrated overview](articles/copyapp-overview.zh-CN.md) includes Hopper and sandbox evidence examples.
 
-```mermaid
-flowchart TB
-  Agent[Codex / Claude Code / other coding agent] --> CLI[Copy APP CLI]
-  CLI --> Identity[Exact UDID, Bundle ID, app build]
-  Identity --> SSH[USB-forwarded mobile SSH]
-  Identity --> UI[iOS MCP or iCTRL]
-  Identity --> Runtime[Frida]
-  SSH --> Evidence[Local case store: hashes, manifests, source IDs]
-  UI --> Evidence
-  Runtime --> Evidence
-  CLI --> Native[Mach-O index, optional Ghidra or Hopper]
-  Native --> Evidence
-  Evidence --> Review[Agent-reviewed report and feature spec]
-  Review --> Project[Independent Xcode project]
-  Project --> Compare[Same-device paired playbooks and visual review]
-  Compare --> Delivery[Verified delivery and stated gaps]
-```
+![Copy APP Mac and jailbroken iPhone architecture](assets/architecture-overview.svg)
 
 ## Component boundaries
 
@@ -38,6 +22,6 @@ Only one UI backend sends actions in a given playbook. Original and rebuilt runs
 
 ## Cases and trust
 
-Commands save manifests, source identities, hashes, raw observations and derived reports under `cases/<case-id>/`. `copyapp verify` checks the case structure and its source links. The `copy` workflow pauses for agent-authored discovery, formal report and independent-app implementation, then verifies each handoff before continuing. Case folders are Git-ignored because they can contain proprietary binaries, screenshots, sandbox data and credentials. Published docs summarize results and limits without embedding those artifacts.
+Commands save manifests, source identities, hashes, raw observations and derived reports under `cases/<case-id>/`. `copyapp verify` checks the case structure and its source links. The `copy` workflow pauses for agent-authored discovery, formal report and independent-app implementation, then verifies each handoff before continuing. Case folders are Git-ignored because they can contain proprietary binaries, screenshots, sandbox data and credentials. Published docs summarize results and limits, using only selected public examples and diagrams instead of complete case artifacts.
 
 The analysis IPA produced by encrypted-package recovery is for inspection; it is not a signed installable clone. The rebuilt app is an independent Xcode project with its own Bundle ID. `coverage-plan` and `coverage-delivery` keep the known-capability target separate from selected-flow pass counts and unobserved behavior.

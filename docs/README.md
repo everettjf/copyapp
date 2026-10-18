@@ -8,6 +8,7 @@ Copy APP publishes **v0.1.0**. The current `main` branch has additional unreleas
 | --- | --- |
 | New Mac and phone | [Setup and first survey](setup.md) |
 | How the parts fit | [Architecture and evidence model](architecture.md) |
+| Illustrated project story | [Copy APP overview (简体中文)](articles/copyapp-overview.zh-CN.md) |
 | Tested phones and open limits | [Current status](current-status.md) |
 | End-to-end analyze and rebuild | [Workflow](copy-workflow.md) |
 | Choosing a realistic clone goal | [Coverage targets](coverage-targets.md) |
