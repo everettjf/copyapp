@@ -14,11 +14,11 @@
 | iPhone 14 · iOS 17.3.1 · Relaxin/RootHide | 完成四流程 `copyapp copy` 父案例：Calculator 审阅报告、原版按键跟踪、独立签名复刻版、四条末端断言和五组截图审阅；Remoboard 加密包恢复；夹具流程、SQLite 核对及分享扩展收到固定文本；原版 Translate 输入与 Clock 秒表的选定流程经两种界面后端通过 | ElleKit 与 RootHide iOS MCP、mobile SSH、固定版本 Frida 17.23.3 独立服务、复刻版的 Apple Development 签名；Translate/Clock 首次使用引导已完成 |
 | iPhone 11 · iOS 26.0.1 | 未测试 | 暂无配置或兼容性结论 |
 
-### v0.1.16 阶段性状态
+### 里程碑一 · v0.1.17
 
-[系统 Notes 的 XR 实测](docs/notes-xr-workflow.zh-CN.md)现已完成选定流程的分析与独立复刻全路径：三条本地流程、包含精确二进制 Hopper 证据的审阅报告、可运行的 [NotesClone](rebuild/NotesClone/README.zh-CN.md)、三组原版/复刻版真机对照与逐图审阅。同时修复未加密包误等手机端砸壳助手的超时问题；**322 项单测通过**。范围仅为 XR 上的本地文件夹导航、纯文本新建和搜索，不能推断完整 Notes 或 iOS 17 Notes 行为。详见 [v0.1.16 发布说明](docs/releases/v0.1.16.zh-CN.md)与[双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)。
+这个 patch 版本完成第一个选定流程里程碑：有来源的分析、可运行的独立 iOS App、同机对照，以及经过审阅的覆盖目标和交付。[系统 Notes XR 实测](docs/notes-xr-workflow.zh-CN.md)覆盖 iOS 16.1.1 上三条本地流程；[iOS 17 Calculator 实测](docs/ios17-calculator-fresh-from-report.zh-CN.md)覆盖有界的报告驱动新源码与成对检查。[动态覆盖方法](docs/coverage-targets.zh-CN.md)把阶段目标与整个 App 的功能等价区分开。详见 [v0.1.17 发布说明](docs/releases/v0.1.17.zh-CN.md)和[双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
-当前 `main` 又加入可修订的 `coverage-plan` 与 `coverage-delivery`，用于固定已知能力目标并核验实际覆盖；它们尚未包含在 v0.1.16 安装包中。基于已保存 Notes XR 报告与交付的本地离线演练中，两种新案例都通过校验；演练所用五项清单只是有界示例，不能当作 Notes 全部功能的覆盖率。当前 `main` 的 **324 项 Python 测试通过**。
+`coverage-plan` 与 `coverage-delivery` 可固定可修订的已知能力清单，汇总一项或多项选定流程的真机交付，并分别报告目标、阶段完成和已知能力实证覆盖。基于已保存 Notes XR 报告与交付的本地离线演练中，两种新案例均通过校验；演练所用五项清单只是有界示例，不能当作 Notes 全部功能的覆盖率。**324 项 Python 测试通过。**iOS 26 是下一阶段，尚未实测。
 
 | 配置差异 | iPhone XR / iOS 16.1.1 | iPhone 14 / iOS 17.3.1 |
 | --- | --- | --- |
