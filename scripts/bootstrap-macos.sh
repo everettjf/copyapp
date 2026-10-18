@@ -51,7 +51,13 @@ if [ ! -x "$venv_python" ]; then
     exit 1
 fi
 
-if [ "$new_venv" -eq 1 ]; then
+if [ "$new_venv" -eq 1 ] || ! "$venv_python" -c '
+import pip, setuptools, wheel
+def version(value):
+    return tuple(int(part) for part in value.split(".")[:2])
+raise SystemExit(0 if version(pip.__version__) >= (21, 3) and
+                 version(setuptools.__version__) >= (64, 0) else 1)
+' >/dev/null 2>&1; then
     printf 'Preparing Python packaging tools...\n'
     "$venv_python" -m pip install --quiet --upgrade pip setuptools wheel
 fi

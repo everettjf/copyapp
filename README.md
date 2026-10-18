@@ -4,6 +4,29 @@ English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_
 
 Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app on a jailbroken iPhone and rebuilding selected behavior as an independent, runnable iOS app. It acquires package and sandbox evidence, inspects native code, captures UI and runtime behavior, produces a cited report and feature specification, then builds and compares a clone on the same device.
 
+## Start here
+
+For your first result, use a Mac with Python 3.9+, a USB-connected, unlocked iPhone, and **Trust This Computer** accepted on the phone. The USB survey needs no phone tweak, SSH or Frida:
+
+```sh
+git clone https://github.com/everettjf/copyapp.git
+cd copyapp
+sh scripts/bootstrap-macos.sh
+.venv/bin/copyapp onboard
+```
+
+The clone step requires GitHub access to this repository. If GitHub returns 404, ask the owner for collaborator access before continuing.
+
+`onboard` prints the device UDID (or asks you to choose one if several phones are connected). List Apps, **open the target App on the phone and leave it on the screen to inspect**, then capture that screen, replacing both placeholders with exact values:
+
+```sh
+.venv/bin/copyapp apps --udid <UDID> --all
+.venv/bin/copyapp survey --udid <UDID> --bundle <BUNDLE_ID> --ui-backend usb --out cases/first-survey
+.venv/bin/copyapp verify cases/first-survey
+```
+
+Read `cases/first-survey/report.md`. Use a new output directory on a retry. For a deep report and runnable rebuild, continue with [phone-service setup](#4-add-phone-services-for-full-analysis) and the [Analyze → Rebuild workflow](#run-the-full-analyze--rebuild-workflow). You can also give [this first-run task](docs/first-run-agent.md) to Codex or Claude Code in the checkout; [中文任务](docs/first-run-agent.zh-CN.md). The survey is an initial observation, not a finished reverse-engineering report.
+
 **Rebuild scope is chosen per App.** After analysis, make a known-capability inventory and set a reviewed milestone: a small App may target all known capabilities; a large App may target a useful 50–60% first slice. `coverage-plan` freezes the target; `coverage-delivery` combines verified device cases with explicit reviewer decisions and reports the achieved scope, gaps and unknowns. [Coverage target method and commands](docs/coverage-targets.md) · [中文](docs/coverage-targets.zh-CN.md).
 
 **Tested support:** The first-release core stages are verified on both iPhone XR / iOS 16.1.1 (rootless) and [iPhone 14 / iOS 17.3.1 (Relaxin/RootHide)](docs/relaxin-roothide-iphone14.md). Support here means the tested device setup can collect evidence, produce a reviewed report, install an independent App and verify named behavior on the same phone. It does not promise every App, jailbreak configuration or feature will work. iOS 26 has not been tested.
@@ -27,7 +50,7 @@ This patch release closes the first selected-flow milestone: source-linked analy
 | Rebuilt App installation | TrollStore helper through root Frida, with exact installed version/build checks | Apple Development signed IPA through USB InstallationProxy |
 | Latest developer-file probe | File listing failed with `ConnectionTerminatedError` after developer-image remount; SSH, Frida, iOS MCP and iCTRL remained available | File listing and the other tested channels were available |
 
-**Next work:** restore and retest XR developer-file service; test a clean Mac setup and longer device/installer reliability; prove unfamiliar-App discovery and new-source generation without prepared flows; widen App state, network and visual coverage. A standalone Claude CLI run, hours-long or interrupted Clock behavior, and iOS 26 remain unverified. The current deliveries are independent Apps with measured selected-flow coverage, not complete replicas of arbitrary Apps.
+**Next work:** restore and retest XR developer-file service; test setup on a separate clean Mac and longer device/installer reliability; prove unfamiliar-App discovery and new-source generation without prepared flows; widen App state, network and visual coverage. A standalone Claude CLI run, hours-long or interrupted Clock behavior, and iOS 26 remain unverified. The current deliveries are independent Apps with measured selected-flow coverage, not complete replicas of arbitrary Apps.
 
 The earlier iOS 17 Calculator clone source and IPA existed before its report; a separate [new-source four-flow pilot](docs/ios17-calculator-fresh-from-report.md) now verifies report-guided implementation, signing, installation and paired comparison on that phone. Its installed RootHide Frida server cannot provide root `root-run`; the verified encrypted-package route uses mobile SSH. The [iOS 17 device record](docs/relaxin-roothide-iphone14.md) gives exact evidence and limits.
 
@@ -127,7 +150,7 @@ On the phone, activate its compatible jailbreak, unlock it, connect it by USB, a
 .venv/bin/copyapp onboard
 ```
 
-It selects the only USB device, creates a dedicated local SSH key if needed, checks Mac and phone channels, and saves an actionable report under `cases/onboard-.../report.md`. It opens a temporary USB SSH forward for its check, so no tunnel terminal is needed yet. It never installs phone packages or trusts an unverified SSH host key. The default `--stage survey` shows only first-survey repairs; rerun with `--stage analyze` or `--stage rebuild` for those goals. If several devices are connected, it prints their IDs and requires `--udid <UDID>`. Once the report says the first survey is ready, list Apps:
+It selects the only USB device, checks USB identity and screenshot readiness, and saves an actionable report under `cases/onboard-.../report.md`. The default `--stage survey` does not create an SSH key or probe SSH, Frida, iOS MCP and iCTRL. Rerun with `--stage analyze` or `--stage rebuild` for those goals; those stages create a dedicated local SSH key if needed and probe the additional channels through a temporary USB SSH forward. `onboard` never installs phone packages or trusts an unverified SSH host key. If several devices are connected, it prints their IDs and requires `--udid <UDID>`. Once the report says the first survey is ready, list Apps:
 
 ```sh
 .venv/bin/copyapp apps --udid <UDID> --all
@@ -151,7 +174,7 @@ You can stop here for a first impression. The remaining setup is for full packag
 
 ### 4. Add phone services for full analysis
 
-First install host Frida if you have not already: `sh scripts/bootstrap-macos.sh --trace`. The phone-side steps below are one-time per device. `copyapp doctor` reports which channels are ready once they are configured.
+Start with `.venv/bin/copyapp onboard --udid <UDID> --stage analyze` to create the Mac SSH key and list the additional setup repairs. Then install host Frida if needed: `sh scripts/bootstrap-macos.sh --trace`. The phone-side steps below are one-time per device. `copyapp doctor` reports which channels are ready once they are configured.
 
 The full pipeline needs the following channels on the **same UDID**:
 
@@ -164,7 +187,7 @@ The full pipeline needs the following channels on the **same UDID**:
 
 For the tweak, the source build requires a complete Xcode, Theos, the iPhoneOS 16.5 SDK and `ldid`; the SDK and Theos are **not** vendored here. From the repository root, after installing those tools, run `THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules make -C device/ios-mcp package`. Install the resulting `.deb` from `device/ios-mcp/packages/` with the phone's package manager or Filza, then reload SpringBoard. The XR/iOS 16 rootless package is tested. RootHide needs its own Theos fork, `THEOS_PACKAGE_SCHEME=roothide`, and an actual tweak loader such as ElleKit. [The iPhone 14 status note](docs/relaxin-roothide-iphone14.md) records a successful RootHide build, ElleKit installation and live UI service validation. The optional iCTRL source is pinned in [`vendor/ictrl`](vendor/ictrl/UPSTREAM.md) with its Apache 2.0 license and NOTICE; generated signing files, large build dependencies and pairing keys stay local.
 
-Copy APP expects a dedicated `mobile` SSH key at `cases/ssh/id_ed25519` (created by `onboard` if absent) and a pinned host-key file at `cases/ssh-known-hosts`. For the one-time host-key check or interactive UI work, one command keeps both USB forwards running:
+Copy APP expects a dedicated `mobile` SSH key at `cases/ssh/id_ed25519` (created by `onboard --stage analyze` or `--stage rebuild` if absent) and a pinned host-key file at `cases/ssh-known-hosts`. For the one-time host-key check or interactive UI work, one command keeps both USB forwards running:
 
 ```sh
 .venv/bin/copyapp tunnel --udid <UDID>

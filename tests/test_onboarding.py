@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-from copyapp.doctor import _frida_probe, _next_steps, _ssh_probe
+from copyapp.doctor import _frida_probe, _next_steps, _ssh_probe, run_doctor
 from copyapp.onboarding import _choose_device, _prepare_ssh_key, run_onboarding
 from copyapp.tunnels import run_tunnels
 
@@ -114,7 +114,9 @@ class OnboardingTest(unittest.TestCase):
     def test_onboard_prints_only_the_selected_stage_repairs(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            def fake_doctor(udid, output, *args):
+            stages = []
+            def fake_doctor(udid, output, *args, **kwargs):
+                stages.append(kwargs.get("survey_only"))
                 output.mkdir()
                 (output / "report.md").write_text("report")
                 (output / "device.json").write_text(json.dumps({
@@ -132,18 +134,51 @@ class OnboardingTest(unittest.TestCase):
             device = SimpleNamespace(serial=UDID, connection_type="USB")
             with patch("copyapp.onboarding.list_devices", new=AsyncMock(return_value=[device])), \
                  patch("copyapp.onboarding.run_doctor", side_effect=fake_doctor), \
+                 patch("copyapp.onboarding._prepare_ssh_key") as keygen, \
                  redirect_stdout(display):
-                _, ready = run_onboarding(output=root / "survey", prepare_ssh=False)
+                _, ready = run_onboarding(output=root / "survey")
             self.assertTrue(ready)
+            keygen.assert_not_called()
+            self.assertEqual(stages, [True])
             self.assertNotIn("configure SSH", display.getvalue())
             display = StringIO()
             with patch("copyapp.onboarding.list_devices", new=AsyncMock(return_value=[device])), \
                  patch("copyapp.onboarding.run_doctor", side_effect=fake_doctor), \
+                 patch("copyapp.onboarding._prepare_ssh_key", return_value=True) as keygen, \
                  redirect_stdout(display):
-                _, ready = run_onboarding(output=root / "analyze", prepare_ssh=False,
-                                          stage="analyze")
+                _, ready = run_onboarding(output=root / "analyze", stage="analyze",
+                                          ssh_identity=root / "id_ed25519")
             self.assertFalse(ready)
+            keygen.assert_called_once_with(root / "id_ed25519")
+            self.assertEqual(stages, [True, False])
             self.assertIn("configure SSH", display.getvalue())
+
+    def test_survey_doctor_skips_deep_channels_and_repair_steps(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "survey"
+            async def fake_usb(udid, case, probes, evidence, survey_only):
+                self.assertTrue(survey_only)
+                probes.update({"usb_lockdown": {"status": "available"},
+                               "usb_screenshot": {"status": "available"},
+                               "dvt_filesystem": {"status": "not_probed"},
+                               "rootless_marker": {"status": "not_probed"}})
+                return {"UniqueDeviceID": udid}
+            host = {name: {"status": "not_configured"} for name in
+                    ("xcode", "xcodegen", "ldid", "codex_cli", "claude_cli", "theos")}
+            with patch("copyapp.doctor._usb_probes", side_effect=fake_usb), \
+                 patch("copyapp.doctor._host_probes", return_value=host), \
+                 patch("copyapp.doctor.ssh_tunnel") as ssh_tunnel, \
+                 patch("copyapp.doctor._frida_probe") as frida_probe, \
+                 patch("copyapp.doctor._ios_mcp_probe") as ios_mcp_probe:
+                report, connected = run_doctor(UDID, output, survey_only=True)
+            self.assertTrue(connected)
+            self.assertTrue(report.is_file())
+            ssh_tunnel.assert_not_called()
+            frida_probe.assert_not_called()
+            ios_mcp_probe.assert_not_called()
+            record = json.loads((output / "device.json").read_text())
+            self.assertEqual(record["next_steps"], [])
+            self.assertEqual(record["probes"]["ssh_mobile"]["status"], "not_probed")
 
 
 if __name__ == "__main__":

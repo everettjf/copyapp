@@ -61,9 +61,9 @@ def run_onboarding(udid: Optional[str] = None, output: Optional[Path] = None,
         output = Path("cases") / f"onboard-{stamp}-{uuid4().hex[:8]}"
     if output.exists():
         raise FileExistsError(f"refusing to overwrite setup case: {output}")
-    created_key = _prepare_ssh_key(ssh_identity) if prepare_ssh else False
+    created_key = _prepare_ssh_key(ssh_identity) if prepare_ssh and stage != "survey" else False
     report, connected = run_doctor(selected, output, ssh_port, ssh_identity,
-                                   ssh_known_hosts)
+                                   ssh_known_hosts, survey_only=(stage == "survey"))
     record = json.loads((output / "device.json").read_text(encoding="utf-8"))
     survey_ready = (connected and
                     record["probes"].get("usb_screenshot", {}).get("status") == "available")
@@ -81,8 +81,11 @@ def run_onboarding(udid: Optional[str] = None, output: Optional[Path] = None,
         print(f"Created dedicated Mac SSH key: {ssh_identity}")
     print(f"Setup report: {report}")
     print("First USB survey: " + ("ready" if survey_ready else "needs setup"))
-    print("Deep analysis: " + ("ready" if analysis_ready else "needs setup"))
-    print("Runnable rebuild tools: " + ("ready" if rebuild_ready else "needs setup"))
+    print("Deep analysis: " + ("not checked (rerun with --stage analyze)" if stage == "survey"
+                               else "ready" if analysis_ready else "needs setup"))
+    print("Runnable rebuild tools: " + ("not checked (rerun with --stage rebuild)"
+                                        if stage == "survey" else "ready" if rebuild_ready
+                                        else "needs setup"))
     relevant = {"survey": {"usb_lockdown", "usb_screenshot"},
                 "analyze": {"usb_lockdown", "usb_screenshot", "ssh_mobile",
                             "frida_usb", "ios_mcp", "xcode", "theos_tweak"},

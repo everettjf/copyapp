@@ -2,6 +2,29 @@
 
 [English](README.md) · 简体中文 · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
+## 从这里开始
+
+第一次运行只需一台装有 Python 3.9+ 的 Mac，以及已解锁、通过 USB 连接并点了“信任此电脑”的 iPhone。首次 USB 采集不需要手机端 tweak、SSH 或 Frida：
+
+```sh
+git clone https://github.com/everettjf/copyapp.git
+cd copyapp
+sh scripts/bootstrap-macos.sh
+.venv/bin/copyapp onboard
+```
+
+克隆仓库需要已有 GitHub 访问权限；若 GitHub 返回 404，请先向仓库所有者申请协作者权限。
+
+`onboard` 会显示设备 UDID；若连接了多台手机，按提示指定其中一台。然后列出 App、确认准确 Bundle ID，**在手机上打开目标 App 并停留于待观察页面**，再采集：
+
+```sh
+.venv/bin/copyapp apps --udid <UDID> --all
+.venv/bin/copyapp survey --udid <UDID> --bundle <BUNDLE_ID> --ui-backend usb --out cases/first-survey
+.venv/bin/copyapp verify cases/first-survey
+```
+
+阅读 `cases/first-survey/report.md`；重试时换一个新的输出目录。要继续生成深度报告和可运行复刻版，参阅[手机端服务配置](#4-配置完整分析所需手机端服务)及[完整工作流](#独立终端的一命令入口)。也可以把[首次运行任务](docs/first-run-agent.zh-CN.md)交给仓库内的 Codex 或 Claude Code；[English](docs/first-run-agent.md)。首次采集只是初步观察，并非完整逆向报告。
+
 **复刻范围按 App 动态确定。**分析后先盘点已知能力并设定可审阅的阶段目标：简单 App 可以争取覆盖全部已知能力；大型 App 可以先选择有价值的 50–60%。`coverage-plan` 固定目标，`coverage-delivery` 结合真机交付和逐项审阅计算实际覆盖，并列出缺口与未知。[目标设定方法和命令](docs/coverage-targets.zh-CN.md) · [English](docs/coverage-targets.md)。
 
 在已越狱的 iPhone XR（iOS 16.1.1）上，[Translate 完整案例](docs/translate-xr-workflow.zh-CN.md)（[English](docs/translate-xr-workflow.md)）已经从新写的发现脚本走通到[审阅报告](cases/translate-current-workflow-20261016/analysis-agent/reviewed-report/report.md)、[独立 UIKit 工程](rebuild/TranslateFreshProbe)、真机安装与三组原版/复刻版对照。六张截图逐张审阅，均有轻微图标或间距差异。范围限于文字输入但不提交翻译、Favorites 空状态和 Conversation 待机导航；翻译结果、语音和相机能力仍未实现或验证。
@@ -27,7 +50,7 @@
 | 复刻版安装 | root Frida 启动 TrollStore helper，并核对安装版本及构建号 | Apple Development 签名 IPA 经 USB InstallationProxy 安装 |
 | 最新开发者文件探针 | 重挂开发者镜像后，文件列表仍报 `ConnectionTerminatedError`；SSH、Frida、iOS MCP、iCTRL 可用 | 文件列表和其他已测通道可用 |
 
-**后续工作：**恢复并复测 XR 开发者文件服务；在全新 Mac 验证环境搭建及更长期的设备、安装可靠性；证明无需预置脚本的陌生 App 自主发现和新源码生成；扩展 App 状态、网络与视觉覆盖。独立 Claude CLI 全流程、Clock 数小时或受系统事件干扰的行为、iOS 26 均未验证。目前交付的是对选定流程做过衡量的独立 App，不能称为任意 App 的完整复刻。
+**后续工作：**恢复并复测 XR 开发者文件服务；在另一台全新 Mac 验证环境搭建及更长期的设备、安装可靠性；证明无需预置脚本的陌生 App 自主发现和新源码生成；扩展 App 状态、网络与视觉覆盖。独立 Claude CLI 全流程、Clock 数小时或受系统事件干扰的行为、iOS 26 均未验证。目前交付的是对选定流程做过衡量的独立 App，不能称为任意 App 的完整复刻。
 
 Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 导出包和索引数据沙盒；本地解析 Mach-O。XR 上的 Compass 已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展已恢复为可分析 IPA。iPhone 14 上的 Frida 17 独立服务已对原版 Calculator 完成逐次点击跟踪。
 
@@ -129,7 +152,7 @@ sh scripts/bootstrap-macos.sh
 .venv/bin/copyapp onboard
 ```
 
-它自动选唯一的 USB 设备，在缺少专用 Mac SSH 密钥时创建密钥，检查 Mac 和手机通道，并把具体修复步骤写入 `cases/onboard-.../report.md`。检查时会临时打开 SSH USB 转发，无须先开另一个终端；它不会在手机上装包，也不会自动信任未经核对的 SSH 主机公钥。默认 `--stage survey` 只显示首次采集的修复项；完整分析或复刻时分别加 `--stage analyze`、`--stage rebuild`。若同时连接多台设备，命令会列出 ID 并要求加 `--udid <UDID>`。报告显示首次 USB 采集已就绪后，列出 App：
+它自动选唯一的 USB 设备，只检查 USB 身份和截图是否就绪，并把修复步骤写入 `cases/onboard-.../report.md`。默认 `--stage survey` 不创建 SSH 密钥，也不探测 SSH、Frida、iOS MCP 和 iCTRL。完整分析或复刻时分别加 `--stage analyze`、`--stage rebuild`；这两个阶段才会按需创建专用 Mac SSH 密钥，并通过临时 USB 转发探测额外通道。`onboard` 不会在手机上装包，也不会自动信任未经核对的 SSH 主机公钥。若同时连接多台设备，命令会列出 ID 并要求加 `--udid <UDID>`。报告显示首次 USB 采集已就绪后，列出 App：
 
 ```sh
 .venv/bin/copyapp apps --udid <UDID> --all
@@ -153,7 +176,7 @@ sh scripts/bootstrap-macos.sh
 
 ### 4. 配置完整分析所需手机端服务
 
-若尚未安装 Mac 端 Frida，先运行 `sh scripts/bootstrap-macos.sh --trace`。以下手机端步骤每台设备只需配置一次，配置后用 `copyapp doctor` 检查哪些通道已就绪。
+先运行 `.venv/bin/copyapp onboard --udid <UDID> --stage analyze`，创建 Mac SSH 密钥并列出深度分析还缺的配置。若尚未安装 Mac 端 Frida，再运行 `sh scripts/bootstrap-macos.sh --trace`。以下手机端步骤每台设备只需配置一次，配置后用 `copyapp doctor` 检查哪些通道已就绪。
 
 下列通道必须都指向**同一 UDID**：
 
@@ -166,7 +189,7 @@ sh scripts/bootstrap-macos.sh
 
 iOS MCP tweak 编译需要完整 Xcode、Theos、iPhoneOS 16.5 SDK 和 `ldid`；本仓库**不提供** Theos 与 SDK。安装好后，在仓库根目录运行 `THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules make -C device/ios-mcp package`，再用手机包管理器或 Filza 安装 `device/ios-mcp/packages/` 生成的 `.deb`，重新载入 SpringBoard。XR/iOS 16 的普通 rootless 包已验证；RootHide 需要 `roothide/theos`、`THEOS_PACKAGE_SCHEME=roothide` 和 ElleKit 等真正的 tweak 注入器。iPhone 14 已安装 ElleKit 与 RootHide 包，界面服务通过真机验证；见 [状态记录](docs/relaxin-roothide-iphone14.md)。可选的 iCTRL 源码及 Apache 2.0 许可、NOTICE 已固定在 [`vendor/ictrl`](vendor/ictrl/UPSTREAM.md)；生成的签名文件、大型构建依赖及配对密钥只保存在本地。
 
-Mac 端专用 SSH 私钥位于 `cases/ssh/id_ed25519`（`onboard` 在缺少时创建），已核对的设备主机公钥位于 `cases/ssh-known-hosts`，端口 `22222` 从 Mac 转发到手机 SSH 端口 `22`。首次核对 SSH 主机指纹或交互式使用 UI 时，可另开终端保持 SSH 与 iOS MCP 转发：
+Mac 端专用 SSH 私钥位于 `cases/ssh/id_ed25519`（`onboard --stage analyze` 或 `--stage rebuild` 在缺少时创建），已核对的设备主机公钥位于 `cases/ssh-known-hosts`，端口 `22222` 从 Mac 转发到手机 SSH 端口 `22`。首次核对 SSH 主机指纹或交互式使用 UI 时，可另开终端保持 SSH 与 iOS MCP 转发：
 
 ```sh
 .venv/bin/copyapp tunnel --udid <UDID>

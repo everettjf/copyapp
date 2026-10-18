@@ -34,7 +34,7 @@ def _record(output: Path, name: str, data: bytes, kind: str) -> Dict[str, str]:
 
 
 async def _usb_probes(udid: str, output: Path, probes: Dict[str, Any],
-                      evidence: list) -> Dict[str, Any]:
+                      evidence: list, survey_only: bool = False) -> Dict[str, Any]:
     device = await create_using_usbmux(serial=udid, connection_type="USB", autopair=False)
     try:
         values = await device.get_value()
@@ -54,6 +54,10 @@ async def _usb_probes(udid: str, output: Path, probes: Dict[str, Any],
                                         "route": route}
         except Exception as exc:
             probes["usb_screenshot"] = _error(exc)
+        if survey_only:
+            for name in ("dvt_filesystem", "rootless_marker"):
+                probes[name] = {"status": "not_probed", "reason": "not needed for first USB survey"}
+            return info
         try:
             version = str(values.get("ProductVersion", ""))
             _, route = await list_directory(device, udid, version, "/")
@@ -279,18 +283,22 @@ def _next_steps(udid: str, probes: Dict[str, Any], host: Dict[str, Any],
 def run_doctor(udid: str, output: Path, ssh_port: int = 22222,
                ssh_identity: Path = Path("cases/ssh/id_ed25519"),
                ssh_known_hosts: Path = Path("cases/ssh-known-hosts"),
-               ictrl_client: Path = DEFAULT_CLIENT) -> Tuple[Path, bool]:
+               ictrl_client: Path = DEFAULT_CLIENT,
+               survey_only: bool = False) -> Tuple[Path, bool]:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite device baseline: {output}")
     output.mkdir(parents=True)
     probes: Dict[str, Any] = {}
     evidence = []
     try:
-        device_info = asyncio.run(_usb_probes(udid, output, probes, evidence))
+        device_info = asyncio.run(_usb_probes(udid, output, probes, evidence, survey_only))
     except Exception as exc:
         probes["usb_lockdown"] = _error(exc)
         device_info = {"UniqueDeviceID": udid}
-    if probes["usb_lockdown"]["status"] == "available":
+    if survey_only:
+        for key in ("ssh_mobile", "frida_usb", "ios_mcp", "ictrl"):
+            probes[key] = {"status": "not_probed", "reason": "not needed for first USB survey"}
+    elif probes["usb_lockdown"]["status"] == "available":
         try:
             with socket.create_connection(("127.0.0.1", ssh_port), timeout=0.3):
                 pass
@@ -318,11 +326,15 @@ def run_doctor(udid: str, output: Path, ssh_port: int = 22222,
     host = _host_probes()
     next_steps = _next_steps(udid, probes, host, ssh_identity, ssh_known_hosts,
                              ssh_port)
+    if survey_only:
+        next_steps = [step for step in next_steps
+                      if step["for"] in ("usb_lockdown", "usb_screenshot")]
     device_data = (json.dumps({"device": device_info, "probes": probes,
                                "host": host, "next_steps": next_steps},
                               ensure_ascii=False, indent=2, default=str) + "\n").encode()
     evidence.append(_record(output, "device.json", device_data, "json"))
     lines = ["# Copy APP device setup", "",
+             f"- Probe scope: `{'first USB survey' if survey_only else 'full device baseline'}`",
              f"- Device: `{device_info.get('ProductType', 'unknown')}` / iOS {device_info.get('ProductVersion', 'unknown')}",
              f"- UDID: `{udid}`", "",
              "| Capability | Status | Detail |", "| --- | --- | --- |"]
@@ -331,17 +343,22 @@ def run_doctor(udid: str, output: Path, ssh_port: int = 22222,
         lines.append(f"| `{name}` | {item['status']} | {str(detail).replace('|', '/')} |")
     lines += ["", "## Mac tools", "", "| Tool | Status |", "| --- | --- |"]
     for name, item in host.items():
+        if survey_only and name != "xcode":
+            continue
         lines.append(f"| `{name}` | {item['status']} |")
     lines += ["", "## Next steps", ""]
     lines.extend(f"{index}. **{item['for']}**: {item['action']}"
                  for index, item in enumerate(next_steps, 1))
     if not next_steps:
-        lines.append("The probed channels are ready. Choose an App with `copyapp apps --udid <UDID> --all`.")
+        lines.append("The USB survey is ready. Choose an App with `copyapp apps --udid <UDID> --all`."
+                     if survey_only else
+                     "The probed channels are ready. Choose an App with `copyapp apps --udid <UDID> --all`.")
     lines += ["", "A green probe covers only this run; file markers alone do not prove jailbreak privileges or tool compatibility.", ""]
     evidence.append(_record(output, "report.md", "\n".join(lines).encode(), "text"))
     manifest = {"schema_version": 1,
                 "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                "kind": "device_doctor", "device_id_sha256_prefix": hashlib.sha256(udid.encode()).hexdigest()[:16],
+                "kind": "device_doctor", "probe_scope": "survey" if survey_only else "full",
+                "device_id_sha256_prefix": hashlib.sha256(udid.encode()).hexdigest()[:16],
                 "device": device_info, "probes": probes, "host": host,
                 "next_steps": next_steps, "evidence": evidence}
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2,
