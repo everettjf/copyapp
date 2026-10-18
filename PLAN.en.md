@@ -67,6 +67,6 @@ The [v0.1.6 two-device validation](docs/releases/v0.1.6.md) refreshed USB, SSH, 
 1. Exercise independent CLI discovery and implementation on an unfamiliar app without reusing prior scripts or clone source; optionally repeat with Claude CLI.
 2. Extend fresh discovery and implementation to an unfamiliar app and different UI stack or protection state; quantify coverage and failures.
 3. Expand selected-flow implementations into more of each app's behavior, including persistence and backend boundaries, with new paired checks.
-4. Replay core workflows live on iPhone 14/iOS 17 when connected, test clean second-Mac setup and reboot/rejailbreak persistence, then prepare one release. The [XR/iOS 16 current-code replay](docs/ios16-ios26-current-code-validation.md) is complete. Keep iOS 26 claims scoped to the tested iPhone 11 and selected flows.
+4. Replay core workflows live on iPhone 14/iOS 17 when connected, test phone provisioning on another Mac and reboot/rejailbreak persistence, then prepare one release. A [fresh GitHub-hosted macOS runner](https://github.com/everettjf/copyapp/actions/runs/39138640791) already passed the minimal bootstrap, optional trace install and 338 tests without a phone. The [XR/iOS 16 current-code replay](docs/ios16-ios26-current-code-validation.md) is complete. Keep iOS 26 claims scoped to the tested iPhone 11 and selected flows.
 
 Keep credentials, IPA snapshots, screenshots and raw sandbox data in ignored local `cases/`. A hash proves consistency of saved bytes, not the correctness of an interpretation.

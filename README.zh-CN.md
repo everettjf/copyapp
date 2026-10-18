@@ -56,7 +56,7 @@ sh scripts/bootstrap-macos.sh
 
 此前的双机收尾在 XR/iOS 16 与 iPhone 14/iOS 17 运行了 `doctor`、Calculator `analyze --launch` 和相同的 `7 + 8 = 15` iOS MCP 脚本。之后的[当前代码 iOS 16/26 双机复测](docs/ios16-ios26-current-code-validation.md)确认了两台已连接手机的通道、非黑屏 Clock 截图，以及基线对齐后的 XR 原版／复刻版 Counter 对照；iOS 17 在后一次复测中未连接。
 
-**后续工作：**新黑帧防护已在 XR/iOS 16 的选定流程中连机回归；iPhone 14/iOS 17 等重新连接后再验。在另一台全新 Mac 验证环境搭建，测试完整重启／重新越狱后的持久性，完成剩余门槛后只发布一个版本；追踪 iOS 26 SwiftUI 输入分发、调查 XR 的可选开发者文件服务，并验证无需预置脚本的陌生 App 自主发现和新源码生成。详见[当前代码 iOS 16/26 双机复测](docs/ios16-ios26-current-code-validation.md)。目前交付的是对选定流程做过衡量的独立 App，不能称为任意 App 的完整复刻。
+**后续工作：**新黑帧防护已在 XR/iOS 16 的选定流程中连机回归；iPhone 14/iOS 17 等重新连接后再验。全新 GitHub 托管 Mac 已通过最小安装、trace 依赖安装和 338 项测试；另一台实体 Mac 上的手机服务配置、完整重启／重新越狱后的持久性仍待验，完成剩余门槛后只发布一个版本。还需追踪 iOS 26 SwiftUI 输入分发、调查 XR 的可选开发者文件服务，并验证无需预置脚本的陌生 App 自主发现和新源码生成。详见[当前代码 iOS 16/26 双机复测](docs/ios16-ios26-current-code-validation.md)。目前交付的是对选定流程做过衡量的独立 App，不能称为任意 App 的完整复刻。
 
 Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 导出包和索引数据沙盒；本地解析 Mach-O。XR 上的 Compass 已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展已恢复为可分析 IPA。iPhone 14 上的 Frida 17 独立服务已对原版 Calculator 完成逐次点击跟踪。
 
