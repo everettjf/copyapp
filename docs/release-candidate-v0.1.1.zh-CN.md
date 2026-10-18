@@ -15,6 +15,6 @@
 
 ## 已测范围和边界
 
-当前代码在 iPhone XR/iOS 16.1.1 与 iPhone 11/iOS 26.0.1 上通过设备诊断、包／沙盒采集和同一份原版 Clock Start → Stop 界面脚本。XR 夹具 Counter `1 → 2` 原版／复刻版新对照，以及基线归零后的 iOS 26 Clock Start → Stop → Reset 原版／复刻版新对照均通过；新六组截图逐张审阅为轻微差异。XR 的可选 DVT 文件列表仍返回 `ConnectionTerminatedError`，SSH 包与沙盒采集可用。iOS 26 的 Instruments 启动后仍偶发黑帧，已观察到的几次均经有界恢复成功。iOS 17 证据来自较早代码，正式发布候选版前还需实时重放。另一台实体 Mac 的手机配置尚未实测。选定流程通过和轻微视觉差异不能证明整 App 等价、任意 App 自动复刻或重启后的长期稳定。见[双机证据](ios16-ios26-current-code-validation.md)。
+当前代码在 iPhone XR/iOS 16.1.1 与 iPhone 11/iOS 26.0.1 上通过设备诊断、包／沙盒采集和同一份原版 Clock Start → Stop 界面脚本。XR 夹具 Counter `1 → 2` 原版／复刻版新对照，以及基线归零后的 iOS 26 Clock Start → Stop → Reset 原版／复刻版新对照均通过；新六组截图逐张审阅为轻微差异。[iPhone 14/iOS 17.3.1 当前代码重放](ios17-current-code-validation.zh-CN.md)通过重新采集 Calculator 以及四条 iOS MCP 原版／独立 App 运算流程，五组截图审阅为轻微差异。额外的 iCTRL 复刻版重放在等号处遇到格式错误的 HTTP 响应，该后端限制仍待解决。XR 的可选 DVT 文件列表仍返回 `ConnectionTerminatedError`，SSH 包与沙盒采集可用。iOS 26 的 Instruments 启动后仍偶发黑帧，已观察到的几次均经有界恢复成功。另一台实体 Mac 的手机配置尚未实测，本轮暂缓。选定流程通过和轻微视觉差异不能证明整 App 等价、任意 App 自动复刻或重启后的长期稳定。见[iOS 16／26 证据](ios16-ios26-current-code-validation.md)。
 
 原始 IPA、截图、沙盒内容和设备密钥保存在被 Git 忽略的本地 `cases/`，不作为发布资源。

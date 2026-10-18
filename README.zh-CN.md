@@ -240,7 +240,7 @@ ssh -p 22222 -i cases/ssh/id_ed25519 \
 .venv/bin/copyapp verify cases/first-ictrl-setup
 ```
 
-若 runner 已安装，`setup` 会复用并核验配对。已有签名 IPA 时可传 `--runner-ipa <IPA>`，安装前会检查 Bundle ID 和最低 iOS 版本；加 `--reinstall` 可替换现有 runner。iOS 17+ 可用 `--auto-approve-first-pair` 让开发版 runner 自动批准一次本地 USB 配对。重试用新的 `--out` 目录。仓库源码在 Xcode 27 下构建，XR/iOS 16.1.1 与 iPhone 14/iOS 17.3.1 都完成了配对；iPhone 11/iOS 26.0.1 在挂载个性化开发者镜像并使用 userspace XCTest 隧道后，也完成签名 runner 配对和真实界面脚本。见 [iOS 26 记录](docs/relaxin-roothide-iphone11-ios26.md)、[iPhone 14 状态记录](docs/relaxin-roothide-iphone14.md)和 [iCTRL XR 实测记录](docs/ictrl-xr-validation.md)。
+若 runner 已安装，`setup` 会复用并核验配对。已有签名 IPA 时可传 `--runner-ipa <IPA>`，安装前会检查 Bundle ID 和最低 iOS 版本；加 `--reinstall` 可替换现有 runner。iOS 17+ 可用 `--auto-approve-first-pair` 让开发版 runner 自动批准一次本地 USB 配对。重试用新的 `--out` 目录。仓库源码在 Xcode 27 下构建，XR/iOS 16.1.1 与 iPhone 14/iOS 17.3.1 都完成了配对。后续[当前代码 Calculator 重放](docs/ios17-current-code-validation.zh-CN.md)经 iOS MCP 通过四条原版／复刻版流程；额外的 iCTRL 复刻版多步重放遇到格式错误的 HTTP 响应，该后端的稳定性仍待调查。iPhone 11/iOS 26.0.1 在挂载个性化开发者镜像并使用 userspace XCTest 隧道后，也完成签名 runner 配对和真实界面脚本。见 [iOS 26 记录](docs/relaxin-roothide-iphone11-ios26.md)、[iPhone 14 状态记录](docs/relaxin-roothide-iphone14.md)和 [iCTRL XR 实测记录](docs/ictrl-xr-validation.md)。
 
 Copy APP 的 iCTRL 默认使用按签名团队区分的 ID：可选设置 App 为 `com.copyapp.<team-id>.ictrl`，runner 为 `com.copyapp.<team-id>.ictrl.uitests.xctrunner`。本地生成且被 Git 忽略的 `vendor/ictrl/Config/Local.xcconfig` 优先于默认值；从旧上游版本升级时，把其中 `ICTRL_BUNDLE_PREFIX` 改为 `com.copyapp.<team-id>`，或删除该文件让它重新生成，再重装 runner。新的 Bundle ID 会被 iOS 视为新 App，可能再次弹出通知授权与配对请求。核对指纹并批准；若首次运行因弹窗超时，用新 `--out` 目录重跑 `setup`。新 ID 通过认证检查后可卸载旧 runner。
 
