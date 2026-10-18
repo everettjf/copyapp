@@ -33,6 +33,8 @@ The iOS MCP screenshot command intermittently captured only the status bar over 
 
 The iOS 26 original uses SwiftUI-backed result text that is absent from the bounded UIKit `UILabel` scan. `rebuild-check` now supports an explicit `source: screenshot_ocr` final-view assertion. It binds the last saved screenshot hash, converts image pixels to the recorded screen-point geometry, and requires an exact text match inside the selected region. This check passed for both original and rebuilt screenshots.
 
+The formal report cites an earlier original playbook whose screenshot has no `ready_contains` condition. `rebuild-plan` now produces a verified `needs_verified_screenshot` handoff for that report instead of failing or treating the image as a comparable pair. The later passing iCTRL original/rebuilt check used a separately prepared playbook; a report-to-agent-delivery case for this exact report still requires a newly captured, source-linked original flow with screenshot readiness.
+
 ## Scope and remaining work
 
 The selected `7 + 8 = 15` analysis-to-rebuild path is verified on this one phone. The independent implementation began as an iOS 17 project; its new iOS 26 layout branch was adapted after reviewing the iOS 26 report and actual screen. This is report-guided adaptation of existing source, not generation of a new project from scratch. The final visual review found only minor differences in the selected screenshot pair; it does not establish pixel-level or whole-App equivalence. The saved UIKit method hooks have zero hits, and the internal SwiftUI/Calculate dispatch remains unidentified. A full reboot/rejailbreak persistence test, clean-Mac setup, other iOS 26 devices and broader App coverage are still open.

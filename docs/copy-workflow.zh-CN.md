@@ -41,6 +41,8 @@ Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组
 
 再次续跑后，`prepare-rebuild` 生成关联报告的复刻任务，并停在 `rebuild-agent/TASK.md`。在指定的 `--project` 编写独立 Xcode 工程，在绑定设备上安装并保存证据。开发证书签名的 IPA 可用 `copyapp install --transport usb --udid <UDID> --ipa <IPA> --out <案例>`；现有 TrollStore 安装路径仍是默认值。校验安装案例后，使用 `rebuild-task-check` 在同一 UI 后端对照原版与复刻版选定流程。逐张审阅截图，保存 `visual-review`，最后运行不带 `--run` 的 `agent-delivery`。父流程要求每条选定流程通过行为或末端视图断言、全部图片已审且无重大差异；轻微差异仍需记录。
 
+若 `rebuild-plan` 将某流程标为 `needs_verified_screenshot`，说明报告所引用的原版脚本缺少同时具备 `stable: true` 和 `ready_contains` 的截图步骤。应补采具备就绪条件的原版流程，在审阅报告中引用新证据，再重新生成计划。计划和 Agent 任务仍可校验并指出缺失证据，但不会把未经就绪检查的截图算作通过的成对对照。
+
 每条脚本要声明起始页面及首次使用状态。“新启动”可能恢复上次的编辑页或搜索页，[系统 Notes XR 实测](notes-xr-workflow.zh-CN.md)就遇到此情况。若相邻流程依赖不同的恢复页面，应导航至预期页面、把 App 正常置于后台使 iOS 保存状态、保留准备步骤证据，再续跑同一失败案例。首次使用遮挡层或测试数据条数差异不能直接算作核心行为一致。
 
 最后一次 `--resume` 仅在所有子案例和来源关联通过时将父案例标为完成。`copyapp verify cases/<案例>` 可以重验哈希，但不能证明语义解释正确，也不能证明未测功能等价。已处于 Coding Agent 会话时不要嵌套启动 `copyapp agent-run` 或另一个 Codex/Claude 进程。

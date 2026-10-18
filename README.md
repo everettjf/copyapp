@@ -2,7 +2,7 @@
 
 English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
-[Project website](https://everettjf.github.io/copyapp/) · [Installation guide](#start-here) · [Contributing](CONTRIBUTING.md)
+[Project website](https://xnu.app/copyapp/) · [Installation guide](#start-here) · [Contributing](CONTRIBUTING.md)
 
 Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app on a jailbroken iPhone and rebuilding selected behavior as an independent, runnable iOS app. It acquires package and sandbox evidence, inspects native code, captures UI and runtime behavior, produces a cited report and feature specification, then builds and compares a clone on the same device.
 
@@ -17,7 +17,7 @@ sh scripts/bootstrap-macos.sh
 .venv/bin/copyapp onboard
 ```
 
-The clone step requires GitHub access to this repository. If GitHub returns 404, ask the owner for collaborator access before continuing.
+The repository is public; no collaborator invitation is needed to clone it.
 
 `onboard` prints the device UDID (or asks you to choose one if several phones are connected). List Apps, **open the target App on the phone and leave it on the screen to inspect**, then capture that screen, replacing both placeholders with exact values:
 
@@ -33,7 +33,7 @@ Read `cases/first-survey/report.md`. Use a new output directory on a retry. For 
 
 ## Tested support
 
-The first-release core stages are verified on iPhone XR / iOS 16.1.1 (rootless), [iPhone 14 / iOS 17.3.1 (Relaxin/RootHide)](docs/relaxin-roothide-iphone14.md), and [iPhone 11 / iOS 26.0.1 (Relaxin/RootHide)](docs/relaxin-roothide-iphone11-ios26.md). Support means that the tested setup can collect evidence, produce a reviewed report, install an independent App and verify a named behavior on the same phone. It does not promise every App, jailbreak configuration or feature will work. The iOS 26 Calculator delivery passes one arithmetic flow; its final visual review records only minor differences in that screenshot pair.
+The first-release core stages are verified on iPhone XR / iOS 16.1.1 (rootless), [iPhone 14 / iOS 17.3.1 (Relaxin/RootHide)](docs/relaxin-roothide-iphone14.md), and [iPhone 11 / iOS 26.0.1 (Relaxin/RootHide)](docs/relaxin-roothide-iphone11-ios26.md). Support means that the tested setup can collect evidence, produce a reviewed report, install an independent App and verify a named behavior on the same phone. It does not promise every App, jailbreak configuration or feature will work. The iOS 26 Calculator comparison passes one arithmetic flow with minor visual differences; its formal report-to-delivery handoff still needs a screenshot-ready source playbook.
 
 | Device status | Verified scope | Device-specific setup |
 | --- | --- | --- |

@@ -52,7 +52,7 @@ class RebuildPlanTest(unittest.TestCase):
                     "source_script_sha256": flows[1]["script_sha256"],
                     "final_view": {"text": "15", "region_points": [0, 0, 400, 400]}}]}))
 
-            def load_run(path):
+            def load_run(path, require_comparable=True):
                 index = 1 if "flow-01" in str(path) else 2
                 return {"bundle_id": "com.example.original"}, scripts[index - 1]
 
@@ -115,6 +115,47 @@ class RebuildPlanTest(unittest.TestCase):
             self.assertEqual(clone["bundle_id"], "com.example.clone")
             self.assertEqual(clone["steps"], script["steps"])
             self.assertTrue(verify_case(root / "plan"))
+
+    def test_noncomparable_cited_screenshot_becomes_actionable_task(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "report"
+            play = report / "evidence/original.ui"
+            play.mkdir(parents=True)
+            script = {"schema_version": 1, "bundle_id": "com.example.original",
+                      "scenario_id": "add", "fresh_launch": True,
+                      "steps": [{"action": "tap", "x": 1, "y": 2},
+                                {"action": "screenshot", "stable": True}]}
+            (play / "manifest.json").write_text("{}")
+            (play / "playbook.json").write_text(json.dumps(script))
+            (report / "report-index.json").write_text(json.dumps({
+                "target_bundle_id": "com.example.original",
+                "evidence": {"original.ui": {"kind": "playbook",
+                                             "path": "evidence/original.ui/manifest.json"}}}))
+            (report / "feature-spec.json").write_text(json.dumps({
+                "schema_version": 1, "review_status": "reviewed",
+                "target_bundle_id": "com.example.original",
+                "rebuilt_bundle_id": "com.example.clone", "flows": [{
+                    "id": "add", "entry": "tap then observe", "expected": ["15"],
+                    "verification": "final screenshot", "evidence": ["original.ui"],
+                    "final_view": {"source": "screenshot_ocr", "text": "15",
+                                   "region_points": [0, 0, 400, 400]}}]}))
+            with patch("copyapp.rebuild_plan.verify_case", return_value=True), \
+                    patch("copyapp.rebuild_plan._load_run",
+                          return_value=({"bundle_id": "com.example.original"}, script)) as load:
+                create_rebuild_plan(report, root / "plan")
+            load.assert_called_once_with(play.resolve(), require_comparable=False)
+            plan = json.loads((root / "plan/rebuild-plan.json").read_text())
+            self.assertEqual(plan["ready_count"], 0)
+            self.assertEqual(plan["needs_attention_count"], 1)
+            self.assertEqual(plan["flows"][0]["status"], "needs_verified_screenshot")
+            self.assertFalse((root / "plan/flows").exists())
+            self.assertTrue(verify_case(root / "plan"))
+            with patch("copyapp.agent_task.verify_case", return_value=True):
+                create_agent_task(report, root / "plan", root / "task")
+            task = json.loads((root / "task/task.json").read_text())
+            self.assertEqual(task["status"], "needs_evidence")
+            self.assertIn("ready_contains", task["flows"][0]["reason"])
 
     def test_refuses_unreviewed_spec_before_generating_scripts(self):
         with tempfile.TemporaryDirectory() as directory:

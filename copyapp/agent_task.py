@@ -260,7 +260,7 @@ def create_agent_task(report: Path, plan: Path, output: Path,
             pairs.append((flow_id, original, clone))
             ready_count += 1
         elif record.get("status") in ("needs_original_playbook", "ambiguous_playbooks",
-                                      "no_matching_final_view"):
+                                      "no_matching_final_view", "needs_verified_screenshot"):
             prepared_flow["reason"] = record.get("reason", record.get("status"))
         else:
             raise ValueError(f"unknown flow status in rebuild plan: {flow_id}")

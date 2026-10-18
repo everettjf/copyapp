@@ -34,7 +34,9 @@ def _captured_candidate(root: Path, kind: str, flow_id: str, target: str,
                         final_view: Optional[dict]) -> dict:
     play = root / "playbook" if kind == "flow_capture" else root
     with redirect_stdout(io.StringIO()):
-        manifest, script = _load_run(play)
+        # A cited run may be valid evidence without satisfying the stricter
+        # readiness contract required for an original/rebuilt comparison.
+        manifest, script = _load_run(play, require_comparable=False)
     if (manifest.get("bundle_id") != target or script.get("bundle_id") != target or
             script.get("fresh_launch") is not True):
         raise ValueError(f"cited playbook target or initial state differs: {root}")
@@ -158,6 +160,17 @@ def create_rebuild_plan(report: Path, output: Path, backend: str = "ios-mcp",
             continue
         source = next((item for item in pool if item["kind"] == "flow_capture"), pool[0])
         original = _read(source["script_path"])
+        screenshots = [step for step in original.get("steps", [])
+                       if isinstance(step, dict) and step.get("action") == "screenshot"]
+        if (not screenshots or any(step.get("stable") is not True or
+                not isinstance(step.get("ready_contains"), str) or
+                not step["ready_contains"] for step in screenshots)):
+            records.append({"flow_id": flow_id,
+                            "status": "needs_verified_screenshot",
+                            "source_evidence_id": source["evidence_id"],
+                            "source_script_sha256": source["script_sha256"],
+                            "reason": "cited playbook needs a stable screenshot with ready_contains; recapture it before paired comparison"})
+            continue
         clone = dict(original)
         clone["bundle_id"] = rebuilt
         root = output / "flows" / flow_id
@@ -193,7 +206,7 @@ def create_rebuild_plan(report: Path, output: Path, backend: str = "ios-mcp",
             "limitation": "A structurally valid paired script is an implementation target, not proof that a rebuilt app exists or behaves the same."}
     _write(output / "rebuild-plan.json", plan)
     lines = ["# 复刻实施交接", "", f"- 原版：`{target}`；复刻 Bundle ID：`{rebuilt}`",
-             f"- 可直接用于结构检查的成对脚本：{len(pairs)}；缺少脚本或存在歧义：{len(records)-len(pairs)}。",
+             f"- 可直接用于结构检查的成对脚本：{len(pairs)}；需要补充或澄清证据：{len(records)-len(pairs)}。",
              "- 已复制所选原版脚本，并仅替换顶层 Bundle ID 生成复刻脚本草案；",
              "  复刻 App 需要实现相同的界面标签、状态和截图就绪条件。", "",
              "| 规格流程 | 状态 | 来源证据 |", "| --- | --- | --- |"]

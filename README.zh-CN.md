@@ -2,7 +2,7 @@
 
 [English](README.md) · 简体中文 · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
-[项目网站](https://everettjf.github.io/copyapp/) · [安装指南](#从这里开始) · [参与贡献](CONTRIBUTING.md)
+[项目网站](https://xnu.app/copyapp/) · [安装指南](#从这里开始) · [参与贡献](CONTRIBUTING.md)
 
 ## 从这里开始
 
@@ -15,7 +15,7 @@ sh scripts/bootstrap-macos.sh
 .venv/bin/copyapp onboard
 ```
 
-克隆仓库需要已有 GitHub 访问权限；若 GitHub 返回 404，请先向仓库所有者申请协作者权限。
+仓库已公开，无需协作者邀请即可克隆。
 
 `onboard` 会显示设备 UDID；若连接了多台手机，按提示指定其中一台。然后列出 App、确认准确 Bundle ID，**在手机上打开目标 App 并停留于待观察页面**，再采集：
 
@@ -33,7 +33,7 @@ sh scripts/bootstrap-macos.sh
 
 ## 已验证支持
 
-第一版“分析 → 复刻 → 真机对照”的核心阶段已在 iPhone XR / iOS 16.1.1（普通 rootless）、[iPhone 14 / iOS 17.3.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone14.md)和 [iPhone 11 / iOS 26.0.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone11-ios26.md)上通过真机验证。这里的“支持”指在已测配置上完成证据采集、审阅报告、独立 App 安装及同机选定行为核验，不代表任意 App、越狱配置或全部功能都可用。iOS 26 Calculator 的一条运算流程通过了对照，最终截图审阅只有轻微差异。
+第一版“分析 → 复刻 → 真机对照”的核心阶段已在 iPhone XR / iOS 16.1.1（普通 rootless）、[iPhone 14 / iOS 17.3.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone14.md)和 [iPhone 11 / iOS 26.0.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone11-ios26.md)上通过真机验证。这里的“支持”指在已测配置上完成证据采集、审阅报告、独立 App 安装及同机选定行为核验，不代表任意 App、越狱配置或全部功能都可用。iOS 26 Calculator 的一条运算流程通过了对照，最终截图审阅只有轻微差异；这份正式报告到交付的衔接仍需补采带截图就绪条件的原版脚本。
 
 | 设备状态 | 已验证范围 | 设备专属配置 |
 | --- | --- | --- |
