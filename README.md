@@ -8,13 +8,13 @@ Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app 
 
 | Device status | Verified scope | Device-specific setup |
 | --- | --- | --- |
-| iPhone XR · iOS 16.1.1 · rootless | Deep analysis, encrypted App recovery, a three-flow original/clone fixture check with five reviewed screenshot pairs, current original/clone SQLite row checks, and fixture share-extension text receipt; selected original Translate input and Clock Stopwatch flows pass both UI backends | Rootless iOS MCP, SSH, host-matched Frida; TrollStore or valid signing for installation |
+| iPhone XR · iOS 16.1.1 · rootless | A complete three-flow system Notes analysis-to-rebuild parent case; encrypted App recovery, a three-flow original/clone fixture check with five reviewed screenshot pairs, current original/clone SQLite row checks, and fixture share-extension text receipt; selected original Translate input and Clock Stopwatch flows pass both UI backends | Rootless iOS MCP, SSH, host-matched Frida; TrollStore or valid signing for installation |
 | iPhone 14 · iOS 17.3.1 · Relaxin/RootHide | Completed four-flow `copyapp copy` parent with reviewed Calculator report, original-App button traces, signed independent clone, four paired final-view assertions and five reviewed screenshot pairs; encrypted Remoboard recovery; fixture flows, SQLite checks and share-extension text receipt; selected original Translate input and Clock Stopwatch flows pass both UI backends | RootHide iOS MCP with ElleKit, mobile SSH, pinned Frida 17.23.3 sidecar, Apple Development signing for the clone; first-use setup for Translate/Clock |
 | iPhone 11 · iOS 26.0.1 | Not tested | No setup or compatibility claim yet |
 
-### Project status at v0.1.15
+### Project status at v0.1.16
 
-Development is paused after the two-device selected-flow validation and the [v0.1.15 release](https://github.com/everettjf/copyapp/releases/tag/v0.1.15). The release wheel was downloaded and its SHA-256 matched the build. Its installed-wheel iCTRL fix passed the same nine-step Calculator `7 + 8 = 15` playbook on both phones; 321 unit tests passed. The evidence and exact boundaries are in the [two-device matrix](docs/two-device-verification-matrix.md).
+The [system Notes XR study](docs/notes-xr-workflow.md) now runs the complete selected-flow analysis and independent rebuild path: three local flows, a reviewed report with exact-binary Hopper evidence, a runnable [NotesClone](rebuild/NotesClone/README.md), three paired UI checks and three reviewed screenshot pairs. It also fixes decryption-helper timeouts on already unencrypted packages. **322 unit tests pass.** This is scoped to local folder navigation, plain-text note creation and search on the XR; it does not establish full Notes equivalence or iOS 17 Notes behavior. See the [v0.1.16 release note](docs/releases/v0.1.16.md) and [two-device matrix](docs/two-device-verification-matrix.md).
 
 | Setup difference | iPhone XR / iOS 16.1.1 | iPhone 14 / iOS 17.3.1 |
 | --- | --- | --- |

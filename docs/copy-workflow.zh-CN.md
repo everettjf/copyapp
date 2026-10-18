@@ -31,11 +31,15 @@ Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组
 
 对完全相同的 `copyapp copy` 命令添加 `--resume`。父流程先重验发现结果，再用 `prepare-app` 采集安装包、沙盒、请求的脱壳结果及 UI/运行时调查证据。状态为 `analysis_agent_needs_review` 时，阅读 `analysis-agent/TASK.md` 和来源证据，在 `analysis-agent/reviewed-report/` 写正式报告与 `feature-spec.json`，然后运行 `copyapp analysis-delivery` 保存到 `analysis-agent/analysis-delivery/`。交付关卡检查来源身份和每条流程的证据关联；反编译函数的语义仍须由 Agent 审阅，未知部分要明确标注。
 
+若包内已索引的 Mach-O 全部未加密，请求的恢复阶段现在会验证并记录原包快照，不启动手机端砸壳助手。清单标记为 `source_snapshot_unencrypted`，不能把它表述成真正完成了解密。
+
 默认链路不依赖 REA。需要直接反编译时，可选 `--analysis-provider ghidra-direct --ghidra-dir <目录> --java-home <目录>`，或 `--analysis-provider hopper-direct`（可用 `--hopper-app <Hopper.app>` 指定路径）。前者需要 Ghidra 和 JDK；后者需要在正常 macOS 用户会话中运行已授权的 Hopper GUI。iOS 16.1.1 XR 上的 `investigate-flow --provider hopper-direct` 已完成 UI 重放、Frida 跟踪与 Hopper 反编译，结果进入校验通过的报告。iOS 17.3.1 上的[一流程 Hopper `copy` 父案例](../cases/ios17-hopper-current-parent-20261017/manifest.json)还完成报告、已有独立源码的签名安装和同机对照。Frida 的运行时命中与静态伪代码是不同证据，不能单凭其中一项认定完整实现。
 
 ## 3. 实现与真机对照
 
 再次续跑后，`prepare-rebuild` 生成关联报告的复刻任务，并停在 `rebuild-agent/TASK.md`。在指定的 `--project` 编写独立 Xcode 工程，在绑定设备上安装并保存证据。开发证书签名的 IPA 可用 `copyapp install --transport usb --udid <UDID> --ipa <IPA> --out <案例>`；现有 TrollStore 安装路径仍是默认值。校验安装案例后，使用 `rebuild-task-check` 在同一 UI 后端对照原版与复刻版选定流程。逐张审阅截图，保存 `visual-review`，最后运行不带 `--run` 的 `agent-delivery`。父流程要求每条选定流程通过行为或末端视图断言、全部图片已审且无重大差异；轻微差异仍需记录。
+
+每条脚本要声明起始页面及首次使用状态。“新启动”可能恢复上次的编辑页或搜索页，[系统 Notes XR 实测](notes-xr-workflow.zh-CN.md)就遇到此情况。若相邻流程依赖不同的恢复页面，应导航至预期页面、把 App 正常置于后台使 iOS 保存状态、保留准备步骤证据，再续跑同一失败案例。首次使用遮挡层或测试数据条数差异不能直接算作核心行为一致。
 
 最后一次 `--resume` 仅在所有子案例和来源关联通过时将父案例标为完成。`copyapp verify cases/<案例>` 可以重验哈希，但不能证明语义解释正确，也不能证明未测功能等价。已处于 Coding Agent 会话时不要嵌套启动 `copyapp agent-run` 或另一个 Codex/Claude 进程。
 

@@ -196,6 +196,19 @@ def validate_decrypt_package_case(output: Path, manifest: dict) -> bool:
     device_run = json.loads((output / "device-run/result.json").read_text(
         encoding="utf-8"))
     run_command = device_run.get("command")
+    source_index = analyze_ipa(snapshot)
+    skipped_unencrypted = record.get("recovery_strategy") == "source_snapshot_unencrypted"
+    device_run_valid = (
+        device_run.get("status") == "skipped_unencrypted" and
+        device_run.get("exit_code") is None and run_command == [] and
+        not any(item.get("encrypted_on_disk") for item in source_index["binaries"]) and
+        record.get("recovered_binaries") == [] and
+        _hash_file(snapshot) == _hash_file(candidate)
+    ) if skipped_unencrypted else (
+        device_run.get("exit_code") == 0 and
+        isinstance(run_command, list) and len(run_command) >= 5 and
+        "decrypt" in run_command and record.get("bundle_id") in run_command
+    )
     if (record.get("schema_version") != 1 or
             record.get("bundle_id") != manifest.get("bundle_id") or
             record.get("device_id_sha256_prefix") !=
@@ -207,15 +220,12 @@ def validate_decrypt_package_case(output: Path, manifest: dict) -> bool:
             record.get("analysis_ipa_sha256") != manifest.get("analysis_ipa_sha256") or
             record.get("helper_sha256") != PINNED_HELPER_SHA256 or
             record.get("all_macho_headers_decrypted") is not True or
-            device_run.get("exit_code") != 0 or
+            not device_run_valid or
             hashlib.sha256(device_run["device_id"].encode()).hexdigest()[:16] !=
             record.get("device_id_sha256_prefix") or
-            not isinstance(run_command, list) or
-            len(run_command) < 5 or
-            "decrypt" not in run_command or
-            record["bundle_id"] not in run_command):
+            (not skipped_unencrypted and
+             record.get("recovery_strategy", "device_helper") != "device_helper")):
         return False
-    source_index = analyze_ipa(snapshot)
     static_index = analyze_ipa(candidate)
     if (source_index.get("bundle_id") != record["bundle_id"] or
             source_index.get("version") != record.get("installed_version") or
@@ -266,6 +276,61 @@ def validate_decrypt_package_case(output: Path, manifest: dict) -> bool:
     return True
 
 
+def _use_unencrypted_snapshot(udid: str, bundle: str, snapshot: Path,
+                              source_index: dict, app: dict, output: Path) -> Path:
+    """Record a verified no-op recovery without launching a device helper."""
+    output.mkdir(parents=True, exist_ok=True)
+    candidate = output / "analysis.ipa"
+    shutil.copyfile(snapshot, candidate)
+    check = inspect_decrypted_ipa(candidate, bundle)
+    write_decryption_check(check, output / "check")
+    if not check["header_check_passed"]:
+        raise RuntimeError("unencrypted snapshot failed package-wide Mach-O check")
+    write_ipa_report(analyze_ipa(candidate), output / "static")
+    objc_classes = None
+    objc_methods = None
+    try:
+        with tempfile.TemporaryDirectory(dir=output) as scratch:
+            main_file = Path(scratch) / "main-mach-o"
+            with ZipFile(candidate) as archive, archive.open(check["main_path"]) as source, main_file.open("wb") as target:
+                shutil.copyfileobj(source, target, length=1024 * 1024)
+            objc = index_objc(main_file)
+            write_objc_report(objc, output / "static")
+            objc_classes = len(objc["classes"])
+            objc_methods = sum(len(item.get("instance_methods", [])) + len(item.get("class_methods", []))
+                               for item in objc["classes"])
+    except ObjCIndexError as exc:
+        (output / "static" / "objc-status.json").write_text(
+            json.dumps({"status": "unsupported", "reason": str(exc)}, ensure_ascii=False, indent=2) + "\n")
+    device_run = output / "device-run"
+    device_run.mkdir()
+    (device_run / "result.json").write_text(json.dumps({
+        "schema_version": 1, "device_id": udid, "status": "skipped_unencrypted",
+        "transport": "source snapshot; no device command", "command": [], "exit_code": None,
+    }, indent=2) + "\n")
+    (device_run / "output.txt").write_text("No encrypted Mach-O; device helper was not started.\n")
+    record = {
+        "schema_version": 1, "bundle_id": bundle,
+        "installed_version": app.get("CFBundleShortVersionString"),
+        "installed_build": app.get("CFBundleVersion"),
+        "device_id_sha256_prefix": hashlib.sha256(udid.encode()).hexdigest()[:16],
+        "source_snapshot_sha256": source_index["ipa_sha256"],
+        "helper_source": "not_used", "helper_sha256": PINNED_HELPER_SHA256,
+        "recovery_strategy": "source_snapshot_unencrypted",
+        "device_ipa_sha256": source_index["ipa_sha256"],
+        "analysis_ipa_sha256": _hash_file(candidate),
+        "checked_macho_count": check["checked_binaries"],
+        "recovered_binaries": [], "objc_class_count": objc_classes,
+        "objc_method_count": objc_methods,
+        "all_macho_headers_decrypted": True,
+        "note": "No encrypted Mach-O required recovery; device helper was not started. Installability is not asserted.",
+    }
+    path = output / "decryption.json"
+    path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+    _write_case_manifest(output, snapshot, record)
+    return path
+
+
 def decrypt_package(udid: str, bundle: str, snapshot: Path, helper: Path,
                     output: Path, ssh_port: int, identity: Path,
                     known_hosts: Path) -> Path:
@@ -275,8 +340,6 @@ def decrypt_package(udid: str, bundle: str, snapshot: Path, helper: Path,
         raise ValueError("invalid bundle ID")
     if output.exists() and any(output.iterdir()):
         raise FileExistsError(f"output directory is not empty: {output}")
-    if _hash_file(helper) != PINNED_HELPER_SHA256:
-        raise ValueError("helper does not match reviewed pinned build")
     source_index = analyze_ipa(snapshot)
     if source_index["bundle_id"] != bundle:
         raise ValueError("snapshot bundle ID differs from requested app")
@@ -292,6 +355,10 @@ def decrypt_package(udid: str, bundle: str, snapshot: Path, helper: Path,
                                  timeout=10, check=True).stdout.decode().strip()
     if actual_udid != udid:
         raise RuntimeError("SSH is connected to a different device")
+    if not any(item.get("encrypted_on_disk") for item in source_index["binaries"]):
+        return _use_unencrypted_snapshot(udid, bundle, snapshot, source_index, app, output)
+    if _hash_file(helper) != PINNED_HELPER_SHA256:
+        raise ValueError("helper does not match reviewed pinned build")
     nonce = uuid.uuid4().hex[:16]
     remote_helper = f"/var/mobile/Media/copyapp-helper-{nonce}"
     remote_ipa = f"/var/mobile/Media/copyapp-analysis-{nonce}.ipa"

@@ -8,13 +8,13 @@
 
 | 设备状态 | 已验证范围 | 设备专属配置 |
 | --- | --- | --- |
-| iPhone XR · iOS 16.1.1 · rootless | 深度分析、加密 App 恢复、夹具三流程原版/复刻版对照及五组截图审阅；新版复刻版三流程与原版/复刻版 SQLite 行内容对照通过；夹具分享扩展收到固定文本；原版 Translate 输入与 Clock 秒表的选定流程经两种界面后端通过 | rootless iOS MCP、SSH、版本匹配的 Frida；安装使用 TrollStore 或有效签名 |
+| iPhone XR · iOS 16.1.1 · rootless | 完成系统 Notes 三流程分析到独立复刻的父案例；深度分析、加密 App 恢复、夹具三流程原版/复刻版对照及五组截图审阅；新版复刻版三流程与原版/复刻版 SQLite 行内容对照通过；夹具分享扩展收到固定文本；原版 Translate 输入与 Clock 秒表的选定流程经两种界面后端通过 | rootless iOS MCP、SSH、版本匹配的 Frida；安装使用 TrollStore 或有效签名 |
 | iPhone 14 · iOS 17.3.1 · Relaxin/RootHide | 完成四流程 `copyapp copy` 父案例：Calculator 审阅报告、原版按键跟踪、独立签名复刻版、四条末端断言和五组截图审阅；Remoboard 加密包恢复；夹具流程、SQLite 核对及分享扩展收到固定文本；原版 Translate 输入与 Clock 秒表的选定流程经两种界面后端通过 | ElleKit 与 RootHide iOS MCP、mobile SSH、固定版本 Frida 17.23.3 独立服务、复刻版的 Apple Development 签名；Translate/Clock 首次使用引导已完成 |
 | iPhone 11 · iOS 26.0.1 | 未测试 | 暂无配置或兼容性结论 |
 
-### v0.1.15 阶段性状态
+### v0.1.16 阶段性状态
 
-双机选定流程验收及 [v0.1.15 正式发布](https://github.com/everettjf/copyapp/releases/tag/v0.1.15)后，开发暂时收尾。发布 wheel 已重新下载并核对 SHA-256；修复独立 wheel 的 iCTRL 定位后，同一条九步 Calculator `7 + 8 = 15` 脚本在两机通过；321 项单测通过。完整证据与边界见[双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)。
+[系统 Notes 的 XR 实测](docs/notes-xr-workflow.zh-CN.md)现已完成选定流程的分析与独立复刻全路径：三条本地流程、包含精确二进制 Hopper 证据的审阅报告、可运行的 [NotesClone](rebuild/NotesClone/README.zh-CN.md)、三组原版/复刻版真机对照与逐图审阅。同时修复未加密包误等手机端砸壳助手的超时问题；**322 项单测通过**。范围仅为 XR 上的本地文件夹导航、纯文本新建和搜索，不能推断完整 Notes 或 iOS 17 Notes 行为。详见 [v0.1.16 发布说明](docs/releases/v0.1.16.zh-CN.md)与[双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
 | 配置差异 | iPhone XR / iOS 16.1.1 | iPhone 14 / iOS 17.3.1 |
 | --- | --- | --- |

@@ -3,13 +3,16 @@ import json
 import plistlib
 import shutil
 import struct
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 from zipfile import ZipFile, ZipInfo
 
 from copyapp.decrypt_package import (PINNED_HELPER_SHA256, _canonicalize_analysis_ipa,
-                                     _verify_changed_binaries, _write_case_manifest)
+                                     _verify_changed_binaries, _write_case_manifest,
+                                     decrypt_package)
 from copyapp.decrypt_verify import inspect_decrypted_ipa, write_decryption_check
 from copyapp.ipa import analyze_ipa, write_ipa_report
 from copyapp.verify import verify_case
@@ -205,6 +208,38 @@ class PackageByteAuditTest(unittest.TestCase):
         (case / 'decryption.json').write_text(json.dumps(record))
         _write_case_manifest(case, self.snapshot, record)
         self.assertTrue(verify_case(case))
+
+    def test_unencrypted_package_skips_device_helper_and_verifies(self):
+        with ZipFile(self.snapshot) as source:
+            plist = source.read('Payload/Example.app/Info.plist')
+        with ZipFile(self.snapshot, 'w') as source:
+            source.writestr('Payload/Example.app/Info.plist', plist)
+            source.writestr(self.main, binary(False))
+            source.writestr(self.extension, binary(False))
+        udid = '00000000-0000000000000000'
+        app = {'CFBundleShortVersionString': '1.0', 'CFBundleVersion': '1'}
+
+        async def installed_main(*_):
+            return '/private/var/containers/Bundle/Application/Example.app/Example', None, app
+
+        with patch('copyapp.decrypt_package._installed_main', installed_main), \
+                patch('copyapp.decrypt_package._ssh_argv', return_value=['ssh']), \
+                patch('copyapp.decrypt_package.subprocess.run', return_value=
+                      subprocess.CompletedProcess(['ssh'], 0, udid.encode(), b'')) as run:
+            case = self.root / 'skipped-case'
+            decrypt_package(udid, 'com.example.test', self.snapshot,
+                            self.root / 'missing-helper', case, 22222,
+                            self.root / 'identity', self.root / 'known-hosts')
+        self.assertEqual(run.call_count, 1)
+        record = json.loads((case / 'decryption.json').read_text())
+        self.assertEqual(record['recovery_strategy'], 'source_snapshot_unencrypted')
+        self.assertEqual(record['recovered_binaries'], [])
+        self.assertEqual((case / 'analysis.ipa').read_bytes(), self.snapshot.read_bytes())
+        self.assertTrue(verify_case(case))
+        record['recovered_binaries'] = [{'path': self.main}]
+        (case / 'decryption.json').write_text(json.dumps(record))
+        _write_case_manifest(case, self.snapshot, record)
+        self.assertFalse(verify_case(case))
 
 
 if __name__ == "__main__":
