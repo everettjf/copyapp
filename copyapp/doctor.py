@@ -332,8 +332,15 @@ def run_doctor(udid: str, output: Path, ssh_port: int = 22222,
                     marker = _roothide_marker_probe(active_port, ssh_identity,
                                                     ssh_known_hosts)
                     if marker["status"] == "observed":
+                        previous = probes.get("rootless_marker", {})
                         probes["rootless_marker"] = {
-                            **probes.get("rootless_marker", {}), **marker}
+                            **{key: value for key, value in previous.items()
+                               if key not in ("status", "reason", "error_type")},
+                            **marker,
+                        }
+                        if previous.get("status") == "unavailable":
+                            probes["rootless_marker"]["dvt_marker_status"] = "unavailable"
+                            probes["rootless_marker"]["dvt_marker_error_type"] = previous.get("error_type")
         except Exception as exc:
             probes["ssh_mobile"] = _error(exc)
         probes["frida_usb"] = _frida_probe(udid)

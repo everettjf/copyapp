@@ -193,6 +193,38 @@ class OnboardingTest(unittest.TestCase):
             self.assertTrue(record["probes"]["rootless_marker"]["roothide_namespace"])
             self.assertIn("frida_roothide", [s["for"] for s in record["next_steps"]])
 
+    def test_doctor_ssh_marker_does_not_report_stale_dvt_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "doctor"
+            async def fake_usb(_udid, _output, probes, _evidence, _survey_only):
+                probes.update({"usb_lockdown": {"status": "available"},
+                               "usb_screenshot": {"status": "available"},
+                               "rootless_marker": {"status": "unavailable",
+                                                   "error_type": "RuntimeError",
+                                                   "reason": "native RSD directory listing failed"}})
+                return {"UniqueDeviceID": UDID}
+            host = {name: {"status": "available"} for name in
+                    ("xcode", "xcodegen", "ldid", "codex_cli", "theos")}
+            with patch("copyapp.doctor._usb_probes", side_effect=fake_usb), \
+                 patch("copyapp.doctor.socket.create_connection", side_effect=OSError), \
+                 patch("copyapp.doctor.ssh_tunnel", return_value=nullcontext(22222)), \
+                 patch("copyapp.doctor._ssh_probe", return_value={"status": "available"}), \
+                 patch("copyapp.doctor._roothide_marker_probe", return_value={
+                     "status": "observed", "roothide_namespace": True}), \
+                 patch("copyapp.doctor._frida_probe", return_value={"status": "available"}), \
+                 patch("copyapp.doctor._ios_mcp_probe", return_value={"status": "available"}), \
+                 patch("copyapp.doctor._ictrl_probe", return_value={"status": "available"}), \
+                 patch("copyapp.doctor._host_probes", return_value=host):
+                run_doctor(UDID, output)
+            record = json.loads((output / "device.json").read_text())
+            marker = record["probes"]["rootless_marker"]
+            self.assertEqual(marker["status"], "observed")
+            self.assertTrue(marker["roothide_namespace"])
+            self.assertEqual(marker["dvt_marker_status"], "unavailable")
+            self.assertNotIn("reason", marker)
+            self.assertNotIn("error_type", marker)
+            self.assertNotIn("native RSD directory listing failed", (output / "report.md").read_text())
+
     def test_frida_inventory_does_not_claim_jailed_access_is_ready(self):
         device = SimpleNamespace(id=UDID, type="usb",
                                  query_system_parameters=lambda: {"access": "jailed"},
