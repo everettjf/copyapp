@@ -29,3 +29,7 @@ rebuild/CompassClone/CopyAppCompass.xcodeproj/project.xcworkspace/xcuserdata/
 fixture/CopyAppFixture/build/
 fixture/CopyAppFixture/CopyAppFixture.xcodeproj/
 fixture/CopyAppFixture/ShareExtension/Info.plist
+examples/rebuild/*/build/
+examples/rebuild/*/*.xcodeproj/project.xcworkspace/xcuserdata/
+examples/rebuild/*/*.xcodeproj/xcuserdata/
+examples/rebuild/PodcastsFreshProbe/*.xcodeproj/

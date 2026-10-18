@@ -16,5 +16,6 @@ Copy APP 当前正式发布版为 **v0.1.0**；`main` 已有尚未发布的后�
 | 界面脚本 | [手势](ui-gesture-playbooks.zh-CN.md) · [文字输入](ui-text-playbooks.zh-CN.md) |
 | 原生代码与安装包 | [加密包恢复](full-package-decryption.md) · [Hopper 直连](rea-hopper-integration.zh-CN.md) · [不依赖 REA](rea-independence.zh-CN.md) |
 | 已发布版本 | [v0.1.0 发布说明](releases/v0.1.0.zh-CN.md) |
+| 源码示例 | [独立 App 工程](../examples/rebuild/README.md) · [报告输入格式](../examples/report-inputs/README.md) |
 
 [`examples/report-inputs/`](../examples/report-inputs/README.md) 中的六份 JSON 是试点合成脚本及分析 Skill 使用的**历史目标专属示例**，不是当前设备报告。分析新目标 App 时，必须重新审阅每条结论。

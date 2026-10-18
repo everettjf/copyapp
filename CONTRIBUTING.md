@@ -28,7 +28,8 @@ Thanks for helping make iOS app analysis more reproducible. Copy APP joins phone
 | `device/ios-mcp/` | Rootless phone UI service. |
 | `vendor/ictrl/` | Attributed optional iCTRL source and build. |
 | `skills/` | Coding-agent workflows and handoffs. |
-| `rebuild/` | Independent example implementations. |
+| `examples/rebuild/` | Independent example implementations and experimental probes. |
+| `rebuild/` | Suggested local output path for a new, unreviewed rebuild. |
 | `tests/` and `fixture/` | Automated checks and known-source fixtures. |
 | `examples/report-inputs/` | Historical pilot JSON inputs; not current device reports. |
 | `docs/` | Current setup, architecture, workflow, support limits, release note and localized README overviews. |

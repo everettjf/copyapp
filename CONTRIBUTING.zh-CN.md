@@ -28,7 +28,8 @@ Copy APP 将手机观测、原生代码分析、审阅报告和独立构建的 A
 | `device/ios-mcp/` | 手机端 rootless 界面服务。 |
 | `vendor/ictrl/` | 保留来源和署名的可选 iCTRL 源码。 |
 | `skills/` | Coding Agent 流程与交接。 |
-| `rebuild/` | 独立实现的示例工程。 |
+| `examples/rebuild/` | 独立实现的示例工程和实验探针。 |
+| `rebuild/` | 新复刻工程建议使用的本地输出路径；不代表已审阅示例。 |
 | `tests/` 和 `fixture/` | 自动测试与源码已知夹具。 |
 | `examples/report-inputs/` | 历史试点 JSON 输入，不是当前设备报告。 |
 | `docs/` | 当前安装、架构、工作流、支持边界、正式发布说明与 README 翻译。 |

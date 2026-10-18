@@ -37,6 +37,8 @@ sh scripts/bootstrap-macos.sh
 
 Mac 负责编排和构建。OpenSSH 采集文件，iOS MCP 提供越狱环境下的界面观察与控制，iCTRL 是可选的 XCTest 界面后端，Frida 用于有界运行时取证。Ghidra 和 Hopper 是可选的本机代码分析工具，**不依赖 REA 运行**。详见[架构说明](docs/architecture.zh-CN.md)。
 
+[示例工程](examples/README.md)已集中在 `examples/rebuild/`；下文命令中的 `rebuild/<NEW_PROJECT>` 是用户新建工程的输出位置。
+
 ### 四张图看懂工作流
 
 ![Mac 与指定越狱 iPhone 通过 USB 协作，完成分析与对照](docs/assets/social/01-system-map.png)

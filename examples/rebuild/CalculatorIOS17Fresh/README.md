@@ -8,12 +8,12 @@ From the repository root, after installing the signed App on the exact iPhone, r
 
 ```sh
 .venv/bin/copyapp rebuild-check --udid <IPHONE_14_UDID> \
-  --feature-spec rebuild/CalculatorIOS17Fresh/feature-spec.json --backend ios-mcp \
-  --pair calculator-basic-addition rebuild/CalculatorIOS17Fresh/playbooks/basic-addition.original.json rebuild/CalculatorIOS17Fresh/playbooks/basic-addition.rebuilt.json \
-  --pair decimal-addition rebuild/CalculatorIOS17Fresh/playbooks/decimal-addition.original.json rebuild/CalculatorIOS17Fresh/playbooks/decimal-addition.rebuilt.json \
-  --pair negative-addition rebuild/CalculatorIOS17Fresh/playbooks/negative-addition.original.json rebuild/CalculatorIOS17Fresh/playbooks/negative-addition.rebuilt.json \
-  --pair percent-of-fifty rebuild/CalculatorIOS17Fresh/playbooks/percent-of-fifty.original.json rebuild/CalculatorIOS17Fresh/playbooks/percent-of-fifty.rebuilt.json \
+  --feature-spec examples/rebuild/CalculatorIOS17Fresh/feature-spec.json --backend ios-mcp \
+  --pair calculator-basic-addition examples/rebuild/CalculatorIOS17Fresh/playbooks/basic-addition.original.json examples/rebuild/CalculatorIOS17Fresh/playbooks/basic-addition.rebuilt.json \
+  --pair decimal-addition examples/rebuild/CalculatorIOS17Fresh/playbooks/decimal-addition.original.json examples/rebuild/CalculatorIOS17Fresh/playbooks/decimal-addition.rebuilt.json \
+  --pair negative-addition examples/rebuild/CalculatorIOS17Fresh/playbooks/negative-addition.original.json examples/rebuild/CalculatorIOS17Fresh/playbooks/negative-addition.rebuilt.json \
+  --pair percent-of-fifty examples/rebuild/CalculatorIOS17Fresh/playbooks/percent-of-fifty.original.json examples/rebuild/CalculatorIOS17Fresh/playbooks/percent-of-fifty.rebuilt.json \
   --out cases/calculator-ios17fresh-recheck
 ```
 
-The source does not reuse the earlier `CalculatorFreshProbe` implementation. The [current status](../../docs/current-status.md) records the latest named-device result and the separate iCTRL limitation. Raw report and replay cases remain local under ignored `cases/`.
+The source does not reuse the earlier `CalculatorFreshProbe` implementation. The [current status](../../../docs/current-status.md) records the latest named-device result and the separate iCTRL limitation. Raw report and replay cases remain local under ignored `cases/`.
