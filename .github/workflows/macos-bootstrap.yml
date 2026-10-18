@@ -28,3 +28,5 @@ jobs:
         run: sh scripts/bootstrap-macos.sh --trace
       - name: Run unit tests
         run: .venv/bin/python -m unittest discover -s tests -q
+      - name: Build and verify isolated wheel
+        run: .venv/bin/python scripts/verify-wheel.py
