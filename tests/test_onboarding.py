@@ -2,7 +2,8 @@ import tempfile
 import unittest
 import os
 import json
-from contextlib import redirect_stdout
+import socket
+from contextlib import nullcontext, redirect_stdout
 from io import StringIO
 from pathlib import Path
 from types import SimpleNamespace
@@ -10,7 +11,7 @@ from unittest.mock import AsyncMock, patch
 
 from copyapp.doctor import _frida_probe, _next_steps, _ssh_probe, run_doctor
 from copyapp.onboarding import _choose_device, _prepare_ssh_key, run_onboarding
-from copyapp.tunnels import run_tunnels
+from copyapp.tunnels import _check_port, run_tunnels
 
 
 UDID = "00008020-000D650434B8003A"
@@ -130,6 +131,68 @@ class OnboardingTest(unittest.TestCase):
             steps = _next_steps(UDID, probes, host, root / "id", root / "known_hosts")
             self.assertIn("signing_rebuild", [step["for"] for step in steps])
 
+    def test_roothide_inventory_requires_configured_sidecar_for_analysis(self):
+        probes = {name: {"status": "available"} for name in
+                  ("usb_screenshot", "ssh_mobile", "ios_mcp")}
+        probes["rootless_marker"] = {"roothide_namespace": True}
+        probes["frida_usb"] = {"status": "available", "transport": "usb"}
+        host = {"xcode": {"status": "available"},
+                "xcodegen": {"status": "available"},
+                "ldid": {"status": "available"}}
+        device = SimpleNamespace(serial=UDID, connection_type="USB")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            def fake_doctor(_udid, output, *_args, **_kwargs):
+                output.mkdir()
+                (output / "report.md").write_text("report")
+                (output / "device.json").write_text(json.dumps({
+                    "probes": probes, "host": host,
+                    "next_steps": [{"for": "frida_roothide", "action": "configure sidecar"}],
+                }))
+                return output / "report.md", True
+            display = StringIO()
+            with patch("copyapp.onboarding.list_devices", new=AsyncMock(return_value=[device])), \
+                 patch("copyapp.onboarding.run_doctor", side_effect=fake_doctor), \
+                 redirect_stdout(display):
+                _, ready = run_onboarding(output=root / "before", stage="analyze",
+                                          prepare_ssh=False)
+            self.assertFalse(ready)
+            self.assertIn("configure sidecar", display.getvalue())
+            probes["frida_usb"]["transport"] = "usb_roothide_sidecar"
+            with patch("copyapp.onboarding.list_devices", new=AsyncMock(return_value=[device])), \
+                 patch("copyapp.onboarding.run_doctor", side_effect=fake_doctor), \
+                 redirect_stdout(StringIO()):
+                _, ready = run_onboarding(output=root / "after", stage="analyze",
+                                          prepare_ssh=False)
+            self.assertTrue(ready)
+
+    def test_doctor_detects_roothide_even_when_dvt_marker_was_observed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "doctor"
+            async def fake_usb(_udid, _output, probes, _evidence, _survey_only):
+                probes.update({"usb_lockdown": {"status": "available"},
+                               "usb_screenshot": {"status": "available"},
+                               "rootless_marker": {"status": "observed",
+                                                   "var_jb_readable": True}})
+                return {"UniqueDeviceID": UDID}
+            host = {name: {"status": "available"} for name in
+                    ("xcode", "xcodegen", "ldid", "codex_cli", "theos")}
+            with patch("copyapp.doctor._usb_probes", side_effect=fake_usb), \
+                 patch("copyapp.doctor.socket.create_connection", side_effect=OSError), \
+                 patch("copyapp.doctor.ssh_tunnel", return_value=nullcontext(22222)), \
+                 patch("copyapp.doctor._ssh_probe", return_value={"status": "available"}), \
+                 patch("copyapp.doctor._roothide_marker_probe", return_value={
+                     "status": "observed", "roothide_namespace": True}), \
+                 patch("copyapp.doctor._frida_probe", return_value={"status": "available"}), \
+                 patch("copyapp.doctor._ios_mcp_probe", return_value={"status": "available"}), \
+                 patch("copyapp.doctor._ictrl_probe", return_value={"status": "available"}), \
+                 patch("copyapp.doctor._host_probes", return_value=host):
+                run_doctor(UDID, output)
+            record = json.loads((output / "device.json").read_text())
+            self.assertTrue(record["probes"]["rootless_marker"]["var_jb_readable"])
+            self.assertTrue(record["probes"]["rootless_marker"]["roothide_namespace"])
+            self.assertIn("frida_roothide", [s["for"] for s in record["next_steps"]])
+
     def test_frida_inventory_does_not_claim_jailed_access_is_ready(self):
         device = SimpleNamespace(id=UDID, type="usb",
                                  query_system_parameters=lambda: {"access": "jailed"},
@@ -148,6 +211,14 @@ class OnboardingTest(unittest.TestCase):
     def test_tunnel_rejects_colliding_ports_before_spawning(self):
         with self.assertRaisesRegex(ValueError, "must differ"):
             run_tunnels(UDID, 22222, 22222)
+
+    def test_tunnel_reports_an_occupied_host_port(self):
+        with socket.socket() as listener:
+            listener.bind(("127.0.0.1", 0))
+            listener.listen()
+            port = listener.getsockname()[1]
+            with self.assertRaisesRegex(ValueError, f"local port {port} is already in use"):
+                _check_port(port)
 
     def test_tunnel_refuses_a_missing_exact_device(self):
         with patch("pymobiledevice3.usbmux.list_devices",

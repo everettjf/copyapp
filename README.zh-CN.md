@@ -31,6 +31,8 @@ sh scripts/bootstrap-macos.sh
 
 在已越狱的 iPhone XR（iOS 16.1.1）上，[Translate 完整案例](docs/translate-xr-workflow.zh-CN.md)（[English](docs/translate-xr-workflow.md)）已经从新写的发现脚本走通到[审阅报告](cases/translate-current-workflow-20261016/analysis-agent/reviewed-report/report.md)、[独立 UIKit 工程](rebuild/TranslateFreshProbe)、真机安装与三组原版/复刻版对照。六张截图逐张审阅，均有轻微图标或间距差异。范围限于文字输入但不提交翻译、Favorites 空状态和 Conversation 待机导航；翻译结果、语音和相机能力仍未实现或验证。
 
+[本机干净检出配置实测](docs/clean-checkout-phone-provisioning.zh-CN.md)使用全新 SSH 身份在 XR 和 iOS 26 上采集 Clock，并在 iOS 26 从源码构建、签名、安装及重放独立 Clock App；临时密钥已从手机移除。第二台实体 Mac 的配对和签名仍未实测。
+
 ## 已验证支持
 
 第一版“分析 → 复刻 → 真机对照”的核心阶段已在 iPhone XR / iOS 16.1.1（普通 rootless）、[iPhone 14 / iOS 17.3.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone14.md)和 [iPhone 11 / iOS 26.0.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone11-ios26.md)上通过真机验证。这里的“支持”指在已测配置上完成证据采集、审阅报告、独立 App 安装及同机选定行为核验，不代表任意 App、越狱配置或全部功能都可用。iOS 26 的 Calculator 运算和 Clock 秒表选定流程均完成正式交付，视觉差异为轻微；两者都改造了已有的独立源码。
@@ -189,17 +191,21 @@ sh scripts/bootstrap-macos.sh
 | 组件 | 安装或配置 | 用途 |
 | --- | --- | --- |
 | 手机 OpenSSH | 安装适配 rootless 的 OpenSSH 服务端，通过下方 USB 端口转发访问。 | 只读获取 App 包和沙盒。 |
-| 手机 Frida server | 普通 rootless 安装与 Mac 匹配的版本；已测 RootHide/iOS 17 用 `copyapp setup frida-roothide` 配置独立 Frida 17 服务。 | 运行时函数跟踪及普通 rootless 整包恢复；已测 RootHide 整包恢复走 mobile SSH。 |
+| 手机 Frida server | 普通 rootless 安装与 Mac 匹配的版本；已测 RootHide/iOS 17 和 26 用 `copyapp setup frida-roothide` 配置独立 Frida 17 服务。 | 运行时函数跟踪及普通 rootless 整包恢复；已测 RootHide 整包恢复走 mobile SSH。 |
 | Copy APP iOS MCP tweak | 按 [手机端说明](device/ios-mcp/README.zh-CN.md)编译安装，随后重新载入 SpringBoard。 | 经 USB 本地服务读取前台 App、界面树、截图并执行手势。 |
 | iCTRL runner 与配对 Mac 客户端 | 完成 Xcode 签名配置后运行 `copyapp setup ictrl --udid <UDID> --out cases/ictrl-setup`，再批准手机上的配对提示。 | 可选界面后端，以及 Instruments 启动失败时的终止/重启回退。 |
 
 iOS MCP tweak 编译需要完整 Xcode、Theos、iPhoneOS 16.5 SDK 和 `ldid`；本仓库**不提供** Theos 与 SDK。安装好后，在仓库根目录运行 `THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules make -C device/ios-mcp package`，再用手机包管理器或 Filza 安装 `device/ios-mcp/packages/` 生成的 `.deb`，重新载入 SpringBoard。XR/iOS 16 的普通 rootless 包已验证；RootHide 需要 `roothide/theos`、`THEOS_PACKAGE_SCHEME=roothide` 和 ElleKit 等真正的 tweak 注入器。iPhone 14 已安装 ElleKit 与 RootHide 包，界面服务通过真机验证；见 [状态记录](docs/relaxin-roothide-iphone14.md)。可选的 iCTRL 源码及 Apache 2.0 许可、NOTICE 已固定在 [`vendor/ictrl`](vendor/ictrl/UPSTREAM.md)；生成的签名文件、大型构建依赖及配对密钥只保存在本地。
+
+RootHide 手机执行 `bootstrap-macos.sh --trace` 后，Mac 端 Frida 可能高于侧车要求的版本。先运行 `.venv/bin/python -m pip install 'frida==17.23.3'`，再执行 `.venv/bin/copyapp setup frida-roothide --udid <UDID> --out cases/frida-roothide-setup`。普通 USB Frida 进程列表不能证明 RootHide App 附加可用；检测到 RootHide 时，`onboard --stage analyze` 现在要求侧车已配置。
 
 Mac 端专用 SSH 私钥位于 `cases/ssh/id_ed25519`（`onboard --stage analyze` 或 `--stage rebuild` 在缺少时创建），已核对的设备主机公钥位于 `cases/ssh-known-hosts`，端口 `22222` 从 Mac 转发到手机 SSH 端口 `22`。同时连接多台手机时，用 `--ssh-known-hosts` 和 `--ssh-port` 为每台设置独立的主机密钥文件与本地端口；授权的 Mac 密钥不同时再指定 `--ssh-identity`。`doctor` 或深度 `onboard` 成功核验精确设备后，会把该设备的端口和文件路径记在被 Git 忽略的 `cases/ssh/profiles.json`；后续只需指定 `--udid`，显式 SSH 参数仍可覆盖。首次仍须人工核对主机公钥指纹；配置文件只存路径和端口，不存私钥内容。首次核对 SSH 主机指纹或交互式使用 UI 时，可另开终端保持 SSH 与 iOS MCP 转发：
 
 ```sh
 .venv/bin/copyapp tunnel --udid <UDID>
 ```
+
+多路转发时，`--ssh-port` 必须选空闲本地端口。若提示端口已占用，先用 `lsof -nP -iTCP:<PORT> -sTCP:LISTEN` 查看，再换端口运行隧道和 `ssh-keyscan`。干净检出实测时，`22426` 已被 iOS 26 的 iOS MCP 转发占用，并非 SSH 端口；不要把它的响应当作 SSH 主机公钥。
 
 若尚未安装 iOS MCP tweak，也可先加 `--ssh-only`。在仓库终端读取手机的主机公钥；仅在使用 `onboard --no-keygen` 时才需执行下面的 `ssh-keygen`：
 

@@ -67,9 +67,14 @@ def run_onboarding(udid: Optional[str] = None, output: Optional[Path] = None,
     record = json.loads((output / "device.json").read_text(encoding="utf-8"))
     survey_ready = (connected and
                     record["probes"].get("usb_screenshot", {}).get("status") == "available")
+    roothide = bool(record["probes"].get("rootless_marker", {}).get("roothide_namespace"))
+    runtime_ready = (not roothide or
+                     record["probes"].get("frida_usb", {}).get("transport") ==
+                     "usb_roothide_sidecar")
     analysis_ready = (survey_ready and
                       all(record["probes"].get(name, {}).get("status") == "available"
                           for name in ("ssh_mobile", "frida_usb", "ios_mcp")) and
+                      runtime_ready and
                       record["host"]["xcode"]["status"] == "available")
     signing_tool_ready = any(record["host"].get(name, {}).get("status") == "available"
                              for name in ("ldid", "development_signing"))
@@ -85,12 +90,15 @@ def run_onboarding(udid: Optional[str] = None, output: Optional[Path] = None,
     print("First USB survey: " + ("ready" if survey_ready else "needs setup"))
     print("Deep analysis: " + ("not checked (rerun with --stage analyze)" if stage == "survey"
                                else "ready" if analysis_ready else "needs setup"))
-    print("Runnable rebuild tools: " + ("not checked (rerun with --stage rebuild)"
-                                        if stage == "survey" else "ready" if rebuild_ready
-                                        else "needs setup"))
+    print("Rebuild host tools: " + ("not checked (rerun with --stage rebuild)"
+                                    if stage == "survey" else "ready" if rebuild_ready
+                                    else "needs setup"))
+    if stage == "rebuild" and rebuild_ready:
+        print("A specific App still needs a compatible signing profile or TrollStore route on this device.")
     relevant = {"survey": {"usb_lockdown", "usb_screenshot"},
                 "analyze": {"usb_lockdown", "usb_screenshot", "ssh_mobile",
-                            "frida_usb", "ios_mcp", "xcode", "theos_tweak"},
+                            "frida_usb", "frida_roothide", "ios_mcp", "xcode",
+                            "theos_tweak"},
                 "rebuild": None}[stage]
     for step in record["next_steps"]:
         if relevant is None or step["for"] in relevant:

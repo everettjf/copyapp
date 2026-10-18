@@ -328,12 +328,12 @@ def run_doctor(udid: str, output: Path, ssh_port: int = 22222,
             with tunnel as active_port:
                 probes["ssh_mobile"] = _ssh_probe(udid, active_port,
                                                    ssh_identity, ssh_known_hosts)
-                if (probes["ssh_mobile"]["status"] == "available" and
-                        probes.get("rootless_marker", {}).get("status") != "observed"):
+                if probes["ssh_mobile"]["status"] == "available":
                     marker = _roothide_marker_probe(active_port, ssh_identity,
                                                     ssh_known_hosts)
                     if marker["status"] == "observed":
-                        probes["rootless_marker"] = marker
+                        probes["rootless_marker"] = {
+                            **probes.get("rootless_marker", {}), **marker}
         except Exception as exc:
             probes["ssh_mobile"] = _error(exc)
         probes["frida_usb"] = _frida_probe(udid)

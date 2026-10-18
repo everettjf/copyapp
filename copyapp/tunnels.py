@@ -1,6 +1,7 @@
 """Keep the two Copy APP USB forwards alive in one foreground command."""
 
 import asyncio
+import errno
 import re
 import socket
 import subprocess
@@ -13,7 +14,13 @@ def _check_port(port: int) -> None:
     if not 1 <= port <= 65535:
         raise ValueError("forward port must be between 1 and 65535")
     with socket.socket() as probe:
-        probe.bind(("127.0.0.1", port))
+        try:
+            probe.bind(("127.0.0.1", port))
+        except OSError as exc:
+            if exc.errno == errno.EADDRINUSE:
+                raise ValueError(f"local port {port} is already in use; choose an unused "
+                                 "--ssh-port or --mcp-port") from exc
+            raise
 
 
 def run_tunnels(udid: str, ssh_port: int = 22222, mcp_port: int = 22223,
