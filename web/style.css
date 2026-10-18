@@ -20,10 +20,19 @@ footer{border-top:1px solid var(--line);background:#111111}.footer-inner{display
 .principle-band{background:linear-gradient(90deg,#0a0a0a,#171717,#0a0a0a)}
 .device-display{background:radial-gradient(circle at 50% 46%,#16331f,#0a0a0a 67%)}
 
+/* Public workflow illustrations. Each opens at full resolution for smaller screens. */
+.visual-guide-section{padding-top:30px;padding-bottom:95px}
+.visual-guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.visual-guide-card{min-width:0;margin:0;border:1px solid #3b5141;background:#131a15;overflow:hidden}
+.visual-guide-card>a{display:block;overflow:hidden;background:#f6f9f4}
+.visual-guide-card img{display:block;width:100%;height:auto;transition:transform .25s ease}
+.visual-guide-card>a:hover img{transform:scale(1.025)}
+.visual-guide-card figcaption{padding:18px 22px 21px;display:flex;flex-direction:column;gap:7px}
+.visual-guide-card strong{font:600 17px var(--display);color:#f7f9f7}
+.visual-guide-card figcaption span{color:#b7c6b8;font-size:12px;line-height:1.6}
+@media(max-width:760px){.visual-guide-section{padding-top:0;padding-bottom:70px}.visual-guide-grid{grid-template-columns:1fr;gap:15px}.visual-guide-card figcaption{padding:16px 18px 19px}}
+
 /* Selected public evidence, kept separate from the complete local case store. */
-.system-figure{margin:32px 0 0;border:1px solid #3c3c3c;background:#0b171a;padding:14px}
-.system-figure img{display:block;width:100%;height:auto}
-.system-figure figcaption{padding:13px 12px 4px;color:#a6bfb9;font-size:12px;line-height:1.6}
 .evidence-section{padding-top:90px;padding-bottom:90px}
 .evidence-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
 .evidence-card{margin:0;min-width:0;border:1px solid #383f3b;background:#121715;overflow:hidden;display:flex;flex-direction:column}

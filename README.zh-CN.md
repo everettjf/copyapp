@@ -35,9 +35,19 @@ sh scripts/bootstrap-macos.sh
 
 简单 App 可以设较完整的阶段目标。复杂 App 应先选定有用的功能范围；只有明确已知能力的分母，百分比才有意义。选定流程通过不代表整 App 等价。详见[覆盖目标方法](docs/coverage-targets.zh-CN.md)。
 
-![Copy APP 架构：Mac、越狱手机、证据与复刻流程](docs/assets/architecture-overview.svg)
-
 Mac 负责编排和构建。OpenSSH 采集文件，iOS MCP 提供越狱环境下的界面观察与控制，iCTRL 是可选的 XCTest 界面后端，Frida 用于有界运行时取证。Ghidra 和 Hopper 是可选的本机代码分析工具，**不依赖 REA 运行**。详见[架构说明](docs/architecture.zh-CN.md)。
+
+### 四张图看懂工作流
+
+![Mac 与指定越狱 iPhone 通过 USB 协作，完成分析与对照](docs/assets/social/01-system-map.png)
+
+![安装包、沙盒、界面和运行时证据汇入有来源的报告；Hopper 片段是已保存证据的示意图](docs/assets/social/02-evidence.png)
+
+![iPhone 14 上原版 Calculator 与独立复刻版完成选定的 7 + 8 = 15 流程](docs/assets/social/03-calculator-comparison.png)
+
+![两项交付：有来源的分析报告，以及标明覆盖与缺口的独立可运行 iOS App](docs/assets/social/04-deliverables.png)
+
+这些图说明工作流和经过筛选的公开观察。Calculator 对照仅覆盖一条指定流程，仍有视觉差异；Hopper 片段展示保存的证据，并非恢复出的原始源码。详见[真机证据与限制](docs/current-status.zh-CN.md)。
 
 ## 当前 `main` 的实测范围
 

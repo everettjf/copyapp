@@ -35,9 +35,19 @@ Read `cases/first-survey/report.md`. Use a fresh output directory for each attem
 
 A small app may justify a broad first milestone. A complex app needs a named slice of behavior; a percentage is meaningful only with an explicit known-capability denominator. A passing selected-flow check does not establish whole-app equivalence. See [coverage targets](docs/coverage-targets.md).
 
-![Copy APP architecture: Mac, jailbroken iPhone, evidence and rebuild flow](docs/assets/architecture-overview.svg)
-
 The Mac runs orchestration and builds. OpenSSH acquires files, iOS MCP provides jailbroken UI observation and control, iCTRL is an optional XCTest-based UI backend, and Frida provides bounded runtime evidence. Ghidra and Hopper are optional native-analysis tools. **REA is not required.** The [architecture guide](docs/architecture.md) explains the trust and evidence boundaries.
+
+### The workflow in four images
+
+![Mac orchestration and a selected jailbroken iPhone connected by USB for analysis and comparison](docs/assets/social/01-system-map.png)
+
+![Package, sandbox, UI and runtime evidence feed a cited analysis report; the Hopper excerpt is a diagram of saved evidence](docs/assets/social/02-evidence.png)
+
+![Original Calculator and an independent rebuild showing the selected 7 + 8 = 15 flow on the same iPhone 14](docs/assets/social/03-calculator-comparison.png)
+
+![The two deliverables: a cited analysis report and an independent runnable iOS app with explicit coverage and gaps](docs/assets/social/04-deliverables.png)
+
+These are workflow illustrations and selected public observations. The Calculator comparison covers one named flow and still has visible differences; the Hopper excerpt depicts saved evidence, not recovered source code. See the [device evidence and limits](docs/current-status.md).
 
 ## Tested support on current `main`
 
