@@ -1,0 +1,15 @@
+# Next patch readiness · draft
+
+[English](release-readiness-v0.1.1.md) · [简体中文](release-readiness-v0.1.1.zh-CN.md)
+
+This is a working acceptance record for one future patch after the published `v0.1.0` tag. It is not a release announcement. The source comparison is `git diff v0.1.0..main`; the numbered `v0.1.1`–`v0.1.17` [development checkpoints](development-checkpoints/README.md) were never published tags.
+
+| Gate | Current evidence | Release decision |
+| --- | --- | --- |
+| 1. iOS 26 Calculator report → independent App | Reviewed report, plan, signed App, paired `7 + 8 = 15` check, visual review and verified delivery in `cases/ios26-calculator-source-linked-delivery-20261018` | Passed for one named arithmetic flow; existing independent source was adapted. |
+| 2. iOS MCP black-frame handling | Three rejected black frames and successful Home/relaunch recovery on iOS 26; [device record](relaxin-roothide-iphone11-ios26.md). A fresh Clock run repeated the recovery. | Passed for the observed failure. The heuristic and short observation window do not prove long-term reliability. |
+| 3. Second App and connected-device regression | iOS 26 Clock reviewed report, signed independent App and four visually reviewed pairs; [current-code iOS 16/26 run](ios16-ios26-current-code-validation.md) including fresh exact-device diagnostics and the same Clock Start → Stop script on both phones. | Passed for the selected flows on XR/iOS 16.1.1 and iPhone 11/iOS 26.0.1. iOS 17 current-code replay remains open while that phone is disconnected. |
+| 4. Fresh setup and documentation | [Clean GitHub-hosted macOS run](https://github.com/everettjf/copyapp/actions/runs/39139348793) installed the CLI and tracing extra, then ran 338 tests. Isolated checkout on this Mac completed bootstrap, survey and verification. | Host-only setup passed. Phone pairing, jailbreak services and signing on a second physical Mac remain untested. |
+| 5. One patch publication | Main contains the implementation and draft [English](release-candidate-v0.1.1.md) / [Chinese](release-candidate-v0.1.1.zh-CN.md) notes. Only `v0.1.0` is tagged and published. | Hold the version bump, tag and GitHub Release until remaining acceptance checks are complete. |
+
+Before publishing, replay the core diagnosis and selected original/rebuilt flow on iPhone 14/iOS 17 with the current code, verify its cases, and record any device-specific failures. Provision a second physical Mac from the README, pairing one of the phones and verifying SSH trust, UI control, package/sandbox acquisition and a signed or TrollStore rebuild. Reboot/rejailbreak persistence is still an untested durability boundary; either verify it or explicitly retain that limitation in the final notes. Then review `git diff v0.1.0..main`, run the suite on the final commit, finalize the bilingual notes, bump the package version once, tag once and publish one GitHub Release. A green verifier proves case consistency, not semantic correctness or whole-App equivalence.
