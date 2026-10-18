@@ -15,7 +15,7 @@
 
 新增按钮后，原版夹具的 Counter、Notes、Catalog 三条脚本分别在两机重新完成。六个回归案例分别为 `cases/ios16-fixture-share-regression-{counter,notes,catalog}-20261017` 与 `cases/ios17-fixture-share-regression-{counter,notes,catalog}-20261017`，均通过 `copyapp verify`。Notes 重放会在每台测试机增加一行合成笔记。
 
-0.1.2 文本接收更新后，同样三条原版夹具流程又分别在两机完成。当前构建的六个案例为 `cases/ios16-fixture-share-data-regression-{counter,notes,catalog}-20261017` 与 `cases/ios17-fixture-share-data-regression-{counter,notes,catalog}-20261017`，均通过 `copyapp verify`。本轮界面回归没有重新检查 SQLite 行内容；该内容此前已在[存储验收](releases/v0.1.2.zh-CN.md)单独核查。
+0.1.2 文本接收更新后，同样三条原版夹具流程又分别在两机完成。当前构建的六个案例为 `cases/ios16-fixture-share-data-regression-{counter,notes,catalog}-20261017` 与 `cases/ios17-fixture-share-data-regression-{counter,notes,catalog}-20261017`，均通过 `copyapp verify`。本轮界面回归没有重新检查 SQLite 行内容；该内容此前已在[存储验收](development-checkpoints/v0.1.2.zh-CN.md)单独核查。
 
 在仓库根目录，安装对应夹具并启动 iOS MCP 后可重跑：
 

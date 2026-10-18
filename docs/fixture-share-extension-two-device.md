@@ -15,7 +15,7 @@ The 0.1.2 XR update also timed out on its first attempt; after stopping the host
 
 After adding the button, the original fixture's Counter, Notes and Catalog playbooks each completed again on both phones. The six regression cases are named `cases/ios16-fixture-share-regression-{counter,notes,catalog}-20261017` and `cases/ios17-fixture-share-regression-{counter,notes,catalog}-20261017`; all six passed `copyapp verify`. The Notes replay writes one additional synthetic sample row on each test phone.
 
-After the 0.1.2 text-receipt update, the same three original-fixture paths completed again on both phones. The six current-build cases are `cases/ios16-fixture-share-data-regression-{counter,notes,catalog}-20261017` and `cases/ios17-fixture-share-data-regression-{counter,notes,catalog}-20261017`; all passed `copyapp verify`. These UI regressions do not recheck SQLite row contents, which were separately checked in the earlier [storage validation](releases/v0.1.2.md).
+After the 0.1.2 text-receipt update, the same three original-fixture paths completed again on both phones. The six current-build cases are `cases/ios16-fixture-share-data-regression-{counter,notes,catalog}-20261017` and `cases/ios17-fixture-share-data-regression-{counter,notes,catalog}-20261017`; all passed `copyapp verify`. These UI regressions do not recheck SQLite row contents, which were separately checked in the earlier [storage validation](development-checkpoints/v0.1.2.md).
 
 From the repository root, with the matching fixture version installed and iOS MCP running:
 

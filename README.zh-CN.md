@@ -2,7 +2,7 @@
 
 [English](README.md) · 简体中文 · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
-[项目网站](https://xnu.app/copyapp/) · [安装指南](#从这里开始) · [参与贡献](CONTRIBUTING.md)
+[项目网站](https://xnu.app/copyapp/) · [安装指南](#从这里开始) · [正式发布](docs/releases/README.zh-CN.md) · [参与贡献](CONTRIBUTING.md)
 
 ## 从这里开始
 
@@ -62,17 +62,17 @@ Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱�
 
 iOS 17 的[审阅后深度报告](cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)和[选定流程交付](cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)通过了校验：原版与复刻版最终都显示 `15`，两组截图审阅为轻微差异。此前交付的复刻版源码和 IPA 早于本报告存在；另一次[从报告新写源码并扩展四流程的试验](docs/ios17-calculator-fresh-from-report.zh-CN.md)已完成构建、签名、安装和同机对照。Calculator 全功能等价仍未验证。现有 RootHide Frida 服务不能提供 root `root-run`；已验证的加密包恢复路径使用 mobile SSH。
 
-[v0.1.14 发布](docs/releases/v0.1.14.zh-CN.md)把 XR 上的 TrollStore 安装改为由 root Frida 直接启动指定 helper，再通过安装服务核对版本与构建号。XR 以此路径完成两次递增版本升级，iPhone 14 的对应签名 USB 升级也通过。[v0.1.13 发布](docs/releases/v0.1.13.zh-CN.md)此前加入内嵌 Framework 跟踪与两机 Podcasts 新源码复刻试验。
+[v0.1.14 开发记录](docs/development-checkpoints/v0.1.14.zh-CN.md)把 XR 上的 TrollStore 安装改为由 root Frida 直接启动指定 helper，再通过安装服务核对版本与构建号。XR 以此路径完成两次递增版本升级，iPhone 14 的对应签名 USB 升级也通过。[v0.1.13 开发记录](docs/development-checkpoints/v0.1.13.zh-CN.md)此前加入内嵌 Framework 跟踪与两机 Podcasts 新源码复刻试验。
 
 Podcasts 在两机上分别完成了[审阅报告与全新独立 UIKit 复刻工程](docs/podcasts-two-device-report-rebuild.zh-CN.md)。资料库、搜索和现在收听的同机页面标题检查均为 3/3 通过；逐图审阅发现重大视觉差异，尤其是分类插画与 iOS 17 账号相关内容，因此**不能宣称完整视觉或功能复刻**。iOS 17 首次启动需先完成 SpringBoard 引导。[证据与边界见矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
-发布后又完成[原版 Clock 与独立复刻版的双机五分钟后台秒表检查](docs/clock-five-minute-two-device.zh-CN.md)。12 份启动／返回／停止脚本案例均通过校验，四组可见计时增量与保存的观察间隔在一秒时间戳精度内相符；新版 v0.1.13 设备探针也通过。数小时挂起、锁屏或重启、闹钟和通知仍不在此结果范围内。
+随后完成[原版 Clock 与独立复刻版的双机五分钟后台秒表检查](docs/clock-five-minute-two-device.zh-CN.md)。12 份启动／返回／停止脚本案例均通过校验，四组可见计时增量与保存的观察间隔在一秒时间戳精度内相符；新版 v0.1.13 设备探针也通过。数小时挂起、锁屏或重启、闹钟和通知仍不在此结果范围内。
 
-[v0.1.10 双机发布验收](docs/releases/v0.1.10.zh-CN.md)新增[Clock 复刻版停止态与运行态重启验证](docs/clock-clone-two-device.zh-CN.md)，并通过两台手机运行中升级检查。发布后又完成[复刻版双机约一分钟后台计时检查](docs/clock-background-two-device.zh-CN.md)，两机返回后均继续显示增长的秒表。[v0.1.9 发布](docs/releases/v0.1.9.zh-CN.md)确立跨设备基线并记录当时的状态丢失缺口。[v0.1.8 发布](docs/releases/v0.1.8.zh-CN.md)记录首次使用引导诊断和 Translate/Clock 四路检查。
+[v0.1.10 双机开发验收](docs/development-checkpoints/v0.1.10.zh-CN.md)新增[Clock 复刻版停止态与运行态重启验证](docs/clock-clone-two-device.zh-CN.md)，并通过两台手机运行中升级检查。随后完成[复刻版双机约一分钟后台计时检查](docs/clock-background-two-device.zh-CN.md)，两机返回后均继续显示增长的秒表。[v0.1.9 开发记录](docs/development-checkpoints/v0.1.9.zh-CN.md)确立跨设备基线并记录当时的状态丢失缺口。[v0.1.8 开发记录](docs/development-checkpoints/v0.1.8.zh-CN.md)记录首次使用引导诊断和 Translate/Clock 四路检查。
 
-[双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)又在两台手机上，用**同一脚本**分别经 iOS MCP 与 iCTRL 验证 Calculator `98→9` 左滑和 Safari 地址栏的合成文本输入，并在 iOS 17 上跑通一条 `hopper-direct` 分析到复刻父工作流。这些有界结果不代表所有输入框、手势或 App 都相同。[v0.1.15](docs/releases/v0.1.15.zh-CN.md)修复了独立安装 wheel 对可选源码工具的定位；设置 `COPYAPP_SOURCE_ROOT` 后，同一条 Calculator iCTRL 脚本在两机通过。10 月 17 日 XR 开发者文件服务握手失败，重挂开发者镜像后仍未恢复；SSH、Frida、iOS MCP 和 iCTRL 当时可用，不能把这次 `doctor` 说成全部通过。
+[双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)又在两台手机上，用**同一脚本**分别经 iOS MCP 与 iCTRL 验证 Calculator `98→9` 左滑和 Safari 地址栏的合成文本输入，并在 iOS 17 上跑通一条 `hopper-direct` 分析到复刻父工作流。这些有界结果不代表所有输入框、手势或 App 都相同。[v0.1.15](docs/development-checkpoints/v0.1.15.zh-CN.md)修复了独立安装 wheel 对可选源码工具的定位；设置 `COPYAPP_SOURCE_ROOT` 后，同一条 Calculator iCTRL 脚本在两机通过。10 月 17 日 XR 开发者文件服务握手失败，重挂开发者镜像后仍未恢复；SSH、Frida、iOS MCP 和 iCTRL 当时可用，不能把这次 `doctor` 说成全部通过。
 
-新的 v0.1.10 `doctor` 案例确认两机已测设备通道全部可用；已发布的 v0.1.10 wheel 重新下载后与发布哈希一致，并通过隔离安装检查。[首次使用引导检查](docs/ios17-first-use-gates.zh-CN.md)发现，iOS 17 Translate 与 Clock 启动报错时，SpringBoard 实际显示欢迎页；完成引导后两者都进入自身前台进程。**同一份** Translate 输入和 Clock 秒表脚本又分别经 iOS MCP、iCTRL 在两机通过。XR 上旧的 `(207,320)` 点击仍无法显示输入，而点击提示附近 `(100,201)` 会显示键盘并成功输入。同脚本 URLSession 观察在两机附加后记录到零条任务启动事件；另一条 App Store Search 标签对照则在两机捕获到正事件。Translate 的零事件不能证明它没有网络请求。具体案例和边界见[矩阵](docs/two-device-verification-matrix.zh-CN.md)。
+新的 v0.1.10 `doctor` 案例确认两机已测设备通道全部可用；当时的本地 v0.1.10 wheel 与记录的 SHA-256 一致，并通过隔离安装检查。[首次使用引导检查](docs/ios17-first-use-gates.zh-CN.md)发现，iOS 17 Translate 与 Clock 启动报错时，SpringBoard 实际显示欢迎页；完成引导后两者都进入自身前台进程。**同一份** Translate 输入和 Clock 秒表脚本又分别经 iOS MCP、iCTRL 在两机通过。XR 上旧的 `(207,320)` 点击仍无法显示输入，而点击提示附近 `(100,201)` 会显示键盘并成功输入。同脚本 URLSession 观察在两机附加后记录到零条任务启动事件；另一条 App Store Search 标签对照则在两机捕获到正事件。Translate 的零事件不能证明它没有网络请求。具体案例和边界见[矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
 [独立 Codex CLI 的 XR 实测](docs/external-codex-xr-trial.zh-CN.md)已完成 Calculator 的有来源报告、新 App 构建与安装、三条原版/复刻版行为对照。此次沿用已验证的发现脚本和既有复刻源码，具体范围见实测记录。
 

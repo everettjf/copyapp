@@ -2,11 +2,11 @@
 
 **语言：** [English](PLAN.en.md) | 简体中文
 
-**当前双机状态：** [iOS 16/17 验证矩阵](docs/two-device-verification-matrix.zh-CN.md)记录两机新能力检查、同脚本分别经 iOS MCP 与 iCTRL 完成的 Calculator 手势、Safari/Translate 文本输入和 Clock 秒表、选定流程的分析到复刻交付，以及 iOS 17 的一流程 `hopper-direct` 父案例。iOS 17 的 Translate 与 Clock 需先完成[首次使用引导](docs/ios17-first-use-gates.zh-CN.md)才能正常启动。结论只限于已测设备与流程；整 App 等价、陌生 App 自主生成和 iOS 26 仍待验证。
+**当前双机状态：** [iOS 16/17 验证矩阵](docs/two-device-verification-matrix.zh-CN.md)记录两机新能力检查、同脚本分别经 iOS MCP 与 iCTRL 完成的 Calculator 手势、Safari/Translate 文本输入和 Clock 秒表、选定流程的分析到复刻交付，以及 iOS 17 的一流程 `hopper-direct` 父案例。iOS 17 的 Translate 与 Clock 需先完成[首次使用引导](docs/ios17-first-use-gates.zh-CN.md)才能正常启动。结论只限于已测设备与流程；iOS 26 后来完成 Calculator 与 Clock 的选定流程交付，整 App 等价和陌生 App 自主生成仍待验证。
 
-[v0.1.12 双机检查](docs/releases/v0.1.12.zh-CN.md)新增 Apple Podcasts 的包与静态索引、有界沙盒元数据和三条导航路径，并让独立采集命令自行管理 USB SSH 转发。后续又完成[双机审阅报告与全新源码复刻](docs/podcasts-two-device-report-rebuild.zh-CN.md)：每机三条成对导航通过，但截图存在重大差异。源码由当前 Agent 编写，完整视觉等价与陌生 App 完全自主生成仍待验证。
+[v0.1.12 双机检查](docs/development-checkpoints/v0.1.12.zh-CN.md)新增 Apple Podcasts 的包与静态索引、有界沙盒元数据和三条导航路径，并让独立采集命令自行管理 USB SSH 转发。后续又完成[双机审阅报告与全新源码复刻](docs/podcasts-two-device-report-rebuild.zh-CN.md)：每机三条成对导航通过，但截图存在重大差异。源码由当前 Agent 编写，完整视觉等价与陌生 App 完全自主生成仍待验证。
 
-[v0.1.10 双机 Clock 检查](docs/releases/v0.1.10.zh-CN.md)进一步验证了停止态与运行态秒表跨进程重启、iCTRL 回归，以及两机运行中递增版本升级。TrollStore 对相同构建号重装超时，不计入升级通过结论。
+[v0.1.10 双机 Clock 检查](docs/development-checkpoints/v0.1.10.zh-CN.md)进一步验证了停止态与运行态秒表跨进程重启、iCTRL 回归，以及两机运行中递增版本升级。TrollStore 对相同构建号重装超时，不计入升级通过结论。
 
 **最新 XR 进展：** [独立 Codex CLI 实测](docs/external-codex-xr-trial.zh-CN.md)已在 iOS 16.1.1 上完成 Calculator 的分析、复刻、安装和三条真机对照流程，三条行为断言通过，三对截图为轻微差异。此次沿用已验证的发现脚本及既有独立复刻源码，因此陌生 App 的自主发现和从零实现仍是下一阶段目标。[Translate 完整流程](docs/translate-xr-workflow.zh-CN.md)另行覆盖第二种界面技术栈。
 
@@ -407,15 +407,15 @@ Translate 陌生 App 试点：XR 上采集了系统 Translate 1.0（构建 216.4
 
 RootHide `root-run` 复测定位：旧实现把 Frida spawn 成功当作 root 能力，但在该手机上，挂起的 shell 子进程通过 Frida 注入的 `geteuid()` 明确返回 501 (`mobile`)；先前的无退出记录不能证明 root 执行。现增加恢复运行前的有效 UID 核查，不为 0 则停止并明确报错，且 CLI 自行建立经 SSH 身份校验的精确 UDID USB 转发。真机只读 `id -u` 探针约两秒返回预期拒绝，307 项单元测试通过。RootHide 整包恢复继续使用已验证的 mobile SSH helper，不依赖这个通用 root 入口。本次检测到 SSH 主机密钥变化，已先经原有精确 USB Frida 通道读取手机上的公钥并比对指纹，再更新本地忽略目录中的主机密钥固定记录；原有项目专用 `mobile` 授权公钥也在设备端恢复，随后精确 UDID 的 SSH 登录验证通过。未来越狱环境重置后的密钥恢复仍需单独产品化。
 
-2026-10-17 双机发布验收：XR/iOS 16.1.1 与 iPhone 14/iOS 17.3.1 同时连接，分别完成 USB、SSH、Frida、iOS MCP、iCTRL 设备基线；XR 使用单独固定的 SSH 主机密钥和端口，避免把另一台的密钥误当成 OpenSSH 故障。已知源码夹具在两机重新采集安装包、静态和沙盒索引。iOS 17 修复分享扩展显示名缺失导致安装拒绝、主 App 缺启动屏导致画面缩放和触控坐标偏移；签名原版及独立复刻版均成功安装。iOS 17 原版三流程在两种 UI 后端各跑一遍，复刻版经 iOS MCP 跑三流程；正式三流程成对对照和五组逐图审阅通过。XR 原版/复刻版经 iCTRL 正式三流程对照及五组逐图审阅通过，修复后 ad hoc 包再通过 TrollStore 更新并进行计数器冒烟测试。旧测试数据曾导致画面数字不同，基线对齐后两机选定内容一致，仅系统返回应用名称轻微不同；失败案例保留。309 项本地单元测试通过。XR 的 TrollStore 安装现在自动建立精确设备 SSH 转发，更新后的原版夹具也通过 iOS MCP 的 Counter、Notes 和 Catalog 三流程。先前 XR DeepSeek 与 iOS 17 Remoboard 整包恢复、iOS 17 Calculator 审阅报告和交付案例再次哈希校验通过。详细矩阵、边界和本地证据 ID 见 [v0.1.1 双机验收](docs/releases/v0.1.1.zh-CN.md)。iOS 26、陌生 App 的通用自主复刻仍未验收。
+2026-10-17 双机发布验收：XR/iOS 16.1.1 与 iPhone 14/iOS 17.3.1 同时连接，分别完成 USB、SSH、Frida、iOS MCP、iCTRL 设备基线；XR 使用单独固定的 SSH 主机密钥和端口，避免把另一台的密钥误当成 OpenSSH 故障。已知源码夹具在两机重新采集安装包、静态和沙盒索引。iOS 17 修复分享扩展显示名缺失导致安装拒绝、主 App 缺启动屏导致画面缩放和触控坐标偏移；签名原版及独立复刻版均成功安装。iOS 17 原版三流程在两种 UI 后端各跑一遍，复刻版经 iOS MCP 跑三流程；正式三流程成对对照和五组逐图审阅通过。XR 原版/复刻版经 iCTRL 正式三流程对照及五组逐图审阅通过，修复后 ad hoc 包再通过 TrollStore 更新并进行计数器冒烟测试。旧测试数据曾导致画面数字不同，基线对齐后两机选定内容一致，仅系统返回应用名称轻微不同；失败案例保留。309 项本地单元测试通过。XR 的 TrollStore 安装现在自动建立精确设备 SSH 转发，更新后的原版夹具也通过 iOS MCP 的 Counter、Notes 和 Catalog 三流程。先前 XR DeepSeek 与 iOS 17 Remoboard 整包恢复、iOS 17 Calculator 审阅报告和交付案例再次哈希校验通过。详细矩阵、边界和本地证据 ID 见 [v0.1.1 双机验收](docs/development-checkpoints/v0.1.1.zh-CN.md)。iOS 26、陌生 App 的通用自主复刻仍未验收。
 
-2026-10-17 v0.1.2 存储核验：独立 `sandbox-file` 现在自动建立并校验精确设备 USB SSH 转发。两台设备的原版 Notes 在同一安装上的 SQLite 行数与界面计数分别为 XR 14→15、iPhone 14 4→5；复刻版首次核验发现两机都只写入 `Sample note`，而原版写入 `Sample note <时间戳>`，界面断言未暴露此差异。修复 `rebuild/FixtureClone/Sources/NoteStore.swift` 并重新构建、安装后，两机复刻版分别通过 15→16、6→7 行的界面/数据库同步增量，新增正文均符合原版时间戳格式。更新后的 Counter 与 Catalog 也在两机 iOS MCP 上重放并通过；相关采集、安装和脚本案例通过 `copyapp verify`。分享扩展的用户交互、任意陌生 App 全功能自动复刻以及 iOS 26 仍未验收。详见 [v0.1.2 双机验收](docs/releases/v0.1.2.zh-CN.md)。
+2026-10-17 v0.1.2 存储核验：独立 `sandbox-file` 现在自动建立并校验精确设备 USB SSH 转发。两台设备的原版 Notes 在同一安装上的 SQLite 行数与界面计数分别为 XR 14→15、iPhone 14 4→5；复刻版首次核验发现两机都只写入 `Sample note`，而原版写入 `Sample note <时间戳>`，界面断言未暴露此差异。修复 `rebuild/FixtureClone/Sources/NoteStore.swift` 并重新构建、安装后，两机复刻版分别通过 15→16、6→7 行的界面/数据库同步增量，新增正文均符合原版时间戳格式。更新后的 Counter 与 Catalog 也在两机 iOS MCP 上重放并通过；相关采集、安装和脚本案例通过 `copyapp verify`。分享扩展的用户交互、任意陌生 App 全功能自动复刻以及 iOS 26 仍未验收。详见 [v0.1.2 双机验收](docs/development-checkpoints/v0.1.2.zh-CN.md)。
 
 2026-10-17 iOS 17 Calculator 全新源码补验：根据 iPhone 14 的审阅后 `7 + 8 = 15` 报告和已保存原版界面，当前 Agent 新写 `rebuild/CalculatorIOS17Fresh/` UIKit 工程，使用独立 Bundle ID `dev.copyapp.calculator.ios17fresh`，未复用此前复刻版源码。经 Xcode 27 构建、Apple Development 签名和 USB 安装后，原版/新工程在 iPhone 14 上执行同一九步脚本，正式 `rebuild-check` 的最终 UIKit 文本断言为 `15`，两组截图逐图审阅为轻微差异；安装、界面、成对检查和视觉审阅案例均通过 `copyapp verify`。此结果补齐一条流程的报告→新源码→真机对照，尚不证明多流程或陌生 App 零样本自主生成；详见 [iOS 17 Calculator 新源码记录](docs/ios17-calculator-fresh-from-report.zh-CN.md)。
 
 2026-10-17 iOS 17 Calculator 新工程四流程补验：在原报告 `7 + 8 = 15` 基础上，又从 iPhone 14 的当前界面观察并执行小数加法 `0.3`、负数加法 `−7`、百分比 `0.5`。首版负数结果显示连字符 `-7`，与原版数学负号不同；修复并重新签名、安装 0.1.1（build 2）后，四条原版／新工程脚本在正式 `rebuild-check` 中均通过末端 UIKit 文本断言。五组截图逐张审阅为轻微字形或系统返回标签差异，所有案例经 `copyapp verify`。只有第一条来自深入报告，后三条为新增真机 UI 证据；脚本与派生规格已纳入 `rebuild/CalculatorIOS17Fresh/`。详见 [双语实测记录](docs/ios17-calculator-fresh-from-report.zh-CN.md)。
 
-2026-10-17 v0.1.6 双机复核：已连接的 XR/iOS 16.1.1 与 iPhone 14/iOS 17.3.1 新 `doctor` 案例均显示 USB、截图、开发者文件系统、mobile SSH、Frida、iOS MCP 和 iCTRL 可用；XR 既有 Calculator/Clock 当前 Agent 父案例再次校验。iOS 17 新增完整四流程 `copyapp copy --agent-provider current` 父案例，原版采集、审阅报告、签名独立 App 安装、4/4 末端结果断言及五组截图逐张审阅均通过。所有截图有轻微字体或系统标签差异，无重大差异。复刻源码早于这条父案例，尚不证明陌生 App 一句话从零生成；详见 [v0.1.6 双机验收](docs/releases/v0.1.6.zh-CN.md)。
+2026-10-17 v0.1.6 双机复核：已连接的 XR/iOS 16.1.1 与 iPhone 14/iOS 17.3.1 新 `doctor` 案例均显示 USB、截图、开发者文件系统、mobile SSH、Frida、iOS MCP 和 iCTRL 可用；XR 既有 Calculator/Clock 当前 Agent 父案例再次校验。iOS 17 新增完整四流程 `copyapp copy --agent-provider current` 父案例，原版采集、审阅报告、签名独立 App 安装、4/4 末端结果断言及五组截图逐张审阅均通过。所有截图有轻微字体或系统标签差异，无重大差异。复刻源码早于这条父案例，尚不证明陌生 App 一句话从零生成；详见 [v0.1.6 双机验收](docs/development-checkpoints/v0.1.6.zh-CN.md)。
 
 2026-10-17 已知源码夹具分享扩展补验：原版夹具增加固定文本分享按钮并升级为 0.1.1（build 2）。XR 首次 TrollStore 更新因旧进程仍在运行而 120 秒超时，停止进程后同包重试成功；iPhone 14 使用有效 Apple Development 签名经 USB 安装成功。两机分别从系统分享页进入 `FixtureShare.appex`，XR 12 步、iOS 17 14 步正式脚本均完成并保存可见扩展文字和截图；六条 Counter/Notes/Catalog 回归也通过 `copyapp verify`。XR 分享页无障碍目标多为 `Activity`，iOS 17 的 `More` 标签有重复且横向位置动态变化，脚本据此限定于各自设备。详见 [双机分享扩展记录](docs/fixture-share-extension-two-device.zh-CN.md)。
 
