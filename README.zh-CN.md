@@ -41,16 +41,18 @@ sh scripts/bootstrap-macos.sh
 
 这个 patch 版本完成第一个选定流程里程碑：有来源的分析、可运行的独立 iOS App、同机对照，以及经过审阅的覆盖目标和交付。[系统 Notes XR 实测](docs/notes-xr-workflow.zh-CN.md)覆盖 iOS 16.1.1 上三条本地流程；[iOS 17 Calculator 实测](docs/ios17-calculator-fresh-from-report.zh-CN.md)覆盖有界的报告驱动新源码与成对检查。[动态覆盖方法](docs/coverage-targets.zh-CN.md)把阶段目标与整个 App 的功能等价区分开。详见 [v0.1.17 发布说明](docs/releases/v0.1.17.zh-CN.md)和[双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
-`coverage-plan` 与 `coverage-delivery` 可固定可修订的已知能力清单，汇总一项或多项选定流程的真机交付，并分别报告目标、阶段完成和已知能力实证覆盖。基于已保存 Notes XR 报告与交付的本地离线演练中，两种新案例均通过校验；演练所用五项清单只是有界示例，不能当作 Notes 全部功能的覆盖率。**324 项 Python 测试通过。**iOS 26 是下一阶段，尚未实测。
+`coverage-plan` 与 `coverage-delivery` 可固定可修订的已知能力清单，汇总一项或多项选定流程的真机交付，并分别报告目标、阶段完成和已知能力实证覆盖。基于已保存 Notes XR 报告与交付的本地离线演练中，两种新案例均通过校验；演练所用五项清单只是有界示例，不能当作 Notes 全部功能的覆盖率。iOS 26 尚未实测。
 
 | 配置差异 | iPhone XR / iOS 16.1.1 | iPhone 14 / iOS 17.3.1 |
 | --- | --- | --- |
 | 越狱及设备服务 | Dopamine rootless；普通 rootless iOS MCP | Relaxin/RootHide；RootHide iOS MCP 需要 ElleKit |
 | Frida 与加密包恢复 | 与 Mac 版本匹配的 Frida 和已验证的 root helper 路径；测过 DeepSeek/Kimi | RootHide 自带 Frida 16.1.4 附加原版 Calculator 失败，隔离的 17.23.3 服务可用；Remoboard 主 App 与键盘扩展经 mobile SSH 恢复，通用 `root-run` 不可用 |
 | 复刻版安装 | root Frida 启动 TrollStore helper，并核对安装版本及构建号 | Apple Development 签名 IPA 经 USB InstallationProxy 安装 |
-| 最新开发者文件探针 | 重挂开发者镜像后，文件列表仍报 `ConnectionTerminatedError`；SSH、Frida、iOS MCP、iCTRL 可用 | 文件列表和其他已测通道可用 |
+| 10 月 17 日收尾探针 | 开发者文件列表仍报 `ConnectionTerminatedError`；SSH 包与沙盒采集、Frida、iOS MCP、iCTRL 路径可用 | 开发者文件列表及其他已测通道可用；SSH 包与沙盒采集通过 |
 
-**后续工作：**恢复并复测 XR 开发者文件服务；在另一台全新 Mac 验证环境搭建及更长期的设备、安装可靠性；证明无需预置脚本的陌生 App 自主发现和新源码生成；扩展 App 状态、网络与视觉覆盖。独立 Claude CLI 全流程、Clock 数小时或受系统事件干扰的行为、iOS 26 均未验证。目前交付的是对选定流程做过衡量的独立 App，不能称为任意 App 的完整复刻。
+当前代码在两台手机上均重新运行 `doctor`、Calculator `analyze --launch` 和相同的 `7 + 8 = 15` iOS MCP 脚本；六份新案例及已保存的 XR Notes、iOS 17 Calculator 父案例全部通过 `copyapp verify`。两机末端截图均可见 `15`。证据和边界见[双机矩阵](docs/two-device-verification-matrix.zh-CN.md)。
+
+**后续工作：**调查 XR 的可选开发者文件服务；在另一台全新 Mac 验证环境搭建及更长期的设备、安装可靠性；证明无需预置脚本的陌生 App 自主发现和新源码生成；扩展 App 状态、网络与视觉覆盖。独立 Claude CLI 全流程、Clock 数小时或受系统事件干扰的行为、iOS 26 均未验证。目前交付的是对选定流程做过衡量的独立 App，不能称为任意 App 的完整复刻。
 
 Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 导出包和索引数据沙盒；本地解析 Mach-O。XR 上的 Compass 已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展已恢复为可分析 IPA。iPhone 14 上的 Frida 17 独立服务已对原版 Calculator 完成逐次点击跟踪。
 
@@ -260,7 +262,8 @@ Copy APP 的 iCTRL 默认使用按签名团队区分的 ID：可选设置 App �
 | 卡在什么地方 | 检查方法 |
 | --- | --- |
 | `devices` 没有手机 | 解锁、点 USB 信任、换线或端口，再运行 `devices`。 |
-| 截图或 DVT 不可用 | 检查开发者模式、完整 Xcode 选择和对应 Developer Disk Image；用新目录重跑 `doctor`。 |
+| 截图不可用 | 检查开发者模式、完整 Xcode 选择和对应 Developer Disk Image；用新目录重跑 `doctor`。 |
+| 只有 `dvt_filesystem` 不可用 | 包与沙盒采集走固定主机密钥的 mobile SSH。XR 的 DVT 列表报 `ConnectionTerminatedError`，但 SSH 路径的 `analyze` 已成功；只有需要 USB 文件列表时才继续检查开发者模式和对应镜像。 |
 | `ssh_mobile` 不可用 | 保持 `22222 → 22` 转发，核对主机指纹及 `mobile` 密钥登录，再比较 `deviceinfo uniqueid`。 |
 | `ios_mcp` 不可用 | 检查 SpringBoard 重载后 tweak 是否载入；`analyze` 会自行打开精确设备的 UI 转发；仍不可用时检查 `copyapp doctor`。 |
 | `frida_usb` 不可用 | 检查该手机的 Frida server 是否运行、是否与 Mac 端 Frida 版本匹配。 |

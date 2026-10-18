@@ -6,6 +6,7 @@
 
 | 能力 | XR / iOS 16 | iPhone 14 / iOS 17 | 边界 |
 | --- | --- | --- | --- |
+| 10 月 17 日当前代码收尾 | `cases/ios16-closeout-doctor-20261017/`、`cases/ios16-closeout-calculator-analysis-20261017/`、`cases/ios16-closeout-calculator-playbook-20261017/` 均通过校验；`7 + 8` 末端截图可见 `15`。已保存的系统 Notes 父案例 `cases/notes-copy-ios16-20261017/` 再次通过校验。随后 `cases/ios16-closeout-doctor-dvt-guidance-20261017/` 在真机验证了新的可选 DVT 诊断。 | 对应的 `cases/ios17-closeout-{doctor,calculator-analysis,calculator-playbook}-20261017/` 均通过校验，截图同样可见 `15`。已保存的 Calculator 父案例 `cases/ios17-calculator-current-parent-20261017/` 再次通过校验。 | XR 的开发者文件列表返回 `ConnectionTerminatedError`；当前 SSH 路径仍在两机成功获取并索引 Calculator 包及有界沙盒。这是可选 DVT 缺口，不能称所有通道全绿。新执行的界面检查只覆盖一条算术流程；旧父案例重校验的是证据完整性，未完整重放。 |
 | USB、截图、开发者文件系统、固定主机密钥的 mobile SSH、Frida、iOS MCP、已配对 iCTRL | `cases/ios16-v0113-doctor-20261017/` 全部可用 | `cases/ios17-v0113-doctor-20261017/` 全部可用 | 各代表一台手机的当前配置；能力探针通过不等于 App 行为通过。两份 v0.1.13 案例通过 `copyapp verify`。 |
 | 包、静态与有界沙盒证据 | Calculator 当前 Agent 父案例 `cases/calculator-current-auto-workflow-20261016/` 完成 | Calculator 父案例 `cases/ios17-calculator-current-parent-20261017/` 完成 | 只覆盖该构建及选定路径，未取得整个实时数据容器的一致性快照。 |
 | 新目标 Apple Podcasts 的包与静态采集 | `cases/ios16-podcasts-analysis-20261017/` 校验了 153 个文件的包快照、13 个二进制索引及有界沙盒索引；修复精确设备 SSH 转发后，独立 `acquire` 与 `sandbox` 也完成。 | `cases/ios17-podcasts-analysis-20261017/` 校验了 152 个文件的包快照、12 个二进制索引及有界沙盒索引；修复后两个独立命令也完成。 | 两机主程序均无加密加载命令，此目标没有检验砸壳。独立采集案例可校验；独立 `sandbox` 输出是 JSON 索引，不是 `copyapp verify` 案例。选定语义结论见下方审阅报告；服务端行为仍未知。 |

@@ -85,6 +85,20 @@ class OnboardingTest(unittest.TestCase):
             self.assertIn("separate file", steps[0]["action"])
             self.assertIn("22316", steps[0]["action"])
 
+    def test_doctor_reports_optional_developer_filesystem_gap(self):
+        probes = {name: {"status": "available"} for name in
+                  ("usb_lockdown", "usb_screenshot", "ssh_mobile", "frida_usb",
+                   "ios_mcp", "ictrl")}
+        probes["dvt_filesystem"] = {"status": "unavailable",
+                                    "error_type": "ConnectionTerminatedError"}
+        host = {name: {"status": "available"} for name in
+                ("xcode", "xcodegen", "ldid", "codex_cli")}
+        with tempfile.TemporaryDirectory() as directory:
+            steps = _next_steps(UDID, probes, host, Path(directory) / "id",
+                                Path(directory) / "known_hosts")
+        self.assertEqual([step["for"] for step in steps], ["dvt_filesystem_optional"])
+        self.assertIn("SSH-backed analysis", steps[0]["action"])
+
     def test_frida_inventory_does_not_claim_jailed_access_is_ready(self):
         device = SimpleNamespace(id=UDID, type="usb",
                                  query_system_parameters=lambda: {"access": "jailed"},

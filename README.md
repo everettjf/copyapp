@@ -41,16 +41,18 @@ Read `cases/first-survey/report.md`. Use a new output directory on a retry. For 
 
 This patch release closes the first selected-flow milestone: source-linked analysis, an independent runnable iOS App, same-device comparison, and a reviewed coverage target and delivery. The [system Notes XR study](docs/notes-xr-workflow.md) exercises three local flows on iOS 16.1.1; the [iOS 17 Calculator study](docs/ios17-calculator-fresh-from-report.md) exercises a bounded report-guided build and paired checks. The [coverage-target method](docs/coverage-targets.md) keeps a chosen milestone distinct from whole-App equivalence. See the [v0.1.17 release note](docs/releases/v0.1.17.md) and [two-device matrix](docs/two-device-verification-matrix.md).
 
-`coverage-plan` and `coverage-delivery` freeze a revisable known-capability inventory, combine one or more selected-flow device deliveries, and report target, completion and verified known coverage separately. A local offline exercise against the saved Notes XR report and delivery passed both new case verifiers; its five-item inventory is a bounded example, not a measurement of all Notes features. **324 Python tests pass.** iOS 26 is the next stage and remains untested.
+`coverage-plan` and `coverage-delivery` freeze a revisable known-capability inventory, combine one or more selected-flow device deliveries, and report target, completion and verified known coverage separately. A local offline exercise against the saved Notes XR report and delivery passed both new case verifiers; its five-item inventory is a bounded example, not a measurement of all Notes features. iOS 26 remains untested.
 
 | Setup difference | iPhone XR / iOS 16.1.1 | iPhone 14 / iOS 17.3.1 |
 | --- | --- | --- |
 | Jailbreak and device service | Dopamine rootless; ordinary rootless iOS MCP | Relaxin/RootHide; RootHide iOS MCP needs ElleKit |
 | Frida and encrypted package recovery | Host-matched Frida with a verified root helper route; DeepSeek/Kimi recovery tested | RootHide's packaged Frida 16.1.4 failed to attach to original Calculator; isolated Frida 17.23.3 worked. Remoboard main App and keyboard extension recovery used mobile SSH; generic `root-run` is unavailable |
 | Rebuilt App installation | TrollStore helper through root Frida, with exact installed version/build checks | Apple Development signed IPA through USB InstallationProxy |
-| Latest developer-file probe | File listing failed with `ConnectionTerminatedError` after developer-image remount; SSH, Frida, iOS MCP and iCTRL remained available | File listing and the other tested channels were available |
+| October 17 closeout probe | Developer file listing failed with `ConnectionTerminatedError`; the SSH bundle/sandbox acquisition, Frida, iOS MCP and iCTRL paths remained available | Developer file listing and the other tested channels were available; SSH bundle/sandbox acquisition passed |
 
-**Next work:** restore and retest XR developer-file service; test setup on a separate clean Mac and longer device/installer reliability; prove unfamiliar-App discovery and new-source generation without prepared flows; widen App state, network and visual coverage. A standalone Claude CLI run, hours-long or interrupted Clock behavior, and iOS 26 remain unverified. The current deliveries are independent Apps with measured selected-flow coverage, not complete replicas of arbitrary Apps.
+The current-code closeout ran `doctor`, Calculator `analyze --launch`, and the same `7 + 8 = 15` iOS MCP playbook on both phones; all six new cases and the saved XR Notes and iOS 17 Calculator parent cases passed `copyapp verify`. The final screenshots visibly show `15`. The [two-device matrix](docs/two-device-verification-matrix.md) lists evidence and limits.
+
+**Next work:** investigate XR's optional developer-file service; test setup on a separate clean Mac and longer device/installer reliability; prove unfamiliar-App discovery and new-source generation without prepared flows; widen App state, network and visual coverage. A standalone Claude CLI run, hours-long or interrupted Clock behavior, and iOS 26 remain unverified. The current deliveries are independent Apps with measured selected-flow coverage, not complete replicas of arbitrary Apps.
 
 The earlier iOS 17 Calculator clone source and IPA existed before its report; a separate [new-source four-flow pilot](docs/ios17-calculator-fresh-from-report.md) now verifies report-guided implementation, signing, installation and paired comparison on that phone. Its installed RootHide Frida server cannot provide root `root-run`; the verified encrypted-package route uses mobile SSH. The [iOS 17 device record](docs/relaxin-roothide-iphone14.md) gives exact evidence and limits.
 
@@ -268,7 +270,8 @@ The USB route does not need TrollStore or SSH. `install` saves `input.ipa` insid
 | If setup stops here | Check |
 | --- | --- |
 | `devices` lists nothing | Unlock the phone, accept USB trust, change the cable or USB port, and rerun `devices`. |
-| Screenshot or DVT is unavailable | Check Developer Mode, full Xcode selection and the device's Developer Disk Image; rerun `doctor` into a new directory. |
+| Screenshot is unavailable | Check Developer Mode, full Xcode selection and the device's Developer Disk Image; rerun `doctor` into a new directory. |
+| Only `dvt_filesystem` is unavailable | Use the pinned mobile SSH route for bundle and sandbox acquisition. The tested XR returns `ConnectionTerminatedError` for DVT listing while SSH-backed `analyze` succeeds; investigate Developer Mode and the matching Developer Disk Image only if USB file listing is required. |
 | `ssh_mobile` is unavailable | Keep the `22222 → 22` forward alive, check the pinned host key and `mobile` key login, then compare `deviceinfo uniqueid` with the chosen UDID. |
 | `ios_mcp` is unavailable | Check that the rootless tweak loaded after SpringBoard reload. `analyze` opens its own exact-device UI forward; inspect `copyapp doctor` if the service remains unreachable. |
 | `frida_usb` is unavailable | Check that Frida server is running on that phone and matches the installed host Frida version. |

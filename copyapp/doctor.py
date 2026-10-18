@@ -208,6 +208,12 @@ def _next_steps(udid: str, probes: Dict[str, Any], host: Dict[str, Any],
         steps.append({"for": "usb_screenshot", "action":
                       "Enable Developer Mode on the phone, select full Xcode with "
                       "xcode-select, and mount the matching Developer Disk Image."})
+    if probes.get("dvt_filesystem", {}).get("status") == "unavailable":
+        steps.append({"for": "dvt_filesystem_optional", "action":
+                      "Developer file listing is unavailable on this device. "
+                      "For App bundle and sandbox acquisition, use the pinned mobile SSH route; "
+                      "this does not block SSH-backed analysis. If USB-only file listing is "
+                      "needed, check Developer Mode and the matching Developer Disk Image."})
     if host["xcode"]["status"] != "available":
         steps.append({"for": "xcode", "action":
                       "Install and select full Xcode; check xcodebuild -version."})
