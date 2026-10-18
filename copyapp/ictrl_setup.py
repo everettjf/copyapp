@@ -80,8 +80,10 @@ async def _stop_runner(udid: str, bundle: str) -> None:
         if values.get("UniqueDeviceID") != udid:
             raise RuntimeError("USB runner target identity does not match --udid")
         if sys.platform == "darwin" and int(str(values.get("ProductVersion", "0")).split(".")[0]) >= 17:
+            transport = ("--userspace" if int(str(values["ProductVersion"]).split(".")[0]) >= 26
+                         else "--native")
             command = [sys.executable, "-m", "pymobiledevice3", "developer", "dvt",
-                       "process-id-for-bundle-id", "--native", "--udid", udid, bundle]
+                       "process-id-for-bundle-id", transport, "--udid", udid, bundle]
             result = await asyncio.create_subprocess_exec(
                 *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             stdout, stderr = await asyncio.wait_for(result.communicate(), timeout=45)
@@ -93,7 +95,7 @@ async def _stop_runner(udid: str, bundle: str) -> None:
                 raise RuntimeError("native runner process lookup returned invalid PID")
             if int(pid_text):
                 command = [sys.executable, "-m", "pymobiledevice3", "developer", "dvt",
-                           "signal", "--native", "--udid", udid, pid_text, "9"]
+                           "signal", transport, "--udid", udid, pid_text, "9"]
                 result = await asyncio.create_subprocess_exec(
                     *command, stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE)
@@ -175,6 +177,18 @@ def _build_runner(ios_version: str, output: Path) -> Path:
     output.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(built, output)
     return output
+
+
+def _ensure_developer_image(udid: str, ios_version: str) -> None:
+    """Mount the personalized developer image needed by iOS 26 XCTest."""
+    if _version(ios_version)[0] < 26:
+        return
+    command = [sys.executable, "-m", "pymobiledevice3", "mounter", "auto-mount",
+               "--userspace", "--udid", udid]
+    result = subprocess.run(command, capture_output=True, text=True, timeout=180)
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()[-300:]
+        raise RuntimeError("iOS 26 developer image mount failed: " + detail)
 
 
 @contextmanager
@@ -358,6 +372,7 @@ def setup_ictrl(udid: str, output: Path, ssh_port: int = 22222,
             if not installed:
                 raise RuntimeError("runner is absent after installation")
             if previous_bundle and (previous_bundle != bundle or reinstall):
+                _ensure_developer_image(udid, ios_version)
                 asyncio.run(_stop_runner(udid, previous_bundle))
                 state["stages"].append("previous_runner_stopped")
             _save_bundle(udid, bundle)
@@ -372,8 +387,13 @@ def setup_ictrl(udid: str, output: Path, ssh_port: int = 22222,
         with _usb_forward(udid, 8200) as port:
             native_test = (_version(ios_version)[0] >= 17 and
                            (runner_installed_now or not _runner_ready(port)))
+            if native_test:
+                _ensure_developer_image(udid, ios_version)
+                if _version(ios_version)[0] >= 26:
+                    state["stages"].append("developer_image_ready")
             runner_session = (ictrl_xcuitest_session(udid, bundle, output / "xcuitest.log",
-                                                    auto_approve_first_pair) if native_test
+                                                    auto_approve_first_pair, ios_version)
+                              if native_test
                               else nullcontext(None))
             with runner_session as test_process:
                 if test_process is None:

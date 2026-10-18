@@ -16,6 +16,7 @@ from copyapp.compare_playbooks import _load_run, compare_playbooks
 from copyapp.flow_capture import capture_flow, validate_flow_pair
 from copyapp.install import _installed_app
 from copyapp.gestures import GESTURE_ACTIONS, gesture_params
+from copyapp.host_ocr import recognize_screenshot
 from copyapp.text_actions import TYPE_ACTION, type_params
 from copyapp.investigate_flow import _files
 from copyapp.playbook import run_playbook
@@ -69,6 +70,9 @@ def _preflight(spec_path: Path, pairs: List[Tuple[str, Path, Path]]) -> Tuple[di
         clone = _read(rebuilt_path)
         final_view = flow_specs[flow_id].get("final_view")
         if final_view is not None:
+            if not isinstance(final_view, dict) or final_view.get("source", "uikit_text") not in (
+                    "uikit_text", "screenshot_ocr"):
+                raise ValueError(f"invalid final view source: {flow_id}")
             extra = final_view.get("also", []) if isinstance(final_view, dict) else None
             absent = final_view.get("absent", []) if isinstance(final_view, dict) else None
             if (not isinstance(extra, list) or len(extra) > 8 or
@@ -191,7 +195,78 @@ def _prepare_run(path: Path, bundle: str, scenario: str, prefix: str,
 
 
 def check_final_view(flow_case: Path, assertion: dict) -> dict:
-    """Check one visible UIKit text node within a bounded screen region."""
+    """Check bounded visible text in saved UIKit nodes or a verified screenshot."""
+    if assertion.get("source") == "screenshot_ocr":
+        play_path = flow_case / "playbook"
+        manifest_path = play_path / "manifest.json"
+        manifest = _read(manifest_path)
+        steps = manifest.get("steps")
+        if manifest.get("status") != "complete" or not isinstance(steps, list):
+            raise ValueError("invalid playbook for screenshot OCR assertion")
+        screenshots = [step for step in steps if isinstance(step, dict) and
+                       step.get("action") == "screenshot" and step.get("evidence_path")]
+        if not screenshots:
+            raise ValueError("no saved screenshot for OCR assertion")
+        saved = screenshots[-1]
+        name = saved["evidence_path"]
+        if not isinstance(name, str) or Path(name).name != name:
+            raise ValueError("invalid screenshot evidence path")
+        screenshot_path = play_path / name
+        screenshot_hash = sha256_file(screenshot_path)
+        if screenshot_hash != saved.get("sha256"):
+            raise ValueError("saved screenshot hash mismatch")
+        ocr = recognize_screenshot(screenshot_path.read_bytes())
+        texts = ocr.get("texts")
+        if not isinstance(texts, list):
+            raise ValueError("invalid screenshot OCR result")
+        screen = manifest.get("screen")
+        image = ocr.get("image")
+        if (not isinstance(screen, dict) or not isinstance(image, dict) or
+                any(type(screen.get(key)) not in (int, float) or screen[key] <= 0
+                    for key in ("width", "height")) or
+                any(type(image.get(key)) not in (int, float) or image[key] <= 0
+                    for key in ("width", "height"))):
+            raise ValueError("saved screen geometry is missing for OCR assertion")
+        scale_x = image["width"] / screen["width"]
+        scale_y = image["height"] / screen["height"]
+        if not (0.5 <= scale_x <= 4 and 0.5 <= scale_y <= 4):
+            raise ValueError("OCR image and screen point geometry disagree")
+
+        def ocr_matches(expected: dict) -> list:
+            region = expected["region_points"]
+            matches = []
+            for item in texts:
+                if not isinstance(item, dict) or item.get("text") != expected["text"]:
+                    continue
+                rect = item.get("rect")
+                if not isinstance(rect, dict) or any(type(rect.get(key)) not in (int, float)
+                                                       for key in ("x", "y", "width", "height")):
+                    continue
+                center = ((rect["x"] + rect["width"] / 2) / scale_x,
+                          (rect["y"] + rect["height"] / 2) / scale_y)
+                if region[0] <= center[0] <= region[2] and region[1] <= center[1] <= region[3]:
+                    matches.append({"text": item["text"], "rect": rect,
+                                    "center_points": {"x": center[0], "y": center[1]},
+                                    "confidence": item.get("confidence")})
+            return matches
+
+        matches = ocr_matches(assertion)
+        also_checks = [{"expected": item, "matches": ocr_matches(item)}
+                       for item in assertion.get("also", [])]
+        absent_checks = [{"expected": item, "matches": ocr_matches(item)}
+                         for item in assertion.get("absent", [])]
+        for item in also_checks:
+            item["passed"] = len(item["matches"]) == 1
+        for item in absent_checks:
+            item["passed"] = len(item["matches"]) == 0
+        return {"schema_version": 1, "kind": "final_screenshot_ocr_check",
+                "expected": assertion, "matches": matches,
+                "also_checks": also_checks, "absent_checks": absent_checks,
+                "passed": len(matches) == 1 and all(item["passed"] for item in also_checks + absent_checks),
+                "screenshot_sha256": screenshot_hash,
+                "image_to_points_scale": {"x": scale_x, "y": scale_y},
+                "playbook_manifest_sha256": sha256_file(manifest_path),
+                "flow_manifest_sha256": sha256_file(flow_case / "manifest.json")}
     tree_path = flow_case / "view-tree/view-tree.json"
     tree = _read(tree_path)
     nodes = tree.get("nodes")
@@ -367,7 +442,7 @@ def rebuild_check(udid: str, spec_path: Path, pairs: List[Tuple[str, Path, Path]
                     check = _final_view_check(path, item["final_view"],
                                               root / f"{path.name}-state-check.json")
                     if not check["passed"]:
-                        raise ValueError(f"final UIKit text assertion failed for {flow_id} {path.name}")
+                        raise ValueError(f"final view assertion failed for {flow_id} {path.name}")
             if comparison.exists():
                 attempts = root / "attempts"
                 attempts.mkdir(exist_ok=True)

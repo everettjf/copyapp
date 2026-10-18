@@ -2,6 +2,8 @@
 
 [English](README.md) · 简体中文 · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
+[项目网站](https://everettjf.github.io/copyapp/) · [安装指南](#从这里开始) · [参与贡献](CONTRIBUTING.md)
+
 ## 从这里开始
 
 第一次运行只需一台装有 Python 3.9+ 的 Mac，以及已解锁、通过 USB 连接并点了“信任此电脑”的 iPhone。首次 USB 采集不需要手机端 tweak、SSH 或 Frida：
@@ -29,19 +31,21 @@ sh scripts/bootstrap-macos.sh
 
 在已越狱的 iPhone XR（iOS 16.1.1）上，[Translate 完整案例](docs/translate-xr-workflow.zh-CN.md)（[English](docs/translate-xr-workflow.md)）已经从新写的发现脚本走通到[审阅报告](cases/translate-current-workflow-20261016/analysis-agent/reviewed-report/report.md)、[独立 UIKit 工程](rebuild/TranslateFreshProbe)、真机安装与三组原版/复刻版对照。六张截图逐张审阅，均有轻微图标或间距差异。范围限于文字输入但不提交翻译、Favorites 空状态和 Conversation 待机导航；翻译结果、语音和相机能力仍未实现或验证。
 
-**已验证支持：**第一版“分析 → 复刻 → 真机对照”的核心阶段已在 iPhone XR / iOS 16.1.1（普通 rootless）和 [iPhone 14 / iOS 17.3.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone14.md)上通过真机验证。这里的“支持”指在已测配置上完成证据采集、审阅报告、独立 App 安装及同机选定行为核验，不代表任意 App、越狱配置或全部功能都可用。iOS 26 尚未实测。
+## 已验证支持
+
+第一版“分析 → 复刻 → 真机对照”的核心阶段已在 iPhone XR / iOS 16.1.1（普通 rootless）、[iPhone 14 / iOS 17.3.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone14.md)和 [iPhone 11 / iOS 26.0.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone11-ios26.md)上通过真机验证。这里的“支持”指在已测配置上完成证据采集、审阅报告、独立 App 安装及同机选定行为核验，不代表任意 App、越狱配置或全部功能都可用。iOS 26 Calculator 的一条运算流程通过了对照，最终截图审阅只有轻微差异。
 
 | 设备状态 | 已验证范围 | 设备专属配置 |
 | --- | --- | --- |
 | iPhone XR · iOS 16.1.1 · rootless | 完成系统 Notes 三流程分析到独立复刻的父案例；深度分析、加密 App 恢复、夹具三流程原版/复刻版对照及五组截图审阅；新版复刻版三流程与原版/复刻版 SQLite 行内容对照通过；夹具分享扩展收到固定文本；原版 Translate 输入与 Clock 秒表的选定流程经两种界面后端通过 | rootless iOS MCP、SSH、版本匹配的 Frida；安装使用 TrollStore 或有效签名 |
 | iPhone 14 · iOS 17.3.1 · Relaxin/RootHide | 完成四流程 `copyapp copy` 父案例：Calculator 审阅报告、原版按键跟踪、独立签名复刻版、四条末端断言和五组截图审阅；Remoboard 加密包恢复；夹具流程、SQLite 核对及分享扩展收到固定文本；原版 Translate 输入与 Clock 秒表的选定流程经两种界面后端通过 | ElleKit 与 RootHide iOS MCP、mobile SSH、固定版本 Frida 17.23.3 独立服务、复刻版的 Apple Development 签名；Translate/Clock 首次使用引导已完成 |
-| iPhone 11 · iOS 26.0.1 | 未测试 | 暂无配置或兼容性结论 |
+| iPhone 11 · iOS 26.0.1 · Relaxin/RootHide | USB／SSH 采集、iCTRL、iOS MCP 健康检查及界面操作、Frida 附加、正式 Calculator 报告、签名独立 App 安装及一条 `7 + 8 = 15` 成对流程通过；iOS 26 布局调整后的视觉审阅只有轻微差异 | 个性化开发者镜像与 userspace XCTest 隧道；RootHide tweak 需 ElleKit 和 `sbreload`。成对截图使用 iCTRL，因 iOS MCP 在重新启动 App 后可能截到黑屏。[设备记录](docs/relaxin-roothide-iphone11-ios26.md) |
 
-### 里程碑一 · v0.1.17
+### 里程碑一 · v0.1.0
 
-这个 patch 版本完成第一个选定流程里程碑：有来源的分析、可运行的独立 iOS App、同机对照，以及经过审阅的覆盖目标和交付。[系统 Notes XR 实测](docs/notes-xr-workflow.zh-CN.md)覆盖 iOS 16.1.1 上三条本地流程；[iOS 17 Calculator 实测](docs/ios17-calculator-fresh-from-report.zh-CN.md)覆盖有界的报告驱动新源码与成对检查。[动态覆盖方法](docs/coverage-targets.zh-CN.md)把阶段目标与整个 App 的功能等价区分开。详见 [v0.1.17 发布说明](docs/releases/v0.1.17.zh-CN.md)和[双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)。
+此版本完成第一个选定流程里程碑：有来源的分析、可运行的独立 iOS App、同机对照，以及经过审阅的覆盖目标和交付。[系统 Notes XR 实测](docs/notes-xr-workflow.zh-CN.md)覆盖 iOS 16.1.1 上三条本地流程；[iOS 17 Calculator 实测](docs/ios17-calculator-fresh-from-report.zh-CN.md)覆盖有界的报告驱动新源码与成对检查。[iOS 26 设备记录](docs/relaxin-roothide-iphone11-ios26.md)覆盖 Calculator 正式报告与一条成对运算流程。[动态覆盖方法](docs/coverage-targets.zh-CN.md)把阶段目标与整个 App 的功能等价区分开。详见 [v0.1.0 发布说明](docs/releases/v0.1.0.zh-CN.md)和前两台设备的[验证矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
-`coverage-plan` 与 `coverage-delivery` 可固定可修订的已知能力清单，汇总一项或多项选定流程的真机交付，并分别报告目标、阶段完成和已知能力实证覆盖。基于已保存 Notes XR 报告与交付的本地离线演练中，两种新案例均通过校验；演练所用五项清单只是有界示例，不能当作 Notes 全部功能的覆盖率。iOS 26 尚未实测。
+`coverage-plan` 与 `coverage-delivery` 可固定可修订的已知能力清单，汇总一项或多项选定流程的真机交付，并分别报告目标、阶段完成和已知能力实证覆盖。基于已保存 Notes XR 报告与交付的本地离线演练中，两种新案例均通过校验；演练所用五项清单只是有界示例，不能当作 Notes 全部功能的覆盖率。iOS 26 的交付范围是一条运算流程，既有独立源码按 iOS 26 实测界面调整后，最终截图审阅为轻微差异。
 
 | 配置差异 | iPhone XR / iOS 16.1.1 | iPhone 14 / iOS 17.3.1 |
 | --- | --- | --- |
@@ -52,7 +56,7 @@ sh scripts/bootstrap-macos.sh
 
 当前代码在两台手机上均重新运行 `doctor`、Calculator `analyze --launch` 和相同的 `7 + 8 = 15` iOS MCP 脚本；六份新案例及已保存的 XR Notes、iOS 17 Calculator 父案例全部通过 `copyapp verify`。两机末端截图均可见 `15`。证据和边界见[双机矩阵](docs/two-device-verification-matrix.zh-CN.md)。
 
-**后续工作：**调查 XR 的可选开发者文件服务；在另一台全新 Mac 验证环境搭建及更长期的设备、安装可靠性；证明无需预置脚本的陌生 App 自主发现和新源码生成；扩展 App 状态、网络与视觉覆盖。独立 Claude CLI 全流程、Clock 数小时或受系统事件干扰的行为、iOS 26 均未验证。目前交付的是对选定流程做过衡量的独立 App，不能称为任意 App 的完整复刻。
+**后续工作：**提升 iOS 26 的 iOS MCP 截图稳定性和复刻版视觉一致性，追踪 SwiftUI 输入分发；调查 XR 的可选开发者文件服务；在另一台全新 Mac 验证环境搭建及更长期的设备、安装可靠性；证明无需预置脚本的陌生 App 自主发现和新源码生成；扩展 App 状态、网络与视觉覆盖。独立 Claude CLI 全流程以及 Clock 数小时或受系统事件干扰的行为仍未验证。目前交付的是对选定流程做过衡量的独立 App，不能称为任意 App 的完整复刻。
 
 Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 导出包和索引数据沙盒；本地解析 Mach-O。XR 上的 Compass 已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展已恢复为可分析 IPA。iPhone 14 上的 Frida 17 独立服务已对原版 Calculator 完成逐次点击跟踪。
 
@@ -230,7 +234,7 @@ ssh -p 22222 -i cases/ssh/id_ed25519 \
 .venv/bin/copyapp verify cases/first-ictrl-setup
 ```
 
-若 runner 已安装，`setup` 会复用并核验配对。已有签名 IPA 时可传 `--runner-ipa <IPA>`，安装前会检查 Bundle ID 和最低 iOS 版本；加 `--reinstall` 可替换现有 runner。iOS 17+ 可用 `--auto-approve-first-pair` 让开发版 runner 自动批准一次本地 USB 配对。重试用新的 `--out` 目录。仓库源码在 Xcode 27 下构建，XR/iOS 16.1.1 与 iPhone 14/iOS 17.3.1 都完成了配对；iOS 26 尚未验证。见 [iPhone 14 状态记录](docs/relaxin-roothide-iphone14.md)和 [iCTRL XR 实测记录](docs/ictrl-xr-validation.md)。
+若 runner 已安装，`setup` 会复用并核验配对。已有签名 IPA 时可传 `--runner-ipa <IPA>`，安装前会检查 Bundle ID 和最低 iOS 版本；加 `--reinstall` 可替换现有 runner。iOS 17+ 可用 `--auto-approve-first-pair` 让开发版 runner 自动批准一次本地 USB 配对。重试用新的 `--out` 目录。仓库源码在 Xcode 27 下构建，XR/iOS 16.1.1 与 iPhone 14/iOS 17.3.1 都完成了配对；iPhone 11/iOS 26.0.1 在挂载个性化开发者镜像并使用 userspace XCTest 隧道后，也完成签名 runner 配对和真实界面脚本。见 [iOS 26 记录](docs/relaxin-roothide-iphone11-ios26.md)、[iPhone 14 状态记录](docs/relaxin-roothide-iphone14.md)和 [iCTRL XR 实测记录](docs/ictrl-xr-validation.md)。
 
 Copy APP 的 iCTRL 默认使用按签名团队区分的 ID：可选设置 App 为 `com.copyapp.<team-id>.ictrl`，runner 为 `com.copyapp.<team-id>.ictrl.uitests.xctrunner`。本地生成且被 Git 忽略的 `vendor/ictrl/Config/Local.xcconfig` 优先于默认值；从旧上游版本升级时，把其中 `ICTRL_BUNDLE_PREFIX` 改为 `com.copyapp.<team-id>`，或删除该文件让它重新生成，再重装 runner。新的 Bundle ID 会被 iOS 视为新 App，可能再次弹出通知授权与配对请求。核对指纹并批准；若首次运行因弹窗超时，用新 `--out` 目录重跑 `setup`。新 ID 通过认证检查后可卸载旧 runner。
 
@@ -576,7 +580,7 @@ Mac 端 `copyapp ui --backend ictrl` 通过上游 iCTRL 的加密客户端调用
 .venv/bin/copyapp ui tap --backend ictrl --ref '<元素 ref>'
 ```
 
-上游客户端将配对密钥保存在用户的 `~/.ictrl/token.json`，不要放进案例或 Git。`copyapp ui` 只接 `127.0.0.1` 的 USB 转发端口；返回值带有后端名称和 UTC 时间。一次验证只允许一个界面后端发动作。iCTRL 的 `page_source`、元素 `ref` 和截图与 iOS MCP 的原始结果分别保存，不能假设两者元素 ID 相同。XR 已完成加密配对，`copyapp ui --backend ictrl` 的健康检查、观察、截图、启动和 Compass 方位锁定点击均在真机成功执行。iPhone 14/iOS 17.3.1 也已配对；早期一次截图返回空响应，后来夹具 Counter、Notes、Catalog 三条 iCTRL 脚本及截图均完成并通过证据校验。iOS 26 尚未验收。
+上游客户端将配对密钥保存在用户的 `~/.ictrl/token.json`，不要放进案例或 Git。`copyapp ui` 只接 `127.0.0.1` 的 USB 转发端口；返回值带有后端名称和 UTC 时间。一次验证只允许一个界面后端发动作。iCTRL 的 `page_source`、元素 `ref` 和截图与 iOS MCP 的原始结果分别保存，不能假设两者元素 ID 相同。XR 已完成加密配对，`copyapp ui --backend ictrl` 的健康检查、观察、截图、启动和 Compass 方位锁定点击均在真机成功执行。iPhone 14/iOS 17.3.1 也已配对；早期一次截图返回空响应，后来夹具 Counter、Notes、Catalog 三条 iCTRL 脚本及截图均完成并通过证据校验。iPhone 11/iOS 26.0.1 的 iCTRL 配对、界面树、截图、动作和一条正式原版／复刻版成对流程已通过；最终视觉审阅记录了轻微差异。
 
 `copyapp experiment --backend ictrl` 和 `--backend ios-mcp` 共用同一套“启动目标 → 核对前台 → 截图 → Frida 挂钩 → 点击 → 再截图”实验逻辑。未传 `--port` 时，iCTRL 路径会在指定 USB 设备上启动已安装且已配对的 runner，并建立临时转发；两种后端的点击坐标均为屏幕点，截图保留各自原始分辨率。XR 的原版 Compass 同一坐标与方法已在两端实测调用 1 次，详见 [iCTRL 真机记录](docs/ictrl-xr-validation.md)。
 

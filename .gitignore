@@ -12,6 +12,7 @@ cases/
 .theos/
 packages/
 build/
+dist/
 toolchains/
 vendor/ictrl/build/
 vendor/ictrl/Frameworks/

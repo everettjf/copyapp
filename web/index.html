@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050505">
+  <meta name="description" content="Copy APP turns evidence from a jailbroken iPhone into a deep analysis report and an independently rebuilt iOS app with measured coverage.">
+  <title>Copy APP — Observe. Understand. Rebuild.</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="site.js" defer></script>
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="orb orb-a" aria-hidden="true"></div><div class="orb orb-b" aria-hidden="true"></div>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Copy APP home"><span class="brand-mark">C<span>∕</span>A</span><span class="brand-name">COPY<span>APP</span></span></a>
+    <nav aria-label="Main navigation">
+      <a href="#workflow" data-i18n="navWorkflow">Workflow</a>
+      <a href="#architecture" data-i18n="navArchitecture">Architecture</a>
+      <a href="#devices" data-i18n="navDevices">Devices</a>
+      <a href="#start" data-i18n="navStart">Get started</a>
+    </nav>
+    <div class="header-actions"><button class="language" id="language" type="button" aria-label="Switch language">中 / EN</button><a class="header-github" href="https://github.com/everettjf/copyapp" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a></div>
+  </header>
+  <main id="top">
+    <section class="hero section-shell">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="live-dot"></span><span data-i18n="eyebrow">OPEN SOURCE · REAL DEVICE EVIDENCE</span></div>
+        <h1><span data-i18n="heroOne">See inside.</span><br><span class="gradient-text" data-i18n="heroTwo">Build beyond.</span></h1>
+        <p class="hero-sub" data-i18n="heroSub">Analyze a real iOS app on a jailbroken iPhone. Rebuild selected behavior as an independent app. Keep every conclusion tied to evidence.</p>
+        <div class="hero-actions"><a class="button button-primary" href="#start"><span data-i18n="heroStart">Start exploring</span><span aria-hidden="true">↗</span></a><a class="button button-ghost" href="https://github.com/everettjf/copyapp#how-it-works" target="_blank" rel="noopener"><span data-i18n="heroDocs">Read the docs</span><span aria-hidden="true">→</span></a></div>
+        <div class="hero-facts"><div><strong>02</strong><span data-i18n="factPhases">connected phases</span></div><div><strong>03</strong><span data-i18n="factTested">phones tested</span></div><div><strong>16 / 17 / 26</strong><span data-i18n="factProgress">iOS generations</span></div></div>
+      </div>
+      <div class="hero-visual" aria-label="Copy APP evidence pipeline visualization">
+        <div class="visual-halo"></div>
+        <div class="visual-grid"></div>
+        <div class="device-frame"><div class="device-notch"></div><div class="device-display"><div class="screen-top"><span>09:41</span><span>●●●</span></div><div class="scan-target"><div class="scan-target-inner"><span class="target-glyph">◎</span><small>APP / TARGET</small></div><div class="scan-line"></div></div><div class="screen-footer"><span>UI TREE</span><span>RUNTIME</span><span>BINARY</span></div></div></div>
+        <div class="signal signal-one"><span class="signal-icon">⌘</span><span><small>01 / OBSERVE</small><strong>Evidence captured</strong></span></div>
+        <div class="signal signal-two"><span class="signal-icon">◇</span><span><small>02 / REBUILD</small><strong>Behavior verified</strong></span></div>
+        <div class="orbit-label orbit-label-a">METHOD TRACE / 0xA7F2</div><div class="orbit-label orbit-label-b">DEVICE ID / VERIFIED</div>
+      </div>
+      <div class="hero-bottom"><span>MAC ORCHESTRATION</span><span>USB LINK <i></i> JAILBROKEN IPHONE</span><span>EVIDENCE FIRST / ALWAYS</span></div>
+    </section>
+
+    <section id="workflow" class="section-shell workflow-section">
+      <div class="section-heading"><div><p class="kicker">// 01 — THE WORKFLOW</p><h2 data-i18n="workflowTitle">Two phases. One evidence trail.</h2></div><p data-i18n="workflowIntro">Go from observed behavior to a reviewed implementation. Each phase leaves inspectable cases behind.</p></div>
+      <div class="phase-grid">
+        <article class="phase-card"><div class="phase-head"><span class="phase-no">01</span><span class="phase-tag" data-i18n="phaseOneTag">UNDERSTAND THE ORIGINAL</span></div><div class="phase-symbol">⌁</div><h3 data-i18n="phaseOneTitle">Analyze deeply</h3><p data-i18n="phaseOneText">Collect package, sandbox, UI and runtime evidence. Inspect Mach-O code and selected methods. Write a sourced report and feature specification.</p><div class="phase-rule"></div><ul><li data-i18n="phaseOneA">Installed app &amp; sandbox</li><li data-i18n="phaseOneB">UI flows &amp; screenshots</li><li data-i18n="phaseOneC">Frida traces &amp; native code</li><li data-i18n="phaseOneD">Reviewed report &amp; feature spec</li></ul></article>
+        <div class="phase-link" aria-hidden="true"><span>→</span></div>
+        <article class="phase-card phase-card-second"><div class="phase-head"><span class="phase-no">02</span><span class="phase-tag" data-i18n="phaseTwoTag">BUILD AN INDEPENDENT APP</span></div><div class="phase-symbol">◈</div><h3 data-i18n="phaseTwoTitle">Rebuild selectively</h3><p data-i18n="phaseTwoText">Choose a realistic coverage target. Build and install an independent iOS app. Replay the same flows and review the differences on device.</p><div class="phase-rule"></div><ul><li data-i18n="phaseTwoA">Capability inventory &amp; target</li><li data-i18n="phaseTwoB">New Xcode project &amp; signed IPA</li><li data-i18n="phaseTwoC">Paired behavior &amp; visual checks</li><li data-i18n="phaseTwoD">Verified delivery &amp; known gaps</li></ul></article>
+      </div>
+    </section>
+
+    <section class="principle-band"><div class="section-shell principle-inner"><span class="principle-index">CORE PRINCIPLE / 001</span><p data-i18n="principle">A passing screenshot is a data point. A trustworthy rebuild is a chain of observations, decisions, and repeatable checks.</p><span class="principle-star" aria-hidden="true">✳</span></div></section>
+
+    <section id="architecture" class="section-shell architecture-section"><div class="section-heading"><div><p class="kicker">// 02 — SYSTEM DESIGN</p><h2 data-i18n="architectureTitle">Built as a local instrument.</h2></div><p data-i18n="architectureIntro">Your coding agent drives the workflow. The Mac coordinates collection and builds. The phone supplies the ground truth.</p></div>
+      <div class="architecture-grid"><div class="architecture-map"><div class="arch-rail"><span>AGENT</span><span>MAC</span><span>IPHONE</span><span>OUTPUT</span></div><div class="arch-flow"><div class="arch-node arch-agent"><span class="node-icon">⌘</span><div><strong>Codex / Claude Code</strong><small data-i18n="archAgent">Planning &amp; interpretation</small></div></div><span class="arch-arrow">↓</span><div class="arch-node arch-mac"><span class="node-icon">▣</span><div><strong>Copy APP CLI</strong><small data-i18n="archMac">Orchestration, analysis, builds</small></div></div><span class="arch-arrow">↓ USB / SSH</span><div class="arch-node arch-phone"><span class="node-icon">▤</span><div><strong>Jailbroken iPhone</strong><small>iOS MCP · iCTRL · Frida · OpenSSH</small></div></div><span class="arch-arrow">↓</span><div class="arch-node arch-output"><span class="node-icon">◇</span><div><strong data-i18n="archOutputTitle">Verified artifacts</strong><small data-i18n="archOutput">Report · source · IPA · comparison</small></div></div></div></div><div class="architecture-notes"><div class="note-card"><span>01 / COLLECT</span><h3 data-i18n="noteOneTitle">See what really happened.</h3><p data-i18n="noteOneText">Named device identity, package hashes, bounded actions, screenshots and runtime traces live in local evidence cases.</p></div><div class="note-card"><span>02 / INTERPRET</span><h3 data-i18n="noteTwoTitle">Trace claims back to proof.</h3><p data-i18n="noteTwoText">Native inspection can use bundled tooling, Ghidra or Hopper. Pseudocode is evidence to review, never recovered source code.</p></div><div class="note-card"><span>03 / VERIFY</span><h3 data-i18n="noteThreeTitle">Measure only the chosen scope.</h3><p data-i18n="noteThreeText">Original and rebuilt flows run separately on the same phone. The final delivery names passes, visual differences and unknowns.</p></div></div></div>
+    </section>
+
+    <section id="devices" class="section-shell devices-section"><div class="section-heading"><div><p class="kicker">// 03 — REAL DEVICE STATUS</p><h2 data-i18n="devicesTitle">Tested on actual phones.</h2></div><p data-i18n="devicesIntro">Support statements follow device evidence. Coverage is scoped to the documented flows, not every app or every feature.</p></div><div class="device-grid"><div class="device-card"><span class="device-version">iOS 16.1.1</span><span class="device-status verified" data-i18n="verified">VERIFIED FLOWS</span><h3>iPhone XR</h3><p>Dopamine / rootless</p><span class="device-line"></span><small data-i18n="device16">Analysis, package recovery, UI and selected rebuild flows verified.</small></div><div class="device-card"><span class="device-version">iOS 17.3.1</span><span class="device-status verified" data-i18n="verified">VERIFIED FLOWS</span><h3>iPhone 14</h3><p>Relaxin / RootHide</p><span class="device-line"></span><small data-i18n="device17">Analysis, signed install and paired original/rebuild checks verified.</small></div><div class="device-card"><span class="device-version">iOS 26.0.1</span><span class="device-status verified" data-i18n="verified">VERIFIED FLOWS</span><h3>iPhone 11</h3><p>Relaxin / RootHide</p><span class="device-line"></span><small data-i18n="device26">Analysis and one paired Calculator flow passed; minor visual differences remain.</small></div></div><a class="text-link" href="https://github.com/everettjf/copyapp#tested-support" target="_blank" rel="noopener"><span data-i18n="deviceEvidence">Read device evidence and limits</span> ↗</a></section>
+
+    <section id="start" class="section-shell start-section"><div class="start-copy"><p class="kicker">// 04 — GET STARTED</p><h2 data-i18n="startTitle">Your first observation takes one command.</h2><p data-i18n="startText">Connect and trust an unlocked iPhone. Install the Mac CLI, then run the guided USB survey. Add jailbreak services when you are ready for deep analysis.</p><div class="start-actions"><a class="button button-primary" href="https://github.com/everettjf/copyapp#start-here" target="_blank" rel="noopener"><span data-i18n="setupGuide">Full setup guide</span> ↗</a><a class="button button-ghost" href="https://github.com/everettjf/copyapp/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener"><span data-i18n="contribute">Contribute</span> →</a></div></div><div class="terminal"><div class="terminal-top"><span class="terminal-dots"><i></i><i></i><i></i></span><span>terminal — copyapp</span><button id="copyCommand" type="button" aria-label="Copy setup commands" data-i18n="copy">COPY</button></div><pre><code><span class="comment"># macOS / first USB survey</span>
+<span class="prompt">$</span> git clone https://github.com/everettjf/copyapp.git
+<span class="prompt">$</span> cd copyapp
+<span class="prompt">$</span> sh scripts/bootstrap-macos.sh
+<span class="prompt">$</span> .venv/bin/copyapp onboard
+
+<span class="success">✓</span> <span data-i18n="terminalReady">Device identity and screenshot readiness checked</span></code></pre></div></section>
+  </main>
+  <footer><div class="section-shell footer-inner"><div><div class="footer-brand">COPY<span>APP</span><span class="footer-spark">✳</span></div><p data-i18n="footerLine">Evidence you can inspect. Software you can test.</p></div><div class="footer-links"><a href="https://github.com/everettjf/copyapp" target="_blank" rel="noopener">GitHub ↗</a><a href="https://github.com/everettjf/copyapp#how-it-works" target="_blank" rel="noopener" data-i18n="footerDocs">Documentation ↗</a><a href="https://github.com/everettjf/copyapp/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener" data-i18n="footerContribute">Contributing ↗</a></div></div><div class="section-shell footer-bottom"><span>© 2026 COPY APP</span><span>OPEN SOURCE / BUILT FOR REAL DEVICES</span></div></footer>
+</body>
+</html>

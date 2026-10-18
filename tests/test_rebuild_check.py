@@ -57,6 +57,31 @@ class RebuildCheckTest(unittest.TestCase):
             self.assertTrue(result["passed"])
             self.assertEqual([item["node_id"] for item in result["matches"]], [1])
 
+    def test_screenshot_ocr_final_view_checks_region_and_saved_hash(self):
+        with tempfile.TemporaryDirectory() as temp:
+            flow = Path(temp)
+            play = flow / "playbook"
+            play.mkdir()
+            (flow / "manifest.json").write_text("{}")
+            screenshot = play / "step-02-screenshot.jpg"
+            screenshot.write_bytes(b"saved screenshot")
+            manifest = {"status": "complete", "screen": {"width": 414, "height": 896},
+                "steps": [{"action": "screenshot",
+                "evidence_path": screenshot.name, "sha256": sha256_file(screenshot)}]}
+            (play / "manifest.json").write_text(json.dumps(manifest))
+            assertion = {"source": "screenshot_ocr", "text": "15",
+                         "region_points": [0, 200, 414, 380]}
+            observed = {"image": {"width": 828, "height": 1792},
+                        "texts": [{"text": "15", "confidence": 0.9,
+                          "rect": {"x": 640, "y": 560, "width": 140, "height": 100}}]}
+            with patch("copyapp.rebuild_check.recognize_screenshot", return_value=observed):
+                self.assertTrue(check_final_view(flow, assertion)["passed"])
+                outside = dict(assertion, region_points=[0, 0, 414, 200])
+                self.assertFalse(check_final_view(flow, outside)["passed"])
+                screenshot.write_bytes(b"changed screenshot")
+                with self.assertRaisesRegex(ValueError, "hash mismatch"):
+                    check_final_view(flow, assertion)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

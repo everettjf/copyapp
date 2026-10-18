@@ -111,14 +111,19 @@ async def _ios_version(udid: str) -> str:
 @contextmanager
 def ictrl_xcuitest_session(udid: str, bundle: str,
                           log_path: Optional[Path] = None,
-                          auto_approve_first_pair: bool = False) -> Iterator[subprocess.Popen]:
+                          auto_approve_first_pair: bool = False,
+                          ios_version: str = "") -> Iterator[subprocess.Popen]:
     """Keep iOS 17+ testmanagerd attached while the iCTRL service is in use."""
     if not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", udid):
         raise ValueError("invalid device UDID")
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", bundle):
         raise ValueError("invalid runner Bundle ID")
+    major = int(ios_version.split(".", 1)[0]) if re.match(r"^\d+", ios_version) else 0
+    # On the tested iOS 26 phone, native RSD listed processes but could not
+    # start testmanagerd. A mounted DDI plus the userspace tunnel did.
+    transport = "--userspace" if major >= 26 else "--native"
     command = [sys.executable, "-m", "pymobiledevice3", "developer", "dvt",
-               "xcuitest", "--native", "--udid", udid]
+               "xcuitest", transport, "--udid", udid]
     if auto_approve_first_pair:
         command.extend(["--env", "ICTRL_ALLOW_AUTH_ONCE=1"])
     command.append(bundle)
@@ -189,7 +194,8 @@ def ictrl_tunnel(udid: str, client: Path = DEFAULT_CLIENT) -> Iterator[int]:
             time.sleep(0.2)
         version = asyncio.run(_ios_version(udid)) if not ready else ""
         major = int(version.split(".", 1)[0]) if version[:1].isdigit() else 0
-        session = (ictrl_xcuitest_session(udid, ictrl_runner_bundle(udid))
+        session = (ictrl_xcuitest_session(udid, ictrl_runner_bundle(udid),
+                                        ios_version=version)
                    if not ready and major >= 17 else nullcontext(None))
         with session as test_process:
             if not ready and test_process is None:

@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 from zipfile import ZipFile
 
-from copyapp.ictrl_setup import _bundle_from_ipa, _pair, setup_ictrl
+from copyapp.ictrl_setup import _bundle_from_ipa, _ensure_developer_image, _pair, setup_ictrl
 from copyapp.usb_tunnel import ictrl_xcuitest_session
 from copyapp.verify import verify_case
 
@@ -51,6 +51,28 @@ class ICtrlSetupTest(unittest.TestCase):
         command = launch.call_args.args[0]
         self.assertEqual(command[-3:], ["--env", "ICTRL_ALLOW_AUTH_ONCE=1", BUNDLE])
         process.terminate.assert_called_once()
+
+    def test_ios26_xcuitest_uses_userspace_tunnel(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        with patch("copyapp.usb_tunnel.subprocess.Popen", return_value=process) as launch:
+            with ictrl_xcuitest_session(UDID, BUNDLE, ios_version="26.0.1"):
+                pass
+        command = launch.call_args.args[0]
+        self.assertIn("--userspace", command)
+        self.assertNotIn("--native", command)
+
+    def test_ios26_mounts_developer_image_before_xcuitest(self):
+        with patch("copyapp.ictrl_setup.subprocess.run") as run:
+            run.return_value.returncode = 0
+            _ensure_developer_image(UDID, "26.0.1")
+        command = run.call_args.args[0]
+        self.assertEqual(command[-4:], ["auto-mount", "--userspace", "--udid", UDID])
+
+    def test_older_ios_does_not_mount_developer_image_in_setup(self):
+        with patch("copyapp.ictrl_setup.subprocess.run") as run:
+            _ensure_developer_image(UDID, "17.3.1")
+        run.assert_not_called()
 
     def test_pair_shows_only_fingerprint(self):
         with tempfile.TemporaryDirectory() as directory:
