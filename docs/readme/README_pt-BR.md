@@ -6,7 +6,7 @@ O Copy APP coleta evidências do pacote, da interface, do sandbox e do comportam
 
 ## Como funciona
 
-Um agente de programação controla a CLI do Copy APP no Mac. OpenSSH, Frida, iOS MCP ou o iCTRL opcional coletam evidências do iPhone selecionado. Quando necessário, Ghidra ou Hopper analisam código nativo no Mac. O relatório revisado e `feature-spec.json` orientam a nova implementação; os mesmos fluxos são executados no app original e no novo, e as capturas de tela são examinadas. O [diagrama de arquitetura e a instalação completa](../../README.md#how-it-works) estão em inglês.
+Um agente de programação controla a CLI do Copy APP no Mac. OpenSSH, Frida, iOS MCP ou o iCTRL opcional coletam evidências do iPhone selecionado. Quando necessário, Ghidra ou Hopper analisam código nativo no Mac. O relatório revisado e `feature-spec.json` orientam a nova implementação; os mesmos fluxos são executados no app original e no novo, e as capturas de tela são examinadas. O [diagrama de arquitetura e a instalação completa](../README.md) estão em inglês.
 
 ## Início rápido
 
@@ -19,7 +19,7 @@ sh scripts/bootstrap-macos.sh
 .venv/bin/copyapp onboard
 ```
 
-Comece pela [primeira inspeção via USB](../../README.md#install-and-run-your-first-survey). A análise aprofundada também precisa de SSH, Frida e um serviço de interface no telefone.
+Comece pela [primeira inspeção via USB](../setup.md). A análise aprofundada também precisa de SSH, Frida e um serviço de interface no telefone.
 
 ## Princípios e contribuição
 

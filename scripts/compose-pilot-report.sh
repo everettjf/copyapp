@@ -14,8 +14,8 @@ case "$pilot" in
     compass)
         .venv/bin/copyapp report \
             --case cases/compass-xr-mcp-onepass-20261015 \
-            --findings docs/compass-findings.json \
-            --feature-spec docs/compass-feature-spec.json \
+            --findings examples/report-inputs/compass-findings.json \
+            --feature-spec examples/report-inputs/compass-feature-spec.json \
             --evidence rea.update_display=cases/compass-xr-rea-update-display-20261015 \
             --evidence rea.tap_bearing=cases/compass-bearing-candidate-rea-20261015 \
             --evidence rea.tap_bearing_hopper=cases/compass-hopper-tapped-20261015 \
@@ -55,8 +55,8 @@ case "$pilot" in
     fixture)
         .venv/bin/copyapp report \
             --case cases/fixture-xr-analysis-20261015 \
-            --findings docs/fixture-findings.json \
-            --feature-spec docs/fixture-feature-spec.json \
+            --findings examples/report-inputs/fixture-findings.json \
+            --feature-spec examples/report-inputs/fixture-feature-spec.json \
             --evidence ui.counter_before=cases/fixture-xr-ui-20261015/counter-before.jpg \
             --evidence ui.counter_after=cases/fixture-xr-ui-20261015/counter-after.jpg \
             --evidence ui.counter_view_tree=cases/fixture-swiftui-counter-view-tree-v2-20261015 \

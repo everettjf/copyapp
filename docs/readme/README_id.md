@@ -6,7 +6,7 @@ Copy APP mengumpulkan bukti paket aplikasi, antarmuka, sandbox, dan perilaku saa
 
 ## Cara kerja
 
-Coding Agent menjalankan Copy APP CLI di Mac. OpenSSH, Frida, iOS MCP, atau iCTRL opsional mengumpulkan bukti dari iPhone yang dipilih secara tepat. Jika diperlukan, Ghidra atau Hopper menganalisis kode native di Mac. Laporan yang ditinjau dan `feature-spec.json` memandu implementasi baru; alur yang sama dijalankan pada aplikasi asli dan aplikasi baru, lalu tangkapan layar diperiksa. [Diagram arsitektur dan panduan instalasi lengkap](../../README.md#how-it-works) tersedia dalam bahasa Inggris.
+Coding Agent menjalankan Copy APP CLI di Mac. OpenSSH, Frida, iOS MCP, atau iCTRL opsional mengumpulkan bukti dari iPhone yang dipilih secara tepat. Jika diperlukan, Ghidra atau Hopper menganalisis kode native di Mac. Laporan yang ditinjau dan `feature-spec.json` memandu implementasi baru; alur yang sama dijalankan pada aplikasi asli dan aplikasi baru, lalu tangkapan layar diperiksa. [Diagram arsitektur dan panduan instalasi lengkap](../README.md) tersedia dalam bahasa Inggris.
 
 ## Mulai cepat
 
@@ -19,7 +19,7 @@ sh scripts/bootstrap-macos.sh
 .venv/bin/copyapp onboard
 ```
 
-Mulailah dengan [survei USB pertama](../../README.md#install-and-run-your-first-survey). Analisis mendalam juga memerlukan SSH, Frida, dan layanan antarmuka di ponsel.
+Mulailah dengan [survei USB pertama](../setup.md). Analisis mendalam juga memerlukan SSH, Frida, dan layanan antarmuka di ponsel.
 
 ## Prinsip dan kontribusi
 

@@ -30,11 +30,12 @@ Thanks for helping make iOS app analysis more reproducible. Copy APP joins phone
 | `skills/` | Coding-agent workflows and handoffs. |
 | `rebuild/` | Independent example implementations. |
 | `tests/` and `fixture/` | Automated checks and known-source fixtures. |
-| `docs/` | Guides, experiments and localized README overviews. |
+| `examples/report-inputs/` | Historical pilot JSON inputs; not current device reports. |
+| `docs/` | Current setup, architecture, workflow, support limits, release note and localized README overviews. |
 | `cases/` | Local evidence and credentials; ignored by Git. |
 
 Do not commit raw IPAs, device screenshots, sandbox exports, pairing records, credentials or account data. Use synthetic fixtures or sanitized summaries in reviews. Preserve upstream licenses, NOTICE files and provenance when adapting code.
 
 ## Translation notes
 
-English `README.md` and `README.zh-CN.md` contain detailed setup instructions. The other localized README pages should accurately describe the same capabilities and tested scope, retain the links to the full setup and contribution guide, and state the bounded iPhone 14 / iOS 17.3.1 Relaxin/RootHide validation without claiming that every iOS 17 configuration works. iOS 26 remains untested. Translation-only changes do not require a connected phone; check links, code blocks and technical names.
+English `README.md` and Chinese `README.zh-CN.md` summarize setup and link to the full guides. Other localized README pages should accurately describe the named iOS 16, 17 and 26 selected-flow results, retain links to the current setup and contribution guides, and avoid general device or whole-app compatibility claims. Translation-only changes do not require a connected phone; check links, code blocks and technical names.

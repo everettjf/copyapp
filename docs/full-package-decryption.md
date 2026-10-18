@@ -1,48 +1,29 @@
-# Full analysis IPA recovery on iPhone XR and iPhone 14
+# Encrypted package recovery for analysis
 
-Tested devices: iPhone XR, iOS 16.1.1, Dopamine rootless; iPhone 14, iOS 17.3.1, Relaxin/RootHide. All case data is under Git-ignored `cases/`; it may contain proprietary code and should be kept local.
+[English](full-package-decryption.md) · [简体中文](full-package-decryption.zh-CN.md) · [Setup](setup.md)
 
-## Verified results
+An App Store bundle may contain encrypted Mach-O executables in the main app and extensions. Copy APP can produce an **analysis IPA** whose indexed executables have `cryptid=0`, then audit exactly which bytes changed. It does not recover the developer's original source or produce a signed installable IPA.
 
-| App | Installed version | Mach-O checked | Encrypted executables recovered | Package result |
-| --- | --- | ---: | ---: | --- |
-| DeepSeek `com.deepseek.chat` | 2.4.4 | 32 | Main and one share extension | `cases/deepseek-package-automated-20261015/decryption.json`: all headers decrypted, zero failures |
-| Kimi `com.moonshot.kimichat` | 3.0.9 | 17 | Main, push, share and widget extensions | `cases/kimi-package-automated-20261015/decryption.json`: all headers decrypted, zero failures |
-| Remoboard `com.everettjf.remotekb` on iPhone 14 | 7.1 | 3 | Main and keyboard extension | `cases/iphone14-remotekb-roothide-decrypt-20261017/decryption.json`: both encrypted ranges recovered and standalone case verified |
+## Path and checks
 
-For every originally encrypted executable, Copy APP compared the installed-bundle snapshot with the recovered IPA. File length and Mach-O UUID stayed identical. Only the declared encrypted byte range and four-byte `cryptid` field changed. Every encrypted range had thousands of changed bytes, and the package-wide check found no remaining encrypted Mach-O. DeepSeek and Kimi main executable bytes also exactly match the independent Frida runtime recovery done earlier. Older repeat DeepSeek runs produced identical main and extension binary SHA-256 values but different IPA ZIP hashes because the device helper stamped the recovered entries with the current time. Copy APP now rebuilds the analysis IPA with source ZIP metadata after checking that all other members are unchanged. It accepts only the helper's omission of `SC_Info` receipts.
-
-The command now automatically writes `static/ipa-index.json`, `static/ipa-report.md`, `static/objc-index.json`, and `static/objc-report.md` after the package checks pass. A fresh DeepSeek run produced 1,212 locally defined Objective-C classes and 13,099 methods from the recovered main executable. These are metadata names and addresses, not decompiled implementations.
-
-Kimi's verified analysis IPA SHA-256 is `04da194d939a83350ae5cab27b2ee6b99baf2cdaa281253ff5ffdcc7bc39ff4f`. DeepSeek's automated analysis IPA SHA-256 is `08d590c4736af407427f4d338d73b407885908d33e5db407ea1d4c9b67c34f0c`. These hashes identify local evidence, not downloadable packages.
-
-## How the autonomous path works
-
-1. `copyapp acquire` reads the installed `.app` bundle over key-authenticated USB SSH and records file hashes.
-2. `scripts/prepare-ipadecrypt-helper.sh` pins [`londek/ipadecrypt`](https://github.com/londek/ipadecrypt) at `2fa69244cc6e580cd05f781db57912c79a4c3197` and checks the reviewed iOS helper SHA-256 `8fe2ace941132c29d19480adba554ebd71d2a1ea27a2c7c6ee1eb648a504151b`. The helper stays outside this repository under `../toolchains/`.
-3. `copyapp decrypt-package` verifies snapshot identity and the exact connected UDID, then stages the helper. On ordinary rootless iOS it starts a bounded root process through USB Frida and reads status through mobile SSH. On the tested RootHide device it uses a bounded mobile SSH process in the RootHide namespace. Neither route needs root SSH login.
-4. The helper uses suspended process spawning and `mach_vm_read` to recover the main executable and each extension, then packages an analysis IPA. Copy APP transfers the output over USB SSH, checks its transfer hash, inspects every Mach-O and audits every changed byte against the original snapshot. It then validates the ZIP member list and all unchanged members, restores original ZIP metadata, and records both the device archive hash and canonical analysis archive hash.
-5. Device-side temporary helper and IPA files are removed when the command ends. Local evidence stays in the requested case directory.
-
-`decrypt-package` now writes a standalone `manifest.json`. `copyapp verify <DECRYPT_CASE>` checks the saved files and re-runs the source-to-output byte audit: App/version identity, every recovered encrypted range, all unchanged members, canonical ZIP layout, package-wide encryption headers, static index and device-run identity. The [new XR standalone case](../cases/deepseek-verifiable-decrypt-live-20261015/manifest.json) was produced by the command itself and passed that verifier: 32 Mach-O files checked, two encrypted executables recovered, and canonical IPA SHA-256 `9d4610e4e3587b8ca500aa3d7a08a8eabb498113e9589700a7bc099a09d46185`. A new `analyze` or `prepare-app` case also checks this child manifest when present. The archived device IPA bytes are not retained after canonicalization, so its saved transfer hash is a run-time observation rather than independently rechecked bytes.
-
-`copyapp analyze --decrypt` composes the same recovery with USB UI survey, bundle acquisition, and sandbox metadata indexing into one case. It writes `analysis.md` with links to the recovered IPA index and class report. Individual steps retain errors and evidence if one collector fails.
-
-On the XR, `cases/deepseek-onepass-decrypt-fixed-20261015/` passed all four stages and `copyapp verify`. The iOS MCP foreground check returned `verified_frontmost`; the screenshot visibly shows DeepSeek's sign-in screen. This establishes only that entry screen, since no account session or in-app pages were observed. The resulting case report is `analysis.md`, with a full-package manifest and recovered static indexes in `decrypted/`.
-
-On the iPhone 14, `cases/iphone14-remotekb-full-analyze-20261017/` also passed all four stages and `copyapp verify`. Its original main App and keyboard extension were encrypted on disk; the resulting analysis IPA has `cryptid=0` for all three Mach-O files. The two recovered binaries changed only inside their declared encrypted ranges and `cryptid` fields. This run did not launch Remoboard; the UI survey correctly attributes its screenshot to SpringBoard. RootHide's mobile SSH sees shared Media at `/rootfs/var/mobile/Media`, while the helper writes to the device's `/var/mobile/Media`; Copy APP maps those paths and removes temporary files afterward.
-
-The later [canonical DeepSeek preparation case](../cases/deepseek-canonical-prepare-app-network-live-20261015/manifest.json) ran `prepare-app --decrypt --network` on the XR and passed parent case verification. Its canonical IPA hash is `9d4610e4e3587b8ca500aa3d7a08a8eabb498113e9589700a7bc099a09d46185`, identical to Mac-side normalization of two earlier independent DeepSeek recoveries from the same source snapshot. The three device archive hashes differ. This demonstrates deterministic packaging for this package and helper; it does not establish that every App can be decrypted.
-
-The direct Frida attach path works for regular app processes on this XR, but attach to the system-hosted DeepSeek and Kimi share extension processes timed out after about 25 seconds. A separate `unfair`/`mremap_encrypted` trial stalled while reading a remapped page. The suspended-spawn helper succeeded for those same extension binaries. The earlier unsuccessful methods are retained as diagnostic evidence; the validated full-package command uses the successful method.
-
-## Reproduction
+1. `copyapp acquire` reads the installed bundle over authenticated mobile SSH on the exact USB device and saves a hash-bound snapshot.
+2. `scripts/prepare-ipadecrypt-helper.sh` fetches the pinned `londek/ipadecrypt` helper into an external `../toolchains/` directory; it is not vendored in this repository.
+3. `copyapp decrypt-package` verifies device, app and snapshot identity. On tested ordinary rootless iOS it starts a bounded root process via Frida; on tested RootHide devices it uses authenticated mobile SSH in the RootHide namespace.
+4. The helper uses suspended spawning and `mach_vm_read` to recover each encrypted executable. Copy APP checks length and UUID, audits changes against only the declared encrypted ranges and `cryptid` fields, verifies all unchanged ZIP members, and writes canonical package metadata.
+5. The command indexes the recovered IPA and records per-file results. `copyapp verify <DECRYPT_CASE>` rechecks saved identities, hashes, changed-byte audit and package encryption headers.
 
 ```sh
 sh scripts/prepare-ipadecrypt-helper.sh
-.venv/bin/copyapp acquire --udid <UDID> --bundle <BUNDLE_ID> --out cases/<ACQUIRE_CASE>
+.venv/bin/copyapp acquire --udid <UDID> --bundle <BUNDLE_ID> \
+  --out cases/<ACQUIRE>
 .venv/bin/copyapp decrypt-package --udid <UDID> --bundle <BUNDLE_ID> \
-  --snapshot cases/<ACQUIRE_CASE>/bundle-snapshot.ipa --out cases/<DECRYPT_CASE>
+  --snapshot cases/<ACQUIRE>/bundle-snapshot.ipa \
+  --out cases/<DECRYPT>
+.venv/bin/copyapp verify cases/<DECRYPT>
 ```
 
-The device needs a compatible jailbreak, OpenSSH reachable through a USB port forward, and the existing mobile SSH key. The ordinary rootless route also needs a working root Frida server; the tested RootHide route runs the helper through mobile SSH. The command has a 120-second device timeout and 140-second host timeout. It does not install, launch through the UI, or sign the recovered app. The output is an **analysis IPA**; modified code signatures make installability a separate task. Package header checks and changed-byte auditing provide strong evidence of recovery, while full behavioral equivalence still requires runtime analysis and testing.
+`copyapp analyze --decrypt` composes the recovery with UI survey, bundle acquisition and bounded sandbox indexing. It writes `analysis.md`, which is a collection index; a semantic report still needs reviewed UI/runtime evidence and `copyapp report`.
+
+## Tested scope and limits
+
+Full-package recovery was verified on XR/iOS 16.1.1 for encrypted DeepSeek and Kimi main executables and extensions, and on iPhone 14/iOS 17.3.1 RootHide for the Remoboard main app and keyboard extension. These are specific package builds, not a guarantee for every App or iOS version. Some binaries are already unencrypted; the workflow records an unchanged source snapshot rather than claiming a decrypt operation. The RootHide helper does not require root SSH login. Analysis output, helper logs and extracted data remain in Git-ignored local `cases/`; they are not release assets. Inspect the exact case before reporting recovery success, and keep separate any UI, function or behavioral conclusions.

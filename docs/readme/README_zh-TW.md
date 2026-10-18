@@ -6,7 +6,7 @@ Copy APP 在越獄 iPhone 上蒐集已安裝 App 的套件、介面、沙盒及�
 
 ## 運作方式
 
-Coding Agent 驅動 Mac 上的 Copy APP CLI；OpenSSH、Frida，以及 iOS MCP 或可選的 iCTRL 從指定手機取得證據。Mac 可選用 Ghidra 或 Hopper 分析原生程式碼。經審閱的報告與 `feature-spec.json` 交給復刻階段；新 App 安裝到同一台手機後，逐條重放原版與復刻版流程並審閱截圖。完整[架構圖與安裝指南](../../README.md#how-it-works)以英文提供。
+Coding Agent 驅動 Mac 上的 Copy APP CLI；OpenSSH、Frida，以及 iOS MCP 或可選的 iCTRL 從指定手機取得證據。Mac 可選用 Ghidra 或 Hopper 分析原生程式碼。經審閱的報告與 `feature-spec.json` 交給復刻階段；新 App 安裝到同一台手機後，逐條重放原版與復刻版流程並審閱截圖。完整[架構圖與安裝指南](../README.md)以英文提供。
 
 ## 快速開始
 
@@ -19,7 +19,7 @@ sh scripts/bootstrap-macos.sh
 .venv/bin/copyapp onboard
 ```
 
-先依照[完整安裝步驟](../../README.md#install-and-run-your-first-survey)完成 USB 初步調查；深入分析才需要手機端 SSH、Frida 與介面服務。
+先依照[完整安裝步驟](../setup.md)完成 USB 初步調查；深入分析才需要手機端 SSH、Frida 與介面服務。
 
 ## 理念與貢獻
 

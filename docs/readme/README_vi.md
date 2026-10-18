@@ -6,7 +6,7 @@ Copy APP thu thập bằng chứng về gói ứng dụng, giao diện, sandbox 
 
 ## Cách hoạt động
 
-Coding Agent điều khiển Copy APP CLI trên Mac. OpenSSH, Frida, iOS MCP hoặc iCTRL tùy chọn thu thập bằng chứng từ đúng iPhone. Khi cần, Ghidra hoặc Hopper trên Mac phân tích mã gốc. Báo cáo đã rà soát và `feature-spec.json` hướng dẫn việc xây dựng ứng dụng mới; các luồng của bản gốc và bản mới được chạy lại trên cùng điện thoại và ảnh màn hình được đối chiếu. Xem [sơ đồ kiến trúc và hướng dẫn cài đặt đầy đủ](../../README.md#how-it-works) bằng tiếng Anh.
+Coding Agent điều khiển Copy APP CLI trên Mac. OpenSSH, Frida, iOS MCP hoặc iCTRL tùy chọn thu thập bằng chứng từ đúng iPhone. Khi cần, Ghidra hoặc Hopper trên Mac phân tích mã gốc. Báo cáo đã rà soát và `feature-spec.json` hướng dẫn việc xây dựng ứng dụng mới; các luồng của bản gốc và bản mới được chạy lại trên cùng điện thoại và ảnh màn hình được đối chiếu. Xem [sơ đồ kiến trúc và hướng dẫn cài đặt đầy đủ](../README.md) bằng tiếng Anh.
 
 ## Bắt đầu nhanh
 
@@ -19,7 +19,7 @@ sh scripts/bootstrap-macos.sh
 .venv/bin/copyapp onboard
 ```
 
-Trước tiên hãy hoàn tất [khảo sát USB ban đầu](../../README.md#install-and-run-your-first-survey). Phân tích sâu cần thêm SSH, Frida và dịch vụ giao diện trên điện thoại.
+Trước tiên hãy hoàn tất [khảo sát USB ban đầu](../setup.md). Phân tích sâu cần thêm SSH, Frida và dịch vụ giao diện trên điện thoại.
 
 ## Nguyên tắc và đóng góp
 

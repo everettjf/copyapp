@@ -9,8 +9,8 @@ fi
 cd "$(dirname "$0")/.."
 .venv/bin/copyapp report \
     --case cases/calculator-xr-analysis-20261015 \
-    --findings docs/calculator-findings.json \
-    --feature-spec docs/calculator-feature-spec.json \
+    --findings examples/report-inputs/calculator-findings.json \
+    --feature-spec examples/report-inputs/calculator-feature-spec.json \
     --evidence ui.initial=cases/calculator-basic-addition-20261015/step-03-screenshot.jpg \
     --evidence ui.addition=cases/calculator-basic-addition-ready-20261015 \
     --evidence ui.result=cases/calculator-basic-addition-20261015/step-09-screenshot.jpg \

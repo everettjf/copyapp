@@ -1,9 +1,0 @@
-{
-  "pairs": [
-    {"flow_id": "counter-persistence", "step": 4, "verdict": "minor_difference", "note": "两边均显示 Counter: 11，按钮文字与布局接近；顶部系统返回 App 名称和截图时间不同，存在细微排版差异。"},
-    {"flow_id": "counter-persistence", "step": 7, "verdict": "minor_difference", "note": "两边点击后均显示 Counter: 12，按钮文字与布局接近；顶部系统返回 App 名称和截图时间不同。"},
-    {"flow_id": "sqlite-note", "step": 4, "verdict": "minor_difference", "note": "两边均显示 Saved notes: 11，添加按钮文字与位置接近；顶部系统返回 App 名称不同。"},
-    {"flow_id": "sqlite-note", "step": 7, "verdict": "minor_difference", "note": "两边点击后均显示 Saved notes: 12，添加按钮文字与位置接近；顶部系统返回 App 名称不同。"},
-    {"flow_id": "framework-catalog", "step": 4, "verdict": "minor_difference", "note": "目录两行的文字与位置接近；顶部系统返回 App 名称及少量界面间距不同。"}
-  ]
-}

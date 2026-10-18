@@ -6,7 +6,7 @@ Copy APP は、脱獄済み iPhone にインストールされたアプリのパ
 
 ## 仕組み
 
-Coding Agent が Mac 上の Copy APP CLI を操作します。指定した端末から OpenSSH、Frida、iOS MCP または任意の iCTRL を使って証拠を取得し、必要に応じて Mac の Ghidra または Hopper でネイティブコードを調べます。レビュー済みレポートと `feature-spec.json` を基に別のアプリを作り、同じ iPhone で元アプリとの操作結果とスクリーンショットを比較します。[構成図と詳細なセットアップ](../../README.md#how-it-works)は英語版を参照してください。
+Coding Agent が Mac 上の Copy APP CLI を操作します。指定した端末から OpenSSH、Frida、iOS MCP または任意の iCTRL を使って証拠を取得し、必要に応じて Mac の Ghidra または Hopper でネイティブコードを調べます。レビュー済みレポートと `feature-spec.json` を基に別のアプリを作り、同じ iPhone で元アプリとの操作結果とスクリーンショットを比較します。[構成図と詳細なセットアップ](../README.md)は英語版を参照してください。
 
 ## クイックスタート
 
@@ -19,7 +19,7 @@ sh scripts/bootstrap-macos.sh
 .venv/bin/copyapp onboard
 ```
 
-まず[USB 調査の手順](../../README.md#install-and-run-your-first-survey)を完了してください。詳しい分析には端末側の SSH、Frida、UI サービスが必要です。
+まず[USB 調査の手順](../setup.md)を完了してください。詳しい分析には端末側の SSH、Frida、UI サービスが必要です。
 
 ## 方針と貢献
 

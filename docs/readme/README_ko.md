@@ -6,7 +6,7 @@ Copy APP은 탈옥한 iPhone에 설치된 앱의 패키지, UI, 샌드박스 및
 
 ## 작동 방식
 
-Coding Agent가 Mac의 Copy APP CLI를 실행합니다. OpenSSH, Frida, iOS MCP 또는 선택 사항인 iCTRL을 통해 지정한 iPhone에서 증거를 모읍니다. 필요할 때 Mac의 Ghidra나 Hopper로 네이티브 코드를 분석합니다. 검토된 보고서와 `feature-spec.json`을 바탕으로 새 앱을 만든 뒤, 같은 iPhone에서 원본과 새 앱의 동작 및 스크린샷을 비교합니다. [아키텍처 그림과 전체 설치 안내](../../README.md#how-it-works)는 영어 문서를 참조하세요.
+Coding Agent가 Mac의 Copy APP CLI를 실행합니다. OpenSSH, Frida, iOS MCP 또는 선택 사항인 iCTRL을 통해 지정한 iPhone에서 증거를 모읍니다. 필요할 때 Mac의 Ghidra나 Hopper로 네이티브 코드를 분석합니다. 검토된 보고서와 `feature-spec.json`을 바탕으로 새 앱을 만든 뒤, 같은 iPhone에서 원본과 새 앱의 동작 및 스크린샷을 비교합니다. [아키텍처 그림과 전체 설치 안내](../README.md)는 영어 문서를 참조하세요.
 
 ## 빠른 시작
 
@@ -19,7 +19,7 @@ sh scripts/bootstrap-macos.sh
 .venv/bin/copyapp onboard
 ```
 
-먼저 [USB 조사 절차](../../README.md#install-and-run-your-first-survey)를 완료하세요. 심층 분석에는 기기의 SSH, Frida 및 UI 서비스가 추가로 필요합니다.
+먼저 [USB 조사 절차](../setup.md)를 완료하세요. 심층 분석에는 기기의 SSH, Frida 및 UI 서비스가 추가로 필요합니다.
 
 ## 원칙과 기여
 

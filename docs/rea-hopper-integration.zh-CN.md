@@ -1,36 +1,26 @@
-# Copy APP 直连 Hopper
+# Hopper 直连
 
-**语言：** [English](rea-hopper-integration.md) | 简体中文
+[English](rea-hopper-integration.md) · 简体中文 · [架构](architecture.zh-CN.md)
 
-Copy APP 现在独立调用 Hopper，不需要安装或运行 REA。旧 `rea-function`、`rea-queue` 和 `rea-bridge` 入口已经删除；历史 REA 证据仍可只读校验。
+Copy APP 直接调用本机安装的 Hopper，**运行时不依赖 REA**。旧的 `rea-function`、`rea-queue` 和 `rea-bridge` 入口已删除。新的 Hopper 分析需要 Hopper 许可与正常登录的 macOS 图形会话。
 
-## 原理
+## 证据路径
 
-1. 输入从手机采集或恢复的 Mach-O，先核对原始文件 SHA-256。通用二进制会单独选取 ARM64 slice 并记录其哈希；加密文件会被拒绝。
-2. `hopper-function` 在 Mac 上调用 Hopper 的 launcher，用 `--loader Mach-O --aarch64 --analysis -Y <script> --executable <临时副本>` 导入。Copy APP 自带的 Python 脚本通过 Hopper `Document`/`Procedure` API 精确定位函数入口并提取伪代码。
-3. 结果保存脚本、启动日志、函数签名、伪代码和来源哈希。报告导入时重新核对原始文件、slice、地址与所有证据文件。
-4. `hopper-queue` 从已校验的运行时/静态候选中选有限函数。`investigate-flow`、`investigate-app`、`prepare-analysis` 与 `prepare-app` 使用 `--provider hopper-direct`；顶层 `copy` 使用 `--analysis-provider hopper-direct`。反编译结果会进入审阅任务和正式报告。
-
-参考了 REA 的 MIT 许可 Hopper adapter 来选择 API，但脚本、候选队列与证据校验由 Copy APP 实现。许可见 [REA-LICENSE.txt](third-party/REA-LICENSE.txt)，运行时不启动 REA。
-
-## 用法
+1. 采集或恢复目标 Mach-O，固定原始 SHA-256；胖二进制另行选择 ARM64 切片并记录其哈希。二进制仍加密时先恢复分析副本。
+2. `hopper-function` 用有界 Python 脚本启动 Hopper，通过 `Document`／`Procedure` API 解析指定函数入口并请求伪代码。
+3. 保存启动脚本及日志、来源身份、地址、结果和哈希；校验器核对原始字节、切片和地址绑定。
+4. `hopper-queue` 从已校验候选案例选取有限地址。`--provider hopper-direct` 将结果交给调查、报告与 Agent 任务；父级 `copy` 命令使用 `--analysis-provider hopper-direct`。
 
 ```sh
-.venv/bin/copyapp hopper-function --file <MACHO> --sha256 <原始SHA256> --address 0x地址 --out cases/<函数>
-.venv/bin/copyapp hopper-queue --candidates cases/<候选案例> --limit 4 --out cases/<队列>
-.venv/bin/copyapp investigate-flow --udid <UDID> --analysis cases/<分析案例> --script playbooks/<流程>.json --provider hopper-direct --out cases/<调查案例>
+.venv/bin/copyapp hopper-function --file <MACHO> \
+  --sha256 <ORIGINAL_SHA256> --address 0xADDRESS --out cases/<FUNCTION>
+.venv/bin/copyapp hopper-queue --candidates cases/<CANDIDATES> \
+  --limit 4 --out cases/<QUEUE>
+.venv/bin/copyapp investigate-flow --udid <UDID> \
+  --analysis cases/<ANALYSIS> --script playbooks/<FLOW>.json \
+  --provider hopper-direct --out cases/<INVESTIGATION>
 ```
 
-可加 `--hopper-app '/Applications/Hopper Disassembler.app'` 指定安装位置，也可设置 `HOPPER_APP`。Hopper 是另行安装和授权的 macOS GUI 软件，需在正常登录的图形用户会话中运行。受限 shell 可能因启动器无法查询 Spotlight 而出现 `Cannot launch Hopper!`。单函数默认超时 600 秒。
+自动定位失败时可传 `--hopper-app '/Applications/Hopper Disassembler.app'` 或设置 `HOPPER_APP`。受限 shell 可能报 `Cannot launch Hopper!`，而正常图形会话能够运行。直连函数／队列目标默认限时 600 秒；失败时查看保存的日志，不能把部分伪代码当成完成结果。
 
-## 已验证范围
-
-对 XR 导出的夹具分享扩展，Copy APP 直连 Hopper 反编译了 `viewDidLoad`。对同机导出的夹具主程序，单函数队列反编译了 `FixtureHomeViewController::showCounter`；伪代码显示创建 SwiftUI hosting controller 并压入导航栈。[来源校验报告](../cases/fixture-counter-hopper-report-20261016/report.md)已导入这条证据。这次独立队列使用此前采集的 UI/Frida 候选。
-
-首次在 XR 上运行集成 `investigate-flow --provider hopper-direct` 时，Instruments 启动夹具 App 停滞；中断现场保留在 `cases/fixture-counter-hopper-investigation-20261016/`。Copy APP 现在把启动放入子进程并限制为 20 秒；若失败，就通过配对的 iCTRL 通道终止并重启指定 App。playbook 清单记录实际启动方式和首选通道错误。
-
-之后的[XR 集成调查](../cases/fixture-counter-hopper-investigation-v2-20261016/manifest.json)完成全部七个 UI 步骤：计数由 12 变为 13；Frida 在导航点击期间记录到一次 `FixtureHomeViewController::showCounter`；静态候选绑定到 `0x1000056ec`；Hopper 6.6.0 对该地址生成伪代码。流程、Hopper 队列及[正式报告](../cases/fixture-counter-hopper-integrated-report-20261016/report.md)均通过 `copyapp verify`。本次 Instruments 失败，记录中的实际方式是 `ictrl_lifecycle_fallback`。这证明 XR/iOS 16.1.1 夹具的一条集成调查与报告导入，不代表整个 `copy` 分析到复刻交付或 iOS 17/26 已完成验证。
-
-后续 iPhone 14/iOS 17.3.1 的[直连 Hopper 队列](../cases/ios17-calculator-hopper-queue-20261017/manifest.json)对原版 Calculator 已跟踪的 `0x10000fca0` 候选生成伪代码，并导入[补充报告](../cases/ios17-calculator-hopper-supplement-20261017/report/report.md)。[一流程 `hopper-direct` 父案例](../cases/ios17-hopper-current-parent-20261017/manifest.json)进一步完成采集、Frida、Hopper、审阅报告、已有独立源码的签名安装、同机 `15` 断言和两对截图审阅。测试中修复了 `app_preparation` 校验器漏认 `hopper-direct` 的问题，并添加回归测试。父案例与交付通过 `copyapp verify`；不代表 Hopper 恢复了完整算法或 Agent 在本轮从零生成源码。
-
-当前 Hopper 输出签名和伪代码；Ghidra 路径另有有界调用关系和间接目标跟随。伪代码是反编译器的解释，不是原作者源码，也不独自证明 UI 操作执行了函数。
+伪代码是分析结果，不是原作者源码，也不证明某次 UI 操作执行了该函数。应与哈希绑定的静态候选结合，必要时另行校验 Frida 跟踪。直连 Ghidra 仍可提供有界调用者、被调用者和指令资料，以及选定间接调用调查。Hopper 适配设计参考了 MIT 许可的 REA 代码，许可证保存在 [REA-LICENSE.txt](third-party/REA-LICENSE.txt)；脚本、队列与校验器由本仓库维护。

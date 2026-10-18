@@ -1,62 +1,42 @@
-# Copy APP 工作流程
+# 分析到复刻工作流
 
-**语言：** [English](copy-workflow.md) | 简体中文
+[English](copy-workflow.md) · 简体中文 · [文档目录](README.zh-CN.md)
 
-Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组织为可续跑、按证据验收的流程。`current` 模式供已经打开的 Codex 或 Claude Code 会话执行；独立终端也可选择外部 Agent CLI，但真实模型从头到尾自主完成的路径尚未验收。
+Copy APP 对精确指定的一台手机与一个已安装 App 构建运行可续跑、有证据门槛的流程。先按[安装指南](setup.zh-CN.md)配置并运行 `copyapp doctor`。在现有 Codex 或 Claude Code 会话中使用 `--agent-provider current`：它等待当前 Agent 完成任务，不会再启动一个 Agent 进程。需要独立 CLI 进程时才选择 `codex` 或 `claude`。
 
-核心阶段已在 iPhone XR / iOS 16.1.1（rootless）和 [iPhone 14 / iOS 17.3.1（Relaxin/RootHide）](relaxin-roothide-iphone14.md)通过真机验证。早期 iOS 17 对照复用了已有复刻版源码与 IPA；另一次[报告驱动的新源码四流程试验](ios17-calculator-fresh-from-report.zh-CN.md)已完成真机安装和对照。v0.1.10 的最新设备通道检查及网络观察范围见[双机矩阵](two-device-verification-matrix.zh-CN.md)，设备配置及限制见 [README 支持表](../README.zh-CN.md)。
-
-新 Mac 和手机先运行 `sh scripts/bootstrap-macos.sh`，再运行 `.venv/bin/copyapp onboard --stage rebuild`；同时连着多台设备时加 `--udid`。它保存 Mac 与手机能力报告及有序修复步骤。手机端服务和固定的 SSH 主机密钥就绪后，分析与复刻流程会自行打开精确设备的 SSH 和 UI 转发；仅首次核对主机指纹或交互式界面操作需要单独保持 `.venv/bin/copyapp tunnel --udid <UDID>`。首次 SSH 主机指纹核对和手机配对弹窗仍需明确完成。
-
-[Translate XR 完整案例](translate-xr-workflow.zh-CN.md)（[English](translate-xr-workflow.md)）展示了不依赖 REA 的三流程实测：iCTRL 文字输入、审阅报告、独立 UIKit 复刻、原版/复刻版真机对照以及逐张截图审阅。案例明确标出已经覆盖的行为和剩余差异。
-
-## 1. 发现代表性流程
+## 1. 发现代表性行为
 
 ```sh
-.venv/bin/copyapp copy --udid <UDID> --bundle <原版_BUNDLE_ID> \
+.venv/bin/copyapp copy --udid <UDID> --bundle <ORIGINAL_BUNDLE> \
   --auto-discover --agent-provider current \
-  --project rebuild/<新工程> --rebuilt-bundle <复刻版_BUNDLE_ID> \
-  --out cases/<新案例>
+  --project rebuild/<NEW_PROJECT> --rebuilt-bundle <NEW_BUNDLE> \
+  --out cases/<WORKFLOW>
 ```
 
-首次调用生成 `discovery-agent/TASK.md` 并暂停，不会先操作手机。当前 Agent 观察真实 App，在 `discovery-agent/candidates/` 编写 3–12 条不同且有界的 UI 脚本，再以同一设备、Bundle ID 和 UI 后端运行 `copyapp discover-check`，将通过的案例保存到 `discovery-agent/discovery/`。失败案例保留诊断，检查手机状态后再试。验收绑定脚本内容、设备身份和真机重放证据；它只证明选定路径，不代表覆盖整个 App。
+首次暂停会生成 `discovery-agent/TASK.md`。观察真实 App，写 3–12 条不同的有界 UI 脚本。每条应标明起始页面、包含有意义的操作、尽可能断言可见末端状态并保存稳定截图。按任务要求运行 `copyapp discover-check`，校验案例后用**完全相同**的 `copy` 参数加 `--resume` 续跑。已有脚本可重复传 `--script <FILE>`；已校验的发现案例可用 `--discovery <CASE>`。这两种方式替代 `--auto-discover`。
 
-每条脚本可包含有界点击、滑动、长按和双击。界面可观察时应加入操作后状态断言；后端接受手势调用不代表预期界面效果已发生。参数与后端差异见[中文手势指南](ui-gesture-playbooks.zh-CN.md)（[English](ui-gesture-playbooks.md)）。
+每条 playbook 只使用一个 UI 后端。原版与复刻版对照时使用同一后端、对齐起始状态。操作边界见[手势](ui-gesture-playbooks.zh-CN.md)和[文字输入](ui-text-playbooks.zh-CN.md)指南。RPC 返回成功不是结果断言。保留失败或结果不明的尝试；再次点击前先查看当前画面。
 
-涉及输入框的 App 可在聚焦空字段后使用[有界文本输入](ui-text-playbooks.zh-CN.md)（[English](ui-text-playbooks.md)）。须检查后续界面：输入 RPC 成功不代表文字已显示在 App 中。
+## 2. 采集并解释证据
 
-已有验收案例可用 `--discovery <案例>`；已有脚本可重复使用 `--script <文件>`。这三种输入互斥。
+发现案例通过后，`copy` 采集包、沙盒、界面与请求的运行证据，再于 `analysis-agent/TASK.md` 暂停。阅读二进制索引、界面、轨迹及可选的 Ghidra/Hopper 伪代码；撰写审阅过的 `findings.json`、`feature-spec.json`，按任务创建并校验正式 `copyapp report` 与 `analysis-delivery`。`analyze` 生成的 `analysis.md` 只是采集索引。每条重要功能结论都要有来源案例，标明观察或推断；未知的服务端或原生行为仍标为未知。
 
-## 2. 采集与解释
+加密二进制可能需要[分析 IPA 恢复](full-package-decryption.md)。如果已安装 Mach-O 本来就未加密，只记录来源快照，不称为“解密成功”。Ghidra 与 Hopper 可选；[直连 Hopper](rea-hopper-integration.zh-CN.md)不依赖 REA。静态候选函数与相近时间的 Frida 命中是两种不同证据。
 
-对完全相同的 `copyapp copy` 命令添加 `--resume`。父流程先重验发现结果，再用 `prepare-app` 采集安装包、沙盒、请求的脱壳结果及 UI/运行时调查证据。状态为 `analysis_agent_needs_review` 时，阅读 `analysis-agent/TASK.md` 和来源证据，在 `analysis-agent/reviewed-report/` 写正式报告与 `feature-spec.json`，然后运行 `copyapp analysis-delivery` 保存到 `analysis-agent/analysis-delivery/`。交付关卡检查来源身份和每条流程的证据关联；反编译函数的语义仍须由 Agent 审阅，未知部分要明确标注。
+实现前盘点已知的用户可见能力，并设定[审阅后的覆盖目标](coverage-targets.zh-CN.md)。用 `coverage-plan` 固定目标、选定流程、权重与延期／阻塞项。清单不够确定时，使用有名字的目标，不给出无法支撑的百分比。
 
-若包内已索引的 Mach-O 全部未加密，请求的恢复阶段现在会验证并记录原包快照，不启动手机端砸壳助手。清单标记为 `source_snapshot_unencrypted`，不能把它表述成真正完成了解密。
+## 3. 构建、安装和对照
 
-实现前把审阅后的分析整理为[已知能力清单与阶段目标](coverage-targets.zh-CN.md)。选择具名、端到端的能力，记录延后与受阻项，并保留未知领域。大型 App 的第一阶段可以是 50–60%，简单 App 可以争取全部已知能力。`rebuild-plan` 就绪后运行 `coverage-plan --report <报告> --plan <计划> --inventory <JSON> --out <目标案例>` 并校验目标案例。该命令固定人工审阅的分母和目标，但不能证明清单已穷尽整个 App。
+继续续跑父流程。`prepare-rebuild` 生成 `rebuild-agent/TASK.md`。在指定路径实现独立 Xcode 工程，使用不同的 Bundle ID，在精确选定的手机上构建、签名并安装。开发签名 IPA 的命令：
 
-默认链路不依赖 REA。需要直接反编译时，可选 `--analysis-provider ghidra-direct --ghidra-dir <目录> --java-home <目录>`，或 `--analysis-provider hopper-direct`（可用 `--hopper-app <Hopper.app>` 指定路径）。前者需要 Ghidra 和 JDK；后者需要在正常 macOS 用户会话中运行已授权的 Hopper GUI。iOS 16.1.1 XR 上的 `investigate-flow --provider hopper-direct` 已完成 UI 重放、Frida 跟踪与 Hopper 反编译，结果进入校验通过的报告。iOS 17.3.1 上的[一流程 Hopper `copy` 父案例](../cases/ios17-hopper-current-parent-20261017/manifest.json)还完成报告、已有独立源码的签名安装和同机对照。Frida 的运行时命中与静态伪代码是不同证据，不能单凭其中一项认定完整实现。
+```sh
+.venv/bin/copyapp install --transport usb --udid <UDID> \
+  --ipa <SIGNED_IPA> --out cases/<INSTALL>
+.venv/bin/copyapp verify cases/<INSTALL>
+```
 
-## 3. 实现与真机对照
+适配的包也可走 TrollStore。安装案例不证明启动或功能等价。运行任务要求的原版／复刻版成对检查，逐张查看截图，保存明确的 `visual-review`，再以 `agent-delivery` 绑定源码、安装和检查案例。改变数据的流程还应对照相关沙盒内容的前后变化；界面计数一致不代表持久化一致。模拟服务端行为必须标注为模拟。
 
-再次续跑后，`prepare-rebuild` 生成关联报告的复刻任务，并停在 `rebuild-agent/TASK.md`。在指定的 `--project` 编写独立 Xcode 工程，在绑定设备上安装并保存证据。开发证书签名的 IPA 可用 `copyapp install --transport usb --udid <UDID> --ipa <IPA> --out <案例>`；现有 TrollStore 安装路径仍是默认值。校验安装案例后，使用 `rebuild-task-check` 在同一 UI 后端对照原版与复刻版选定流程。逐张审阅截图，保存 `visual-review`，最后运行不带 `--run` 的 `agent-delivery`。父流程要求每条选定流程通过行为或末端视图断言、全部图片已审且无重大差异；轻微差异仍需记录。
+子案例均通过后再次续跑 `copy`。完成的父案例说明选定证据门槛通过；`copyapp verify cases/<WORKFLOW>` 复核保存哈希与来源链接，不证明语义正确或其他流程。最后运行 `coverage-delivery`，对每项已知能力给出审阅结论。分别报告目标覆盖、阶段完成度、已验证的已知覆盖；分母必须有依据，并列出未知项。
 
-若 `rebuild-plan` 将某流程标为 `needs_verified_screenshot`，说明报告所引用的原版脚本缺少同时具备 `stable: true` 和 `ready_contains` 的截图步骤。应补采具备就绪条件的原版流程，在审阅报告中引用新证据，再重新生成计划。计划和 Agent 任务仍可校验并指出缺失证据，但不会把未经就绪检查的截图算作通过的成对对照。
-
-每条脚本要声明起始页面及首次使用状态。“新启动”可能恢复上次的编辑页或搜索页，[系统 Notes XR 实测](notes-xr-workflow.zh-CN.md)就遇到此情况。若相邻流程依赖不同的恢复页面，应导航至预期页面、把 App 正常置于后台使 iOS 保存状态、保留准备步骤证据，再续跑同一失败案例。首次使用遮挡层或测试数据条数差异不能直接算作核心行为一致。
-
-最后一次 `--resume` 仅在所有子案例和来源关联通过时将父案例标为完成。`copyapp verify cases/<案例>` 可以重验哈希，但不能证明语义解释正确，也不能证明未测功能等价。已处于 Coding Agent 会话时不要嵌套启动 `copyapp agent-run` 或另一个 Codex/Claude 进程。
-
-交付时把选定流程的通过数与能力清单目标分开写明。完成 `agent-delivery` 后运行 `coverage-delivery --plan <目标案例> --delivery <交付案例> --review <JSON> --out <覆盖案例>` 并校验，报告原始目标、带日期的范围修订、分母可靠时的已知能力实证覆盖率、未通过的选定项、延后或受阻项，以及未知领域。即使可运行复刻版通过其他检查，重大视觉差异或服务端行为缺口也必须明确说明。覆盖校验器检查来源身份、选定流程关卡和算术；清单完整性及语义判断仍由审阅者负责。
-
-## 当前验收边界
-
-iOS 16.1.1 的 iPhone XR 已完成 Clock 三流程的当前 Agent 父案例：正式报告、独立 App 源码、安装、3/3 行为与末端视图断言及 10 对逐张审阅的截图，截图均有轻微差异。另一个[Clock 自动发现父案例](../cases/clock-current-auto-workflow-20261016/manifest.json)使用三条先前编写的脚本，在同一案例内完成发现、报告、独立工程、安装和三流程真机交付；父案例 517 项证据文件通过校验，源码改自既有独立实现。新的[Calculator 父案例](../cases/calculator-current-auto-workflow-20261016/manifest.json)由当前 Agent 根据 XR 实际界面新写三条脚本并从空工程编写 UIKit 复刻版；三条运算流程的双端行为与末端视图断言均通过，三对截图均已审为轻微差异、无重大差异，交付与父案例通过核验。外部进程试验仍使用固定脚本。陌生 App 的普适发现、真实外部 CLI 自主闭环和全功能等价尚未验证。iPhone 14/iOS 17.3.1 已验证 USB 与 SSH 采集、开发证书签名复刻版安装、iOS MCP 与 iCTRL 两套后端的原版/复刻版运算对照，以及一款加密 App 与扩展的整包恢复；固定版本的 Frida 17.23.3 RootHide 独立服务已在原版 Calculator 完成五次点击的方法绑定跟踪；原有 16.1.4 服务附加该 App 仍失败。[正式深度报告](../cases/iphone14-calculator-frida17-deep-report-v3-20261017/report.md)、报告派生任务、原版与复刻版最终显示 `15` 的断言、两张逐图审阅以及[选定流程交付](../cases/iphone14-calculator-frida17-agent-delivery-20261017/report.md)已通过校验。复刻版源码与 IPA 早于这份报告，因此尚未验证由新报告生成源码。iPhone 11/iOS 26.0.1 已通过 USB／SSH 采集、iCTRL、iOS MCP 界面服务、Frida 附加、正式 Calculator 报告和一条同机原版／复刻版运算对照。既有独立源码按 iOS 26 实测布局调整后，最终截图审阅只有轻微差异；iOS MCP 在重新启动 App 后可能截到黑屏，因此成对检查使用 iCTRL。
-
-参见 [中文 README](../README.zh-CN.md)、[英文 README](../README.md) 和 [详细试验记录](../PLAN.md)。
-
-对于会修改本地数据的选定流程，还应在操作前后用 `copyapp sandbox-file` 采集已索引的数据文件，在本地限定范围检查内容并与原版比较；该命令会自行建立精确设备 SSH 转发。界面计数相同不足以证明数据库正文相同。[v0.1.2 夹具核验](development-checkpoints/v0.1.2.zh-CN.md)曾据此发现并修复复刻版 Notes 正文缺少时间戳的问题。
-
-此前的 iOS 17 Calculator 交付沿用既有复刻版；另一次[从报告重新编写源码并扩展四流程的试验](ios17-calculator-fresh-from-report.zh-CN.md)现在已在 iPhone 14 上通过签名安装、四流程同机成对断言和五组截图审阅。此结果仍不代表陌生 App 的零样本自主复刻或 Calculator 全功能等价。
-
-已知源码夹具的[分享扩展](fixture-share-extension-two-device.zh-CN.md)现也在 iOS 16/17 两台手机上通过系统分享菜单实际打开并显示收到的精确合成文本；其他内容类型和扩展不在此项验证内。
+指定设备结果及限制见[当前状态](current-status.zh-CN.md)。原始案例只保存在被 Git 忽略的本地目录。

@@ -6,7 +6,7 @@ Copy APP, jailbreak uygulanmış bir iPhone'daki kurulu uygulamanın paket, aray
 
 ## Nasıl çalışır?
 
-Bir kodlama ajanı Mac'teki Copy APP CLI'yi yönetir. OpenSSH, Frida ve iOS MCP ya da isteğe bağlı iCTRL, belirtilen iPhone'dan kanıt toplar. Gerekirse Ghidra veya Hopper Mac'te yerel kodu inceler. İncelenmiş rapor ve `feature-spec.json` yeni uygulamaya yol gösterir; özgün ve yeni uygulamanın akışları aynı telefonda yeniden oynatılır ve ekran görüntüleri karşılaştırılır. [Mimari şema ve ayrıntılı kurulum](../../README.md#how-it-works) İngilizce kılavuzdadır.
+Bir kodlama ajanı Mac'teki Copy APP CLI'yi yönetir. OpenSSH, Frida ve iOS MCP ya da isteğe bağlı iCTRL, belirtilen iPhone'dan kanıt toplar. Gerekirse Ghidra veya Hopper Mac'te yerel kodu inceler. İncelenmiş rapor ve `feature-spec.json` yeni uygulamaya yol gösterir; özgün ve yeni uygulamanın akışları aynı telefonda yeniden oynatılır ve ekran görüntüleri karşılaştırılır. [Mimari şema ve ayrıntılı kurulum](../README.md) İngilizce kılavuzdadır.
 
 ## Hızlı başlangıç
 
@@ -19,7 +19,7 @@ sh scripts/bootstrap-macos.sh
 .venv/bin/copyapp onboard
 ```
 
-Önce [USB ile ilk incelemeyi](../../README.md#install-and-run-your-first-survey) tamamlayın. Derin analiz için telefonda SSH, Frida ve arayüz servisi gerekir.
+Önce [USB ile ilk incelemeyi](../setup.md) tamamlayın. Derin analiz için telefonda SSH, Frida ve arayüz servisi gerekir.
 
 ## İlkeler ve katkı
 

@@ -1,0 +1,19 @@
+# Copy APP 文档
+
+[English](README.md) · 简体中文 · [项目首页](../README.zh-CN.md)
+
+Copy APP 当前正式发布版为 **v0.1.0**；`main` 已有尚未发布的后续验证。新用户从[安装指南](setup.zh-CN.md)开始，再按任务查阅下表。旧开发检查点与被取代的实验文档已从当前工作树删除；原提交仍留在 Git 历史中。原始设备证据保存在被忽略的本地 `cases/`。
+
+| 主题 | 文档 |
+| --- | --- |
+| 新 Mac 与手机 | [安装及首次概览](setup.zh-CN.md) |
+| 系统怎样协作 | [架构与证据模型](architecture.zh-CN.md) |
+| 已测手机与限制 | [当前状态](current-status.zh-CN.md) |
+| 分析到复刻 | [工作流](copy-workflow.zh-CN.md) |
+| 确定可实现的目标 | [覆盖目标](coverage-targets.zh-CN.md) |
+| 给 Coding Agent 的首次任务 | [首次运行任务](first-run-agent.zh-CN.md) |
+| 界面脚本 | [手势](ui-gesture-playbooks.zh-CN.md) · [文字输入](ui-text-playbooks.zh-CN.md) |
+| 原生代码与安装包 | [加密包恢复](full-package-decryption.md) · [Hopper 直连](rea-hopper-integration.zh-CN.md) · [不依赖 REA](rea-independence.zh-CN.md) |
+| 已发布版本 | [v0.1.0 发布说明](releases/v0.1.0.zh-CN.md) |
+
+[`examples/report-inputs/`](../examples/report-inputs/README.md) 中的六份 JSON 是试点合成脚本及分析 Skill 使用的**历史目标专属示例**，不是当前设备报告。分析新目标 App 时，必须重新审阅每条结论。
