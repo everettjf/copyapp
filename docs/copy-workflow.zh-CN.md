@@ -33,6 +33,8 @@ Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组
 
 若包内已索引的 Mach-O 全部未加密，请求的恢复阶段现在会验证并记录原包快照，不启动手机端砸壳助手。清单标记为 `source_snapshot_unencrypted`，不能把它表述成真正完成了解密。
 
+实现前把审阅后的分析整理为[已知能力清单与阶段目标](coverage-targets.zh-CN.md)。选择具名、端到端的能力，记录延后与受阻项，并保留未知领域。大型 App 的第一阶段可以是 50–60%，简单 App 可以争取全部已知能力。`rebuild-plan` 就绪后运行 `coverage-plan --report <报告> --plan <计划> --inventory <JSON> --out <目标案例>` 并校验目标案例。该命令固定人工审阅的分母和目标，但不能证明清单已穷尽整个 App。
+
 默认链路不依赖 REA。需要直接反编译时，可选 `--analysis-provider ghidra-direct --ghidra-dir <目录> --java-home <目录>`，或 `--analysis-provider hopper-direct`（可用 `--hopper-app <Hopper.app>` 指定路径）。前者需要 Ghidra 和 JDK；后者需要在正常 macOS 用户会话中运行已授权的 Hopper GUI。iOS 16.1.1 XR 上的 `investigate-flow --provider hopper-direct` 已完成 UI 重放、Frida 跟踪与 Hopper 反编译，结果进入校验通过的报告。iOS 17.3.1 上的[一流程 Hopper `copy` 父案例](../cases/ios17-hopper-current-parent-20261017/manifest.json)还完成报告、已有独立源码的签名安装和同机对照。Frida 的运行时命中与静态伪代码是不同证据，不能单凭其中一项认定完整实现。
 
 ## 3. 实现与真机对照
@@ -42,6 +44,8 @@ Copy APP 把指定越狱 iPhone 上选定功能的“分析”和“复刻”组
 每条脚本要声明起始页面及首次使用状态。“新启动”可能恢复上次的编辑页或搜索页，[系统 Notes XR 实测](notes-xr-workflow.zh-CN.md)就遇到此情况。若相邻流程依赖不同的恢复页面，应导航至预期页面、把 App 正常置于后台使 iOS 保存状态、保留准备步骤证据，再续跑同一失败案例。首次使用遮挡层或测试数据条数差异不能直接算作核心行为一致。
 
 最后一次 `--resume` 仅在所有子案例和来源关联通过时将父案例标为完成。`copyapp verify cases/<案例>` 可以重验哈希，但不能证明语义解释正确，也不能证明未测功能等价。已处于 Coding Agent 会话时不要嵌套启动 `copyapp agent-run` 或另一个 Codex/Claude 进程。
+
+交付时把选定流程的通过数与能力清单目标分开写明。完成 `agent-delivery` 后运行 `coverage-delivery --plan <目标案例> --delivery <交付案例> --review <JSON> --out <覆盖案例>` 并校验，报告原始目标、带日期的范围修订、分母可靠时的已知能力实证覆盖率、未通过的选定项、延后或受阻项，以及未知领域。即使可运行复刻版通过其他检查，重大视觉差异或服务端行为缺口也必须明确说明。覆盖校验器检查来源身份、选定流程关卡和算术；清单完整性及语义判断仍由审阅者负责。
 
 ## 当前验收边界
 

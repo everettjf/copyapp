@@ -4,6 +4,8 @@ English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_
 
 Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app on a jailbroken iPhone and rebuilding selected behavior as an independent, runnable iOS app. It acquires package and sandbox evidence, inspects native code, captures UI and runtime behavior, produces a cited report and feature specification, then builds and compares a clone on the same device.
 
+**Rebuild scope is chosen per App.** After analysis, make a known-capability inventory and set a reviewed milestone: a small App may target all known capabilities; a large App may target a useful 50–60% first slice. `coverage-plan` freezes the target; `coverage-delivery` combines verified device cases with explicit reviewer decisions and reports the achieved scope, gaps and unknowns. [Coverage target method and commands](docs/coverage-targets.md) · [中文](docs/coverage-targets.zh-CN.md).
+
 **Tested support:** The first-release core stages are verified on both iPhone XR / iOS 16.1.1 (rootless) and [iPhone 14 / iOS 17.3.1 (Relaxin/RootHide)](docs/relaxin-roothide-iphone14.md). Support here means the tested device setup can collect evidence, produce a reviewed report, install an independent App and verify named behavior on the same phone. It does not promise every App, jailbreak configuration or feature will work. iOS 26 has not been tested.
 
 | Device status | Verified scope | Device-specific setup |
@@ -15,6 +17,8 @@ Copy APP is a local, evidence-gated workflow for analyzing an installed iOS app 
 ### Project status at v0.1.16
 
 The [system Notes XR study](docs/notes-xr-workflow.md) now runs the complete selected-flow analysis and independent rebuild path: three local flows, a reviewed report with exact-binary Hopper evidence, a runnable [NotesClone](rebuild/NotesClone/README.md), three paired UI checks and three reviewed screenshot pairs. It also fixes decryption-helper timeouts on already unencrypted packages. **322 unit tests pass.** This is scoped to local folder navigation, plain-text note creation and search on the XR; it does not establish full Notes equivalence or iOS 17 Notes behavior. See the [v0.1.16 release note](docs/releases/v0.1.16.md) and [two-device matrix](docs/two-device-verification-matrix.md).
+
+Current `main` additionally includes `coverage-plan` and `coverage-delivery` for revisable, verified known-capability targets; these commands are newer than the v0.1.16 package. A local offline exercise against the saved Notes XR report and delivery passed both new case verifiers. The exercise's five-item inventory is a bounded example, not a measurement of all Notes features. **324 Python tests pass on current `main`.**
 
 | Setup difference | iPhone XR / iOS 16.1.1 | iPhone 14 / iOS 17.3.1 |
 | --- | --- | --- |

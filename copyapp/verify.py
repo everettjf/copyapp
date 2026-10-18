@@ -149,6 +149,12 @@ def verify_case(directory: Path) -> bool:
                 return ok and validate_copy_workflow(directory.resolve(), manifest)
             except (KeyError, OSError, ValueError, TypeError, json.JSONDecodeError):
                 return False
+        if manifest.get("kind") == "coverage_plan":
+            from copyapp.coverage import validate_coverage_plan
+            return ok and validate_coverage_plan(directory)
+        if manifest.get("kind") == "coverage_delivery":
+            from copyapp.coverage import validate_coverage_delivery
+            return ok and validate_coverage_delivery(directory)
         if manifest.get("kind") == "agent_discovery":
             try:
                 from copyapp.discovery_agent import validate_discovery_agent

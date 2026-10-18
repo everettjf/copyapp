@@ -134,7 +134,8 @@ def _review_task(output: Path, analysis: Path, investigation: Path,
              "- 产出经审阅的 findings.json 与 feature-spec.json。规格需给出每条所选流程的"
              "可执行动作、明确结果断言、边界与失败状态；不要仅将草稿的 review_status 改名。",
              "- 用 `copyapp report` 生成正式报告，执行 `copyapp verify`，并说明仍未覆盖的页面、"
-             "权限状态和服务端行为。", "", "## 流程证据", ""]
+             "权限状态和服务端行为。复刻前还要按 `docs/coverage-targets.zh-CN.md` 盘点已知能力，"
+             "将选定流程与延后/受阻项分开。", "", "## 流程证据", ""]
     for index, (flow, spec) in enumerate(zip(parent["flows"], specs), 1):
         root = copied / f"flows/flow-{index:02d}"
         queue_path = investigation / f"flows/flow-{index:02d}/rea/queue.json"

@@ -82,6 +82,7 @@ from copyapp.rebuild_task_check import rebuild_task_check
 from copyapp.agent_task import create_agent_task
 from copyapp.agent_run import run_agent_task
 from copyapp.agent_delivery import create_agent_delivery
+from copyapp.coverage import create_coverage_plan, create_coverage_delivery
 from copyapp.analysis_delivery import create_analysis_delivery
 from copyapp.visual_audit import create_visual_audit
 from copyapp.visual_review import create_visual_review
@@ -682,6 +683,21 @@ def main() -> None:
     agent_delivery.add_argument("--run", type=Path)
     agent_delivery.add_argument("--visual-review", type=Path)
     agent_delivery.add_argument("--out", required=True, type=Path)
+    coverage_plan = sub.add_parser("coverage-plan",
+                                   help="freeze a weighted, revisable known-capability target")
+    coverage_plan.add_argument("--report", required=True, type=Path)
+    coverage_plan.add_argument("--plan", required=True, action="append", type=Path,
+                               help="verified rebuild plan; repeat for larger milestones")
+    coverage_plan.add_argument("--inventory", required=True, type=Path)
+    coverage_plan.add_argument("--previous", type=Path,
+                               help="previous verified target to revise without overwriting")
+    coverage_plan.add_argument("--out", required=True, type=Path)
+    coverage_delivery = sub.add_parser("coverage-delivery",
+                                       help="measure reviewed capability coverage from device deliveries")
+    coverage_delivery.add_argument("--plan", required=True, type=Path)
+    coverage_delivery.add_argument("--delivery", required=True, action="append", type=Path)
+    coverage_delivery.add_argument("--review", required=True, type=Path)
+    coverage_delivery.add_argument("--out", required=True, type=Path)
     analysis_delivery = sub.add_parser("analysis-delivery",
                                        help="bind a verified deep report to every flow in a semantic-review task")
     analysis_delivery.add_argument("--task", required=True, type=Path)
@@ -1162,6 +1178,14 @@ def main() -> None:
         elif args.command == "agent-delivery":
             print(create_agent_delivery(args.task, args.install, args.check,
                                         args.out, args.run, args.visual_review))
+            code = 0
+        elif args.command == "coverage-plan":
+            print(create_coverage_plan(args.report, args.plan, args.inventory,
+                                       args.out, args.previous))
+            code = 0
+        elif args.command == "coverage-delivery":
+            print(create_coverage_delivery(args.plan, args.delivery, args.review,
+                                           args.out))
             code = 0
         elif args.command == "analysis-delivery":
             print(create_analysis_delivery(args.task, args.report, args.out,

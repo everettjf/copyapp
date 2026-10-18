@@ -35,6 +35,8 @@ Resume the identical `copyapp copy` invocation with `--resume`. The parent verif
 
 For a package whose indexed Mach-O files are all unencrypted, the requested recovery stage now verifies and records a source snapshot without starting the device decryption helper. The manifest identifies this as `source_snapshot_unencrypted`; it must not be reported as a successful decrypt operation.
 
+Before implementation, turn the reviewed analysis into a [known-capability inventory and milestone target](coverage-targets.md). Choose named end-to-end capabilities, record deferred and blocked ones, and preserve unknown areas. A 50–60% first milestone may be appropriate for a large App; a small App may target all known capabilities. Once `rebuild-plan` exists, run `coverage-plan --report <REPORT> --plan <PLAN> --inventory <JSON> --out <TARGET_CASE>` and verify the target case. It freezes the reviewed denominator and target; it does not make the inventory exhaustive.
+
 By default the native path needs no REA. For direct decompilation, choose `--analysis-provider ghidra-direct --ghidra-dir <DIR> --java-home <JDK_HOME>` or `--analysis-provider hopper-direct` (optionally `--hopper-app <Hopper.app>`). Ghidra needs a JDK; Hopper needs its licensed GUI app in a normal macOS user session. An integrated `investigate-flow --provider hopper-direct` run on the iOS 16.1.1 XR completed UI replay, Frida tracing and Hopper decompilation, and the result was imported into a verified report. A [one-flow iOS 17 Hopper `copy` parent](../cases/ios17-hopper-current-parent-20261017/manifest.json) also completed report, existing-source installation and paired delivery. Runtime method hits and static pseudocode are separate evidence; neither alone proves a full implementation.
 
 ## 3. Build and compare
@@ -44,6 +46,8 @@ Resume the same command again. `prepare-rebuild` creates a source-linked task an
 Declare each script's starting page and first-use state. A fresh launch can restore the last editor or search page, as the [system Notes XR run](notes-xr-workflow.md) demonstrated. When two flows depend on different restored pages, navigate to the expected page, background the App so iOS saves it, retain that setup evidence, and resume the same failed check. Do not reinterpret an onboarding overlay or changed fixture count as a core behavior match.
 
 A final `--resume` marks the parent complete only if all child cases and source links verify. `copyapp verify cases/<WORKFLOW>` rechecks recorded hashes; it does not certify semantic correctness or behavior outside the selected flows. Do not launch `copyapp agent-run` or another Codex/Claude process from an active coding-agent session.
+
+At delivery, keep selected-flow pass counts separate from the inventory target. After `agent-delivery`, run `coverage-delivery --plan <TARGET_CASE> --delivery <DELIVERY_CASE> --review <JSON> --out <COVERAGE_CASE>` and verify it. Report the original target, any dated scope revision, verified known coverage when the denominator is defensible, unverified selected items, deferred/blocked items and unknown areas. Major visual or server-behavior gaps remain explicit even if the runnable clone passes its other selected checks. The coverage verifier checks source identity, selected-flow gates and arithmetic; a reviewer remains responsible for inventory completeness and semantic judgments.
 
 ## Current validation boundary
 

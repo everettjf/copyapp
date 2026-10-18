@@ -2,6 +2,8 @@
 
 [English](README.md) · 简体中文 · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
+**复刻范围按 App 动态确定。**分析后先盘点已知能力并设定可审阅的阶段目标：简单 App 可以争取覆盖全部已知能力；大型 App 可以先选择有价值的 50–60%。`coverage-plan` 固定目标，`coverage-delivery` 结合真机交付和逐项审阅计算实际覆盖，并列出缺口与未知。[目标设定方法和命令](docs/coverage-targets.zh-CN.md) · [English](docs/coverage-targets.md)。
+
 在已越狱的 iPhone XR（iOS 16.1.1）上，[Translate 完整案例](docs/translate-xr-workflow.zh-CN.md)（[English](docs/translate-xr-workflow.md)）已经从新写的发现脚本走通到[审阅报告](cases/translate-current-workflow-20261016/analysis-agent/reviewed-report/report.md)、[独立 UIKit 工程](rebuild/TranslateFreshProbe)、真机安装与三组原版/复刻版对照。六张截图逐张审阅，均有轻微图标或间距差异。范围限于文字输入但不提交翻译、Favorites 空状态和 Conversation 待机导航；翻译结果、语音和相机能力仍未实现或验证。
 
 **已验证支持：**第一版“分析 → 复刻 → 真机对照”的核心阶段已在 iPhone XR / iOS 16.1.1（普通 rootless）和 [iPhone 14 / iOS 17.3.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone14.md)上通过真机验证。这里的“支持”指在已测配置上完成证据采集、审阅报告、独立 App 安装及同机选定行为核验，不代表任意 App、越狱配置或全部功能都可用。iOS 26 尚未实测。
@@ -15,6 +17,8 @@
 ### v0.1.16 阶段性状态
 
 [系统 Notes 的 XR 实测](docs/notes-xr-workflow.zh-CN.md)现已完成选定流程的分析与独立复刻全路径：三条本地流程、包含精确二进制 Hopper 证据的审阅报告、可运行的 [NotesClone](rebuild/NotesClone/README.zh-CN.md)、三组原版/复刻版真机对照与逐图审阅。同时修复未加密包误等手机端砸壳助手的超时问题；**322 项单测通过**。范围仅为 XR 上的本地文件夹导航、纯文本新建和搜索，不能推断完整 Notes 或 iOS 17 Notes 行为。详见 [v0.1.16 发布说明](docs/releases/v0.1.16.zh-CN.md)与[双机验证矩阵](docs/two-device-verification-matrix.zh-CN.md)。
+
+当前 `main` 又加入可修订的 `coverage-plan` 与 `coverage-delivery`，用于固定已知能力目标并核验实际覆盖；它们尚未包含在 v0.1.16 安装包中。基于已保存 Notes XR 报告与交付的本地离线演练中，两种新案例都通过校验；演练所用五项清单只是有界示例，不能当作 Notes 全部功能的覆盖率。当前 `main` 的 **324 项 Python 测试通过**。
 
 | 配置差异 | iPhone XR / iOS 16.1.1 | iPhone 14 / iOS 17.3.1 |
 | --- | --- | --- |
