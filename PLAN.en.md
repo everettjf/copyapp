@@ -4,7 +4,7 @@
 
 The [Chinese plan](PLAN.md) contains the original full architecture, acceptance criteria and chronological experiment log. This English plan describes the current product contract and remaining work. For exact commands and handoffs, read the [workflow guide](docs/copy-workflow.md).
 
-**Current two-device status:** The [iOS 16/17 verification matrix](docs/two-device-verification-matrix.md) records fresh capability checks and same-script Calculator gesture, Safari/Translate text input and Clock Stopwatch checks through iOS MCP and iCTRL on both phones, selected analysis-to-rebuild deliveries, and a one-flow iOS 17 `hopper-direct` parent. iOS 17 Translate and Clock required [first-use setup](docs/ios17-first-use-gates.md) before they would launch. These are verified paths on the named devices; whole-App equivalence, unfamiliar-App autonomy and iOS 26 remain open.
+**Current three-device status:** The [iOS 16/17 verification matrix](docs/two-device-verification-matrix.md) records selected analysis-to-rebuild deliveries on both older phones. The [iOS 26 device record](docs/relaxin-roothide-iphone11-ios26.md) adds one Calculator arithmetic and one Clock Stopwatch analysis-to-rebuild delivery on iPhone 11/26.0.1, each with minor visual differences. A [current-code run](docs/ios16-ios26-current-code-validation.md) repeated selected live checks on XR/iOS 16 and iPhone 11/iOS 26; iPhone 14/iOS 17 was not connected. Whole-App equivalence and unfamiliar-App autonomy remain open.
 
 The [v0.1.12 check](docs/releases/v0.1.12.md) added Apple Podcasts package/static indexing, bounded sandbox metadata and three navigation paths on both phones, plus self-owned SSH forwards for standalone acquisition. A later [two-device report and new-source rebuild](docs/podcasts-two-device-report-rebuild.md) completed selected semantic analysis and 3/3 paired navigation checks per phone. Major screenshot differences remain, and the source was written by the current agent, so full visual parity and fully autonomous unfamiliar-App generation remain open.
 
@@ -19,7 +19,7 @@ Copy APP has two consecutive jobs:
 1. **Analyze:** On a specified jailbroken iPhone, acquire and verify an installed app's package, selected sandbox/UI/runtime evidence and relevant native code. Deliver a readable, cited report and a machine-readable `feature-spec.json`.
 2. **Rebuild:** Implement selected behavior in an independent, runnable iOS app. Install it on the specified real device, replay paired flows and deliver explicit behavior and visual differences.
 
-A passing case proves only the selected, observed flows. It cannot recover the original source code, unseen server implementation or arbitrary untested app behavior. The first-version acceptance target is a three-flow analysis-to-rebuild loop for one real app, followed by reuse on a second technology stack. The original plan also specifies iOS 16/17/26 validation. The [v0.1.2 two-device run](docs/releases/v0.1.2.md) verifies selected paths and fixture SQLite writes on iOS 16 and 17; iOS 26 remains untested.
+A passing case proves only the selected, observed flows. It cannot recover the original source code, unseen server implementation or arbitrary untested app behavior. The first-version acceptance target is a three-flow analysis-to-rebuild loop for one real app, followed by reuse on a second technology stack. The [v0.1.2 two-device run](docs/releases/v0.1.2.md) verifies selected paths and fixture SQLite writes on iOS 16 and 17. The separate [iOS 26 record](docs/relaxin-roothide-iphone11-ios26.md) verifies one selected Calculator and one selected Clock flow on that phone.
 
 ## Architecture
 
@@ -34,12 +34,12 @@ The REA command and provider bridge has been removed. Copy APP uses its own boun
 
 | Milestone | Acceptance gate | Current state |
 | --- | --- | --- |
-| M0 Device baseline | Inventory and capability checks on all target phones | XR/iOS 16 and iPhone 14/iOS 17 verified; iOS 26 untested |
-| M1 Device control | Repeatable bounded UI flows, one active touch backend, recoverable failures | Three original fixture flows passed both backends on iOS 16 and 17; formal paired checks and repaired-clone iOS MCP replays passed on both; iOS 26 untested |
+| M0 Device baseline | Inventory and capability checks on all target phones | XR/iOS 16, iPhone 14/iOS 17 and iPhone 11/iOS 26 selected channels verified on the named devices |
+| M1 Device control | Repeatable bounded UI flows, one active touch backend, recoverable failures | Original fixture flows passed both backends on iOS 16 and 17. iOS 26 passed iCTRL and iOS MCP selected flows; black iOS MCP frames after fresh launch are retained and rejected, with a bounded recovery verified on Calculator. XR/iOS 16 current-code selected-flow regression passed; live iPhone 14/iOS 17 replay is pending |
 | M2 Evidence acquisition | Package and encrypted Mach-O status, sandbox/runtime evidence with source checks | XR Kimi and DeepSeek full-package recovery, several app pilots and known-source fixture verified; broader protection strategies pending |
 | M3 Analysis report | Major selected-flow claims linked to UI, code and data evidence or marked unknown | Reviewed XR reports and direct Ghidra path available; arbitrary-app semantic interpretation remains Agent work |
 | M4 Real-app pilot | Reviewable deep report and executable feature specification | XR Compass, Calculator, DeepSeek and Clock selected-flow pilots exist; coverage varies by app |
-| M5 Rebuild loop | Independent app on real phone, paired behavior and screenshot review | XR Clock and fresh Calculator current-agent parents complete. An iOS 17 Calculator current-agent parent now also completes four traced and reviewed original flows, a signed independent clone, 4/4 paired final-view assertions and five manually reviewed image pairs with minor differences. Its source was authored before this parent run |
+| M5 Rebuild loop | Independent app on real phone, paired behavior and screenshot review | XR Clock and fresh Calculator parents, iOS 17 Calculator four-flow parent, and iOS 26 Calculator/Clock selected-flow deliveries complete. iOS 26 source adapts earlier independent implementations; four Clock image pairs were reviewed as minor differences |
 | M6 Product entry | Reliable one-request flow, recovery and reuse on a second stack | Guided onboarding and a standalone Codex CLI selected-flow XR run verified; unfamiliar-app autonomy and whole-app generality remain unverified |
 
 The real XR `--auto-discover --agent-provider current` trial at [its parent case](cases/clock-current-auto-workflow-20261016/manifest.json) replayed three previously authored Clock flows, produced a source-linked report, built and installed a distinct clone, and passed 3/3 selected behavior and final-view assertions. Ten screenshot pairs were reviewed with minor differences and no major difference; 517 parent evidence files verified. The clone adapted previously authored independent source. A separate [completed Clock parent](cases/clock-current-workflow-live-20261016/manifest.json) also verifies the downstream handoffs. Neither case establishes model-authored discovery or zero-shot cloning.
@@ -67,6 +67,6 @@ The [v0.1.6 two-device validation](docs/releases/v0.1.6.md) refreshed USB, SSH, 
 1. Exercise independent CLI discovery and implementation on an unfamiliar app without reusing prior scripts or clone source; optionally repeat with Claude CLI.
 2. Extend fresh discovery and implementation to an unfamiliar app and different UI stack or protection state; quantify coverage and failures.
 3. Expand selected-flow implementations into more of each app's behavior, including persistence and backend boundaries, with new paired checks.
-4. Test iOS 26 independently if its jailbreak and device services are available. Do not extrapolate from XR or iOS 17.
+4. Replay core workflows live on iPhone 14/iOS 17 when connected, test clean second-Mac setup and reboot/rejailbreak persistence, then prepare one release. The [XR/iOS 16 current-code replay](docs/ios16-ios26-current-code-validation.md) is complete. Keep iOS 26 claims scoped to the tested iPhone 11 and selected flows.
 
 Keep credentials, IPA snapshots, screenshots and raw sandbox data in ignored local `cases/`. A hash proves consistency of saved bytes, not the correctness of an interpretation.

@@ -25,4 +25,4 @@ Comece pela [primeira inspeção via USB](../../README.md#install-and-run-your-f
 
 Registre as evidências antes de interpretá-las e deixe as incertezas explícitas. Validar fluxos escolhidos não comprova equivalência completa entre apps. Aceitamos relatos reproduzíveis, testes, scripts de UI e traduções. Não envie IPAs, credenciais ou dados brutos do sandbox para o Git. Veja o [guia de contribuição](../../CONTRIBUTING.md).
 
-O iPhone XR com iOS 16.1.1 e o fluxo selecionado no iPhone 14 com iOS 17.3.1 (Relaxin/RootHide) foram validados; iOS 26 ainda não foi testado. Consulte o [escopo de compatibilidade](../../README.md). O idioma da documentação não muda o idioma da CLI nem dos relatórios.
+Fluxos selecionados foram validados no iPhone XR com iOS 16.1.1 e no iPhone 14 com iOS 17.3.1, além de Calculator e Clock no iPhone 11 com iOS 26.0.1. Consulte o [escopo de compatibilidade](../../README.md). O idioma da documentação não muda o idioma da CLI nem dos relatórios.

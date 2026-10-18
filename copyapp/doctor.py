@@ -188,6 +188,16 @@ def _host_probes() -> Dict[str, Any]:
                            "reason": version.stderr.strip()[:150] if version.returncode else ""}
     except (OSError, subprocess.TimeoutExpired) as exc:
         result["xcode"] = _error(exc)
+    try:
+        identities = subprocess.run(
+            ["security", "find-identity", "-v", "-p", "codesigning"],
+            capture_output=True, text=True, timeout=8, check=False)
+        result["development_signing"] = {
+            "status": "available" if identities.returncode == 0 and
+                      "Apple Development:" in identities.stdout else "not_configured",
+            "reason": "Apple Development identity only; the IPA still needs a matching provisioning profile and device registration"}
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        result["development_signing"] = _error(exc)
     theos = Path(os.environ["THEOS"]).expanduser() if os.environ.get("THEOS") else (
         source_root() / "toolchains" / "theos")
     result["theos"] = {"status": "available" if theos.is_dir() else "not_configured",
@@ -254,7 +264,7 @@ def _next_steps(udid: str, probes: Dict[str, Any], host: Dict[str, Any],
     if (probes.get("rootless_marker", {}).get("roothide_namespace") and
             probes["frida_usb"].get("transport") != "usb_roothide_sidecar"):
         steps.append({"for": "frida_roothide", "action":
-                      "For the tested iOS 17 RootHide runtime path, install host frida==17.23.3 "
+                      "For the tested iOS 17/26 RootHide runtime paths, install host frida==17.23.3 "
                       f"and run .venv/bin/copyapp setup frida-roothide --udid {udid} "
                       "--out cases/frida-roothide-setup with the pinned mobile SSH key. "
                       "A Frida process inventory alone does not prove system-App attach."})
@@ -269,9 +279,12 @@ def _next_steps(udid: str, probes: Dict[str, Any], host: Dict[str, Any],
     if host["xcodegen"]["status"] != "available":
         steps.append({"for": "xcodegen_rebuild", "action":
                       "For a runnable clone, install XcodeGen (brew install xcodegen)."})
-    if host["ldid"]["status"] != "available":
-        steps.append({"for": "ldid_rebuild", "action":
-                      "For the tested TrollStore install path, install ldid."})
+    if (host["ldid"]["status"] != "available" and
+            host.get("development_signing", {}).get("status") != "available"):
+        steps.append({"for": "signing_rebuild", "action":
+                      "Choose an install route: install ldid for a supported TrollStore path, "
+                      "or configure an Apple Development signing identity and a provisioning "
+                      "profile covering the clone Bundle ID and this device for USB installation."})
     if (host.get("codex_cli", {}).get("status") != "available" and
             host.get("claude_cli", {}).get("status") != "available"):
         steps.append({"for": "agent_cli_optional", "action":

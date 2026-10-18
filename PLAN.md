@@ -420,3 +420,13 @@ RootHide `root-run` 复测定位：旧实现把 Frida spawn 成功当作 root �
 2026-10-17 已知源码夹具分享扩展补验：原版夹具增加固定文本分享按钮并升级为 0.1.1（build 2）。XR 首次 TrollStore 更新因旧进程仍在运行而 120 秒超时，停止进程后同包重试成功；iPhone 14 使用有效 Apple Development 签名经 USB 安装成功。两机分别从系统分享页进入 `FixtureShare.appex`，XR 12 步、iOS 17 14 步正式脚本均完成并保存可见扩展文字和截图；六条 Counter/Notes/Catalog 回归也通过 `copyapp verify`。XR 分享页无障碍目标多为 `Activity`，iOS 17 的 `More` 标签有重复且横向位置动态变化，脚本据此限定于各自设备。详见 [双机分享扩展记录](docs/fixture-share-extension-two-device.zh-CN.md)。
 
 2026-10-17 分享内容链路补验：夹具 0.1.2（build 3）扩展从系统 `NSItemProvider` 读取合成纯文本并显示 `Received: Copy APP fixture sample text`。XR/iOS 16 和 iPhone 14/iOS 17 分别重新安装；XR 首次 TrollStore 更新超时，停止主 App 和扩展后同包重试成功。两机正式分享脚本的末端无障碍文字及截图都证明精确文本进入扩展，安装和脚本案例均通过 `copyapp verify`；新构建的六条 Counter/Notes/Catalog 回归也通过。只证明一个纯文本输入路径，不推断其他内容类型或任意 App 扩展。详见 [双机分享扩展记录](docs/fixture-share-extension-two-device.zh-CN.md)。
+
+## 下一版集中验收计划（2026-10-18）
+
+只在下列门槛全部满足后发布**一个**新版本；不因单个功能通过而连续发补丁版本。
+
+1. **iOS 26 Calculator 正式链路。**由可验证的原版截图脚本连接审阅报告、复刻计划、Agent 任务、同机对照、逐图审阅及交付。已在 iPhone 11/iOS 26.0.1 完成；范围为一条 `7 + 8 = 15` 流程，复用并调整已有独立源码。
+2. **iOS MCP 黑帧处理。**保存截图来源、哈希和亮度诊断；fresh launch 黑帧时有界重试及返回主屏后重启；最终黑图禁止验收。iOS 26 Calculator 的真实黑帧恢复已通过；长时间稳定性仍需后续观察。
+3. **第二款 App 与跨系统回归。**iOS 26 Clock 秒表 Start→Stop→Reset 的静态／动态证据、正式报告、独立签名 App、四组逐图审阅已通过。随后 XR/iOS 16 重新接入：精确设备 `doctor` 的 SSH、Frida、iOS MCP、iCTRL 可用；Clock 双后端截图及原版／复刻版 Counter 基线对齐后 `0→1` 成对检查通过。已知开发者文件列表仍返回 `ConnectionTerminatedError`，SSH 采集路径可用。iPhone 14/iOS 17 本轮没有 USB 连接，实时回归暂缓。详见[当前代码双机记录](docs/ios16-ios26-current-code-validation.md)。
+4. **从零搭建与文档。**同一台 Mac 上的隔离临时检出已完成 bootstrap、首次 survey 与 verify；另一台全新 Mac 尚未实测。README 中英、RootHide/iOS 26 指南、语言首页与站点同步现状；签名路径必须区分 `ldid`/TrollStore 和覆盖精确 UDID 的 Apple Development 描述。
+5. **单次发布。**336 项当前代码单元测试及本轮两台设备的选定案例已通过；iOS 17 实时回归和另一台干净 Mac 的搭建验收仍待执行。完成剩余门槛与文档复核后，审阅 diff，写单份双语发布说明，再合并、推送、打标签并发布。发布说明只承诺三台已测设备上的选定流程，列出黑帧启发式、视觉差异、未覆盖的 App 功能与重启持久性边界。

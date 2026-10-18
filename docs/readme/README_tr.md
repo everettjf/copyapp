@@ -25,4 +25,4 @@ sh scripts/bootstrap-macos.sh
 
 Önce kanıtı kaydedin, sonra açıklayın; bilinmeyenleri açıkça belirtin. Seçilen akışların doğrulanması uygulamanın tümüyle eşdeğer olduğu anlamına gelmez. Tekrarlanabilir hata raporları, testler, UI betikleri ve çeviriler memnuniyetle karşılanır. IPA, kimlik bilgileri veya ham telefon verilerini göndermeyin. [Katkı kılavuzuna](../../CONTRIBUTING.md) bakın.
 
-İOS 16.1.1 yüklü iPhone XR ve iOS 17.3.1 yüklü iPhone 14 (Relaxin/RootHide) üzerindeki seçili analiz ve yeniden oluşturma akışı doğrulandı; iOS 26 henüz test edilmedi. Ayrıntılar için [destek kapsamına](../../README.md) bakın. Belge dili CLI veya rapor dilini değiştirmez.
+iOS 16.1.1 yüklü iPhone XR ve iOS 17.3.1 yüklü iPhone 14 üzerindeki seçili akışlar ile iOS 26.0.1 yüklü iPhone 11'deki Calculator ve Clock akışları doğrulandı. Ayrıntılar için [destek kapsamına](../../README.md) bakın. Belge dili CLI veya rapor dilini değiştirmez.

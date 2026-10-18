@@ -25,4 +25,4 @@ Completa prima la [prima ricognizione USB](../../README.md#install-and-run-your-
 
 Conserva le prove prima di interpretarle e indica chiaramente ciò che resta ignoto. La verifica dei percorsi scelti non dimostra l'equivalenza completa delle app. Sono benvenuti bug riproducibili, test, script UI e traduzioni. Non inviare IPA, credenziali o dati grezzi della sandbox a Git. Consulta la [guida ai contributi](../../CONTRIBUTING.md).
 
-Sono stati verificati l'iPhone XR con iOS 16.1.1 e un flusso selezionato di analisi e ricostruzione sull'iPhone 14 con iOS 17.3.1 (Relaxin/RootHide); iOS 26 non è ancora stato testato. Consulta l'[ambito del supporto](../../README.md). La lingua della documentazione non cambia quella della CLI o dei rapporti.
+Sono stati verificati flussi selezionati sull'iPhone XR con iOS 16.1.1 e sull'iPhone 14 con iOS 17.3.1, oltre a Calculator e Clock sull'iPhone 11 con iOS 26.0.1. Consulta l'[ambito del supporto](../../README.md). La lingua della documentazione non cambia quella della CLI o dei rapporti.

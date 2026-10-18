@@ -99,6 +99,37 @@ class OnboardingTest(unittest.TestCase):
         self.assertEqual([step["for"] for step in steps], ["dvt_filesystem_optional"])
         self.assertIn("SSH-backed analysis", steps[0]["action"])
 
+    def test_development_signing_is_a_rebuild_route_without_ldid(self):
+        probes = {name: {"status": "available"} for name in
+                  ("usb_lockdown", "usb_screenshot", "ssh_mobile", "frida_usb",
+                   "ios_mcp", "ictrl")}
+        host = {name: {"status": "available"} for name in
+                ("xcode", "xcodegen", "codex_cli", "development_signing")}
+        host["ldid"] = {"status": "not_configured"}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            steps = _next_steps(UDID, probes, host, root / "id", root / "known_hosts")
+            self.assertNotIn("signing_rebuild", [step["for"] for step in steps])
+            def fake_doctor(_udid, output, *_args, **_kwargs):
+                output.mkdir()
+                (output / "report.md").write_text("report")
+                (output / "device.json").write_text(json.dumps({
+                    "probes": probes, "host": host, "next_steps": steps,
+                }))
+                return output / "report.md", True
+            device = SimpleNamespace(serial=UDID, connection_type="USB")
+            display = StringIO()
+            with patch("copyapp.onboarding.list_devices", new=AsyncMock(return_value=[device])), \
+                 patch("copyapp.onboarding.run_doctor", side_effect=fake_doctor), \
+                 patch("copyapp.onboarding._prepare_ssh_key", return_value=False), \
+                 redirect_stdout(display):
+                _, ready = run_onboarding(output=root / "rebuild", stage="rebuild")
+            self.assertTrue(ready)
+            self.assertIn("no persistent tunnel is required", display.getvalue())
+            host["development_signing"] = {"status": "not_configured"}
+            steps = _next_steps(UDID, probes, host, root / "id", root / "known_hosts")
+            self.assertIn("signing_rebuild", [step["for"] for step in steps])
+
     def test_frida_inventory_does_not_claim_jailed_access_is_ready(self):
         device = SimpleNamespace(id=UDID, type="usb",
                                  query_system_parameters=lambda: {"access": "jailed"},

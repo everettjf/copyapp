@@ -11,7 +11,7 @@ from PIL import Image
 
 from copyapp.compare_playbooks import _load_run
 from copyapp.playbook import run_playbook
-from copyapp.verify import sha256_file
+from copyapp.verify import sha256_file, verify_case
 
 
 @contextmanager
@@ -38,7 +38,7 @@ class PlaybookVisualLabelsTest(unittest.TestCase):
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
         self.root = Path(temp.name)
-        image = Image.new("RGB", (414, 896), "black")
+        image = Image.new("RGB", (414, 896), "#303030")
         stream = io.BytesIO()
         image.save(stream, format="JPEG")
         self.image = stream.getvalue()
@@ -107,6 +107,35 @@ class PlaybookVisualLabelsTest(unittest.TestCase):
         path.write_text(json.dumps(manifest))
         with self.assertRaisesRegex(ValueError, "visual labels do not match image OCR"):
             _load_run(run)
+
+    def test_black_frame_cannot_pass_accessibility_ready_check(self):
+        image = io.BytesIO()
+        Image.new("RGB", (414, 896), "black").save(image, format="JPEG")
+        with patch("copyapp.playbook.ExperimentUI", FakeUI), \
+             patch("copyapp.playbook.ios_mcp_tunnel", fake_tunnel), \
+             patch("copyapp.playbook.capture_stable", return_value=(
+                 image.getvalue(), {"stable": True, "samples": 5})), \
+             patch("copyapp.playbook.time.sleep"):
+            path, complete = run_playbook("device", "ios-mcp", self.script,
+                                          self.root / "black")
+        record = json.loads(path.read_text())
+        self.assertFalse(complete)
+        self.assertIn("near-uniform black", record["error"]["message"])
+        self.assertEqual(len(record["steps"][0]["frame_attempts"]), 3)
+        self.assertNotIn("ready_found", record["steps"][0])
+        self.assertTrue((path.parent / "step-01-black-attempt-1.jpg").exists())
+
+    def test_verifier_rejects_black_pixels_even_with_updated_hashes(self):
+        path, complete = self.run_with_painted_labels(["Stop"], "tampered")
+        self.assertTrue(complete)
+        image_path = path.parent / "step-01-screenshot.jpg"
+        Image.new("RGB", (414, 896), "black").save(image_path, format="JPEG")
+        manifest = json.loads(path.read_text())
+        digest = sha256_file(image_path)
+        manifest["steps"][0]["sha256"] = digest
+        manifest["evidence"][1]["sha256"] = digest
+        path.write_text(json.dumps(manifest))
+        self.assertFalse(verify_case(path.parent))
 
 
 if __name__ == "__main__":

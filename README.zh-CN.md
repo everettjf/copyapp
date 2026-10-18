@@ -33,13 +33,13 @@ sh scripts/bootstrap-macos.sh
 
 ## 已验证支持
 
-第一版“分析 → 复刻 → 真机对照”的核心阶段已在 iPhone XR / iOS 16.1.1（普通 rootless）、[iPhone 14 / iOS 17.3.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone14.md)和 [iPhone 11 / iOS 26.0.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone11-ios26.md)上通过真机验证。这里的“支持”指在已测配置上完成证据采集、审阅报告、独立 App 安装及同机选定行为核验，不代表任意 App、越狱配置或全部功能都可用。iOS 26 Calculator 的一条运算流程通过了对照，最终截图审阅只有轻微差异；这份正式报告到交付的衔接仍需补采带截图就绪条件的原版脚本。
+第一版“分析 → 复刻 → 真机对照”的核心阶段已在 iPhone XR / iOS 16.1.1（普通 rootless）、[iPhone 14 / iOS 17.3.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone14.md)和 [iPhone 11 / iOS 26.0.1（Relaxin/RootHide）](docs/relaxin-roothide-iphone11-ios26.md)上通过真机验证。这里的“支持”指在已测配置上完成证据采集、审阅报告、独立 App 安装及同机选定行为核验，不代表任意 App、越狱配置或全部功能都可用。iOS 26 的 Calculator 运算和 Clock 秒表选定流程均完成正式交付，视觉差异为轻微；两者都改造了已有的独立源码。
 
 | 设备状态 | 已验证范围 | 设备专属配置 |
 | --- | --- | --- |
 | iPhone XR · iOS 16.1.1 · rootless | 完成系统 Notes 三流程分析到独立复刻的父案例；深度分析、加密 App 恢复、夹具三流程原版/复刻版对照及五组截图审阅；新版复刻版三流程与原版/复刻版 SQLite 行内容对照通过；夹具分享扩展收到固定文本；原版 Translate 输入与 Clock 秒表的选定流程经两种界面后端通过 | rootless iOS MCP、SSH、版本匹配的 Frida；安装使用 TrollStore 或有效签名 |
 | iPhone 14 · iOS 17.3.1 · Relaxin/RootHide | 完成四流程 `copyapp copy` 父案例：Calculator 审阅报告、原版按键跟踪、独立签名复刻版、四条末端断言和五组截图审阅；Remoboard 加密包恢复；夹具流程、SQLite 核对及分享扩展收到固定文本；原版 Translate 输入与 Clock 秒表的选定流程经两种界面后端通过 | ElleKit 与 RootHide iOS MCP、mobile SSH、固定版本 Frida 17.23.3 独立服务、复刻版的 Apple Development 签名；Translate/Clock 首次使用引导已完成 |
-| iPhone 11 · iOS 26.0.1 · Relaxin/RootHide | USB／SSH 采集、iCTRL、iOS MCP 健康检查及界面操作、Frida 附加、正式 Calculator 报告、签名独立 App 安装及一条 `7 + 8 = 15` 成对流程通过；iOS 26 布局调整后的视觉审阅只有轻微差异 | 个性化开发者镜像与 userspace XCTest 隧道；RootHide tweak 需 ElleKit 和 `sbreload`。成对截图使用 iCTRL，因 iOS MCP 在重新启动 App 后可能截到黑屏。[设备记录](docs/relaxin-roothide-iphone11-ios26.md) |
+| iPhone 11 · iOS 26.0.1 · Relaxin/RootHide | USB／SSH 采集、iCTRL 与 iOS MCP 界面操作、Frida 附加、Calculator 和 Clock 正式报告、签名独立 App、一条运算与一条秒表成对流程通过；Clock 四组截图均为轻微差异 | 个性化开发者镜像与 userspace XCTest 隧道；RootHide tweak 需 ElleKit 和 `sbreload`。CLI 会识别 iOS MCP 重启 App 后的黑帧、保留失败样本，并尝试有界的返回主屏／重新启动恢复。[设备记录](docs/relaxin-roothide-iphone11-ios26.md) |
 
 ### 里程碑一 · v0.1.0
 
@@ -54,9 +54,9 @@ sh scripts/bootstrap-macos.sh
 | 复刻版安装 | root Frida 启动 TrollStore helper，并核对安装版本及构建号 | Apple Development 签名 IPA 经 USB InstallationProxy 安装 |
 | 10 月 17 日收尾探针 | 开发者文件列表仍报 `ConnectionTerminatedError`；SSH 包与沙盒采集、Frida、iOS MCP、iCTRL 路径可用 | 开发者文件列表及其他已测通道可用；SSH 包与沙盒采集通过 |
 
-当前代码在两台手机上均重新运行 `doctor`、Calculator `analyze --launch` 和相同的 `7 + 8 = 15` iOS MCP 脚本；六份新案例及已保存的 XR Notes、iOS 17 Calculator 父案例全部通过 `copyapp verify`。两机末端截图均可见 `15`。证据和边界见[双机矩阵](docs/two-device-verification-matrix.zh-CN.md)。
+此前的双机收尾在 XR/iOS 16 与 iPhone 14/iOS 17 运行了 `doctor`、Calculator `analyze --launch` 和相同的 `7 + 8 = 15` iOS MCP 脚本。之后的[当前代码 iOS 16/26 双机复测](docs/ios16-ios26-current-code-validation.md)确认了两台已连接手机的通道、非黑屏 Clock 截图，以及基线对齐后的 XR 原版／复刻版 Counter 对照；iOS 17 在后一次复测中未连接。
 
-**后续工作：**提升 iOS 26 的 iOS MCP 截图稳定性和复刻版视觉一致性，追踪 SwiftUI 输入分发；调查 XR 的可选开发者文件服务；在另一台全新 Mac 验证环境搭建及更长期的设备、安装可靠性；证明无需预置脚本的陌生 App 自主发现和新源码生成；扩展 App 状态、网络与视觉覆盖。独立 Claude CLI 全流程以及 Clock 数小时或受系统事件干扰的行为仍未验证。目前交付的是对选定流程做过衡量的独立 App，不能称为任意 App 的完整复刻。
+**后续工作：**新黑帧防护已在 XR/iOS 16 的选定流程中连机回归；iPhone 14/iOS 17 等重新连接后再验。在另一台全新 Mac 验证环境搭建，测试完整重启／重新越狱后的持久性，完成剩余门槛后只发布一个版本；追踪 iOS 26 SwiftUI 输入分发、调查 XR 的可选开发者文件服务，并验证无需预置脚本的陌生 App 自主发现和新源码生成。详见[当前代码 iOS 16/26 双机复测](docs/ios16-ios26-current-code-validation.md)。目前交付的是对选定流程做过衡量的独立 App，不能称为任意 App 的完整复刻。
 
 Mac 端通过 USB 读取安装信息、屏幕与无障碍元素；通过越狱机上的 SSH 导出包和索引数据沙盒；本地解析 Mach-O。XR 上的 Compass 已取得 Frida 调用证据；DeepSeek 和 Kimi 的主程序及扩展已恢复为可分析 IPA。iPhone 14 上的 Frida 17 独立服务已对原版 Calculator 完成逐次点击跟踪。
 

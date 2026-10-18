@@ -6,7 +6,9 @@ from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
-from copyapp.playbook import _exact_labels, _fresh_launch, run_playbook
+from PIL import Image
+
+from copyapp.playbook import _check_fresh_launch_frame, _exact_labels, _fresh_launch, run_playbook
 
 
 @contextmanager
@@ -151,6 +153,36 @@ class PlaybookExactLabelsTest(unittest.TestCase):
             ("terminate_app", {"bundle_id": "com.apple.mobiletimer"}),
             ("launch_app", {"bundle_id": "com.apple.mobiletimer"}),
         ])
+
+    def test_black_dvt_launch_reactivates_and_retains_frame_provenance(self):
+        class BlackLaunchUI:
+            def __init__(self):
+                self.client = Mock()
+                self.reactivated = False
+                self.last_screenshot_source = "getScreenDataWithQuantity"
+
+            def screenshot(self, path):
+                image = Image.new("RGB", (100, 100),
+                                  "#303030" if self.reactivated else "black")
+                image.save(path, format="JPEG")
+
+            def launch(self, bundle):
+                self.reactivated = True
+
+            def frontmost(self):
+                return "com.apple.mobiletimer"
+
+        ui = BlackLaunchUI()
+        record = {"evidence": []}
+        with patch("copyapp.playbook.time.sleep"):
+            _check_fresh_launch_frame(ui, "com.apple.mobiletimer", self.root, record)
+        self.assertEqual(record["fresh_launch_render_recovery"],
+                         "home_then_ios_mcp_launch")
+        self.assertEqual(len(record["fresh_launch_frames"]), 4)
+        self.assertTrue(record["fresh_launch_frames"][0]["near_uniform_black"])
+        self.assertFalse(record["fresh_launch_frames"][-1]["near_uniform_black"])
+        self.assertEqual(len(record["evidence"]), 4)
+        ui.client.call_ui.assert_called_once_with("press_home")
 
 
 if __name__ == "__main__":

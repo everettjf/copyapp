@@ -25,4 +25,4 @@ Mulailah dengan [survei USB pertama](../../README.md#install-and-run-your-first-
 
 Simpan bukti sebelum menafsirkannya dan jelaskan hal yang belum diketahui. Keberhasilan beberapa alur terpilih tidak membuktikan kesetaraan seluruh aplikasi. Laporan bug yang dapat diulang, pengujian, skrip UI, dan terjemahan sangat diterima. Jangan memasukkan IPA, kredensial, atau data sandbox mentah ke Git. Lihat [panduan kontribusi](../../CONTRIBUTING.md).
 
-Yang sudah diverifikasi adalah iPhone XR dengan iOS 16.1.1 serta alur analisis dan pembuatan ulang terpilih pada iPhone 14 dengan iOS 17.3.1 (Relaxin/RootHide); iOS 26 belum diuji. Lihat [cakupan dukungan](../../README.md). Bahasa dokumentasi tidak mengubah bahasa CLI atau laporan.
+Alur terpilih telah diverifikasi pada iPhone XR dengan iOS 16.1.1 dan iPhone 14 dengan iOS 17.3.1, serta untuk Calculator dan Clock pada iPhone 11 dengan iOS 26.0.1. Lihat [cakupan dukungan](../../README.md). Bahasa dokumentasi tidak mengubah bahasa CLI atau laporan.

@@ -5,6 +5,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from PIL import Image
+
 from copyapp.discover_check import check_discovered_flows, inspect_playbook
 from copyapp.verify import sha256_file, verify_case
 
@@ -40,7 +42,7 @@ class DiscoveryCheckTest(unittest.TestCase):
         output.mkdir(parents=True)
         (output / 'playbook.json').write_bytes(script.read_bytes())
         write(output / 'step-01-observe.json', {'elements': [{'text': 'Home'}]})
-        (output / 'step-03-screenshot.jpg').write_bytes(b'fake screenshot')
+        Image.new('RGB', (20, 30), '#303030').save(output / 'step-03-screenshot.jpg')
         evidence = [{'path': name, 'sha256': sha256_file(output / name)}
                     for name in ('playbook.json', 'step-01-observe.json',
                                  'step-03-screenshot.jpg')]

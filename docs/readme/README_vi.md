@@ -25,4 +25,4 @@ Trước tiên hãy hoàn tất [khảo sát USB ban đầu](../../README.md#ins
 
 Lưu bằng chứng trước khi diễn giải và nêu rõ những điều chưa biết. Kiểm chứng vài luồng được chọn không chứng minh toàn bộ ứng dụng tương đương. Chúng tôi hoan nghênh lỗi có thể tái hiện, bài kiểm tra, kịch bản UI và bản dịch. Không đưa IPA, thông tin xác thực hay dữ liệu sandbox thô vào Git. Xem [hướng dẫn đóng góp](../../CONTRIBUTING.md).
 
-Đã kiểm chứng iPhone XR chạy iOS 16.1.1 và quy trình phân tích, dựng lại đã chọn trên iPhone 14 chạy iOS 17.3.1 (Relaxin/RootHide); iOS 26 chưa được kiểm thử. Xem [phạm vi hỗ trợ](../../README.md). Ngôn ngữ tài liệu không thay đổi ngôn ngữ CLI hoặc báo cáo.
+Đã kiểm chứng các quy trình được chọn trên iPhone XR chạy iOS 16.1.1 và iPhone 14 chạy iOS 17.3.1, cùng các luồng Calculator và Clock trên iPhone 11 chạy iOS 26.0.1. Xem [phạm vi hỗ trợ](../../README.md). Ngôn ngữ tài liệu không thay đổi ngôn ngữ CLI hoặc báo cáo.

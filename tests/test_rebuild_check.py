@@ -119,7 +119,7 @@ class RebuildCheckTest(unittest.TestCase):
                     "frontmost": bundle, "duration_ms": 5}
             if requested["action"] == "screenshot":
                 image = output / f"step-{index:02d}-screenshot.jpg"
-                Image.new("RGB", (20, 30), "black").save(image)
+                Image.new("RGB", (20, 30), "#303030").save(image)
                 digest = sha256_file(image)
                 item.update({"evidence_path": image.name, "sha256": digest,
                              "stability": {"stable": True},

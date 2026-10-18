@@ -143,6 +143,21 @@ def verify_case(directory: Path) -> bool:
     if (directory / "manifest.json").is_file():
         manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
         ok = verify_survey(directory)
+        if ((directory / "playbook.json").is_file() and
+                manifest.get("status") == "complete" and
+                manifest.get("ui_backend") == "ios-mcp"):
+            # A saved accessibility-ready flag cannot turn a compositor-black
+            # image into valid visual evidence. Reinspect pixels on verification.
+            try:
+                from copyapp.ui_capture import frame_health
+                for step in manifest.get("steps", []):
+                    if step.get("action") != "screenshot":
+                        continue
+                    image = checked_path(directory, step["evidence_path"])
+                    if frame_health(image.read_bytes())["near_uniform_black"]:
+                        return False
+            except (KeyError, OSError, ValueError, TypeError):
+                return False
         if manifest.get("kind") == "copy_workflow":
             try:
                 from copyapp.copy_workflow import validate_copy_workflow

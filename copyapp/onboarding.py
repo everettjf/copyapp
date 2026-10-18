@@ -71,9 +71,11 @@ def run_onboarding(udid: Optional[str] = None, output: Optional[Path] = None,
                       all(record["probes"].get(name, {}).get("status") == "available"
                           for name in ("ssh_mobile", "frida_usb", "ios_mcp")) and
                       record["host"]["xcode"]["status"] == "available")
+    signing_tool_ready = any(record["host"].get(name, {}).get("status") == "available"
+                             for name in ("ldid", "development_signing"))
     rebuild_ready = (analysis_ready and
-                     all(record["host"][name]["status"] == "available"
-                         for name in ("xcodegen", "ldid")))
+                     record["host"]["xcodegen"]["status"] == "available" and
+                     signing_tool_ready)
     ready = {"survey": survey_ready, "analyze": analysis_ready,
              "rebuild": rebuild_ready}[stage]
     print(f"Device: {selected}")
@@ -97,5 +99,6 @@ def run_onboarding(udid: Optional[str] = None, output: Optional[Path] = None,
         print(f"Next: .venv/bin/copyapp apps --udid {selected} --all")
         print(f"For full analysis: .venv/bin/copyapp onboard --udid {selected} --stage analyze")
     elif ready and stage in ("analyze", "rebuild"):
-        print(f"For longer device runs, keep .venv/bin/copyapp tunnel --udid {selected} open in another terminal.")
+        print("Device commands open exact-device USB forwards when needed; no persistent tunnel is required.")
+        print(f"Use .venv/bin/copyapp tunnel --udid {selected} only for interactive checks or first SSH host-key pinning.")
     return report, ready

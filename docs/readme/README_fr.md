@@ -25,4 +25,4 @@ Commencez par le [premier relevé USB](../../README.md#install-and-run-your-firs
 
 Conserver les preuves avant de les interpréter et signaler les inconnues. La validation de parcours choisis ne démontre pas une équivalence complète. Les bogues reproductibles, tests, scripts UI et traductions sont bienvenus. Ne commitez ni IPA, ni identifiants, ni données brutes du bac à sable. Voir le [guide de contribution](../../CONTRIBUTING.md).
 
-L'iPhone XR sous iOS 16.1.1 et un parcours choisi d'analyse et de reconstruction sur l'iPhone 14 sous iOS 17.3.1 (Relaxin/RootHide) ont été vérifiés ; iOS 26 reste à tester. Voir le [périmètre de prise en charge](../../README.md). La langue de la documentation ne modifie pas celle de la CLI ou des rapports.
+Des parcours choisis ont été vérifiés sur l'iPhone XR sous iOS 16.1.1 et l'iPhone 14 sous iOS 17.3.1, ainsi que pour Calculator et Clock sur l'iPhone 11 sous iOS 26.0.1. Voir le [périmètre de prise en charge](../../README.md). La langue de la documentation ne modifie pas celle de la CLI ou des rapports.

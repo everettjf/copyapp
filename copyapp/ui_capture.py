@@ -12,6 +12,28 @@ def _thumbnail(image: bytes) -> Image.Image:
         return source.convert("L").resize((48, 48), Image.Resampling.BILINEAR)
 
 
+def frame_health(image: bytes) -> Dict:
+    """Flag an almost uniform black app area, excluding system chrome.
+
+    This is deliberately narrow: dark themed screens with text and controls
+    retain enough variance to pass. A flagged frame is diagnostic evidence,
+    never a successful screenshot for a UI playbook.
+    """
+    with Image.open(io.BytesIO(image)) as source:
+        gray = source.convert("L")
+        width, height = gray.size
+        if width < 20 or height < 20:
+            raise ValueError("screenshot is too small to assess")
+        app_area = gray.crop((int(width * .2), int(height * .2),
+                              max(int(width * .9), 1), max(int(height * .9), 1)))
+        stats = ImageStat.Stat(app_area)
+    mean = round(stats.mean[0], 2)
+    deviation = round(stats.stddev[0], 2)
+    return {"mean_luma": mean, "stddev_luma": deviation,
+            "near_uniform_black": mean <= 4 and deviation <= 3,
+            "region": "central_70_percent"}
+
+
 def capture_stable(capture: Callable[[], bytes], samples: int = 5,
                    interval: float = 0.35, threshold: float = 0.02,
                    minimum_samples: int = 2) -> Tuple[bytes, Dict]:

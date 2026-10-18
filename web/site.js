@@ -17,7 +17,7 @@ const translations = {
     noteThreeTitle: '只衡量选定的范围。', noteThreeText: '原版与复刻版分别在同一台手机上运行。最终交付列出通过项、视觉差异与未知项。',
     devicesTitle: '在真实手机上验证。', devicesIntro: '支持声明以设备证据为准，限定在已记录流程内，不代表任意 App 或全部功能。',
     verified: '流程已验证', inProgress: '验证进行中', device16: '已验证分析、包恢复、界面和选定复刻流程。',
-    device17: '已验证分析、签名安装以及原版与复刻版对照。', device26: '分析和一条 Calculator 成对流程已通过；仍有轻微视觉差异。',
+    device17: '已验证分析、签名安装以及原版与复刻版对照。', device26: 'Calculator 与 Clock 的选定复刻流程已通过；仍有轻微视觉差异。',
     deviceEvidence: '阅读真机证据与限制', startTitle: '第一份观察，从一条命令开始。',
     startText: '连接、解锁并信任 iPhone。在 Mac 安装 CLI，运行引导式 USB 检查。需要深度分析时再增加越狱服务。',
     setupGuide: '完整安装指南', contribute: '参与贡献', copy: '复制', terminalReady: '已检查设备身份及截图能力',

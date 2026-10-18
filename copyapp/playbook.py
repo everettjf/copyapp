@@ -20,7 +20,7 @@ from copyapp.text_actions import TYPE_ACTION, type_params
 from copyapp.ictrl import DEFAULT_CLIENT, ICtrlClient
 from copyapp.ocr_file import ocr_file
 from copyapp.usb_tunnel import ictrl_tunnel, ios_mcp_tunnel
-from copyapp.ui_capture import capture_stable
+from copyapp.ui_capture import capture_stable, frame_health
 from copyapp.verify import sha256_file
 
 
@@ -60,6 +60,39 @@ def _exact_labels(observation: Dict[str, Any], backend: str) -> set:
 
 def _record_file(output: Path, path: Path, evidence: list) -> None:
     evidence.append({"path": str(path.relative_to(output)), "sha256": sha256_file(path)})
+
+
+def _check_fresh_launch_frame(ui: ExperimentUI, bundle: str, output: Path,
+                              record: dict) -> None:
+    """Recover a DVT-launched app whose compositor still paints black."""
+    frames = record["fresh_launch_frames"] = []
+    for phase in ("initial", "after_reactivation"):
+        for attempt in range(1, 4):
+            path = output / f"fresh-launch-{phase}-{attempt}.jpg"
+            ui.screenshot(path)
+            health = frame_health(path.read_bytes())
+            _record_file(output, path, record["evidence"])
+            frames.append({"phase": phase, "attempt": attempt,
+                           "path": str(path.relative_to(output)),
+                           "sha256": sha256_file(path),
+                           "source": getattr(ui, "last_screenshot_source", "unknown"),
+                           **health})
+            if not health["near_uniform_black"]:
+                return
+            time.sleep(0.35)
+        if phase == "initial":
+            ui.client.call_ui("press_home")
+            time.sleep(0.35)
+            ui.launch(bundle)
+            record["fresh_launch_render_recovery"] = "home_then_ios_mcp_launch"
+            for _ in range(10):
+                if ui.frontmost() == bundle:
+                    break
+                time.sleep(0.3)
+            else:
+                raise RuntimeError("target did not return to foreground after black-frame recovery")
+            time.sleep(1.0)
+    raise RuntimeError("fresh launch remained near-uniform black after reactivation")
 
 
 def run_playbook(udid: str, backend: str, script: Path, output: Path,
@@ -180,6 +213,8 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
         # SpringBoard can report the new foreground app before UIKit paints its
         # first complete navigation bar. XR / iOS 16 Clock reproduced this.
         time.sleep(2.0)
+        if backend == "ios-mcp" and record.get("fresh_launch_backend") == "instruments":
+            _check_fresh_launch_frame(ui, bundle, output, record)
     if trace_observer is not None:
         if ui.frontmost() != bundle:
             raise RuntimeError("target is not frontmost before trace attachment")
@@ -365,28 +400,41 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
                     trace_observer.end_step()
         else:
             path = output / f"step-{index:02d}-screenshot.jpg"
-            if step.get("stable") is True:
-                # Allow the last accessibility update to reach the rendered
-                # frame before assessing screenshot stability.
-                time.sleep(1.0)
-                sample = output / f".step-{index:02d}-sample.jpg"
-                try:
-                    def capture() -> bytes:
-                        ui.screenshot(sample)
-                        return sample.read_bytes()
+            for frame_attempt in range(1, 4):
+                if step.get("stable") is True:
+                    # Allow accessibility to reach the rendered frame first.
+                    time.sleep(1.0)
+                    sample = output / f".step-{index:02d}-sample.jpg"
+                    try:
+                        def capture() -> bytes:
+                            ui.screenshot(sample)
+                            return sample.read_bytes()
 
-                    image, stability = capture_stable(capture, samples=6,
-                                                      interval=0.35, threshold=0.012,
-                                                      minimum_samples=5)
-                finally:
-                    sample.unlink(missing_ok=True)
-                path.write_bytes(image)
-                item["stability"] = stability
-            else:
-                ui.screenshot(path)
+                        image, stability = capture_stable(capture, samples=6,
+                                                          interval=0.35, threshold=0.012,
+                                                          minimum_samples=5)
+                    finally:
+                        sample.unlink(missing_ok=True)
+                    path.write_bytes(image)
+                    item["stability"] = stability
+                else:
+                    ui.screenshot(path)
+                health = frame_health(path.read_bytes())
+                item.setdefault("frame_attempts", []).append({
+                    "attempt": frame_attempt, "source": getattr(ui, "last_screenshot_source", "unknown"),
+                    "sha256": sha256_file(path), **health})
+                if not health["near_uniform_black"]:
+                    break
+                if frame_attempt < 3:
+                    rejected = output / f"step-{index:02d}-black-attempt-{frame_attempt}.jpg"
+                    shutil.copyfile(path, rejected)
+                    _record_file(output, rejected, record["evidence"])
+                    time.sleep(0.35)
             item["sha256"] = sha256_file(path)
             item["evidence_path"] = str(path.relative_to(output))
             _record_file(output, path, record["evidence"])
+            if health["near_uniform_black"]:
+                raise RuntimeError(f"screenshot remains near-uniform black at step {index}")
             if step.get("stable") is True and not item["stability"]["stable"]:
                 raise RuntimeError(f"screenshot did not settle at step {index}")
             if ui.frontmost() != bundle:

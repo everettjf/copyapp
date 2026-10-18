@@ -229,7 +229,7 @@ class ReportCompositionTest(unittest.TestCase):
                     {"action": "screenshot", "stable": True, "ready_contains": "result"}]}
         (play / "playbook.json").write_text(json.dumps(plan))
         image = play / "step-01-screenshot.jpg"
-        Image.new("RGB", (20, 30), "black").save(image)
+        Image.new("RGB", (20, 30), "#303030").save(image)
         manifest = {"schema_version": 1, "scenario_id": "tap-result",
                     "bundle_id": "com.example.target", "status": "complete",
                     "ui_backend": "ios-mcp", "device_id_sha256_prefix": "abc123",

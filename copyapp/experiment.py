@@ -93,11 +93,16 @@ class ExperimentUI:
 
     def screenshot(self, path: Path) -> str:
         if self.backend == "ios-mcp":
-            data = IOSMCPClient.image_bytes(self.client.call_ui("screenshot"))
+            result = self.client.call_ui("screenshot", {"debug": True})
+            data = IOSMCPClient.image_bytes(result)
+            self.last_screenshot_source = next(
+                (item.get("source", "unknown") for item in result.get("content", [])
+                 if isinstance(item, dict) and item.get("type") == "image"), "unknown")
             path.write_bytes(data)
         else:
             self.client.screenshot(path)
             data = path.read_bytes()
+            self.last_screenshot_source = "ictrl"
         return hashlib.sha256(data).hexdigest()
 
     def tap(self, x: float, y: float) -> Dict[str, Any]:
