@@ -71,6 +71,7 @@ from copyapp.discover_check import check_discovered_flows, accepted_playbooks
 from copyapp.compare_playbooks import compare_playbooks
 from copyapp.doctor import run_doctor
 from copyapp.onboarding import run_onboarding
+from copyapp.ssh_profile import apply_ssh_profile, remember_verified_doctor_case
 from copyapp.tunnels import run_tunnels
 from copyapp.candidates import build_candidates
 from copyapp.view_tree import capture_view_tree
@@ -1015,12 +1016,15 @@ def main() -> None:
     ax.add_argument("--caption", default="", help="exact current accessibility caption for press")
     args = parser.parse_args()
     try:
+        apply_ssh_profile(args, sys.argv[1:])
         if args.command == "devices":
             code = asyncio.run(command_devices())
         elif args.command == "onboard":
-            _, ready = run_onboarding(args.udid, args.out, args.ssh_identity,
-                                      args.ssh_known_hosts, args.ssh_port,
-                                      not args.no_keygen, args.stage)
+            report, ready = run_onboarding(args.udid, args.out, args.ssh_identity,
+                                           args.ssh_known_hosts, args.ssh_port,
+                                           not args.no_keygen, args.stage)
+            remember_verified_doctor_case(report.parent, args.ssh_port,
+                                          args.ssh_identity, args.ssh_known_hosts)
             code = 0 if ready else 1
         elif args.command == "tunnel":
             code = run_tunnels(args.udid, args.ssh_port, args.mcp_port,
@@ -1042,6 +1046,8 @@ def main() -> None:
             path, connected = run_doctor(args.udid, args.out, args.ssh_port,
                                          args.ssh_identity, args.ssh_known_hosts,
                                          args.ictrl_client)
+            remember_verified_doctor_case(path.parent, args.ssh_port,
+                                          args.ssh_identity, args.ssh_known_hosts)
             print(path)
             code = 0 if connected else 1
         elif args.command == "verify":

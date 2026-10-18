@@ -195,7 +195,7 @@ sh scripts/bootstrap-macos.sh
 
 iOS MCP tweak 编译需要完整 Xcode、Theos、iPhoneOS 16.5 SDK 和 `ldid`；本仓库**不提供** Theos 与 SDK。安装好后，在仓库根目录运行 `THEOS=/path/to/theos CLANG_MODULE_CACHE_PATH=/private/tmp/copyapp-clang-modules make -C device/ios-mcp package`，再用手机包管理器或 Filza 安装 `device/ios-mcp/packages/` 生成的 `.deb`，重新载入 SpringBoard。XR/iOS 16 的普通 rootless 包已验证；RootHide 需要 `roothide/theos`、`THEOS_PACKAGE_SCHEME=roothide` 和 ElleKit 等真正的 tweak 注入器。iPhone 14 已安装 ElleKit 与 RootHide 包，界面服务通过真机验证；见 [状态记录](docs/relaxin-roothide-iphone14.md)。可选的 iCTRL 源码及 Apache 2.0 许可、NOTICE 已固定在 [`vendor/ictrl`](vendor/ictrl/UPSTREAM.md)；生成的签名文件、大型构建依赖及配对密钥只保存在本地。
 
-Mac 端专用 SSH 私钥位于 `cases/ssh/id_ed25519`（`onboard --stage analyze` 或 `--stage rebuild` 在缺少时创建），已核对的设备主机公钥位于 `cases/ssh-known-hosts`，端口 `22222` 从 Mac 转发到手机 SSH 端口 `22`。首次核对 SSH 主机指纹或交互式使用 UI 时，可另开终端保持 SSH 与 iOS MCP 转发：
+Mac 端专用 SSH 私钥位于 `cases/ssh/id_ed25519`（`onboard --stage analyze` 或 `--stage rebuild` 在缺少时创建），已核对的设备主机公钥位于 `cases/ssh-known-hosts`，端口 `22222` 从 Mac 转发到手机 SSH 端口 `22`。同时连接多台手机时，用 `--ssh-known-hosts` 和 `--ssh-port` 为每台设置独立的主机密钥文件与本地端口；授权的 Mac 密钥不同时再指定 `--ssh-identity`。`doctor` 或深度 `onboard` 成功核验精确设备后，会把该设备的端口和文件路径记在被 Git 忽略的 `cases/ssh/profiles.json`；后续只需指定 `--udid`，显式 SSH 参数仍可覆盖。首次仍须人工核对主机公钥指纹；配置文件只存路径和端口，不存私钥内容。首次核对 SSH 主机指纹或交互式使用 UI 时，可另开终端保持 SSH 与 iOS MCP 转发：
 
 ```sh
 .venv/bin/copyapp tunnel --udid <UDID>
