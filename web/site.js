@@ -1,6 +1,6 @@
 const translations = {
   zh: {
-    navWorkflow: '工作流程', navArchitecture: '架构', navDevices: '实测设备', navStart: '开始使用',
+    navWorkflow: '工作流程', navArchitecture: '架构', navEvidence: '证据示例', navDevices: '实测设备', navStart: '开始使用',
     eyebrow: '开源项目 · 真机证据', heroOne: '看见内部。', heroTwo: '构建新可能。',
     heroSub: '在越狱 iPhone 上分析真实 iOS App；把选定行为实现成独立 App。每一项结论都能追溯到证据。',
     heroStart: '开始探索', heroDocs: '阅读文档', factPhases: '相连的阶段', factTested: '台真机已测', factProgress: 'iOS 世代',
@@ -15,9 +15,22 @@ const translations = {
     noteOneTitle: '看清实际发生的事。', noteOneText: '指定设备身份、安装包哈希、有界操作、截图和运行时跟踪都保存到本地证据案例。',
     noteTwoTitle: '每个结论都能找到依据。', noteTwoText: '原生分析可使用项目工具、Ghidra 或 Hopper。伪代码是待审阅证据，不是原始源码。',
     noteThreeTitle: '只衡量选定的范围。', noteThreeText: '原版与复刻版分别在同一台手机上运行。最终交付列出通过项、视觉差异与未知项。',
+    systemCaption: 'Mac 保存案例并负责构建；指定的 iPhone 提供安装包、界面及运行时观察。',
+    evidenceTitle: '看见证据，也看见边界。', evidenceIntro: '这些经过筛选的公开示例说明工作方式。完整案例、第三方二进制和沙盒内容仍留在本地。',
+    pairTitle: '原版 ↔ 独立复刻版', pairCaption: 'iPhone 14 / iOS 17：选定的 7 + 8 = 15 流程通过，但仍有视觉差异。',
+    ios26Title: '一次 iOS 26 观察', ios26Caption: 'iPhone 11 上的原版 Calculator。仅凭这张图不能证明复刻版等价。',
+    hopperTitle: '原生代码的一条线索', hopperCaption: '基于已保存的 Hopper 输出绘制，并非工具窗口截图或原作者源码。',
+    sandboxTitle: '有界的沙盒目录', sandboxCaption: '仅包含路径元数据；本案例没有复制文件内容，也没有证明数据模型。',
+    articleLink: '阅读完整图文介绍',
     devicesTitle: '在真实手机上验证。', devicesIntro: '支持声明以设备证据为准，限定在已记录流程内，不代表任意 App 或全部功能。',
     verified: '流程已验证', inProgress: '验证进行中', device16: '已验证分析、包恢复、界面和选定复刻流程。',
     device17: '已验证分析、签名安装以及原版与复刻版对照。', device26: 'Calculator 与 Clock 的选定复刻流程已通过；仍有轻微视觉差异。',
+    validationLabel: '尚待验证', validationTitle: '这些测试尚未证明什么',
+    validationOne: 'iOS 17 复刻版上 iCTRL 多步重放的稳定性',
+    validationTwo: 'XR 可选开发者文件列表，以及重启／重新越狱后的持续可用性',
+    validationThree: '第二台实体 Mac 的首次手机配置',
+    validationFour: '任意 App 的覆盖、整 App 功能等价和像素级一致',
+    validationLink: '当前状态与验收门槛',
     deviceEvidence: '阅读真机证据与限制', startTitle: '第一份观察，从一条命令开始。',
     startText: '连接、解锁并信任 iPhone。在 Mac 安装 CLI，运行引导式 USB 检查。需要深度分析时再增加越狱服务。',
     setupGuide: '完整安装指南', contribute: '参与贡献', copy: '复制', terminalReady: '已检查设备身份及截图能力',
@@ -38,6 +51,13 @@ function setLanguage(language) {
     if (zh && translations.zh[key]) element.textContent = translations.zh[key];
     else if (element.dataset.english) element.textContent = element.dataset.english;
   });
+  const statusUrl = zh
+    ? 'https://github.com/everettjf/copyapp/blob/main/docs/current-status.zh-CN.md'
+    : 'https://github.com/everettjf/copyapp/blob/main/docs/current-status.md';
+  for (const id of ['statusLink', 'deviceStatusLink']) {
+    const link = document.getElementById(id);
+    if (link) link.href = statusUrl;
+  }
   languageButton.setAttribute('aria-label', zh ? 'Switch to English' : '切换到中文');
   try { localStorage.setItem('copyapp-language', language); } catch (_) { /* private mode */ }
 }

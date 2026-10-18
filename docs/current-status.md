@@ -22,6 +22,18 @@ The most recent local suite passed **342 tests**; the [macOS bootstrap, unit-tes
 - A full first-use phone onboarding on a **second physical Mac** has not been tested; that work is deferred for now. A fresh checkout on the same Mac and a clean GitHub-hosted macOS bootstrap passed narrower setup checks.
 - Selected-flow deliveries do not demonstrate arbitrary-app discovery, complete app parity, server-side behavior, or pixel-perfect visuals. Some independent app projects adapted existing source; distinguish those from new-source work.
 
+### Next verification pass
+
+| Open item | Evidence needed to close it |
+| --- | --- |
+| iOS 17 iCTRL multi-step replay | Capture the failing response and runner state, fix or isolate the transport, then replay the original and rebuilt flows repeatedly with final-state and screenshot checks. Until then, use the verified iOS MCP route for those selected checks. |
+| XR DVT file listing | Reproduce with a pinned device and developer service state; either demonstrate a working listing or document it as an optional-path limitation. SSH package and sandbox acquisition already work. |
+| Reboot / rejailbreak durability | Reboot each tested phone, restore its jailbreak and services, run `doctor`, acquire a small case, and complete a UI check. Include iOS 26 black-frame recovery and longer runs. |
+| Second physical Mac | Follow the public setup guide from a fresh checkout and USB trust through SSH key pinning, UI capture, package acquisition and a signed or TrollStore-installed rebuild. |
+| Broader app coverage | Test an unfamiliar app with a reviewed capability inventory, source-linked report, named rebuild target, paired flows and documented unknowns. Do not infer full-app parity from a few passing flows. |
+
+The [illustrated overview](articles/copyapp-overview.zh-CN.md) and [system diagram](assets/architecture-overview.svg) show the current workflow and selected public evidence examples. The underlying raw cases remain local.
+
 ## Publication rule
 
 Do not number development checkpoints as releases. Keep v0.1.0 as the sole published version until the remaining acceptance scope is settled, the final diff and bilingual notes are reviewed, the suite passes on the release commit, and one new tag and GitHub Release are created. The [current plan](../PLAN.en.md) tracks those gates. Raw IPAs, account data, sandbox exports and private keys are never release assets.
