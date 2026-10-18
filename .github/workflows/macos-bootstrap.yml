@@ -12,9 +12,14 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
       - name: Install from a fresh checkout
         run: sh scripts/bootstrap-macos.sh
       - name: Check the installed CLI
         run: .venv/bin/copyapp --help
+      - name: Install optional tracing tools
+        run: sh scripts/bootstrap-macos.sh --trace
       - name: Run unit tests
         run: .venv/bin/python -m unittest discover -s tests -q

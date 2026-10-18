@@ -1,8 +1,10 @@
 import json
+import os
 import struct
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from copyapp.ghidra_queue import (decompile_candidate_queue, select_ghidra_targets,
                                   verified_indirect_targets)
@@ -100,8 +102,9 @@ pathlib.Path(args[args.index('-log') + 1]).write_text('fake provider\\n')
         java = java_home / "bin/java"
         java.write_text("#!/bin/sh\necho 'openjdk version 21-test' >&2\n")
         java.chmod(0o755)
-        with self.assertRaisesRegex(FileNotFoundError, "JDK"):
-            _ghidra_ready(doctor_dir, self.root / "ghidra", None)
+        with patch.dict(os.environ, {"JAVA_HOME": ""}):
+            with self.assertRaisesRegex(FileNotFoundError, "JDK"):
+                _ghidra_ready(doctor_dir, self.root / "ghidra", None)
         _ghidra_ready(doctor_dir,
                    self.root / "ghidra", java_home)
         doctor = json.loads((doctor_dir / "toolchain-doctor.json").read_text())
