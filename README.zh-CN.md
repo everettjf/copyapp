@@ -6,6 +6,12 @@
 
 Copy APP 对越狱 iPhone 上已安装的 iOS App 取证分析，并协助 Coding Agent 创建**独立、可运行的 iOS App**，复现经过审阅的一组功能。它采集安装包、沙盒、界面和运行时证据，生成有来源引用的报告与功能规格，再在同一台手机上对照原版和新 App。当前正式发布版只有 **v0.1.0**；`main` 中已有后续开发成果，但尚未发布下一个版本。
 
+## 架构一览
+
+![Mac 与指定越狱 iPhone 通过 USB 协作，完成分析与对照](docs/assets/social/01-system-map.png)
+
+Mac 协调 Coding Agent、证据与构建；指定的 iPhone 提供 App 文件和观察结果。组件边界和证据关系见[详细架构说明](docs/architecture.zh-CN.md)。
+
 ## 从这里开始
 
 首次 USB 概览需要一台装有 Python 3.9+ 的 Mac、已解锁并通过 USB 连接的 iPhone，以及手机上已点“信任此电脑”。这个阶段无需 tweak、SSH、Frida 或 Xcode 签名。
@@ -39,9 +45,7 @@ Mac 负责编排和构建。OpenSSH 采集文件，iOS MCP 提供越狱环境下
 
 [示例工程](examples/README.md)已集中在 `examples/rebuild/`；下文命令中的 `rebuild/<NEW_PROJECT>` 是用户新建工程的输出位置。
 
-### 四张图看懂工作流
-
-![Mac 与指定越狱 iPhone 通过 USB 协作，完成分析与对照](docs/assets/social/01-system-map.png)
+### 证据、对照与交付
 
 ![安装包、沙盒、界面和运行时证据汇入有来源的报告；Hopper 片段是已保存证据的示意图](docs/assets/social/02-evidence.png)
 

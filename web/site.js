@@ -3,7 +3,7 @@ const translations = {
     navWorkflow: '工作流程', navArchitecture: '架构', navEvidence: '证据示例', navDevices: '实测设备', navStart: '开始使用',
     eyebrow: '开源项目 · 真机证据', heroOne: '看见内部。', heroTwo: '构建新可能。',
     heroSub: '在越狱 iPhone 上分析真实 iOS App；把选定行为实现成独立 App。每一项结论都能追溯到证据。',
-    heroStart: '开始探索', heroDocs: '阅读文档', factPhases: '相连的阶段', factTested: '台真机已测', factProgress: 'iOS 世代',
+    heroStart: '开始探索', heroDocs: '阅读文档', heroDiscord: '到 Discord 交流', factPhases: '相连的阶段', factTested: '台真机已测', factProgress: 'iOS 世代',
     workflowTitle: '两个阶段，一条证据链。', workflowIntro: '从观察原版到审阅独立实现；每个阶段都留下可复查的案例。',
     phaseOneTag: '理解原版', phaseOneTitle: '深度分析', phaseOneText: '采集 App 包、沙盒、界面和运行时证据。检查 Mach-O 与选定方法，写出有来源的报告与功能规格。',
     phaseOneA: '已安装包与沙盒', phaseOneB: '界面流程与截图', phaseOneC: 'Frida 跟踪与原生代码', phaseOneD: '审阅报告与功能规格',
@@ -38,7 +38,7 @@ const translations = {
     deviceEvidence: '阅读真机证据与限制', startTitle: '第一份观察，从一条命令开始。',
     startText: '连接、解锁并信任 iPhone。在 Mac 安装 CLI，运行引导式 USB 检查。需要深度分析时再增加越狱服务。',
     setupGuide: '完整安装指南', contribute: '参与贡献', copy: '复制', terminalReady: '已检查设备身份及截图能力',
-    footerLine: '可以复查的证据。可以实测的软件。', footerDocs: '文档 ↗', footerContribute: '贡献指南 ↗'
+    footerLine: '可以复查的证据。可以实测的软件。', footerDiscord: 'Discord ↗', footerDocs: '文档 ↗', footerContribute: '贡献指南 ↗'
   }
 };
 

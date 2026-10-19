@@ -46,6 +46,8 @@ footer{border-top:1px solid var(--line);background:#111111}.footer-inner{display
 .evidence-card figcaption{padding:20px 24px 23px;border-top:1px solid #38433d;display:flex;flex-direction:column;gap:7px}
 .evidence-card figcaption strong{font:600 18px var(--display);color:#f7f9f7}
 .evidence-card figcaption span{color:#adb9b0;font-size:12px;line-height:1.6}
+.community-link{display:inline-flex;align-items:center;gap:12px;margin-top:17px;color:var(--mint);font:500 12px var(--mono)}
+.community-link:hover{text-decoration:underline}
 .validation-panel{margin-top:37px;padding:30px 34px;border:1px solid #406448;background:linear-gradient(110deg,#102016,#101510);display:grid;grid-template-columns:1fr 1.35fr;column-gap:42px;row-gap:14px}
 .validation-label{font:10px var(--mono);letter-spacing:.12em;color:var(--mint)}
 .validation-panel h3{font:600 25px/1.2 var(--display);letter-spacing:-.04em;margin:13px 0 0}

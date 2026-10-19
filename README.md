@@ -6,6 +6,12 @@ English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_
 
 Copy APP analyzes an installed iOS app on a jailbroken iPhone and helps a coding agent build an **independent, runnable iOS app** that reproduces a reviewed set of behaviors. It collects package, sandbox, UI and runtime evidence; produces a source-linked report and feature specification; then checks the new app against the original on the same phone. The published release is **v0.1.0**. The current `main` branch contains additional work that has not been published as another version.
 
+## Architecture at a glance
+
+![Mac orchestration and a selected jailbroken iPhone connected by USB for analysis and comparison](docs/assets/social/01-system-map.png)
+
+The Mac coordinates the coding agent, evidence and build; the selected iPhone supplies app files and observations. See the [detailed architecture and evidence model](docs/architecture.md).
+
 ## Start here
 
 A first USB survey needs a Mac with Python 3.9+, an unlocked iPhone connected by USB, and **Trust This Computer** accepted. It does not require a phone tweak, SSH, Frida or Xcode signing.
@@ -39,9 +45,7 @@ The Mac runs orchestration and builds. OpenSSH acquires files, iOS MCP provides 
 
 The [example projects](examples/README.md) are under `examples/rebuild/`; `rebuild/<NEW_PROJECT>` in the commands below is a workspace for your own new output.
 
-### The workflow in four images
-
-![Mac orchestration and a selected jailbroken iPhone connected by USB for analysis and comparison](docs/assets/social/01-system-map.png)
+### Evidence, comparison and deliverables
 
 ![Package, sandbox, UI and runtime evidence feed a cited analysis report; the Hopper excerpt is a diagram of saved evidence](docs/assets/social/02-evidence.png)
 
