@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import plistlib
+import subprocess
 import tempfile
 import unittest
 from contextlib import contextmanager
@@ -45,7 +46,8 @@ class ICtrlSetupTest(unittest.TestCase):
     def test_xcuitest_one_shot_pairing_is_explicit(self):
         process = MagicMock()
         process.poll.return_value = None
-        with patch("copyapp.usb_tunnel.subprocess.Popen", return_value=process) as launch:
+        with patch("copyapp.usb_tunnel.subprocess.Popen", return_value=process) as launch, \
+             patch("copyapp.usb_tunnel.subprocess.run", return_value=subprocess.CompletedProcess([], 0)):
             with ictrl_xcuitest_session(UDID, BUNDLE, auto_approve_first_pair=True):
                 pass
         command = launch.call_args.args[0]
@@ -55,12 +57,41 @@ class ICtrlSetupTest(unittest.TestCase):
     def test_ios26_xcuitest_uses_userspace_tunnel(self):
         process = MagicMock()
         process.poll.return_value = None
-        with patch("copyapp.usb_tunnel.subprocess.Popen", return_value=process) as launch:
+        with patch("copyapp.usb_tunnel.subprocess.Popen", return_value=process) as launch, \
+             patch("copyapp.usb_tunnel.subprocess.run", return_value=subprocess.CompletedProcess([], 0)):
             with ictrl_xcuitest_session(UDID, BUNDLE, ios_version="26.0.1"):
                 pass
         command = launch.call_args.args[0]
         self.assertIn("--userspace", command)
         self.assertNotIn("--native", command)
+
+    def test_owned_runner_stops_before_testmanager_disconnect_even_on_failure(self):
+        events = []
+        process = MagicMock()
+        process.poll.return_value = None
+        process.terminate.side_effect = lambda: events.append("disconnect")
+
+        def stop(command, **kwargs):
+            self.assertEqual(command[-3:], ["copyapp.ictrl_runner_stop", UDID, BUNDLE])
+            events.append("stop runner")
+            return subprocess.CompletedProcess(command, 0)
+
+        with patch("copyapp.usb_tunnel.subprocess.Popen", return_value=process), \
+             patch("copyapp.usb_tunnel.subprocess.run", side_effect=stop):
+            with self.assertRaisesRegex(RuntimeError, "capture failed"):
+                with ictrl_xcuitest_session(UDID, BUNDLE, ios_version="17.3.1"):
+                    raise RuntimeError("capture failed")
+        self.assertEqual(events, ["stop runner", "disconnect"])
+
+    def test_runner_stop_failure_still_closes_host_and_is_reported(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        with patch("copyapp.usb_tunnel.subprocess.Popen", return_value=process), \
+             patch("copyapp.usb_tunnel.subprocess.run", return_value=subprocess.CompletedProcess([], 1)):
+            with self.assertRaisesRegex(RuntimeError, "could not stop the owned"):
+                with ictrl_xcuitest_session(UDID, BUNDLE, ios_version="17.3.1"):
+                    pass
+        process.terminate.assert_called_once()
 
     def test_ios26_mounts_developer_image_before_xcuitest(self):
         with patch("copyapp.ictrl_setup.subprocess.run") as run:

@@ -133,13 +133,24 @@ def ictrl_xcuitest_session(udid: str, bundle: str,
         try:
             yield process
         finally:
-            if process.poll() is None:
-                process.terminate()
-                try:
-                    process.wait(timeout=3)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-                    process.wait(timeout=3)
+            try:
+                if process.poll() is None:
+                    # Disconnecting testmanagerd alone leaves a briefly live
+                    # HTTP server which the next capture can mistake for a
+                    # usable XCTest session. Stop our runner before detaching.
+                    stopped = subprocess.run(
+                        [sys.executable, "-m", "copyapp.ictrl_runner_stop", udid, bundle],
+                        capture_output=True, timeout=50, check=False)
+                    if stopped.returncode:
+                        raise RuntimeError("could not stop the owned iCTRL runner; inspect device state before reuse")
+            finally:
+                if process.poll() is None:
+                    process.terminate()
+                    try:
+                        process.wait(timeout=3)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait(timeout=3)
 
 
 async def _launch_ictrl_runner(udid: str) -> None:

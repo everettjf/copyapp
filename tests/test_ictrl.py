@@ -1,8 +1,10 @@
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from copyapp.ictrl import ICtrlClient, ICtrlError
 
@@ -36,6 +38,18 @@ class ICtrlClientTest(unittest.TestCase):
             os.chmod(fake, 0o700)
             with self.assertRaises(ICtrlError):
                 ICtrlClient(client=fake).call_ui("logs")
+
+    def test_dropped_reply_is_unknown_completion_and_never_replayed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            client = Path(directory) / "ictrl"
+            client.touch()
+            for error in ("malformed HTTP response", "empty HTTP response", "read failed: reset"):
+                with self.subTest(error=error), \
+                     patch("copyapp.ictrl.subprocess.run", return_value=
+                           subprocess.CompletedProcess([], 1, "", "ictrl: " + error)) as run:
+                    with self.assertRaisesRegex(ICtrlError, "completion is unknown"):
+                        ICtrlClient(client=client).call_ui("tap", {"x": 10, "y": 20})
+                    run.assert_called_once()
 
 
 if __name__ == "__main__":

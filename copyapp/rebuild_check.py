@@ -7,7 +7,7 @@ import json
 import math
 import re
 import shutil
-from contextlib import redirect_stdout
+from contextlib import ExitStack, redirect_stdout
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Tuple
@@ -20,6 +20,7 @@ from copyapp.host_ocr import recognize_screenshot
 from copyapp.text_actions import TYPE_ACTION, type_params
 from copyapp.investigate_flow import _files
 from copyapp.playbook import run_playbook
+from copyapp.usb_tunnel import ictrl_tunnel
 from copyapp.verify import sha256_file, verify_case
 
 
@@ -417,60 +418,67 @@ def rebuild_check(udid: str, spec_path: Path, pairs: List[Tuple[str, Path, Path]
     record["flows"] = []
     record.pop("error", None)
     try:
-        for item in inputs:
-            flow_id = item["flow_id"]
-            root = output / "flows" / flow_id
-            original = root / "original"
-            clone = root / "rebuilt"
-            comparison = root / "comparison"
-            for path, bundle, script_key in ((original, original_id["bundle_id"], "original_script"),
-                                              (clone, rebuilt_id["bundle_id"], "rebuilt_script")):
-                wants_view = item["final_view"] is not None
-                if not _prepare_run(path, bundle, item["scenario_id"], prefix, backend,
-                                    resume, wants_view):
+        with ExitStack() as session:
+            # Keep testmanagerd attached through every original/clone flow. A
+            # runner can still answer logs briefly after its XCTest host exits.
+            connection = {}
+            for item in inputs:
+                flow_id = item["flow_id"]
+                root = output / "flows" / flow_id
+                original = root / "original"
+                clone = root / "rebuilt"
+                comparison = root / "comparison"
+                for path, bundle, script_key in ((original, original_id["bundle_id"], "original_script"),
+                                                  (clone, rebuilt_id["bundle_id"], "rebuilt_script")):
+                    wants_view = item["final_view"] is not None
+                    if not _prepare_run(path, bundle, item["scenario_id"], prefix, backend,
+                                        resume, wants_view):
+                        if backend == "ictrl" and not connection:
+                            connection["port"] = session.enter_context(ictrl_tunnel(udid))
+                        if wants_view:
+                            _, done = capture_flow(udid, backend, Path(item[script_key]), path, **connection)
+                        else:
+                            _, done = run_playbook(udid, backend, Path(item[script_key]), path, **connection)
+                        if not done:
+                            raise RuntimeError(f"{flow_id} {path.name} flow capture failed")
+                    play_path = path / "playbook" if wants_view else path
+                    if sha256_file(play_path / "playbook.json") != item[script_key + "_sha256"]:
+                        raise ValueError(f"saved playbook differs from the selected script: {flow_id}")
+                    _verified_run(path, bundle, item["scenario_id"], prefix, backend, wants_view)
                     if wants_view:
-                        _, done = capture_flow(udid, backend, Path(item[script_key]), path)
-                    else:
-                        _, done = run_playbook(udid, backend, Path(item[script_key]), path)
-                    if not done:
-                        raise RuntimeError(f"{flow_id} {path.name} flow capture failed")
-                play_path = path / "playbook" if wants_view else path
-                if sha256_file(play_path / "playbook.json") != item[script_key + "_sha256"]:
-                    raise ValueError(f"saved playbook differs from the selected script: {flow_id}")
-                _verified_run(path, bundle, item["scenario_id"], prefix, backend, wants_view)
-                if wants_view:
-                    check = _final_view_check(path, item["final_view"],
-                                              root / f"{path.name}-state-check.json")
-                    if not check["passed"]:
-                        raise ValueError(f"final view assertion failed for {flow_id} {path.name}")
-            if comparison.exists():
-                attempts = root / "attempts"
-                attempts.mkdir(exist_ok=True)
-                shutil.move(str(comparison), str(attempts / f"comparison-{len(list(attempts.iterdir())) + 1:02d}"))
-            compare_playbooks(original / "playbook" if item["final_view"] else original,
-                              clone / "playbook" if item["final_view"] else clone,
-                              comparison)
-            summary = _read(comparison / "report-index.json")
-            if (summary.get("original_bundle_id") != original_id["bundle_id"] or
-                    summary.get("rebuilt_bundle_id") != rebuilt_id["bundle_id"] or
-                    summary.get("scenario_id") != item["scenario_id"] or
-                    summary.get("device_id_sha256_prefix") != prefix or
-                    summary.get("ui_backend") != backend or
-                    summary.get("checks_status") == "failed"):
-                raise ValueError(f"comparison identity or explicit visual check failed: {flow_id}")
-            record["flows"].append({"flow_id": flow_id,
-                                    "scenario_id": item["scenario_id"],
-                                    "comparison_index": str((comparison / "report-index.json").relative_to(output)),
-                                    "comparison_sha256": sha256_file(comparison / "report-index.json"),
-                                    "checks_status": summary["checks_status"],
-                                    "final_view_status": "passed" if item["final_view"] else "not_configured",
-                                    "screenshot_pairs": len(summary["screenshots"])})
-            current = [_identity(asyncio.run(_installed_app(udid, identity["bundle_id"])),
-                                 identity["bundle_id"]) for identity in (original_id, rebuilt_id)]
-            if current != [original_id, rebuilt_id]:
-                raise ValueError("installed app identity changed during rebuild check")
-        record["status"] = "complete"
+                        check = _final_view_check(path, item["final_view"],
+                                                  root / f"{path.name}-state-check.json")
+                        if not check["passed"]:
+                            raise ValueError(f"final view assertion failed for {flow_id} {path.name}")
+                if comparison.exists():
+                    attempts = root / "attempts"
+                    attempts.mkdir(exist_ok=True)
+                    shutil.move(str(comparison), str(attempts / f"comparison-{len(list(attempts.iterdir())) + 1:02d}"))
+                compare_playbooks(original / "playbook" if item["final_view"] else original,
+                                  clone / "playbook" if item["final_view"] else clone,
+                                  comparison)
+                summary = _read(comparison / "report-index.json")
+                if (summary.get("original_bundle_id") != original_id["bundle_id"] or
+                        summary.get("rebuilt_bundle_id") != rebuilt_id["bundle_id"] or
+                        summary.get("scenario_id") != item["scenario_id"] or
+                        summary.get("device_id_sha256_prefix") != prefix or
+                        summary.get("ui_backend") != backend or
+                        summary.get("checks_status") == "failed"):
+                    raise ValueError(f"comparison identity or explicit visual check failed: {flow_id}")
+                record["flows"].append({"flow_id": flow_id,
+                                        "scenario_id": item["scenario_id"],
+                                        "comparison_index": str((comparison / "report-index.json").relative_to(output)),
+                                        "comparison_sha256": sha256_file(comparison / "report-index.json"),
+                                        "checks_status": summary["checks_status"],
+                                        "final_view_status": "passed" if item["final_view"] else "not_configured",
+                                        "screenshot_pairs": len(summary["screenshots"])})
+                current = [_identity(asyncio.run(_installed_app(udid, identity["bundle_id"])),
+                                     identity["bundle_id"]) for identity in (original_id, rebuilt_id)]
+                if current != [original_id, rebuilt_id]:
+                    raise ValueError("installed app identity changed during rebuild check")
+            record["status"] = "complete"
     except Exception as exc:
+        record["status"] = "failed"
         record["error"] = {"type": type(exc).__name__, "message": str(exc)[:400]}
     finally:
         record["finished_at"] = _now()

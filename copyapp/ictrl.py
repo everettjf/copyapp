@@ -44,7 +44,12 @@ class ICtrlClient:
                 "iCTRL command timed out; completion is unknown. Inspect runner logs before any retry."
             ) from exc
         if result.returncode:
-            raise ICtrlError((result.stderr or result.stdout).strip()[:800])
+            detail = (result.stderr or result.stdout).strip()[:600]
+            if any(message in detail for message in (
+                    "malformed HTTP response", "empty HTTP response", "read failed:")):
+                detail += ("; command completion is unknown. Inspect runner logs and the "
+                           "current UI before any retry.")
+            raise ICtrlError(detail)
         return result
 
     def call_ui(self, method: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:

@@ -2,21 +2,26 @@
 
 [English](current-status.md) · [简体中文](current-status.zh-CN.md) · [Documentation](README.md)
 
-**Published version:** [v0.1.1](releases/v0.1.1.md). This page describes the named-device scope tested through 2026-10-18 and the remaining limits. The [v0.1.0 notes](releases/v0.1.0.md) retain the original release record.
+**Published version:** [v0.1.2](releases/v0.1.2.md). This page describes the named-device scope tested through 2026-10-18 and the remaining limits. v0.1.2 includes the iCTRL session fix below; its new device regression covers the named iPhone 14 only. The [v0.1.0 notes](releases/v0.1.0.md) retain the original release record.
 
 ## Named-device results
 
 | Device | Current-code result | Boundaries |
 | --- | --- | --- |
 | iPhone XR, iOS 16.1.1, Dopamine rootless | SSH package/sandbox route, Frida, iOS MCP and iCTRL; selected Notes, Calculator, Translate and Clock analysis/rebuild paths. A recent Counter original/clone check passed after aligning state. | Optional developer file listing returns `ConnectionTerminatedError` on this phone. SSH-backed acquisition remains usable. |
-| iPhone 14, iOS 17.3.1, Relaxin/RootHide | Current-code `doctor` and original Calculator acquisition verified; four iOS MCP original/independent-app flows passed final assertions (`15`, `0.3`, `−7`, `0.5`), with five image pairs reviewed as minor differences. Original-App Frida tracing hit the selected button method once on each of five taps. | An extra iCTRL rebuilt-app paired replay failed at equals with `ictrl: malformed HTTP response` on two attempts. Runner health later recovered; multi-step reliability is not established. |
+| iPhone 14, iOS 17.3.1, Relaxin/RootHide | Current-code `doctor` and original Calculator acquisition verified; four iOS MCP original/independent-app flows passed final assertions (`15`, `0.3`, `−7`, `0.5`), with five image pairs reviewed as minor differences. Original-App Frida tracing hit the selected button method once on each of five taps. | v0.1.1 iCTRL paired replay could fail after premature XCTest-session teardown. The v0.1.2 fix passed four original/rebuilt iCTRL flows and left runner PID 0 on exit. Reboot/rejailbreak durability and this change on other devices remain untested. |
 | iPhone 11, iOS 26.0.1, Relaxin/RootHide | USB/SSH acquisition, iCTRL and iOS MCP UI, Frida attach, reviewed Calculator and Clock reports, signed independent apps, selected arithmetic and Stopwatch paired checks. A Clock Start → Stop → Reset comparison and visual review passed. | iOS MCP may capture a black app area after Instruments fresh launch. Rejected frames and bounded Home/relaunch recovery are recorded; long-term reliability is unknown. |
 
-The most recent local suite passed **342 tests**; the [macOS bootstrap, unit-test and isolated-wheel run](https://github.com/everettjf/copyapp/actions/runs/39151891412) passed on commit `1499222`. Saved case evidence, including failed attempts, stays under ignored local `cases/` and is not shipped with the repository or release. `copyapp verify` checks case consistency and source binding; it does not prove a reverse-engineering interpretation or whole-app equivalence.
+The v0.1.2 suite passed **346 tests**, and its isolated-wheel installation check passed. The earlier [macOS bootstrap, unit-test and isolated-wheel run](https://github.com/everettjf/copyapp/actions/runs/39151891412) passed on commit `1499222`. Saved case evidence, including failed attempts, stays under ignored local `cases/` and is not shipped with the repository or release. `copyapp verify` checks case consistency and source binding; it does not prove a reverse-engineering interpretation or whole-app equivalence.
+
+## iOS 17 iCTRL session fix (v0.1.2)
+
+The previous orchestration detached its owned XCTest host after capturing the original, then reused a runner that could still briefly answer log requests. In this reproduction, the clone's equals request received zero bytes, while an independent screenshot showed 15: the tap had executed and must not be repeated just because its reply was lost. A controlled experiment retaining one host completed two four-flow checks, supporting the session-lifetime diagnosis.
+
+`rebuild-check` now retains the session through all paired flows and immediate view-tree captures, stops its owned runner before detaching, and reports unknown completion after an HTTP disconnect. Two independent production-command runs (local cases `cases/ios17-ictrl-session-fixed-four-flow-run1-20261018` and `cases/ios17-ictrl-session-fixed-four-flow-run2-20261018`) each passed all four final assertions and left runner PID 0 on exit. All ten screenshot pairs were reviewed as minor differences. Failures, request timelines, source snapshots and experiment records remain under local `cases/ios17-ictrl-transport-diagnosis-20261018/`. This is a named-device, selected-flow regression fix, not reboot or long-term validation; the v0.1.1 release record is unchanged.
 
 ## What is still open
 
-- **Investigate:** the iOS 17 rebuilt-app iCTRL multi-step transport failure occurred on separate October 17 and 18 attempts, including two current-code retries at equals. The v0.1.1 release records this limitation; the selected iOS MCP checks remain usable.
 - **Low priority:** XR's optional DVT developer-file listing returned `ConnectionTerminatedError` in repeated October 17 and 18 probes. SSH package and sandbox acquisition still work, so this does not block the main workflow.
 - **Monitor with recovery:** iOS 26 iOS MCP produced black fresh-launch frames in several distinct October 18 Calculator and Clock runs. Each cited run rejected the frames and completed after bounded reactivation. Revisit the capture path if recovery fails, the black frame reaches accepted evidence, or a new device/build shows the issue without a working fallback.
 - Reboot/rejailbreak persistence and longer-running UI/backend reliability need dedicated checks.
@@ -27,7 +32,7 @@ The most recent local suite passed **342 tests**; the [macOS bootstrap, unit-tes
 
 | Open item | Evidence needed to close it |
 | --- | --- |
-| iOS 17 iCTRL multi-step replay | Capture the failing response and runner state, fix or isolate the transport, then replay the original and rebuilt flows repeatedly with final-state and screenshot checks. Until then, use the verified iOS MCP route for those selected checks. |
+| iCTRL session-change boundaries | Multi-step regression passed on the named iPhone 14; check reboot/rejailbreak behavior and exercise the changed session cleanup on the other named devices. |
 | XR DVT file listing | Keep the optional-path limit documented. Reinvestigate when a change to developer services or a new device makes this route necessary; SSH acquisition is already verified. |
 | Reboot / rejailbreak durability | Reboot each tested phone, restore its jailbreak and services, run `doctor`, acquire a small case, and complete a UI check. Check that any rejected iOS 26 black frame still recovers before accepting a screenshot; investigate the capture path only if that recovery stops working. |
 | Second physical Mac | Follow the public setup guide from a fresh checkout and USB trust through SSH key pinning, UI capture, package acquisition and a signed or TrollStore-installed rebuild. |
@@ -35,7 +40,7 @@ The most recent local suite passed **342 tests**; the [macOS bootstrap, unit-tes
 
 The [illustrated overview](articles/copyapp-overview.zh-CN.md) and [system diagram](assets/architecture-overview.svg) show the current workflow and selected public evidence examples. The underlying raw cases remain local.
 
-One-off failures that do not recur after a comparable retry should be kept in their saved case, not carried as an active defect. The iCTRL, DVT, and black-frame observations above were repeated; their priority follows whether they still block the main workflow or have a verified fallback.
+One-off failures that do not recur after a comparable retry should be kept in their saved case, not carried as an active defect. The iCTRL, DVT, and black-frame observations above were repeated. The named-device iCTRL regression fix is recorded; prioritize the remaining issues by whether they block the main workflow or have a verified fallback.
 
 ## Publication rule
 

@@ -2,37 +2,32 @@
 
 [English](README.md) · 简体中文 · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
-[项目网站](https://xnu.app/copyapp/) · [图文介绍](docs/articles/copyapp-overview.zh-CN.md) · [文档目录](docs/README.zh-CN.md) · [已发布版本](docs/releases/v0.1.1.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md) · [Apache-2.0 许可证](LICENSE)
+[项目网站](https://xnu.app/copyapp/) · [图文介绍](docs/articles/copyapp-overview.zh-CN.md) · [文档目录](docs/README.zh-CN.md) · [已发布版本](docs/releases/v0.1.2.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md) · [Apache-2.0 许可证](LICENSE)
 
-Copy APP 对越狱 iPhone 上已安装的 iOS App 取证分析，并协助 Coding Agent 创建**独立、可运行的 iOS App**，复现经过审阅的一组功能。它采集安装包、沙盒、界面和运行时证据，生成有来源引用的报告与功能规格，再在同一台手机上对照原版和新 App。当前正式发布版为 **v0.1.1**。
+Copy APP 对越狱 iPhone 上已安装的 iOS App 取证分析，并协助 Coding Agent 创建**独立、可运行的 iOS App**，复现经过审阅的一组功能。它采集安装包、沙盒、界面和运行时证据，生成有来源引用的报告与功能规格，再在同一台手机上对照原版和新 App。当前正式发布版为 **v0.1.2**。
+
+<a id="从这里开始"></a>
+
+## 从这里开始：交给 Codex 或 Claude Code
+
+在 Mac 上打开能执行本地命令的 **Codex 或 Claude Code**，用 USB 连接并解锁已越狱的 iPhone。把下面这段任务复制到 Agent 对话里，将 App 名称换成你的目标即可；不知道 Bundle ID 也没关系。
+
+```text
+请使用 https://github.com/everettjf/copyapp，帮我分析并复刻 USB 连接的越狱 iPhone 上的「App 名称」。
+如果还没有检出项目，请克隆到一个新目录；已有检出则在其中工作。
+先阅读 AGENTS.md 和 skills/copyapp-start/SKILL.md，检查并配置环境，识别准确的手机和 App，再完成分析、独立实现、真机安装与同机对照。
+能直接执行的步骤请替我完成；需要我在手机上确认或补充目标信息时，再告诉我具体操作。最后给我报告、可运行工程、已验证的功能和剩余差异。
+```
+
+Agent 会读取仓库里的[首次使用 Skill](skills/copyapp-start/SKILL.md)，再按任务调用分析、复刻和验收流程。**你不需要逐条输入下方的 CLI 命令，也不需要先安装某个专属扩展。** Mac 环境由 Agent 检查和配置；手机信任、首次授权和签名条件仍可能需要你参与。
+
+只想先分析，把第一句改成“帮我分析……，这次先不复刻”；只想检查连接，改成“完成并校验首次 USB survey 后停止”。更多任务示例见[交给 Agent 的首次运行任务](docs/first-run-agent.zh-CN.md)。喜欢自己操作 CLI，可以直接看[手动安装与首次采集](#手动安装与首次采集)。
 
 ## 架构一览
 
 ![Mac 与指定越狱 iPhone 通过 USB 协作，完成分析与对照](docs/assets/social/01-system-map.png)
 
 Mac 协调 Coding Agent、证据与构建；指定的 iPhone 提供 App 文件和观察结果。组件边界和证据关系见[详细架构说明](docs/architecture.zh-CN.md)。
-
-## 从这里开始
-
-首次 USB 概览需要一台装有 Python 3.9+ 的 Mac、已解锁并通过 USB 连接的 iPhone，以及手机上已点“信任此电脑”。这个阶段无需 tweak、SSH、Frida 或 Xcode 签名。
-
-```sh
-git clone https://github.com/everettjf/copyapp.git
-cd copyapp
-sh scripts/bootstrap-macos.sh
-.venv/bin/copyapp onboard
-.venv/bin/copyapp apps --udid <UDID> --all
-```
-
-在手机上打开目标 App，从列表确认准确的 Bundle ID，然后执行：
-
-```sh
-.venv/bin/copyapp survey --udid <UDID> --bundle <BUNDLE_ID> \
-  --ui-backend usb --out cases/first-survey
-.venv/bin/copyapp verify cases/first-survey
-```
-
-阅读 `cases/first-survey/report.md`。每次重试使用新的输出目录。需要深入分析和可运行复刻时，继续按[完整安装指南](docs/setup.zh-CN.md)及[分析到复刻流程](docs/copy-workflow.zh-CN.md)操作。也可以把[首次运行任务](docs/first-run-agent.zh-CN.md)交给当前仓库中的 Codex 或 Claude Code。
 
 ## 两项交付
 
@@ -57,19 +52,37 @@ Mac 负责编排和构建。OpenSSH 采集文件，iOS MCP 提供越狱环境下
 
 ## 当前 `main` 的实测范围
 
-以下结论只适用于指定手机和选定流程，不保证任意设备或 App 兼容。[当前状态](docs/current-status.zh-CN.md)记录 v0.1.1 的范围及剩余问题。
+以下结论只适用于指定手机和选定流程，不保证任意设备或 App 兼容。[当前状态](docs/current-status.zh-CN.md)记录 v0.1.2 的范围及剩余问题。
 
 | 手机 | 越狱方式与已测范围 | 当前限制 |
 | --- | --- | --- |
 | iPhone XR · iOS 16.1.1 | Dopamine rootless；SSH、Frida、iOS MCP 与 iCTRL；Notes、Calculator、Translate 和 Clock 的选定分析／复刻路径 | 可选的开发者文件列表可能报 `ConnectionTerminatedError`；SSH 包／沙盒采集可用。 |
-| iPhone 14 · iOS 17.3.1 | Relaxin/RootHide；原版 Calculator 采集、Frida 跟踪，以及经 iOS MCP 完成四条原版／独立 App 运算对照 | 额外的 iCTRL 复刻版多步重放返回 `malformed HTTP response`，稳定性仍待处理。 |
+| iPhone 14 · iOS 17.3.1 | Relaxin/RootHide；原版 Calculator 采集、Frida 跟踪，以及经 iOS MCP 完成四条原版／独立 App 运算对照 | v0.1.2 修复 v0.1.1 的 iCTRL 会话故障，两轮各四条成对流程通过；重启及其他设备上的新清理逻辑仍待复验。 |
 | iPhone 11 · iOS 26.0.1 | Relaxin/RootHide；Calculator、Clock 原版分析、签名独立 App 和选定运算／秒表成对检查 | iOS MCP 新启动后可能得到黑帧；已观察的故障经有界返回主屏／重启恢复。 |
 
 尚未证明整 App 功能覆盖、无视觉差异、重新越狱后的长期稳定，或第二台实体 Mac 的全新配置。原始 IPA、完整案例截图、沙盒内容和凭据只保存在被 Git 忽略的本地 `cases/`，不作为发布附件；文档中的少量 Calculator 示意画面经过单独筛选。
 
-## 安装与首次概览
+## 手动安装与首次采集
 
-[从这里开始](#从这里开始)的命令安装 CLI 并完成第一次 USB 采集。完整分析还需手机上的 OpenSSH、精确设备 SSH 路由、Copy APP iOS MCP tweak 和兼容的 Frida 服务；iCTRL 可按需加入。可运行复刻另需完整 Xcode、签名团队或 TrollStore，以及安装路径。[安装指南](docs/setup.zh-CN.md)列出了步骤和不同系统的分支。运行 `copyapp onboard --stage analyze` 与 `copyapp doctor --udid <UDID>` 查看各通道状态；USB 探针成功不等于全部服务就绪。
+以下是给手动使用 CLI 的读者准备的入口。通过 Agent 使用时，它会执行这些步骤。第一次 USB 采集需要 Python 3.9+、已解锁并连接的 iPhone，以及手机上的“信任此电脑”；这个阶段无需 tweak、SSH、Frida 或 Xcode 签名。
+
+```sh
+git clone https://github.com/everettjf/copyapp.git
+cd copyapp
+sh scripts/bootstrap-macos.sh
+.venv/bin/copyapp onboard
+.venv/bin/copyapp apps --udid <UDID> --all
+```
+
+在手机上打开目标 App，确认准确的 Bundle ID，再采集并校验：
+
+```sh
+.venv/bin/copyapp survey --udid <UDID> --bundle <BUNDLE_ID> \
+  --ui-backend usb --out cases/first-survey
+.venv/bin/copyapp verify cases/first-survey
+```
+
+阅读 `cases/first-survey/report.md`，每次重试使用新的输出目录。完整分析还需 OpenSSH、精确设备 SSH 路由、Copy APP iOS MCP tweak 和兼容的 Frida 服务；iCTRL 按需加入。复刻另需完整 Xcode、签名团队或 TrollStore。用 `onboard --stage analyze` 和 `doctor --udid <UDID>` 检查就绪情况，按[完整安装指南](docs/setup.zh-CN.md)及[分析到复刻工作流](docs/copy-workflow.zh-CN.md)继续。
 
 ## 运行完整分析到复刻流程
 

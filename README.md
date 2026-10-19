@@ -2,37 +2,32 @@
 
 English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
-[Project website](https://xnu.app/copyapp/) · [Illustrated overview (简体中文)](docs/articles/copyapp-overview.zh-CN.md) · [Documentation](docs/README.md) · [Published release](docs/releases/v0.1.1.md) · [Contributing](CONTRIBUTING.md) · [Apache-2.0 license](LICENSE)
+[Project website](https://xnu.app/copyapp/) · [Illustrated overview (简体中文)](docs/articles/copyapp-overview.zh-CN.md) · [Documentation](docs/README.md) · [Published release](docs/releases/v0.1.2.md) · [Contributing](CONTRIBUTING.md) · [Apache-2.0 license](LICENSE)
 
-Copy APP analyzes an installed iOS app on a jailbroken iPhone and helps a coding agent build an **independent, runnable iOS app** that reproduces a reviewed set of behaviors. It collects package, sandbox, UI and runtime evidence; produces a source-linked report and feature specification; then checks the new app against the original on the same phone. The current release is **v0.1.1**.
+Copy APP analyzes an installed iOS app on a jailbroken iPhone and helps a coding agent build an **independent, runnable iOS app** that reproduces a reviewed set of behaviors. It collects package, sandbox, UI and runtime evidence; produces a source-linked report and feature specification; then checks the new app against the original on the same phone. The current release is **v0.1.2**.
+
+<a id="start-here"></a>
+
+## Start here: give the task to Codex or Claude Code
+
+Open **Codex or Claude Code with local command execution on your Mac**, then connect and unlock your jailbroken iPhone over USB. Paste this request into the agent conversation and replace the app name. You do not need to know its Bundle ID.
+
+```text
+Use https://github.com/everettjf/copyapp to analyze and rebuild “APP NAME” on my USB-connected jailbroken iPhone.
+Clone the project into a new directory if needed, or work in its existing checkout.
+Read AGENTS.md and skills/copyapp-start/SKILL.md first. Check and configure the environment, identify the exact phone and app, then complete analysis, independent implementation, device installation and same-device comparison.
+Execute the steps you can perform yourself. Tell me the specific action only when you need phone-side confirmation or missing target information. Deliver the report, runnable project, verified behavior and remaining differences.
+```
+
+The agent reads the repository's [first-use skill](skills/copyapp-start/SKILL.md) and follows the analysis, rebuild and verification workflows. **You do not need to type every CLI command below or install a provider-specific extension first.** The agent checks and configures the Mac; phone trust, initial permissions and signing access may still require your participation.
+
+For analysis only, change the first sentence to “Analyze …; do not rebuild it in this task.” For a connection check, ask it to stop after a verified USB survey. See [first-run agent tasks](docs/first-run-agent.md) for more examples, or use the [manual CLI entry](#manual-installation-and-first-survey) if you prefer.
 
 ## Architecture at a glance
 
 ![Mac orchestration and a selected jailbroken iPhone connected by USB for analysis and comparison](docs/assets/social/01-system-map.png)
 
 The Mac coordinates the coding agent, evidence and build; the selected iPhone supplies app files and observations. See the [detailed architecture and evidence model](docs/architecture.md).
-
-## Start here
-
-A first USB survey needs a Mac with Python 3.9+, an unlocked iPhone connected by USB, and **Trust This Computer** accepted. It does not require a phone tweak, SSH, Frida or Xcode signing.
-
-```sh
-git clone https://github.com/everettjf/copyapp.git
-cd copyapp
-sh scripts/bootstrap-macos.sh
-.venv/bin/copyapp onboard
-.venv/bin/copyapp apps --udid <UDID> --all
-```
-
-Open the target app on the phone, find its exact Bundle ID in the app list, and run:
-
-```sh
-.venv/bin/copyapp survey --udid <UDID> --bundle <BUNDLE_ID> \
-  --ui-backend usb --out cases/first-survey
-.venv/bin/copyapp verify cases/first-survey
-```
-
-Read `cases/first-survey/report.md`. Use a fresh output directory for each attempt. For deep analysis and a runnable rebuild, follow the [full setup guide](docs/setup.md) and [Analyze → Rebuild workflow](docs/copy-workflow.md). You can give the [first-run task](docs/first-run-agent.md) to Codex or Claude Code in this checkout.
 
 ## What the workflow delivers
 
@@ -57,19 +52,37 @@ These are workflow illustrations and selected public observations. The Calculato
 
 ## Tested support on current `main`
 
-These are named-device, selected-flow results, not a compatibility promise for every iOS device or app. [Current evidence and limitations](docs/current-status.md) records the v0.1.1 scope and remaining gaps.
+These are named-device, selected-flow results, not a compatibility promise for every iOS device or app. [Current evidence and limitations](docs/current-status.md) records the v0.1.2 scope and remaining gaps.
 
 | Phone | Jailbreak and verified scope | Open limits |
 | --- | --- | --- |
 | iPhone XR · iOS 16.1.1 | Dopamine rootless; SSH, Frida, iOS MCP and iCTRL; selected Notes, Calculator, Translate and Clock analysis/rebuild paths | Optional developer file listing can return `ConnectionTerminatedError`; the SSH package/sandbox route works. |
-| iPhone 14 · iOS 17.3.1 | Relaxin/RootHide; original Calculator acquisition, Frida trace and four original/independent-app arithmetic checks through iOS MCP | An additional iCTRL rebuilt-app multi-step replay returned `malformed HTTP response`; its reliability remains open. |
+| iPhone 14 · iOS 17.3.1 | Relaxin/RootHide; original Calculator acquisition, Frida trace and four original/independent-app arithmetic checks through iOS MCP | v0.1.2 fixes the v0.1.1 iCTRL session-lifetime fault; two runs of four paired flows passed. Reboot durability and the changed cleanup on other devices remain untested. |
 | iPhone 11 · iOS 26.0.1 | Relaxin/RootHide; original Calculator and Clock analysis, signed independent apps and selected paired arithmetic/Stopwatch checks | iOS MCP can return a black frame after fresh launch; bounded Home/relaunch recovery passed observed runs. |
 
 Current limitations include incomplete app coverage, modest visual differences, unverified reboot/rejailbreak durability, and no end-to-end onboarding test on a second physical Mac. Raw IPAs, complete case screenshots, sandbox contents and credentials stay in Git-ignored local `cases/` and are never release assets; the few Calculator images in the docs were selected separately for publication.
 
-## Install and run your first survey
+## Manual installation and first survey
 
-The commands under [Start here](#start-here) install the CLI and produce an initial USB case. For full analysis, configure phone OpenSSH, an exact-device SSH route, the Copy APP iOS MCP tweak and a compatible Frida server; add iCTRL when useful. A runnable rebuild also needs full Xcode, a signing team or TrollStore, and an install route. The [setup guide](docs/setup.md) gives the steps and device-specific branches. Run `copyapp onboard --stage analyze` and `copyapp doctor --udid <UDID>` to inspect each channel; do not treat a successful USB probe as proof that every service is ready.
+These commands are for readers using the CLI directly; an agent executes them for you. The first USB survey needs Python 3.9+, an unlocked USB-connected iPhone, and **Trust This Computer** accepted. This stage needs no phone tweak, SSH, Frida or Xcode signing.
+
+```sh
+git clone https://github.com/everettjf/copyapp.git
+cd copyapp
+sh scripts/bootstrap-macos.sh
+.venv/bin/copyapp onboard
+.venv/bin/copyapp apps --udid <UDID> --all
+```
+
+Open the target app on the phone, confirm its exact Bundle ID, then collect and verify:
+
+```sh
+.venv/bin/copyapp survey --udid <UDID> --bundle <BUNDLE_ID> \
+  --ui-backend usb --out cases/first-survey
+.venv/bin/copyapp verify cases/first-survey
+```
+
+Read `cases/first-survey/report.md` and use a new output directory for each retry. Deep analysis also needs OpenSSH, an exact-device SSH route, the Copy APP iOS MCP tweak and a compatible Frida service; add iCTRL as needed. Rebuilding requires full Xcode and signing access or TrollStore. Use `onboard --stage analyze` and `doctor --udid <UDID>` to check readiness, then follow the [full setup guide](docs/setup.md) and [Analyze → Rebuild workflow](docs/copy-workflow.md).
 
 ## Run the full Analyze → Rebuild workflow
 

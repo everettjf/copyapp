@@ -2,6 +2,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 
@@ -227,6 +228,49 @@ class RebuildCheckTest(unittest.TestCase):
         self.assertEqual(record["installed_apps"][1]["build"], "7")
         self.assertEqual(record["flows"][0]["screenshot_pairs"], 2)
         self.assertTrue(verify_case(self.root / "out"))
+
+    def test_ictrl_pair_keeps_host_attached_and_reports_cleanup_failure(self):
+        async def installed(udid, bundle):
+            return {"CFBundleVersion": "7", "Path": f"/Applications/{bundle}.app"}
+
+        for fail_cleanup in (False, True):
+            with self.subTest(fail_cleanup=fail_cleanup):
+                events = []
+                active = False
+
+                @contextmanager
+                def tunnel(udid):
+                    nonlocal active
+                    self.assertEqual(udid, self.udid)
+                    active = True
+                    events.append("attach")
+                    try:
+                        yield 33224
+                    finally:
+                        active = False
+                        events.append("detach")
+                        if fail_cleanup:
+                            raise RuntimeError("runner cleanup failed")
+
+                def run(udid, backend, script, output, **kwargs):
+                    self.assertTrue(active)
+                    self.assertEqual(kwargs, {"port": 33224})
+                    events.append(json.loads(script.read_text())["bundle_id"])
+                    return self._run(udid, backend, script, output)
+
+                output = self.root / f"ictrl-{fail_cleanup}"
+                with patch("copyapp.rebuild_check._installed_app", side_effect=installed), \
+                     patch("copyapp.rebuild_check.ictrl_tunnel", side_effect=tunnel), \
+                     patch("copyapp.rebuild_check.run_playbook", side_effect=run):
+                    manifest, complete = rebuild_check(self.udid, self.spec,
+                        [("add", *self.scripts)], output, backend="ictrl")
+                self.assertEqual(events, ["attach", self.original, self.rebuilt, "detach"])
+                self.assertEqual(complete, not fail_cleanup)
+                record = json.loads(manifest.read_text())
+                if fail_cleanup:
+                    self.assertEqual(record["status"], "failed")
+                    self.assertIn("runner cleanup failed", record["error"]["message"])
+                self.assertTrue(verify_case(output))
 
     def test_resume_keeps_verified_original_without_new_touch(self):
         async def installed(udid, bundle):

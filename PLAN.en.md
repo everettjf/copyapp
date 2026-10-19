@@ -12,17 +12,17 @@ The rebuild milestone is selected after a known-capability inventory. A simple a
 
 ## Current baseline
 
-- **Published:** v0.1.1 includes the named-device selected-flow evidence below. v0.1.0 remains the first-release archive.
+- **Published:** v0.1.2 includes the iOS 17 session fix and agent-led first-use entry; distinguish earlier named-device results from new regression evidence. v0.1.0 remains the first-release archive.
 - **iOS 16:** iPhone XR/Dopamine rootless has selected report-to-rebuild paths. SSH acquisition works despite an optional DVT file-listing failure.
-- **iOS 17:** iPhone 14/Relaxin RootHide has current-code Calculator acquisition, four original/independent-app iOS MCP checks, five reviewed image pairs and a five-hit original Frida trace. An extra iCTRL clone replay has an unresolved malformed HTTP response.
+- **iOS 17:** iPhone 14/Relaxin RootHide has current-code Calculator acquisition, four original/independent-app iOS MCP checks, five reviewed image pairs and a five-hit original Frida trace. The v0.1.1 iCTRL session issue is fixed in v0.1.2: two runs of four original/rebuilt final assertions and exit cleanup passed.
 - **iOS 26:** iPhone 11/Relaxin RootHide has selected Calculator and Clock deliveries. iOS MCP black-frame rejection and bounded recovery passed observed runs.
-- **Host:** 342 local tests and a fresh GitHub macOS bootstrap, test and isolated-wheel check passed at `1499222`. A second physical Mac's first phone onboarding is deferred.
+- **Host:** 346 v0.1.2 local tests and isolated-wheel installation passed; `1499222` retains the earlier fresh GitHub macOS bootstrap/test record. A second physical Mac's first phone onboarding is deferred.
 
 These are named-device, selected-flow results. See [current status](docs/current-status.md) for limits. Raw cases remain ignored local evidence, not release assets.
 
 ## Next gates
 
-1. Diagnose and fix the iOS 17 iCTRL multi-step transport failure, which is an explicit v0.1.1 limit. Do not replay an uncertain action without checking device state.
+1. Retain the named-device iOS 17 session-fix regression evidence, then check the changed cleanup on other named phones. Do not replay an uncertain action without checking device state.
 2. Keep XR's repeated optional DVT file-listing failure documented; revisit it when a new device or developer-service change makes this route necessary. SSH acquisition remains the working route.
 3. Check reboot/rejailbreak durability and longer-running backend reliability on the supported devices.
 4. When work on a second physical Mac resumes, follow the setup guide from first USB trust through SSH pinning, UI control, acquisition and a signed or TrollStore rebuild.

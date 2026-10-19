@@ -10,7 +10,7 @@
 | 深入分析 | 兼容越狱环境、mobile OpenSSH 与固定的 SSH 密钥、iOS MCP 界面服务、Frida；开发者服务需要完整 Xcode。仅在需要时加 Ghidra/Hopper。 |
 | 可运行复刻 | 深入分析环境，加完整 Xcode、签名或 TrollStore，以及经过验证的安装路径。iCTRL 可选。 |
 
-以下步骤针对 v0.1.1 检出。正式 wheel 包含 Mac CLI，但不包含 Theos、手机 tweak、签名资源或私有凭据。使用 wheel 搭配源码构建的可选组件时，另保留一份仓库检出，并设置 `COPYAPP_SOURCE_ROOT=/absolute/path/to/copyapp`。
+以下步骤针对 v0.1.2 检出。正式 wheel 包含 Mac CLI，但不包含 Theos、手机 tweak、签名资源或私有凭据。使用 wheel 搭配源码构建的可选组件时，另保留一份仓库检出，并设置 `COPYAPP_SOURCE_ROOT=/absolute/path/to/copyapp`。
 
 ## 1. 安装 CLI 并识别手机
 

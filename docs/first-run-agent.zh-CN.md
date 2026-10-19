@@ -2,16 +2,36 @@
 
 [English](first-run-agent.md) · [简体中文](first-run-agent.zh-CN.md)
 
-在 **Copy APP 仓库目录**打开 Codex 或 Claude Code，把越狱 iPhone 用 USB 连接到 Mac。将下文的 `<App 名称或 Bundle ID>` 换成目标后直接发送给 Agent；不知道 Bundle ID 时填 App 名称即可。
+在 Mac 上打开能执行本地命令的 Codex 或 Claude Code，连接并解锁已越狱的 iPhone。无需先手动安装 Copy APP：把任务交给 Agent，它可以检出仓库、配置 Mac 环境并调用 CLI。已有检出时，在该目录打开 Agent 即可。仓库内的[首次使用 Skill](../skills/copyapp-start/SKILL.md)通过提示词明确读取，无需先配置扩展或斜杠命令。
 
-> 用 Copy APP 分析已连接越狱 iPhone 上的 `<App 名称或 Bundle ID>`。在本仓库工作，遵循 `AGENTS.md` 和 `skills/copyapp-analyze/SKILL.md`。如未安装 Mac 命令行，先运行 `sh scripts/bootstrap-macos.sh`，之后用 `.venv/bin/copyapp` 调用。确认准确 USB UDID 和 Bundle ID；若有多台手机或多个同名 App，列出选项让我选择。先运行 `.venv/bin/copyapp onboard --stage survey`，请我在手机上打开目标 App，再执行不加 `--launch` 的纯 USB `survey`、案例校验，并给我报告和截图。然后运行 `onboard --stage analyze`，按它列出的顺序配置深度分析通道。Mac 端能自主完成的配置请直接完成；只把确需我在手机上操作的信任、安装或授权步骤明确告诉我。通道就绪后，采集 App 包、沙盒、界面和运行时证据，调查代表性流程及相关类/函数，产出有证据引用且经过审阅的深度报告和 `feature-spec.json`，最后校验报告案例。区分观测事实、代码解释与未知行为；不要把 `survey` 或 `analyze/analysis.md` 当成最终深度报告。IPA、截图、沙盒数据和凭据保存在被 Git 忽略的本地 `cases/`。这次先不复刻 App。
+## 分析并复刻
 
-如果只想验证 USB 首次采集，把末尾要求改为：“完成并校验 `survey` 后停止，说明采集到了什么。”采集前请用户在手机上打开目标 App；可选的 USB `--launch` 会依赖可能不可用的开发者服务。这一条路径不需要手机端 Copy APP tweak、OpenSSH 或 Frida。
+把 `<App 名称或 Bundle ID>` 换成目标后，复制到 Agent 对话中：
 
-## 预期交付
+```text
+请使用 https://github.com/everettjf/copyapp，分析并复刻 USB 连接的越狱 iPhone 上的 <App 名称或 Bundle ID>。
+如未检出项目，克隆到一个新目录；已有检出就复用。先阅读 AGENTS.md 和 skills/copyapp-start/SKILL.md。
+检查和配置环境，识别准确设备与 App，自主发现代表性流程，完成带来源的深度报告、明确的复刻目标、独立工程、真机安装和原版／复刻版对照。
+能执行的步骤请直接完成，只在确需手机操作或目标不明确时告诉我具体需要。最终给我报告、工程、实测范围和剩余差异。
+```
 
-- 精确的设备与 App 身份、可校验的首次采集案例和截图。
-- 深度分析时，得到有来源引用的报告：已观察的界面、包与动态库、选定功能实现路径、数据与存储、运行时证据、尚未确认之处，以及功能规格。具体证据门槛见[分析 Skill](../skills/copyapp-analyze/SKILL.md)。
-- 如果手机端条件暂时不齐，明确列出缺少什么以及已完成哪些 Mac 端工作。
+Agent 应继续完成当前任务中的发现、报告审阅和实现交接；CLI 显示等待 Agent 或生成 `TASK.md` 时，仍需它继续工作。它在当前会话中执行，不再启动嵌套的 Codex／Claude CLI。
 
-之后要生成可运行的独立 App，再使用[分析到复刻工作流](copy-workflow.zh-CN.md)和[动态覆盖方法](coverage-targets.zh-CN.md)。那是更大的任务，需要 Xcode 签名和同机对照。
+## 只做分析
+
+```text
+请使用 https://github.com/everettjf/copyapp，分析 USB 连接的越狱 iPhone 上的 <App 名称或 Bundle ID>，这次先不复刻。
+如未检出项目，克隆到新目录。先阅读 AGENTS.md 和 skills/copyapp-start/SKILL.md，完成环境检查、设备与 App 身份确认、证据采集及相关类／函数调查。
+交付经过审阅、有来源引用的深度报告和 feature-spec.json，并校验案例。区分观测、推断与未知；不要在 survey 或 analyze/analysis.md 生成后就结束。
+```
+
+只想验证连接时，将交付要求改为“完成并校验首次 USB survey 后停止，给我报告、截图和仍缺少的配置”。这条路径需要 USB 信任和前台 App，不需要手机端 Copy APP tweak、OpenSSH 或 Frida。深度分析和复刻的额外条件见[安装指南](setup.zh-CN.md)。
+
+## 你会得到什么
+
+- 精确设备与 App 身份，以及通过校验的证据案例。
+- 分析任务：带来源引用的深度报告和功能规格，而非只有采集索引。
+- 复刻任务：独立工程、构建／安装结果、同机成对检查、逐张截图审阅与实际覆盖和差异。
+- 缺少手机侧条件时：已完成的 Mac 工作，以及需要你参与的具体操作。解锁、信任、首次 SSH 指纹核对、权限或签名条件可能需要你确认。
+
+原始 IPA、截图、沙盒数据和凭据保留在忽略的本地 `cases/`。选定流程通过不表示整 App 等价；已知能力清单与目标见[覆盖方法](coverage-targets.zh-CN.md)，实测设备边界见[当前状态](current-status.zh-CN.md)。

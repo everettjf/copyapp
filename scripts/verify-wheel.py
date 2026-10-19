@@ -13,6 +13,7 @@ from pathlib import Path
 
 SOURCE = Path(__file__).resolve().parent.parent
 REQUIRED_DATA = {
+    "copyapp/ictrl_runner_stop.py",
     "copyapp/ghidra_scripts/CopyAppAnalysisOptions.java",
     "copyapp/ghidra_scripts/CopyAppDecompile.java",
     "copyapp/ghidra_scripts/REA-LICENSE.txt",
@@ -39,7 +40,7 @@ def main() -> None:
             names = set(archive.namelist())
         missing = REQUIRED_DATA - names
         if missing:
-            raise RuntimeError("wheel lacks packaged analysis resources: " +
+            raise RuntimeError("wheel lacks required runtime files: " +
                                ", ".join(sorted(missing)))
         invalid = sorted(name for name in names
                          if not (name.startswith("copyapp/") or

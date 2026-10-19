@@ -248,7 +248,8 @@ def capture_flow(udid: str, backend: str, script: Path, output: Path,
                  branch_offsets: Optional[list[int]] = None,
                  branch_return_u32_offsets: Optional[list[int]] = None,
                  branch_registers: Optional[list[tuple[int, str]]] = None,
-                 network: bool = False) -> Tuple[Path, bool]:
+                 network: bool = False,
+                 port: Optional[int] = None) -> Tuple[Path, bool]:
     if backend not in ("ios-mcp", "ictrl"):
         raise ValueError("unsupported UI backend")
     if output.exists() and any(output.iterdir()):
@@ -289,7 +290,8 @@ def capture_flow(udid: str, backend: str, script: Path, output: Path,
     try:
         # Reopening an iCTRL tunnel can foreground its runner. Keep one tunnel
         # across the playbook and immediate no-launch view scan.
-        session = ictrl_tunnel(udid, ictrl_client) if backend == "ictrl" else nullcontext(None)
+        session = (ictrl_tunnel(udid, ictrl_client)
+                   if backend == "ictrl" and port is None else nullcontext(port))
         with session as shared_port:
             play_path, play_ok = run_playbook(udid, backend, script, output / "playbook",
                                               port=shared_port, ictrl_client=ictrl_client,
@@ -336,7 +338,9 @@ def capture_flow(udid: str, backend: str, script: Path, output: Path,
             record["node_count"] = views["node_count"]
             record["window_count"] = views["window_count"]
             record["status"] = "complete"
+            stage = "session_cleanup"
     except Exception as exc:
+        record["status"] = "failed"
         record["error"] = {"stage": stage, "type": type(exc).__name__,
                            "message": str(exc)[:400]}
     finally:

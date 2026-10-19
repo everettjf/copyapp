@@ -1,17 +1,37 @@
-# First-run task for a coding agent
+# First-run tasks for a coding agent
 
 [English](first-run-agent.md) · [简体中文](first-run-agent.zh-CN.md)
 
-Open Codex or Claude Code **in the Copy APP checkout** with your jailbroken iPhone connected to the Mac. Replace `<APP NAME OR BUNDLE ID>` in the following request and send it to the agent. You can name an App even if you do not know its Bundle ID.
+Open Codex or Claude Code with local command execution on your Mac, then connect and unlock your jailbroken iPhone. You do not need to install Copy APP manually first: the agent can clone the repository, configure the Mac and invoke the CLI. If you already have a checkout, open the agent there. The prompt explicitly reads the repository's [first-use skill](../skills/copyapp-start/SKILL.md); no extension or slash-command configuration is required.
 
-> Analyze `<APP NAME OR BUNDLE ID>` on my connected jailbroken iPhone with Copy APP. Work in this repository and follow `AGENTS.md` and `skills/copyapp-analyze/SKILL.md`. Install the Mac CLI with `sh scripts/bootstrap-macos.sh` if needed; invoke it as `.venv/bin/copyapp`. Identify the exact USB UDID and Bundle ID; if more than one phone or matching App is present, show me the choices. Run `.venv/bin/copyapp onboard --stage survey`, ask me to open the target App on the phone, then run a USB `survey` without `--launch`; verify the case and show me its report and screenshot. Continue to `onboard --stage analyze` and its ordered repairs for the deep report. Configure Mac-side tools you can configure, and tell me only the exact phone-side trust, package or permission action that needs my participation. When the required channels are ready, collect package, sandbox, UI and runtime evidence; investigate representative flows and relevant classes/functions; produce a cited, reviewed deep report and `feature-spec.json`; verify the report case. Distinguish observed facts, code interpretation and unknown behavior. Do not treat `survey` or `analyze/analysis.md` as the finished deep report. Keep IPA, screenshots, sandbox data and credentials under ignored local `cases/`. Do not rebuild the App in this task.
+## Analyze and rebuild
 
-For a **USB-only first check**, replace the final part with: “Stop after the verified survey and explain what it captured.” Ask the user to open the target App on the phone before this survey; the optional USB `--launch` path depends on developer services that may be unavailable. This path needs no phone-side Copy APP tweak, OpenSSH or Frida.
+Replace `<APP NAME OR BUNDLE ID>` and paste this into the agent conversation:
 
-## What you should receive
+```text
+Use https://github.com/everettjf/copyapp to analyze and rebuild <APP NAME OR BUNDLE ID> on my USB-connected jailbroken iPhone.
+Clone into a new directory if needed, or reuse its existing checkout. Read AGENTS.md and skills/copyapp-start/SKILL.md first.
+Check and configure the environment, identify the exact phone and app, discover representative flows, and complete a cited deep report, a named rebuild target, an independent project, device installation and original/rebuilt comparisons.
+Execute the steps you can perform yourself. Tell me the specific action only when you need phone-side participation or missing target information. Deliver the report, project, tested scope and remaining differences.
+```
 
-- An exact device and App identity, plus the verified survey case and screenshot.
-- For a deep run, a source-linked report that describes the observed UI, package and libraries, selected implementation paths, data/storage and runtime evidence, with explicit gaps and a feature specification. The [analysis skill](../skills/copyapp-analyze/SKILL.md) defines the handoff and evidence checks.
-- A clear statement of what still needs device setup or observation if the deep run cannot complete. The agent should finish all Mac-side work it can perform before reporting a phone-side blocker.
+The agent should complete discovery, semantic review and implementation handoffs within this task. A CLI message waiting for an agent or a generated `TASK.md` still requires it to continue. It works in the current session without starting nested Codex or Claude CLIs.
 
-When you later want a runnable independent App, use the [Analyze → Rebuild workflow](copy-workflow.md) and [coverage-target method](coverage-targets.md). That is a separate, larger task and requires Xcode signing and same-device comparison.
+## Analyze only
+
+```text
+Use https://github.com/everettjf/copyapp to analyze <APP NAME OR BUNDLE ID> on my USB-connected jailbroken iPhone. Do not rebuild it in this task.
+Clone into a new directory if needed. Read AGENTS.md and skills/copyapp-start/SKILL.md first, then check the environment, identify the phone and app, collect evidence and investigate relevant classes/functions.
+Deliver a reviewed, cited deep report and feature-spec.json, and verify the case. Distinguish observations, inferences and unknowns; do not stop when survey or analyze/analysis.md has been generated.
+```
+
+For a connection check only, replace the deliverable with: “Stop after a verified first USB survey and show its report, screenshot and missing setup.” This route needs USB trust and the foreground app, but no phone-side Copy APP tweak, OpenSSH or Frida. Additional analysis and rebuild prerequisites are in [setup](setup.md).
+
+## What you receive
+
+- The exact device/app identity and verified evidence cases.
+- For analysis: a cited deep report and feature specification, beyond the collection index.
+- For rebuilding: an independent project, build/install results, same-device paired checks, image-by-image review and measured scope with differences.
+- If phone-side prerequisites are missing: the completed Mac work and the specific action you need to take. Unlocking, trust, initial SSH fingerprint checks, permissions or signing access may require your participation.
+
+Keep raw IPAs, screenshots, sandbox data and credentials under ignored local `cases/`. Selected-flow success does not establish whole-app parity; see [coverage targets](coverage-targets.md) and the [named-device limits](current-status.md).

@@ -298,10 +298,13 @@ class FlowCaptureTest(unittest.TestCase):
                  patch("copyapp.flow_capture.validate_flow_pair"), \
                  patch("copyapp.flow_capture.verify_case", return_value=True):
                 _, complete = capture_flow("device", "ictrl", script, root / "flow")
+                _, shared_complete = capture_flow("device", "ictrl", script,
+                                                   root / "shared-flow", port=22225)
             self.assertTrue(complete)
+            self.assertTrue(shared_complete)
             tunnel.assert_called_once()
-            self.assertEqual(replay.call_args.kwargs["port"], 22224)
-            self.assertEqual(scan.call_args.kwargs["port"], 22224)
+            self.assertEqual([call.kwargs["port"] for call in replay.call_args_list], [22224, 22225])
+            self.assertEqual([call.kwargs["port"] for call in scan.call_args_list], [22224, 22225])
             self.assertFalse(scan.call_args.kwargs["launch"])
 
 
