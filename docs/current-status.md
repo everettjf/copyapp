@@ -16,8 +16,9 @@ The most recent local suite passed **342 tests**; the [macOS bootstrap, unit-tes
 
 ## What is still open
 
-- iCTRL's iOS 17 rebuilt-app multi-step transport failure needs a verified fix. The v0.1.1 release records this limitation; the selected iOS MCP checks remain usable.
-- XR's optional DVT developer-file listing fails, although its SSH acquisition route works.
+- **Investigate:** the iOS 17 rebuilt-app iCTRL multi-step transport failure occurred on separate October 17 and 18 attempts, including two current-code retries at equals. The v0.1.1 release records this limitation; the selected iOS MCP checks remain usable.
+- **Low priority:** XR's optional DVT developer-file listing returned `ConnectionTerminatedError` in repeated October 17 and 18 probes. SSH package and sandbox acquisition still work, so this does not block the main workflow.
+- **Monitor with recovery:** iOS 26 iOS MCP produced black fresh-launch frames in several distinct October 18 Calculator and Clock runs. Each cited run rejected the frames and completed after bounded reactivation. Revisit the capture path if recovery fails, the black frame reaches accepted evidence, or a new device/build shows the issue without a working fallback.
 - Reboot/rejailbreak persistence and longer-running UI/backend reliability need dedicated checks.
 - A full first-use phone onboarding on a **second physical Mac** has not been tested; that work is deferred for now. A fresh checkout on the same Mac and a clean GitHub-hosted macOS bootstrap passed narrower setup checks.
 - Selected-flow deliveries do not demonstrate arbitrary-app discovery, complete app parity, server-side behavior, or pixel-perfect visuals. Some independent app projects adapted existing source; distinguish those from new-source work.
@@ -27,12 +28,14 @@ The most recent local suite passed **342 tests**; the [macOS bootstrap, unit-tes
 | Open item | Evidence needed to close it |
 | --- | --- |
 | iOS 17 iCTRL multi-step replay | Capture the failing response and runner state, fix or isolate the transport, then replay the original and rebuilt flows repeatedly with final-state and screenshot checks. Until then, use the verified iOS MCP route for those selected checks. |
-| XR DVT file listing | Reproduce with a pinned device and developer service state; either demonstrate a working listing or document it as an optional-path limitation. SSH package and sandbox acquisition already work. |
-| Reboot / rejailbreak durability | Reboot each tested phone, restore its jailbreak and services, run `doctor`, acquire a small case, and complete a UI check. Include iOS 26 black-frame recovery and longer runs. |
+| XR DVT file listing | Keep the optional-path limit documented. Reinvestigate when a change to developer services or a new device makes this route necessary; SSH acquisition is already verified. |
+| Reboot / rejailbreak durability | Reboot each tested phone, restore its jailbreak and services, run `doctor`, acquire a small case, and complete a UI check. Check that any rejected iOS 26 black frame still recovers before accepting a screenshot; investigate the capture path only if that recovery stops working. |
 | Second physical Mac | Follow the public setup guide from a fresh checkout and USB trust through SSH key pinning, UI capture, package acquisition and a signed or TrollStore-installed rebuild. |
 | Broader app coverage | Test an unfamiliar app with a reviewed capability inventory, source-linked report, named rebuild target, paired flows and documented unknowns. Do not infer full-app parity from a few passing flows. |
 
 The [illustrated overview](articles/copyapp-overview.zh-CN.md) and [system diagram](assets/architecture-overview.svg) show the current workflow and selected public evidence examples. The underlying raw cases remain local.
+
+One-off failures that do not recur after a comparable retry should be kept in their saved case, not carried as an active defect. The iCTRL, DVT, and black-frame observations above were repeated; their priority follows whether they still block the main workflow or have a verified fallback.
 
 ## Publication rule
 

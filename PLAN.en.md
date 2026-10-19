@@ -23,7 +23,7 @@ These are named-device, selected-flow results. See [current status](docs/current
 ## Next gates
 
 1. Diagnose and fix the iOS 17 iCTRL multi-step transport failure, which is an explicit v0.1.1 limit. Do not replay an uncertain action without checking device state.
-2. Investigate XR's optional DVT file-listing failure while keeping the working SSH acquisition route.
+2. Keep XR's repeated optional DVT file-listing failure documented; revisit it when a new device or developer-service change makes this route necessary. SSH acquisition remains the working route.
 3. Check reboot/rejailbreak durability and longer-running backend reliability on the supported devices.
 4. When work on a second physical Mac resumes, follow the setup guide from first USB trust through SSH pinning, UI control, acquisition and a signed or TrollStore rebuild.
 5. Expand the named-app and device evidence before another release. Review its diff and bilingual notes, test the release commit, and publish a single tag and GitHub Release only for that completed scope.
