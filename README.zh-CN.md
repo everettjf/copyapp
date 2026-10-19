@@ -2,7 +2,7 @@
 
 [English](README.md) · 简体中文 · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
-[项目网站](https://xnu.app/copyapp/) · [图文介绍](docs/articles/copyapp-overview.zh-CN.md) · [文档目录](docs/README.zh-CN.md) · [已发布版本](docs/releases/v0.1.0.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md)
+[项目网站](https://xnu.app/copyapp/) · [图文介绍](docs/articles/copyapp-overview.zh-CN.md) · [文档目录](docs/README.zh-CN.md) · [已发布版本](docs/releases/v0.1.0.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md) · [Apache-2.0 许可证](LICENSE)
 
 Copy APP 对越狱 iPhone 上已安装的 iOS App 取证分析，并协助 Coding Agent 创建**独立、可运行的 iOS App**，复现经过审阅的一组功能。它采集安装包、沙盒、界面和运行时证据，生成有来源引用的报告与功能规格，再在同一台手机上对照原版和新 App。当前正式发布版只有 **v0.1.0**；`main` 中已有后续开发成果，但尚未发布下一个版本。
 
@@ -88,6 +88,10 @@ Mac 负责编排和构建。OpenSSH 采集文件，iOS MCP 提供越狱环境下
 ## 项目理念与贡献
 
 把原始观察与解释分开。重要结论绑定设备、App 构建和可校验来源；保留失败尝试和未知项。原版与复刻版应从可比状态对照，只报告真正测过的行为。保留所用上游项目的署名和许可证。欢迎改进安装体验、有界分析、可重现真机检查、无障碍支持和翻译；见[贡献指南](CONTRIBUTING.zh-CN.md)。
+
+## 许可证
+
+Copy APP 自有代码和文档采用 [Apache License 2.0](LICENSE)。仓库中引用或改造的第三方材料保留各自的许可和署名：[iOS MCP](device/ios-mcp/LICENSE) 为 MIT，[iCTRL](vendor/ictrl/LICENSE) 为 Apache-2.0，保留的 [REA 许可证](docs/third-party/REA-LICENSE.txt)为 MIT。项目主许可证不会替代这些上游声明。
 
 ## 致谢
 

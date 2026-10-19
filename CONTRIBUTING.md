@@ -37,6 +37,8 @@ Thanks for helping make iOS app analysis more reproducible. Copy APP joins phone
 
 Do not commit raw IPAs, device screenshots, sandbox exports, pairing records, credentials or account data. Use synthetic fixtures or sanitized summaries in reviews. Preserve upstream licenses, NOTICE files and provenance when adapting code.
 
+Contributions to Copy APP's project-owned code and documentation must be available under [Apache-2.0](LICENSE). Submit only material you have the right to contribute under that license. Third-party material keeps its original license and attribution.
+
 ## Translation notes
 
 English `README.md` and Chinese `README.zh-CN.md` summarize setup and link to the full guides. Other localized README pages should accurately describe the named iOS 16, 17 and 26 selected-flow results, retain links to the current setup and contribution guides, and avoid general device or whole-app compatibility claims. Translation-only changes do not require a connected phone; check links, code blocks and technical names.
