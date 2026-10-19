@@ -2,9 +2,9 @@
 
 [English](README.md) · 简体中文 · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
-[项目网站](https://xnu.app/copyapp/) · [图文介绍](docs/articles/copyapp-overview.zh-CN.md) · [文档目录](docs/README.zh-CN.md) · [已发布版本](docs/releases/v0.1.0.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md) · [Apache-2.0 许可证](LICENSE)
+[项目网站](https://xnu.app/copyapp/) · [图文介绍](docs/articles/copyapp-overview.zh-CN.md) · [文档目录](docs/README.zh-CN.md) · [已发布版本](docs/releases/v0.1.1.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md) · [Apache-2.0 许可证](LICENSE)
 
-Copy APP 对越狱 iPhone 上已安装的 iOS App 取证分析，并协助 Coding Agent 创建**独立、可运行的 iOS App**，复现经过审阅的一组功能。它采集安装包、沙盒、界面和运行时证据，生成有来源引用的报告与功能规格，再在同一台手机上对照原版和新 App。当前正式发布版只有 **v0.1.0**；`main` 中已有后续开发成果，但尚未发布下一个版本。
+Copy APP 对越狱 iPhone 上已安装的 iOS App 取证分析，并协助 Coding Agent 创建**独立、可运行的 iOS App**，复现经过审阅的一组功能。它采集安装包、沙盒、界面和运行时证据，生成有来源引用的报告与功能规格，再在同一台手机上对照原版和新 App。当前正式发布版为 **v0.1.1**。
 
 ## 架构一览
 
@@ -57,7 +57,7 @@ Mac 负责编排和构建。OpenSSH 采集文件，iOS MCP 提供越狱环境下
 
 ## 当前 `main` 的实测范围
 
-以下结论只适用于指定手机和选定流程，不保证任意设备或 App 兼容。[当前状态](docs/current-status.zh-CN.md)区分了 v0.1.0 发布基线和后续 `main` 验证。
+以下结论只适用于指定手机和选定流程，不保证任意设备或 App 兼容。[当前状态](docs/current-status.zh-CN.md)记录 v0.1.1 的范围及剩余问题。
 
 | 手机 | 越狱方式与已测范围 | 当前限制 |
 | --- | --- | --- |

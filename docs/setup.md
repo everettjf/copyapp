@@ -10,7 +10,7 @@
 | Deep analysis | Compatible jailbreak, mobile OpenSSH and pinned SSH key, iOS MCP UI service, Frida; full Xcode for developer services. Ghidra/Hopper only when requested. |
 | Runnable rebuild | Deep-analysis setup plus full Xcode, signing or TrollStore, and a verified install route. iCTRL is optional. |
 
-These instructions describe the current `main` checkout. The published wheel is v0.1.0; a release wheel does not contain Theos, the phone tweak, signing assets, or private credentials. If using the wheel for optional source-built components, also keep a checkout and set `COPYAPP_SOURCE_ROOT=/absolute/path/to/copyapp`.
+These instructions describe the v0.1.1 checkout. The release wheel contains the Mac CLI but does not contain Theos, the phone tweak, signing assets, or private credentials. If using the wheel for optional source-built components, also keep a checkout and set `COPYAPP_SOURCE_ROOT=/absolute/path/to/copyapp`.
 
 ## 1. Install the Mac CLI and identify the phone
 

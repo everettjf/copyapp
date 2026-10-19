@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "copyapp"
-version = "0.1.0"
+version = "0.1.1"
 description = "Evidence-backed iOS App analysis and selected-flow rebuilding"
 readme = "README.md"
 license = "Apache-2.0"

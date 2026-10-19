@@ -2,7 +2,7 @@
 
 [English](current-status.md) · [简体中文](current-status.zh-CN.md) · [Documentation](README.md)
 
-**Published version:** [v0.1.0](releases/v0.1.0.md) is the only Git tag and GitHub Release. The current `main` branch contains later, unreleased work. This page describes `main` as tested through 2026-10-18; it does not retroactively change the v0.1.0 release record.
+**Published version:** [v0.1.1](releases/v0.1.1.md). This page describes the named-device scope tested through 2026-10-18 and the remaining limits. The [v0.1.0 notes](releases/v0.1.0.md) retain the original release record.
 
 ## Named-device results
 
@@ -16,7 +16,7 @@ The most recent local suite passed **342 tests**; the [macOS bootstrap, unit-tes
 
 ## What is still open
 
-- iCTRL's iOS 17 rebuilt-app multi-step transport failure needs a verified fix or an explicit limitation in any future release.
+- iCTRL's iOS 17 rebuilt-app multi-step transport failure needs a verified fix. The v0.1.1 release records this limitation; the selected iOS MCP checks remain usable.
 - XR's optional DVT developer-file listing fails, although its SSH acquisition route works.
 - Reboot/rejailbreak persistence and longer-running UI/backend reliability need dedicated checks.
 - A full first-use phone onboarding on a **second physical Mac** has not been tested; that work is deferred for now. A fresh checkout on the same Mac and a clean GitHub-hosted macOS bootstrap passed narrower setup checks.
@@ -36,4 +36,4 @@ The [illustrated overview](articles/copyapp-overview.zh-CN.md) and [system diagr
 
 ## Publication rule
 
-Do not number development checkpoints as releases. Keep v0.1.0 as the sole published version until the remaining acceptance scope is settled, the final diff and bilingual notes are reviewed, the suite passes on the release commit, and one new tag and GitHub Release are created. The [current plan](../PLAN.en.md) tracks those gates. Raw IPAs, account data, sandbox exports and private keys are never release assets.
+Number only tagged, published releases. The [current plan](../PLAN.en.md) tracks the next verification work. Raw IPAs, account data, sandbox exports and private keys are never release assets.

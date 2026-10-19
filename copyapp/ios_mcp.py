@@ -88,7 +88,7 @@ class IOSMCPClient:
             raise IOSMCPError("service does not support MCP 2025-06-18")
         result = self.request("initialize", {
             "protocolVersion": self.protocol_version,
-            "capabilities": {}, "clientInfo": {"name": "copyapp", "version": "0.1.0"},
+            "capabilities": {}, "clientInfo": {"name": "copyapp", "version": "0.1.1"},
         })
         self.protocol_version = result.get("protocolVersion", self.protocol_version)
         return result

@@ -121,4 +121,4 @@ sh scripts/bootstrap-macos.sh
 
 如果你有一台越狱 iPhone，可以从上面的 `onboard` 开始，先做一次 USB 概览，再按 [README](https://github.com/everettjf/copyapp#start-here) 选择一个熟悉的小 App 跑通分析。想尝试复刻时，先给自己定一条可重放的功能流程；把结果和差异都记下来。没有越狱机也欢迎阅读架构、改进文档或提交可复现的问题。
 
-项目仍在持续打磨，正式发布版是 **v0.1.0**，后续成果在 `main`。如果这条“真机证据 → 可追溯报告 → 独立实现 → 同机对照”的路线对你有帮助，欢迎到 [GitHub 仓库](https://github.com/everettjf/copyapp) **Star**，动手试用，并分享你遇到的设备问题或工作流改进。也可以加入与 [xnu.app 相同的 Discord 社区](https://discord.gg/eGzEaP6TzR)交流。
+项目仍在持续打磨，当前正式发布版是 **v0.1.1**。如果这条“真机证据 → 可追溯报告 → 独立实现 → 同机对照”的路线对你有帮助，欢迎到 [GitHub 仓库](https://github.com/everettjf/copyapp) **Star**，动手试用，并分享你遇到的设备问题或工作流改进。也可以加入与 [xnu.app 相同的 Discord 社区](https://discord.gg/eGzEaP6TzR)交流。

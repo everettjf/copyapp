@@ -12,7 +12,7 @@ The rebuild milestone is selected after a known-capability inventory. A simple a
 
 ## Current baseline
 
-- **Published:** v0.1.0 is the only Git tag and GitHub Release. There are no published v0.1.1+ versions.
+- **Published:** v0.1.1 includes the named-device selected-flow evidence below. v0.1.0 remains the first-release archive.
 - **iOS 16:** iPhone XR/Dopamine rootless has selected report-to-rebuild paths. SSH acquisition works despite an optional DVT file-listing failure.
 - **iOS 17:** iPhone 14/Relaxin RootHide has current-code Calculator acquisition, four original/independent-app iOS MCP checks, five reviewed image pairs and a five-hit original Frida trace. An extra iCTRL clone replay has an unresolved malformed HTTP response.
 - **iOS 26:** iPhone 11/Relaxin RootHide has selected Calculator and Clock deliveries. iOS MCP black-frame rejection and bounded recovery passed observed runs.
@@ -22,10 +22,10 @@ These are named-device, selected-flow results. See [current status](docs/current
 
 ## Next gates
 
-1. Diagnose and fix or explicitly scope the iOS 17 iCTRL multi-step transport failure. Do not replay an uncertain action without checking device state.
+1. Diagnose and fix the iOS 17 iCTRL multi-step transport failure, which is an explicit v0.1.1 limit. Do not replay an uncertain action without checking device state.
 2. Investigate XR's optional DVT file-listing failure while keeping the working SSH acquisition route.
 3. Check reboot/rejailbreak durability and longer-running backend reliability on the supported devices.
 4. When work on a second physical Mac resumes, follow the setup guide from first USB trust through SSH pinning, UI control, acquisition and a signed or TrollStore rebuild.
-5. Review the final implementation diff and bilingual docs, run tests on the release commit, set the next package version once, create one tag and publish one GitHub Release. State the selected flows and remaining limits in those notes.
+5. Expand the named-app and device evidence before another release. Review its diff and bilingual notes, test the release commit, and publish a single tag and GitHub Release only for that completed scope.
 
-Future work after that release includes unfamiliar-app autonomous discovery, more complete selected-app behavior, persistence/backend boundaries and stronger visual fidelity. Do not promise an arbitrary complete clone before those checks exist.
+Longer-term work includes unfamiliar-app autonomous discovery, more complete selected-app behavior, persistence/backend boundaries and stronger visual fidelity. Do not promise an arbitrary complete clone before those checks exist.
