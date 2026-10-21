@@ -221,7 +221,9 @@ after the flow. A minimal script is:
 Replace selectors and expectations with observations of the actual App. Supported
 actions are launch, screenshot, click, click_element, key, type, scroll, drag, quit,
 expect_text, expect_file, expect_stopped and wait. Input is bounded and follows an
-exact foreground AX/screenshot capture; element matches must be unique. Text and
+exact foreground AX/screenshot capture; element matches must be unique. Selectors
+can use exact `title`, `description`, `identifier` or `role`, optionally within a
+named `window`. Catalyst often exposes visible labels through `description`. Text and
 file assertions are exact unless a text assertion explicitly uses `match: contains`.
 File assertions use run-relative paths and one of `text_equals`, `json_equals` or
 `sha256`; substitute `{{output_dir}}` in typed text for the unique guest output

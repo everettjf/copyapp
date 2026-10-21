@@ -48,7 +48,7 @@ def validate_script(script: dict):
         if action in {"click_element", "expect_text"}:
             selector = step.get("selector")
             if (not isinstance(selector, dict) or not selector or
-                    not set(selector).issubset({"title", "identifier", "role", "window"}) or
+                    not set(selector).issubset({"title", "description", "identifier", "role", "window"}) or
                     any(not isinstance(value, str) or not value for value in selector.values())):
                 raise ValueError("an explicit bounded element selector is required")
         if action == "expect_text":

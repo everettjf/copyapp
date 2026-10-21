@@ -50,6 +50,18 @@ class MacReviewContractTests(unittest.TestCase):
 
 
 class MacReplayInputTests(unittest.TestCase):
+    def test_catalyst_description_selector_requires_a_unique_exact_match(self):
+        selector = {"role": "AXButton", "description": "Continue"}
+        validate_script({"schema_version": 2, "platform": "macos", "bundle_id": "example.catalyst",
+                         "app_path": "/Applications/Example.app", "scenario_id": "welcome",
+                         "steps": [{"action": "launch"}, {"action": "click_element", "selector": selector}]})
+        node = {"id": 0, "parent": None, "role": "AXButton", "description": "Continue"}
+        tree = {"source_channel": "ax", "truncated": False, "nodes": [node]}
+        self.assertEqual(select_node(tree, selector), node)
+        for nodes in ([], [dict(node, description="Continue Later")], [node, dict(node, id=1)]):
+            with self.subTest(nodes=nodes), self.assertRaises(ValueError):
+                select_node(dict(tree, nodes=nodes), selector)
+
     def test_script_rejects_unsafe_inputs_before_replay(self):
         base = {"schema_version": 2, "platform": "macos", "bundle_id": "example.original",
                 "app_path": "/Applications/Original.app", "scenario_id": "bounded", "steps": [{"action": "launch"}]}

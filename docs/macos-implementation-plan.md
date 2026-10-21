@@ -318,6 +318,15 @@ Earlier TextEdit static distribution probes remain separate evidence.
   `49a08be256f8a702c97ead1d56265ff19ab133a26c3b44a28b11e64b1a9e4894`.
   Logs: `/tmp/copyapp-dual-platform-catalyst-20261021.log` and
   `/tmp/copyapp-macos-catalyst-wheel-20261021.log`.
+- Live Stocks exposes many visible labels as AX descriptions rather than titles.
+  Mac replay selectors now accept exact `description` alongside the existing fields;
+  missing, partial and duplicate matches remain rejected. The actual guest showed
+  its news/watchlist interface and AAPL chart. These exploration cases do not yet
+  supply the three reviewed representative flows. Full regression: 393 tests
+  passed in 42.127s; installed wheel passed, SHA-256
+  `d067e0cebc6752e1bd962d2bef5437ea031f353fbebcc2b14172e754c442924d`.
+  Logs: `/tmp/copyapp-dual-platform-description-selector-20261021.log` and
+  `/tmp/copyapp-macos-description-selector-wheel-20261021.log`.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.
