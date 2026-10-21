@@ -429,6 +429,63 @@ Earlier TextEdit static distribution probes remain separate evidence.
   required; neither previous behavior success nor this timing change accepts a
   failed check or completes the remaining visual/physical gates.
 
+### Continued live acceptance on 2026-10-21
+
+- The repaired VM remains usable; no deletion/recreation or password change was
+  needed. Credentials remain only in ChatComputer's official local storage.
+- Fresh Stocks build-4 `check-3` completed and verified all nine behavior
+  comparisons (three flows × three rounds). The exact check is under
+  `cases/macos-stocks-recheck-20261021/`; `visual-review-3` also verifies.
+  All 195 required full pairs were reviewed (390 occurrences, 299 exact unique
+  complete PNG hashes; no content/mask deduplication). Every pair retains a major
+  full-screen difference. Missing live news/market services, incomplete menus,
+  absent hover feedback and different delete-dialog stacking prevent accepted
+  delivery. Initial task states agree in all nine pairs; that does not make the
+  substituted data/content visually equivalent. The frozen target remains 3/11
+  known capabilities; 9/9 is the selected-flow behavior rate, not verified coverage.
+- The owned fixture's guest package matches the local original build exactly.
+  `cases/macos-owned-fixture-20261021/` now contains verified
+  `file-roundtrip-original-2`, `wrap-persistence-original-1` and
+  `multiwindow-summary-original-1`, followed by `discovery-1`, `report-1` and
+  `rebuild-plan-1`. The selected Unicode text roundtrips as 18 UTF-8 bytes with
+  14 characters/four words. Two documents keep distinct text; Window-menu selection,
+  two inspectors and exported JSON agree. Wrapping Off survives an asserted process
+  exit/relaunch; Reset returns On. This empty-document persistence flow does not
+  establish long-text line breaking. The earlier default-filename mismatch and
+  compilation failure remain preserved.
+- The fixture reconstruction target freezes seven of nine reviewed known
+  capabilities before implementation. `examples/macos/IndependentEditor/` is an
+  independent source-available acceptance example, with separate Bundle ID and
+  preferences, not a blind-source benchmark. `rebuilt-build-2` and
+  `rebuilt-install-1` verify its build and non-overwriting guest installation;
+  `check-plan-1` freezes three rounds. Paired checking is in progress and has no
+  accepted visual review/delivery yet. Current full CLI regression remains the
+  396-test/wheel run above; the new example additionally passed native compilation.
+- The physical-host lock, live takeover/input-interruption and restored-App
+  behavior gates remain unresolved. The branch and draft PR remain unmerged;
+  neither sample is described as whole-App parity or native function analysis.
+- Fixture `check-1` stopped before rebuilt input because its initial frame was
+  720×508 at (204,88), versus the declared original 720×512 at (204,84). The saved
+  screen and AX were inspected, then `cleanup-after-check1-1` quit the blank clone
+  once and verified exit. A local compiler experiment found direct swiftc stamped
+  SDK 14.0, while xcrun/the same explicit SDKROOT stamped the actual SDK 27.0.
+  New builds preserve the versioned SDK spelling and export/record that SDKROOT;
+  historical build cases still verify with their original log shape. The native
+  regression now checks LC_BUILD_VERSION and rejects a rehashed SDKROOT log change.
+  `rebuilt-build-3` records SDK 27.0; `rebuilt-install-2`, `check-plan-2` and fresh
+  `check-2` retain the new non-overwriting path. The live rebuilt frame now matches
+  the original. Original/rebuilt file roundtrip has passed in its first round;
+  the remaining pairs are running, without accepted visual delivery.
+- SDKROOT regression: seven native/bridge tests passed. Full regression passed
+  **396 tests in 53.867s** (`/tmp/copyapp-dual-platform-sdk-root-final-20261021.log`);
+  isolated wheel passed, SHA-256
+  `5fd0de74bb0ce956c0fceeb9b5bbd0a4128839de1b866b9fa3197759940e379f`
+  (`/tmp/copyapp-macos-sdk-root-wheel-20261021.log`). The earlier full attempt
+  retained two simulated-server initialization timeouts under concurrent build
+  load. The action-timeout test now applies its 0.3s bound after initialization;
+  its lost/late-input/no-retry assertions are unchanged. No iOS device execution
+  code changed and no fresh physical-iPhone regression is claimed.
+
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.
 Runtime observations additionally bind PID/start time and executable hash. Record

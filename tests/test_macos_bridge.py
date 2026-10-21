@@ -326,6 +326,14 @@ class NativeCollectorTests(unittest.TestCase):
                 self.assertIs(build_facts["installed"], False)
                 self.assertIs(build_facts["behavior_checked"], False)
                 self.assertEqual(build_facts["app"]["bundle_id"], "dev.copyapp.Clone")
+                sdk_version = json.loads((native_build / "sdk-settings.json").read_text())["Version"]
+                # Check the artifact, not just compiler argv: direct swiftc
+                # without SDKROOT previously stamped minos as the linked SDK.
+                linked = subprocess.run(["xcrun", "otool", "-l", str(native_build / "products/Independent.app/Contents/MacOS/Independent")],
+                                        check=True, capture_output=True, text=True).stdout
+                build_version = linked.split("cmd LC_BUILD_VERSION", 1)[1].split("Load command", 1)[0]
+                self.assertIn("sdk " + sdk_version, build_version)
+                rejects_rehashed(native_build, "build-log.json", lambda value: value[1].update(environment={"SDKROOT": "/another/sdk"}))
                 self.assertEqual((native_build / "source/Main.swift").read_bytes(), (project / "Main.swift").read_bytes())
                 rejects_rehashed(native_build, "build.json", lambda value: value.update(installed=True))
                 rejects_rehashed(native_build, "build-log.json", lambda value: value[-1].update(returncode=1))

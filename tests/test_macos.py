@@ -203,7 +203,10 @@ class MacMCPTests(unittest.TestCase):
         for behavior in ("disconnect", "timeout"):
             with self.subTest(behavior=behavior), tempfile.TemporaryDirectory() as folder:
                 executable, log = make_server(Path(folder), behavior=behavior)
-                with ChatComputer(executable, timeout=0.3) as client:
+                # The short bound tests the action reply, not Python process
+                # startup/initialize under concurrent native build load.
+                with ChatComputer(executable, timeout=2) as client:
+                    client.timeout = 0.3
                     with self.assertRaises(UnknownCompletion):
                         client.call("click", {"x": 1, "y": 1})
                     with self.assertRaises(ChatComputerError):

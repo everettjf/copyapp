@@ -76,12 +76,17 @@ def recipe_for(*, swift_sources=(), info_plist=None, resources=None, xcode_proje
             "deployment_target": None if xcode_project else deployment_target}
 
 
-def run_command(argv: list, cwd: Path, logs: list, timeout: float):
+def run_command(argv: list, cwd: Path, logs: list, timeout: float, *, sdk_root=None):
     """Retain bounded output and stop only this owned build's process group."""
     log = {"argv": argv, "cwd": str(cwd), "started_at": now(), "timed_out": False}
+    environment = None
+    if sdk_root is not None:
+        environment = dict(os.environ, SDKROOT=sdk_root)
+        log["environment"] = {"SDKROOT": sdk_root}
     with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
         process = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL,
-                                   stdout=stdout, stderr=stderr, start_new_session=True)
+                                   stdout=stdout, stderr=stderr, start_new_session=True,
+                                   env=environment)
         try:
             process.wait(timeout=timeout)
         except BaseException as exc:
@@ -198,16 +203,21 @@ def build_app(plan: Path, output: Path, recipe: dict, timeout: float = 1200) -> 
             located = subprocess.run(["xcrun", "--find", "xcodebuild"], capture_output=True, text=True, check=True, timeout=30)
             compiler = located.stdout.strip()
         sdk_probe = subprocess.run(["xcrun", "--sdk", "macosx", "--show-sdk-path"], capture_output=True, text=True, check=True, timeout=30)
-        sdk = Path(sdk_probe.stdout.strip()).resolve(strict=True)
+        # Swift derives the SDK name/version from this versioned spelling.
+        # Keep xcrun's versioned spelling for Swift's SDK-name inference.
+        # Direct swiftc also needs SDKROOT for its clang linker invocation;
+        # without it this toolchain stamps minos as the linked SDK version.
+        sdk = Path(sdk_probe.stdout.strip()).absolute()
         sdk_settings = sdk / "SDKSettings.json"
         if sdk_settings.stat().st_size > 1 << 20:
             raise ValueError("oversized SDK metadata")
         case.add("sdk-settings.json", sdk_settings.read_bytes(), binary=True)
         tools = {"compiler": tool(compiler), "codesign": tool(shutil.which("codesign") or "/usr/bin/codesign"),
-                 "sdk": {"path": str(sdk), "settings_sha256": digest(case.root / "sdk-settings.json")}}
+                 "sdk": {"path": str(sdk), "settings_sha256": digest(case.root / "sdk-settings.json"),
+                         "export_root": True}}
         case.add("tools.json", tools)
         for argv in commands(case.root, target, recipe, tools, executable):
-            run_command(argv, case.root / "source", logs, timeout)
+            run_command(argv, case.root / "source", logs, timeout, sdk_root=str(sdk))
         facts = app_facts(product)
         if facts["bundle_id"] != target["bundle_id"]:
             raise ValueError("built product has another Bundle ID")
@@ -255,7 +265,9 @@ def validate_build(root: Path, manifest: dict, names: set) -> bool:
     if (recipe != recipe_for(**{key: value for key, value in recipe.items() if key != "mode"}) or
             source != {"entries": entries, "ignored_top_level": list(IGNORED), "sha256": hashlib.sha256(canonical(entries)).hexdigest()} or
             set(tools) != {"compiler", "codesign", "sdk"} or
-            set(tools["sdk"]) != {"path", "settings_sha256"} or not Path(tools["sdk"]["path"]).is_absolute() or
+            set(tools["sdk"]) not in ({"path", "settings_sha256"}, {"path", "settings_sha256", "export_root"}) or
+            ("export_root" in tools["sdk"] and tools["sdk"]["export_root"] is not True) or
+            not Path(tools["sdk"]["path"]).is_absolute() or
             tools["sdk"]["settings_sha256"] != digest(root / "sdk-settings.json")):
         return False
     for value in (tools["compiler"], tools["codesign"]):
@@ -267,8 +279,11 @@ def validate_build(root: Path, manifest: dict, names: set) -> bool:
     app = package["app"]
     expected_argv = commands(Path(saved["workspace"]), target, recipe, tools, saved["executable"])
     logs = read(root, "build-log.json")
+    # Historical cases omit export_root and retain their original log shape.
+    expected_environment = {"SDKROOT": tools["sdk"]["path"]} if tools["sdk"].get("export_root") else None
     if (not isinstance(logs, list) or len(logs) != len(expected_argv) or
             any(log.get("argv") != argv or type(log.get("returncode")) is not int or log["returncode"] != 0 or
+                log.get("environment") != expected_environment or
                 log.get("cwd") != str(Path(saved["workspace"]) / "source") or
                 log.get("timed_out") is not False or log.get("output_truncated") is not False
                 for log, argv in zip(logs, expected_argv))):

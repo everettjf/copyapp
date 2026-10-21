@@ -40,8 +40,8 @@ implementation, and report the actual acceptance scope and unfinished gates.
 
 For an independent rebuild, add the desired behavior and ask the agent to continue
 through a reviewed rebuild plan, implementation, paired replay and delivery.
-The development commands have local/simulated protocol tests; live guest and
-physical-Mac acceptance remain open. See the ledger before treating a prepared
+The development commands have local/simulated protocol tests and named live guest
+evidence; complete sample delivery and physical-Mac acceptance remain open. See the ledger before treating a prepared
 task or passing protocol check as a completed App.
 
 For bounded snapshot metadata, safety-preserving restore and interrupted-operation
@@ -50,8 +50,9 @@ prove restored App behavior; upstream snapshots have only a preflight takeover
 guard in this integration, not an atomic expected-lease condition.
 
 The [owned AppKit fixture](../examples/macos/BehaviorFixture/README.md) is available
-for acceptance development. It is an original sample; its host smoke checks do not
-substitute for guest discovery, independent reconstruction or paired delivery.
+for acceptance development. Its three guest flows now have a reviewed report and
+frozen reconstruction scope. The separate [independent editor](../examples/macos/IndependentEditor/README.md)
+is a source-available acceptance example; consult the ledger for its live checks.
 
 ## Check the environment
 
@@ -247,11 +248,19 @@ command proves implementation or delivery, and neither performs deep code analys
 
 ## Remaining acceptance
 
-Live guest replay, sandbox/data acquisition, discovery acceptance, real-sample
-builds and guest install/launch, live paired checks, actual visual review and delivery acceptance remain open. Two sample apps,
-three selected flows each and three rounds are required, plus one physical Mac
-recheck. Runtime/native investigation is a separate capability with entitlement
-limits. Keep these gates open until their actual saved evidence passes.
+Stocks acquisition, three original flows, reviewed discovery/report, independent
+build/install and three rounds of paired behavior now have named guest evidence.
+All nine selected behavior comparisons passed, but the complete 195-pair screenshot
+review records major differences, including offline data/news substitutions,
+menus, hover feedback and dialog stacking. It has no accepted delivery.
+
+The owned fixture has three original guest flows, a reviewed report, a frozen
+seven-of-nine known-capability target and a separately built/installed editor;
+paired acceptance is still in progress. Both sample deliveries, live takeover/input
+interruption, restored App behavior, remaining data-acquisition checks and a physical
+Mac recheck remain open. The physical-host attempt was blocked before launch by a
+locked host. Runtime/native investigation is separate and unverified. See the ledger
+for exact case paths; keep each gate open until its own evidence passes.
 
 ## Build and install an independent App
 
@@ -292,6 +301,13 @@ metadata directories are recorded separately. `.git`, `.build`, `DerivedData`,
 `__pycache__` and `.DS_Store` are excluded only at the project root. Keep the build
 case outside that source directory. This is source provenance and a local build,
 not notarization, installation or behavioral acceptance.
+
+New builds preserve xcrun's versioned SDK path and explicitly export that same
+`SDKROOT` to the recorded child commands. The native regression inspects the
+resulting Mach-O SDK version: direct swiftc without this environment stamped 14.0
+instead of the installed 27.0 SDK and selected older AppKit window decoration in
+the fixture. Historical build cases retain their original command/environment
+records and remain verifiable; rebuilding creates new evidence.
 
 Installation uses the build's original registered environment, stages the verified
 package under its fresh inbox session, verifies the guest copy's signature and
