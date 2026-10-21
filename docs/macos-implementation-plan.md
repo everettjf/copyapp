@@ -61,7 +61,8 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
 - Separate `copyapp mac` commands now cover doctor, inspect, build/prepare-collector,
   connect, observe, acquire, playbook, report, rebuild-plan, build-app, install,
   check-plan, rebuild-check, visual-review, delivery, share-probe,
-  share-probe-check, import-app, discover-check, data-file and data-schema, with versioned
+  share-probe-check, import-app, discover-check, data-file, data-schema,
+  snapshot-inspect, snapshot-take and snapshot-restore, with versioned
   `mac_*` semantic validators. These are development commands, not completed
   end-to-end reconstruction or a new release.
 - Local TextEdit package snapshot passed its byte/identity verifier after a
@@ -199,6 +200,32 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
   do not certify guest replay, and do not satisfy paired reconstruction or the
   required physical-Mac reconstruction recheck. The current original needs its
   own guest acquisition, reviewed flows and independent rebuild before comparison.
+- Snapshot development now records bounded public metadata, creates a uniquely
+  named ChatComputer snapshot and restores a pinned take case only with
+  `save_current: true`. It retains the exclusive collector lock while switching
+  protocol epoch and MCP transport, preserving old shared replies. Unknown action
+  outcomes are not retried. A preflight input lease detects an existing human
+  takeover; the upstream snapshot API has no atomic expected-lease condition, so
+  a later takeover race remains an explicit limitation. Metadata/reconnect cases
+  do not verify restored App behavior, saved disk/memory bytes or shared-data reset.
+  See [recovery](macos-recovery.md).
+- The actual VM's read-only snapshot inventory verified at
+  `cases/macos-p0-20261021/snapshot-inventory-1`: stage `agentInstalled`, zero
+  snapshots, no current ID or restore in progress. No snapshot mutation or
+  permission grant was made. The source contract was checked at the pinned
+  upstream revision and retained under ignored
+  `cases/macos-recovery-upstream-20261021/` without credentials.
+- Snapshot regression: 388 tests passed, including existing iOS tests and the
+  simulated snapshot controller with a real local collector. Tests reject old
+  session replies, altered metadata/requests, missing safety snapshots, changed
+  targets, interrupted journals and incompatible argument schemas. Lost take/
+  restore replies and a post-commit readiness error retain evidence with one
+  action submission; human takeover blocks before snapshot submission. No actual
+  VM disk/memory was restored in these tests. The installed wheel passed;
+  development SHA-256:
+  `5e34680164ba45059ae831c48c967d558e0636a3f5ee077753eef64d3f8bfc2c`.
+  Logs: `/tmp/copyapp-dual-platform-snapshots-20261021.log` and
+  `/tmp/copyapp-macos-snapshots-wheel-20261021.log`.
 - The repository Mac skill and bilingual entry prompts route Mac targets directly
   to this development workflow. Existing iOS skills and historical v1 validation
   retain their scope. Live sandbox capture,

@@ -10,7 +10,8 @@ KINDS = frozenset({"mac_doctor", "mac_app_index", "mac_collector_build",
                    "mac_collector_deployment", "mac_environment", "mac_observation", "mac_app_acquisition",
                    "mac_playbook", "mac_behavior_report", "mac_rebuild_plan", "mac_build", "mac_install",
                    "mac_check_plan", "mac_rebuild_check", "mac_visual_review", "mac_delivery",
-                   "mac_share_request", "mac_share_result", "mac_distribution", "mac_discovery", "mac_data_file", "mac_data_schema"})
+                   "mac_share_request", "mac_share_result", "mac_distribution", "mac_discovery", "mac_data_file", "mac_data_schema",
+                   "mac_snapshot_inventory", "mac_snapshot_take", "mac_snapshot_restore"})
 
 
 def now() -> str:
@@ -171,6 +172,12 @@ def verify_mac_case(root: Path) -> bool:
         if manifest["kind"] == "mac_data_schema":
             from copyapp.macos.data_schema import validate_schema
             return validate_schema(root, manifest, names)
+        if manifest["kind"] == "mac_snapshot_inventory":
+            from copyapp.macos.snapshots import validate_inventory
+            return validate_inventory(root, manifest, names)
+        if manifest["kind"] in {"mac_snapshot_take", "mac_snapshot_restore"}:
+            from copyapp.macos.snapshots import validate_operation
+            return validate_operation(root, manifest, names)
         from copyapp.macos.package import validate_index
         return validate_index(root, manifest, names)
     except (OSError, ValueError, KeyError, TypeError, AttributeError):

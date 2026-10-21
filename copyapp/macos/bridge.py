@@ -35,23 +35,37 @@ class Collector:
         self.root = shared_root.resolve(strict=True)
         self.hash = collector_sha256
         self.timeout = timeout
-        self.session = str(uuid4())
+        self.session = None
         self.instance = None
         self.last_request = None
         self.last_response = None
         self.closed = False
-        self.requests = self.root / "inbox/copyapp-bridge" / self.session
-        self.responses = self.root / "outbox/copyapp-bridge" / self.session
-        self.requests.parent.mkdir(parents=True, exist_ok=True)
-        self._lock = (self.requests.parent / ".host.lock").open("a+b")
+        parent = self.root / "inbox/copyapp-bridge"
+        parent.mkdir(parents=True, exist_ok=True)
+        self._lock = (parent / ".host.lock").open("a+b")
         try:
             fcntl.flock(self._lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            self.requests.mkdir(parents=True, exist_ok=False)
-            atomic_json(self.root / "inbox/copyapp-bridge/active.json",
-                        {"protocol_version": 2, "session_id": self.session})
+            self.new_session()
         except BaseException:
             self._lock.close()
             raise
+
+    def new_session(self):
+        """Rotate the protocol epoch while retaining the exclusive host lock.
+
+        This issues no RPC and reuses no request. A failed/closed client cannot
+        rotate; inspect the guest and explicitly establish another client.
+        """
+        if self.closed or self._lock.closed:
+            raise RuntimeError("cannot rotate a closed collector; inspect state first")
+        self.session = str(uuid4())
+        self.instance = None
+        self.last_request, self.last_response = None, None
+        self.requests = self.root / "inbox/copyapp-bridge" / self.session
+        self.responses = self.root / "outbox/copyapp-bridge" / self.session
+        self.requests.mkdir(parents=True, exist_ok=False)
+        atomic_json(self.root / "inbox/copyapp-bridge/active.json",
+                    {"protocol_version": 2, "session_id": self.session})
 
     def call(self, method: str, params=None) -> dict:
         if self.closed:

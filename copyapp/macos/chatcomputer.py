@@ -15,11 +15,14 @@ import threading
 import time
 from pathlib import Path
 from typing import Optional
+from uuid import uuid4
 
 
 MAX_MESSAGE = 48 * 1024 * 1024
 MAX_IMAGE = 32 * 1024 * 1024
 INPUT_TOOLS = frozenset({"click", "move", "drag", "scroll", "type", "key", "save_file"})
+MUTATING_TOOLS = INPUT_TOOLS | frozenset({"snapshot_take", "snapshot_restore", "snapshot_delete",
+                                         "put_file", "share_add", "share_remove"})
 TOOLS = INPUT_TOOLS | frozenset({"status", "screenshot", "elements", "text", "wait",
                                "snapshot_list", "snapshot_take", "snapshot_restore",
                                "snapshot_delete", "put_file", "outbox", "share_list",
@@ -49,6 +52,11 @@ class ChatComputer:
         self._next_id = 0
         self._tools = set()
         self._lock = threading.Lock()
+        self.transport_id = None
+        self.server_info = None
+        self.catalog = None
+        self.last_request = None
+        self.last_response = None
 
     def __enter__(self):
         executable = shutil.which(self.executable)
@@ -62,6 +70,7 @@ class ChatComputer:
             self.process = subprocess.Popen([executable, "mcp"], stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE, stderr=self._stderr,
                                             env=environment)
+            self.transport_id = str(uuid4())
             os.set_blocking(self.process.stdin.fileno(), False)
             self._selector = selectors.DefaultSelector()
             self._selector.register(self.process.stdout, selectors.EVENT_READ)
@@ -81,6 +90,7 @@ class ChatComputer:
                     len(set(names)) != len(names)):
                 raise ChatComputerError("invalid or duplicate MCP tool names")
             self._tools = set(names)
+            self.catalog = catalog
             if not {"status", "screenshot", "release"}.issubset(self._tools):
                 raise ChatComputerError("ChatComputer lacks required public tools")
             return self
@@ -124,10 +134,13 @@ class ChatComputer:
     def _request(self, method: str, params: dict) -> dict:
         self._next_id += 1
         expected = self._next_id
-        self._write({"jsonrpc": "2.0", "id": expected, "method": method, "params": params})
+        request = {"jsonrpc": "2.0", "id": expected, "method": method, "params": params}
+        self.last_request, self.last_response = request, None
+        self._write(request)
         deadline = time.monotonic() + self.timeout
         while True:
             response = json.loads(self._line(deadline))
+            self.last_response = response
             if not isinstance(response, dict) or response.get("jsonrpc") != "2.0":
                 raise ChatComputerError("malformed JSON-RPC response")
             if "id" not in response and isinstance(response.get("method"), str):
@@ -153,14 +166,25 @@ class ChatComputer:
                         type(result.get("isError", False)) is not bool):
                     raise ChatComputerError("malformed MCP tool response")
             except (OSError, EOFError, TimeoutError, ValueError, ChatComputerError) as exc:
+                evidence = self.evidence()
                 self.close()
-                if name in INPUT_TOOLS or name.startswith("snapshot_"):
-                    raise UnknownCompletion("Completion unknown for " + name +
-                                            "; inspect state before replay") from exc
-                raise ChatComputerError(str(exc)) from exc
+                error = (UnknownCompletion("Completion unknown for " + name + "; inspect state before replay")
+                         if name in MUTATING_TOOLS else ChatComputerError(str(exc)))
+                error.chatcomputer_evidence = evidence
+                raise error from exc
             if result.get("isError"):
-                raise ChatComputerError(self.text(result))
+                # Snapshot APIs can commit the snapshot and then fail to ready
+                # the guest. An error reply is not proof of no state change.
+                error = (UnknownCompletion("Snapshot result needs inspection: " + self.text(result))
+                         if name in {"snapshot_take", "snapshot_restore", "snapshot_delete"}
+                         else ChatComputerError(self.text(result)))
+                error.chatcomputer_evidence = self.evidence()
+                raise error
             return result
+
+    def evidence(self) -> dict:
+        return {"transport_id": self.transport_id, "server_info": self.server_info,
+                "request": self.last_request, "response": self.last_response}
 
     @staticmethod
     def text(result: dict) -> str:

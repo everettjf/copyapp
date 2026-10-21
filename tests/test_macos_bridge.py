@@ -38,6 +38,24 @@ def answer(client, *, change=None):
 
 
 class BridgeTests(unittest.TestCase):
+    def test_new_epoch_keeps_lock_and_rejects_old_reply(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with Collector(Path(folder), "a" * 64, timeout=2) as client:
+                worker = threading.Thread(target=answer, args=(client,))
+                worker.start(); client.call("health"); worker.join()
+                old_session, old_responses = client.session, client.responses
+                old_files = list(old_responses.glob("*.json"))
+                client.new_session()
+                self.assertNotEqual(client.session, old_session)
+                self.assertIsNone(client.instance)
+                self.assertTrue(all(path.exists() for path in old_files))
+                with self.assertRaises(BlockingIOError): Collector(Path(folder), "a" * 64)
+                worker = threading.Thread(target=answer, args=(client,), kwargs={"change": {"session_id": old_session}})
+                worker.start()
+                with self.assertRaises(ValueError): client.call("health")
+                worker.join()
+                with self.assertRaises(RuntimeError): client.new_session()
+
     def test_bound_response_and_exclusive_session(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -96,7 +114,7 @@ class NativeCollectorTests(unittest.TestCase):
     def test_simulated_environment_registration_and_bound_identity_observation(self):
         # A local helper plus a simulated MCP/VM configuration exercises the
         # provenance contracts. This does not count as live virtual-Mac evidence.
-        from test_macos import make_server
+        from macos_snapshot_checks import make_snapshot_server, exercise_snapshot_protocol
         from copyapp.macos.setup import build_collector
         from copyapp.macos.deploy import prepare_collector
         from copyapp.macos.environment import register_environment
@@ -117,7 +135,7 @@ class NativeCollectorTests(unittest.TestCase):
             (vm / "HardwareModel.bin").write_bytes(b"simulated-hardware-model")
             fake = root / "fake"
             fake.mkdir()
-            source, _ = make_server(fake)
+            source, _ = make_snapshot_server(fake, vm)
             command = root / "ChatComputer.app/Contents/MacOS/ChatComputer"
             command.parent.mkdir(parents=True)
             shutil.copyfile(source, command)
@@ -132,6 +150,7 @@ class NativeCollectorTests(unittest.TestCase):
                 environment = register_environment(vm, root / "build", root / "environment",
                                                    str(command), timeout=5)
                 self.assertTrue(verify_case(environment))
+                exercise_snapshot_protocol(self, root, environment, vm)
                 case = observe_app(environment, str(app), "dev.copyapp.MacCollector", root / "observation")
                 self.assertTrue(verify_case(case))
                 acquisition = acquire_app(environment, str(app), "dev.copyapp.MacCollector",

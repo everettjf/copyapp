@@ -44,6 +44,11 @@ The development commands have local/simulated protocol tests; live guest and
 physical-Mac acceptance remain open. See the ledger before treating a prepared
 task or passing protocol check as a completed App.
 
+For bounded snapshot metadata, safety-preserving restore and interrupted-operation
+handling, read [Mac recovery](macos-recovery.md). A metadata/reconnect case does not
+prove restored App behavior; upstream snapshots have only a preflight takeover
+guard in this integration, not an atomic expected-lease condition.
+
 The [owned AppKit fixture](../examples/macos/BehaviorFixture/README.md) is available
 for acceptance development. It is an original sample; its host smoke checks do not
 substitute for guest discovery, independent reconstruction or paired delivery.

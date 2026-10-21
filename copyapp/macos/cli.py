@@ -119,6 +119,17 @@ def configure(parser: argparse.ArgumentParser):
     schema.add_argument("--data", required=True, type=Path)
     schema.add_argument("--format", choices=("plist", "sqlite"), required=True)
     schema.add_argument("--out", required=True, type=Path)
+    inventory = sub.add_parser("snapshot-inspect", help="record bounded public snapshot metadata without a VM mutation")
+    inventory.add_argument("--vm-directory", type=Path, required=True)
+    inventory.add_argument("--out", type=Path, required=True)
+    take = sub.add_parser("snapshot-take", help="take one ChatComputer-owned snapshot and recheck fresh sessions")
+    take.add_argument("--environment", type=Path, required=True)
+    take.add_argument("--timeout", type=float, default=120)
+    take.add_argument("--out", type=Path, required=True)
+    restore = sub.add_parser("snapshot-restore", help="restore a pinned Copy APP snapshot; always retain a safety snapshot")
+    restore.add_argument("--snapshot", type=Path, required=True)
+    restore.add_argument("--timeout", type=float, default=120)
+    restore.add_argument("--out", type=Path, required=True)
 
 
 def named_flows(items: list) -> dict:
@@ -132,6 +143,15 @@ def named_flows(items: list) -> dict:
 
 
 def run(args) -> int:
+    if args.mac_command == "snapshot-inspect":
+        from copyapp.macos.snapshots import snapshot_inventory
+        print(snapshot_inventory(args.vm_directory, args.out))
+        return 0
+    if args.mac_command in {"snapshot-take", "snapshot-restore"}:
+        from copyapp.macos.snapshots import snapshot_operation
+        action = "take" if args.mac_command == "snapshot-take" else "restore"
+        print(snapshot_operation(args.environment if action == "take" else args.snapshot, args.out, action, args.timeout))
+        return 0
     if args.mac_command == "data-schema":
         from copyapp.macos.data_schema import data_schema
         print(data_schema(args.data, args.format, args.out))

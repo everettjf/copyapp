@@ -42,6 +42,11 @@ IPAs, UIKit observations or iOS-only skills for a Mac target.
   acquisition for replay. A static index cannot substitute for guest provenance.
 - `mac observe --ax` requires the exact foreground App/process. Review the saved
   structured AX and screenshot; MCP prose alone does not establish identity.
+- For baseline snapshots or interruption, follow [recovery](../../docs/macos-recovery.md).
+  Use `snapshot-inspect` for metadata only; take/restore requires the pinned ready
+  environment. Retain safety snapshots and all failed attempts. Never retry an
+  uncertain action or bypass human takeover; the upstream snapshot operation has
+  no atomic expected-lease condition. Recheck package and UI after fresh reconnect.
 
 ## Selected behavior analysis
 

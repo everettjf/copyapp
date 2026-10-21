@@ -40,6 +40,11 @@ ZIP／DMG 输入使用 `mac import-app`；DMG 在 macOS 27 上以只读、禁止
 开发命令已有本地／模拟协议测试，客体实测和实体 Mac 验收仍未完成，不能把已准备的任务
 或通过的协议检查当作已经交付的 App。
 
+快照清点、保留安全快照的恢复和中断处理见[恢复流程](macos-recovery.md)。
+`snapshot-inspect` 只读公开元数据；`snapshot-take`／`snapshot-restore` 需要已就绪的准确环境。
+恢复后使用新的 MCP 和采集器会话，旧共享目录不会回滚。上游快照只有本次集成的操作前租约检查，
+不能证明操作期间原子地排除了人接管；元数据与重新连接也不能替代 App 行为复验。
+
 验收开发可使用[自有 AppKit 样例](../examples/macos/BehaviorFixture/README.md)。它是原始测试 App，
 包含原生文件对话框、编辑与统计、设置持久化和多窗口；宿主冒烟测试不等于客体采集、独立重建或对照交付。
 
