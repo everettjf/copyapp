@@ -13,6 +13,7 @@ from pathlib import Path
 
 SOURCE = Path(__file__).resolve().parent.parent
 REQUIRED_DATA = {
+    "copyapp/macos/collector/Collector.swift",
     "copyapp/ictrl_runner_stop.py",
     "copyapp/ghidra_scripts/CopyAppAnalysisOptions.java",
     "copyapp/ghidra_scripts/CopyAppDecompile.java",
@@ -61,8 +62,12 @@ def main() -> None:
         env.pop("COPYAPP_SOURCE_ROOT", None)
         run([str(python), "-m", "pip", "install", str(wheel)], cwd=root, env=env)
         help_text = run([str(cli), "--help"], cwd=root, env=env).stdout
-        if not all(command in help_text for command in ("onboard", "analyze", "copy")):
+        if not all(command in help_text for command in ("onboard", "analyze", "copy", "mac")):
             raise RuntimeError("installed wheel CLI lacks expected commands")
+        mac_help = run([str(cli), "mac", "--help"], cwd=root, env=env).stdout
+        if not all(command in mac_help for command in ("doctor", "inspect", "build-collector", "acquire",
+                                                       "playbook", "report", "rebuild-plan")):
+            raise RuntimeError("installed wheel lacks Mac entry points")
         probe = ("import copyapp, pathlib, sys; "
                  "root=pathlib.Path(copyapp.__file__).resolve().parent; "
                  "assert root.is_relative_to(pathlib.Path(sys.argv[1]).resolve()); "

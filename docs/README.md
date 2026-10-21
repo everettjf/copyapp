@@ -7,6 +7,7 @@ Copy APP publishes **v0.1.2**. Begin with the [agent-led first task](first-run-a
 | Topic | Read this |
 | --- | --- |
 | New Mac and phone | [Setup and first survey](setup.md) |
+| macOS App support in development | [ChatComputer integration](macos-support.md) · [Acceptance ledger](macos-implementation-plan.md) |
 | How the parts fit | [Architecture and evidence model](architecture.md) |
 | Illustrated project story | [Copy APP overview (简体中文)](articles/copyapp-overview.zh-CN.md) |
 | Tested phones and open limits | [Current status](current-status.md) |

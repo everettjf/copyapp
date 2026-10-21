@@ -6,6 +6,10 @@ English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_
 
 Copy APP analyzes an installed iOS app on a jailbroken iPhone and helps a coding agent build an **independent, runnable iOS app** that reproduces a reviewed set of behaviors. It collects package, sandbox, UI and runtime evidence; produces a source-linked report and feature specification; then checks the new app against the original on the same phone. The current release is **v0.1.2**.
 
+Development branch: [macOS support through ChatComputer](docs/macos-support.md) is being added alongside iOS. Its [acceptance ledger](docs/macos-implementation-plan.md) distinguishes implemented foundations from pending end-to-end validation; published v0.1.2 remains the iOS release.
+
+For a **Mac App** task on this branch, ask your agent to read `AGENTS.md` and `skills/copyapp-mac/SKILL.md`. Use the [Mac agent prompt](docs/macos-support.md#start-with-an-agent); the iPhone prompt below continues to use the existing iOS workflow.
+
 <a id="start-here"></a>
 
 ## Start here: give the task to Codex or Claude Code

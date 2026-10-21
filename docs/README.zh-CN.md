@@ -7,6 +7,7 @@ Copy APP 当前正式发布版为 **v0.1.2**。新用户从[交给 Agent 的首�
 | 主题 | 文档 |
 | --- | --- |
 | 新 Mac 与手机 | [安装及首次概览](setup.zh-CN.md) |
+| 开发中的 macOS App 支持 | [ChatComputer 集成](macos-support.zh-CN.md) · [实施与验收清单](macos-implementation-plan.md) |
 | 系统怎样协作 | [架构与证据模型](architecture.zh-CN.md) |
 | 带图的项目介绍 | [Copy APP：分析与复刻实验室](articles/copyapp-overview.zh-CN.md) |
 | 已测手机与限制 | [当前状态](current-status.zh-CN.md) |

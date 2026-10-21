@@ -1,0 +1,173 @@
+# macOS development support
+
+[简体中文](macos-support.zh-CN.md) · [Implementation ledger](macos-implementation-plan.md)
+
+macOS is being added **alongside** the published iOS workflows. Existing iOS
+commands and v1 cases keep their original meaning. This branch currently supplies
+collection, bounded replay and reviewed report/planning commands; it does not yet certify an end-to-end
+Mac reconstruction. Do not use an iOS UDID or IPA case to represent a Mac.
+
+ChatComputer owns the virtual desktop and all keyboard/mouse input. The current
+coding agent does analysis and implementation; do not start ChatComputer's built-in
+model loop or nest another coding-agent CLI. Its external MCP currently returns
+text/images. Copy APP's bounded guest collector adds structured app identity and AX
+observations without depending on a future upstream shell API.
+
+## Start with an agent
+
+Open this development checkout in Codex or Claude Code and paste:
+
+```text
+Analyze the macOS App “APP NAME” using this Copy APP checkout and ChatComputer.
+Read AGENTS.md and skills/copyapp-mac/SKILL.md first. Identify the exact guest,
+App and build, collect representative flows and produce a cited behavior report.
+Keep existing iOS support intact. Use the current agent session for review and
+implementation, and report the actual acceptance scope and unfinished gates.
+```
+
+For an independent rebuild, add the desired behavior and ask the agent to continue
+through a reviewed rebuild plan and implementation. The current development
+commands do not yet provide verified paired delivery. See the ledger before
+treating a prepared task as a completed App.
+
+## Check the environment
+
+Use an Apple Silicon Mac with the installed ChatComputer application. Finish its
+guest onboarding in the GUI, then use the CLI from this checkout:
+
+```sh
+.venv/bin/copyapp mac doctor --out cases/mac-transport
+.venv/bin/copyapp verify cases/mac-transport
+```
+
+A `needs_setup` doctor case is verifiable evidence of missing prerequisites. A
+successful doctor establishes transport and screenshot availability only; it does
+not identify an app, validate runtime tracing or prove behavior. `--data-dir`
+selects a non-default ChatComputer data directory explicitly.
+
+## Build and prepare the collector
+
+```sh
+.venv/bin/copyapp mac build-collector --out cases/mac-collector-build
+.venv/bin/copyapp verify cases/mac-collector-build
+.venv/bin/copyapp mac prepare-collector --build cases/mac-collector-build \
+  --out cases/mac-collector-deployment --request-accessibility
+.venv/bin/copyapp verify cases/mac-collector-deployment
+chatcomputer share add "$PWD/cases/mac-collector-deployment/payload"
+```
+
+Share only this deployment payload, read-only. Use the guest path printed by
+ChatComputer, open that folder in the **guest** Finder and run
+`Start Collector.command`. It installs the exact hashed helper in the guest's
+`~/Applications/CopyAppTools/<hash>/`. The launcher checks that it is inside a
+virtual Mac and that the ChatComputer share exists. It does not modify the host.
+
+`--request-accessibility` makes the helper ask macOS for Accessibility access in
+the guest. The guest owner grants it through System Settings; no permission is
+granted automatically. ChatComputer separately needs its normal guest capture and
+control permissions. A local collector build/self-test requests neither permission.
+
+The default collector signature is ad-hoc. For repeatable TCC identity, use a
+suitable stable `--signing-identity` and retain the exact build; changing the
+signature can require a new guest permission grant. A successful build is not a
+notarized distribution or proof of installation.
+
+## Register one exact VM
+
+```sh
+.venv/bin/copyapp mac connect \
+  --vm-directory "$HOME/.chatcomputer/ChatComputer.vm" \
+  --collector-build cases/mac-collector-build --out cases/mac-environment
+.venv/bin/copyapp verify cases/mac-environment
+```
+
+Registration pins VM ID and machine/hardware identifier hashes, test configuration,
+ChatComputer executable identity, collector executable hash, guest identity and OS.
+It copies no password, model credential or pairing token. Reconnect checks these
+identities again. A changed app/tool/OS needs a reviewed new registration, not a
+silent rewrite of old evidence.
+
+The helper bridge uses unique session and request IDs, a request hash and an
+exclusive host session. Interrupted launch requests retain an outbox start marker
+and are never blindly re-executed. Shared outbox files are outside VM snapshots:
+old files must not be accepted as fresh results after restore.
+
+## Collect static and UI evidence
+
+```sh
+.venv/bin/copyapp mac inspect --app /path/to/Example.app --out cases/mac-package
+.venv/bin/copyapp verify cases/mac-package
+.venv/bin/copyapp mac observe --environment cases/mac-environment \
+  --app-path /Applications/Example.app --bundle example.app \
+  --out cases/mac-app-identity
+.venv/bin/copyapp mac observe --environment cases/mac-environment \
+  --app-path /Applications/Example.app --bundle example.app --ax \
+  --out cases/mac-ui-observation
+.venv/bin/copyapp verify cases/mac-ui-observation
+```
+
+`inspect` snapshots a local `.app`, inventories regular files and safe internal
+symlinks, and distinguishes the whole executable hash from its arm64 slice hash.
+It requires a macOS Mach-O platform, rejecting iOS and Intel-only binaries. It
+copies package bytes and permissions without propagating protected system flags.
+Its scope is **static package only**, never guest installation or execution.
+
+`observe --ax` requires one exact foreground process with a known launch time. It
+records bounded AX structure, raw MCP screenshot and before/after app identity.
+AX and screenshot are sequential observations, not simultaneous captures. Truncated
+trees and unavailable permissions remain explicit. These inputs still require
+semantic review and do not establish function implementation or whole-app coverage.
+
+## Replay and review selected behavior
+
+```sh
+.venv/bin/copyapp mac acquire --environment cases/mac-environment \
+  --app-path /Applications/Example.app --bundle example.app \
+  --out cases/mac-acquisition
+.venv/bin/copyapp verify cases/mac-acquisition
+.venv/bin/copyapp mac playbook --acquisition cases/mac-acquisition \
+  --script cases/mac-flow.json --out cases/mac-flow
+.venv/bin/copyapp verify cases/mac-flow
+```
+
+Acquisition exports a bounded package snapshot through the collector and compares
+the complete guest/source/copy inventories. Replay pins that package before and
+after the flow. A minimal script is:
+
+```json
+{
+  "schema_version": 2,
+  "platform": "macos",
+  "scenario_id": "visible-editor",
+  "bundle_id": "example.app",
+  "app_path": "/Applications/Example.app",
+  "steps": [
+    {"action": "launch"},
+    {"action": "expect_text", "selector": {"identifier": "editor"}, "text": "Expected text"}
+  ]
+}
+```
+
+Replace selectors and expectations with observations of the actual App. Supported
+actions are launch, screenshot, click, click_element, key, type, scroll, drag, quit,
+expect_text, expect_file, expect_stopped and wait. Input is bounded and follows an
+exact foreground AX/screenshot capture; element matches must be unique. Text and
+file assertions are exact unless a text assertion explicitly uses `match: contains`.
+File assertions use run-relative paths and one of `text_equals`, `json_equals` or
+`sha256`; substitute `{{output_dir}}` in typed text for the unique guest output
+directory. Changing or linked output files are rejected. A failed action is retained
+and never automatically repeated; inspect state before starting a new case.
+
+Read the raw UI/output evidence, then follow the [review JSON contract](macos-review.md)
+to run `mac report` and `mac rebuild-plan`. The report binds findings and a feature
+specification to source cases. The plan freezes known capabilities, target coverage
+and original/clone playbooks and writes `TASK.md` for the current agent. Neither
+command proves implementation or delivery, and neither performs deep code analysis.
+
+## Remaining acceptance
+
+Live guest replay, sandbox/data acquisition, discovery acceptance, independent
+build/install, paired checks, complete visual review and delivery remain open. Two sample apps,
+three selected flows each and three rounds are required, plus one physical Mac
+recheck. Runtime/native investigation is a separate capability with entitlement
+limits. Keep these gates open until their actual saved evidence passes.

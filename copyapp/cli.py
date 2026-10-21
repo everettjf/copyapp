@@ -409,6 +409,9 @@ async def _command_survey(udid: str, bundle: str, output: Path, launch: bool,
 def main() -> None:
     parser = argparse.ArgumentParser(description="Copy APP USB survey (v0.1)")
     sub = parser.add_subparsers(dest="command", required=True)
+    mac = sub.add_parser("mac", help="macOS App support through ChatComputer (experimental)")
+    from copyapp.macos.cli import configure as configure_mac
+    configure_mac(mac)
     sub.add_parser("devices", help="list connected USB devices")
     onboard = sub.add_parser("onboard", help="identify one phone and print exact setup repairs")
     onboard.add_argument("--udid", help="required when more than one USB device is connected")
@@ -1017,7 +1020,10 @@ def main() -> None:
     args = parser.parse_args()
     try:
         apply_ssh_profile(args, sys.argv[1:])
-        if args.command == "devices":
+        if args.command == "mac":
+            from copyapp.macos.cli import run as run_mac
+            code = run_mac(args)
+        elif args.command == "devices":
             code = asyncio.run(command_devices())
         elif args.command == "onboard":
             report, ready = run_onboarding(args.udid, args.out, args.ssh_identity,

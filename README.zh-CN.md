@@ -6,6 +6,10 @@
 
 Copy APP 对越狱 iPhone 上已安装的 iOS App 取证分析，并协助 Coding Agent 创建**独立、可运行的 iOS App**，复现经过审阅的一组功能。它采集安装包、沙盒、界面和运行时证据，生成有来源引用的报告与功能规格，再在同一台手机上对照原版和新 App。当前正式发布版为 **v0.1.2**。
 
+开发分支正在保留 iOS 支持的同时新增 [ChatComputer／macOS 支持](docs/macos-support.zh-CN.md)。[实施清单](docs/macos-implementation-plan.md)区分已实现基础设施与尚待完成的闭环验收；正式发布的 v0.1.2 仍为 iOS 版本。
+
+在此分支处理 **Mac App** 时，让 Agent 阅读 `AGENTS.md` 和 `skills/copyapp-mac/SKILL.md`，可直接复制 [Mac 专用任务](docs/macos-support.zh-CN.md#交给-agent)。下方 iPhone 任务继续走原有 iOS 流程。
+
 <a id="从这里开始"></a>
 
 ## 从这里开始：交给 Codex 或 Claude Code

@@ -28,3 +28,4 @@ include = ["copyapp*"]
 
 [tool.setuptools.package-data]
 copyapp = ["ghidra_scripts/*.java", "ghidra_scripts/REA-LICENSE.txt"]
+"copyapp.macos" = ["collector/*.swift"]

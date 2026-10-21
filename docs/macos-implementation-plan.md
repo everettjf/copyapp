@@ -1,0 +1,132 @@
+# macOS support implementation and acceptance plan
+
+This is an implementation plan, not a claim of released macOS support. Keep the
+published iOS v0.1.2 commands, USB transports, historical cases and verification
+semantics working. Add macOS alongside iOS; do not reinterpret a Mac as an iPhone.
+
+## Architecture
+
+The current coding agent owns discovery, semantic review and independent source
+implementation. Copy APP owns cases and acceptance. ChatComputer owns the virtual
+Mac, computer input, screenshots and snapshots. A bounded Copy APP collector in
+the guest supplies exact app/process identity and structured acquisition. Do not
+launch another coding agent or ChatComputer's built-in model loop.
+
+Pin the installed ChatComputer build. Its current MCP returns text and images,
+not structured AX objects. Do not parse prose into identity assertions. The guest
+collector must supply Bundle ID, executable path/hash, process and window identity.
+Use a run-scoped request/result exchange through the existing shared folders if
+P0 verifies atomic writes and recovery. Never depend on upstream's planned shell
+API. Read neither ChatComputer credentials nor guest pairing secrets.
+
+macOS cases use schema version 2 and explicit `platform: macos` and execution
+environment. iOS v1 cases retain their existing validators. A static package index
+does not prove installation, launch, UI behavior or binary runtime provenance.
+Every new case kind needs a semantic validator; unknown Mac kinds must fail.
+
+## Scope
+
+First acceptance environment: Apple Silicon macOS 27 host and macOS 27 guest,
+ChatComputer v0.9.11 (record actual version and hash). Native arm64 AppKit/SwiftUI
+apps; universal bundles retain full-file and selected-slice hashes. Begin with
+independent `.app`, ZIP and DMG distribution. No initial promise for Intel/Rosetta,
+encrypted store packages, drivers, system extensions, hardware-dependent or
+account/payment workflows. Electron behavior compatibility is a later named test.
+
+UI/static/file evidence produces a **behavior analysis** report, never an
+unsupported deep function report. Optional Frida/Ghidra/Hopper evidence is a
+separate capability and cannot be invented to satisfy a gate.
+
+## Work and evidence ledger
+
+| Stage | Required work | Acceptance evidence | State |
+| --- | --- | --- | --- |
+| P0 | Pin ChatComputer; ready desktop, input lease, screenshots, coordinates; file exchange; exact identity; snapshot recovery | Live probe cases, including failures; restart must not accept stale results | In progress |
+| P1 | `copyapp mac` CLI; target/environment identity; versioned cases and validators; old iOS compatibility | Positive cases and negative tampering/cross-platform tests; baseline and final iOS suite | In progress |
+| P2 | Guest collector; app/package/data acquisition; AX/window observations; bounded playbooks | Same-name app rejection, ambiguous element rejection, output and persistence assertions | In progress |
+| P3 | Discovery, reviewed report/specification, coverage plan, agent task, host build, guest install, paired check, visual review, delivery | End-to-end source-linked cases with explicit scope and remaining differences | In progress |
+| P4 | Control takeover, interrupted action, reconnect, snapshot restore, time and data resets | No blind action retries; new run/session identity; rejected old results | Pending |
+| P5 | Agent-first bilingual docs, wheel resources, examples and clean installation | Installed-wheel checks; two sample applications and one physical Mac recheck | In progress |
+| M2 | Optional runtime/native function investigation | Debug fixture first, then named third-party build; report actual entitlement limits | Pending |
+
+First-stage effort estimate is 13–20 developer days, revised after P0. This is not
+a deadline or a reason to reduce scope. No tag/release until acceptance completes.
+
+## Required evidence model
+
+### Development evidence recorded on 2026-10-21
+
+- Branch: `codex/macos-chatcomputer-support`.
+- Existing iOS baseline: 346 tests passed before modifications.
+- Separate `copyapp mac` commands now cover doctor, inspect, build/prepare-collector,
+  connect, observe, acquire, playbook, report and rebuild-plan, with versioned
+  `mac_*` semantic validators. These are development commands, not completed
+  end-to-end reconstruction or a new release.
+- Local TextEdit package snapshot passed its byte/identity verifier after a
+  protected-system-flag copying failure was retained and the byte-copy path fixed.
+- The bounded Swift collector compiled and passed code-signature verification,
+  self-test and a **local filesystem** request/response probe. This is not guest
+  acceptance. The local probe does not request Accessibility or screen permissions.
+- Local integration tests exercise package export and exact source linking, followed
+  by simulated UI replay, output assertions, reviewed report/specification and a
+  frozen rebuild task. Rehashed input/script, citation, function-analysis and coverage
+  tampering is rejected. Lost input replies are not retried. No simulated desktop
+  or local helper test counts as live guest behavior evidence.
+- Full regression: 369 tests passed, including the existing iOS tests. The installed
+  wheel check passed with the collector source and new Mac CLI entry points;
+  development wheel SHA-256:
+  `a19a73d2350c87f606a9e8e10b7a55a38d2b590db1565bbc70b0e8aea7a699d4`.
+  Logs: `/tmp/copyapp-dual-platform-report-20261021.log` and
+  `/tmp/copyapp-macos-report-wheel-20261021.log`. This is a local development wheel,
+  not a published v0.1.2 artifact or a new release.
+- ChatComputer's guest OS and control Agent have been installed. GUI setup is at
+  the guest permissions stage, awaiting the user's response to the permission
+  request. No guest or host permission grant is inferred from continued coding.
+  The earlier transport probe correctly records `needs_setup`. Live guest identity,
+  UI replay, snapshot restore, paired reconstruction and physical-Mac gates remain open.
+- The repository Mac skill and bilingual entry prompts route Mac targets directly
+  to this development workflow. Existing iOS skills and historical v1 validation
+  retain their scope. ZIP/DMG, sandbox capture, discovery acceptance, build/install,
+  paired delivery and actual sample/physical-Mac evidence remain unfinished.
+
+Record host/guest OS builds, VM registration and snapshot identity, tool versions,
+app Bundle ID/version/path, architecture, signing facts and full package inventory.
+Runtime observations additionally bind PID/start time and executable hash. Record
+script hash, requests, outcomes, timestamps, screenshots, structured AX observations
+and output-file hashes. Keep observations, inference and unknowns separate.
+
+Snapshots do not reset host shared folders or network services. Give every run its
+own workspace, request IDs and results; re-establish the session after restoring.
+Record both host and guest clocks. Persistence assertions run through actual quit
+and relaunch within the flow. Pin language, appearance, scaling, window placement,
+input data and network expectations before comparing original and rebuilt runs.
+
+Do not overwrite installed apps or unrelated user data. Install rebuilds under a
+separate Bundle ID. Preserve signed originals and separately identify any re-signed
+or instrumented copies. No blanket SIP changes or credential copying.
+
+## Release acceptance
+
+1. Two sample apps: one owned fixture and one actual desktop app. At least three
+   selected flows per app, three rounds each: 18 original/rebuild comparisons.
+2. Cover menus, shortcuts, file dialogs, multiple windows, output correctness and
+   quit/relaunch persistence. Validate every selected behavior, not screenshots alone.
+3. Exercise takeover, connection interruption and snapshot recovery. Never repeat
+   an action solely because its response was lost; inspect state first.
+4. Tampered executable, script, screenshot, output, source link, target identity or
+   incomplete result must be rejected. Same display name is not app identity.
+5. Review all required screenshot pairs with explicit judgments. Image metrics do
+   not certify visual equivalence; masks are declared before acceptance.
+6. Freeze the known-capability denominator before implementation. Keep target,
+   verified known coverage and selected-flow pass rate separate. Disclose unknowns.
+7. At least one sample's selected flows pass on a physical Mac. Keep VM and physical
+   results separate. Never describe a VM check as physical-Mac acceptance.
+8. Existing iOS suite and installed wheel pass. Changes to iOS device execution
+   require the affected named-device recheck, with failed evidence preserved.
+
+## Sources checked during planning
+
+- [ChatComputer command vocabulary](https://github.com/chatcomputer/chatcomputer/blob/c774a4ceadc7dc17a589a1de8f5a40fe36c2a649/Packages/ChatComputerKit/Sources/ComputerControl/ControlCommand.swift)
+- [MCP response contract](https://github.com/chatcomputer/chatcomputer/blob/c774a4ceadc7dc17a589a1de8f5a40fe36c2a649/Packages/ChatComputerKit/Sources/ComputerControl/MCPSession.swift)
+- [Snapshot implementation](https://github.com/chatcomputer/chatcomputer/blob/c774a4ceadc7dc17a589a1de8f5a40fe36c2a649/Packages/ChatComputerKit/Sources/VMKit/SnapshotStore.swift)
+- [Current upstream status and limitations](https://github.com/chatcomputer/chatcomputer/blob/c774a4ceadc7dc17a589a1de8f5a40fe36c2a649/docs/STATUS.md)

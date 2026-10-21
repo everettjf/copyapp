@@ -1,5 +1,13 @@
 # Copy APP agent entry
 
+macOS is being added alongside the existing iOS workflows. For a Mac App target,
+read `skills/copyapp-mac/SKILL.md`, `docs/macos-support.md` and `docs/macos-implementation-plan.md`; use the separate
+`copyapp mac` commands and explicit ChatComputer environment identity. Do not route
+a Mac target through iOS-only skills or invent a USB UDID. Preserve iOS commands,
+v1 historical evidence and their validators. The current Mac implementation is
+development work: do not claim complete behavior reconstruction, VM acceptance,
+physical-Mac compatibility or deep function analysis from foundation tests alone.
+
 This repository implements two user-facing jobs on jailbroken iPhones:
 
 1. **Analyze an installed app.** Identify the exact USB device and Bundle ID, collect the app package, UI and sandbox evidence, decrypt encrypted Mach-O files when the verified device path supports it, inspect selected functions, run targeted UI/Frida experiments, and deliver a cited deep report plus `feature-spec.json`.
