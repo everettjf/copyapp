@@ -159,7 +159,15 @@ def report_markdown(review: dict, citations: list) -> str:
     return "\n".join(lines)
 
 
-def report(flows: dict, review_path: Path, output: Path) -> Path:
+def report(flows: dict, review_path: Path, output: Path, *, discovery: Path = None) -> Path:
+    if discovery is not None:
+        from copyapp.macos.discovery import accepted_flows
+        if flows:
+            raise ValueError("choose explicit flows or an accepted discovery case")
+        discovery = discovery.resolve(strict=True)
+        if output.resolve() == discovery or discovery in output.resolve().parents:
+            raise ValueError("report must be outside its source discovery")
+        flows = accepted_flows(discovery)
     if not isinstance(flows, dict) or not 1 <= len(flows) <= 12:
         raise ValueError("supply one to twelve named Mac flow cases")
     roots, sources = {}, {}
@@ -175,8 +183,16 @@ def report(flows: dict, review_path: Path, output: Path) -> Path:
         raise ValueError("report flows must use the same package and registered environment")
     review = json.loads(review_path.read_text())
     citations = validate_review(review, sources, roots)
+    link = None
+    if discovery is not None:
+        from copyapp.macos.discovery import report_link
+        link = report_link(discovery, sources, review)
     case = Case(output, "mac_behavior_report")
     try:
+        if discovery is not None:
+            shutil.copytree(discovery, case.root / "discovery", symlinks=True)
+            case.record("discovery/manifest.json")
+            case.add("discovery-link.json", link)
         for flow_id, root in roots.items():
             shutil.copytree(root, case.root / "evidence" / flow_id, symlinks=True)
             case.record("evidence/" + flow_id + "/manifest.json")
@@ -218,6 +234,12 @@ def verify_report(root: Path, manifest: dict, names: set) -> bool:
         return False
     review = read(root, "review.json")
     citations = validate_review(review, sources, roots)
+    discovery_fields = {"discovery/manifest.json", "discovery-link.json"}
+    if discovery_fields & names or (root / "discovery").exists() or (root / "discovery-link.json").exists():
+        from copyapp.macos.discovery import report_link
+        if (not discovery_fields.issubset(names) or
+                read(root, "discovery-link.json") != report_link(root / "discovery", sources, review)):
+            return False
     return (read(root, "citations.json") == citations and
             read(root, "feature-spec.json") == specification(review, sources) and
             (root / "report.md").read_text() == report_markdown(review, citations))

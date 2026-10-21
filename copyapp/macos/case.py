@@ -10,7 +10,7 @@ KINDS = frozenset({"mac_doctor", "mac_app_index", "mac_collector_build",
                    "mac_collector_deployment", "mac_environment", "mac_observation", "mac_app_acquisition",
                    "mac_playbook", "mac_behavior_report", "mac_rebuild_plan", "mac_build", "mac_install",
                    "mac_check_plan", "mac_rebuild_check", "mac_visual_review", "mac_delivery",
-                   "mac_share_request", "mac_share_result", "mac_distribution"})
+                   "mac_share_request", "mac_share_result", "mac_distribution", "mac_discovery"})
 
 
 def now() -> str:
@@ -162,6 +162,9 @@ def verify_mac_case(root: Path) -> bool:
         if manifest["kind"] == "mac_distribution":
             from copyapp.macos.distribution import validate_import
             return validate_import(root, manifest, names)
+        if manifest["kind"] == "mac_discovery":
+            from copyapp.macos.discovery import validate_discovery
+            return validate_discovery(root, manifest, names)
         from copyapp.macos.package import validate_index
         return validate_index(root, manifest, names)
     except (OSError, ValueError, KeyError, TypeError, AttributeError):

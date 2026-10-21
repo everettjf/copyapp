@@ -36,6 +36,13 @@ IPAs, UIKit observations or iOS-only skills for a Mac target.
 
 ## Selected behavior analysis
 
+For a request without preselected flows, first follow
+[Mac discovery](../../docs/macos-discovery.md): observe and replay three to twelve
+distinct representative flows, review known/deferred/blocked capabilities and
+unknowns, then run `mac discover-check`. Read its `TASK.md` and continue semantic
+review yourself; pass the accepted case to `mac report --discovery`. This gate
+accepts evidence inputs and does not finish the report or prove whole-App coverage.
+
 Observe the requested behavior and write bounded schema-v2 Mac playbooks. Use
 `mac playbook` against the verified acquisition. Include explicit text, output-file
 or stopped-process assertions; screenshots alone cannot support a behavior report.

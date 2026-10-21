@@ -61,7 +61,7 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
 - Separate `copyapp mac` commands now cover doctor, inspect, build/prepare-collector,
   connect, observe, acquire, playbook, report, rebuild-plan, build-app, install,
   check-plan, rebuild-check, visual-review, delivery, share-probe,
-  share-probe-check and import-app, with versioned
+  share-probe-check, import-app and discover-check, with versioned
   `mac_*` semantic validators. These are development commands, not completed
   end-to-end reconstruction or a new release.
 - Local TextEdit package snapshot passed its byte/identity verifier after a
@@ -137,9 +137,23 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
   Logs: `/tmp/copyapp-dual-platform-distribution-20261021.log` and
   `/tmp/copyapp-macos-distribution-wheel-20261021.log`. This is not a release or
   a new iPhone device result; no iOS device execution path changed in this stage.
+- Discovery development accepts three to twelve distinct completed replay cases,
+  reviewed selection reasons and a known/deferred/blocked inventory. Its handoff
+  is `ready_for_behavior_review`, not a completed report. `mac report --discovery`
+  binds the exact accepted replay manifests and retains discovered capability IDs;
+  interpretation and unresolved unknowns still require agent review. Duplicate
+  effective scripts, wrong script hashes, fabricated counts and dropped inventory
+  are rejected in the existing simulated-desktop integration test. This adds no
+  live sample-app acceptance. See [the discovery guide](macos-discovery.md).
+- Discovery regression: all 384 tests passed, including expanded simulated flow
+  acceptance/report checks and the unchanged iOS suite. The installed wheel passed
+  with `discover-check`; development SHA-256:
+  `35989922638368abc290d5e68405ca47abe2aea66216948f4f4e695b93857bc9`.
+  Logs: `/tmp/copyapp-dual-platform-discovery-20261021.log` and
+  `/tmp/copyapp-macos-discovery-wheel-20261021.log`.
 - The repository Mac skill and bilingual entry prompts route Mac targets directly
   to this development workflow. Existing iOS skills and historical v1 validation
-  retain their scope. Sandbox capture, discovery acceptance, live guest install/launch,
+  retain their scope. Sandbox capture, live discovery acceptance, live guest install/launch,
   live paired delivery and actual sample/physical-Mac evidence remain unfinished.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,

@@ -183,6 +183,8 @@ class NativeCollectorTests(unittest.TestCase):
                 review_path.write_bytes(canonical(review))
                 reviewed = report({flow_id: replay}, review_path, root / "report")
                 self.assertTrue(verify_case(reviewed))
+                from macos_discovery_checks import exercise_discovery
+                exercise_discovery(self, root, acquisition, registered, source_index, target, replay, review)
                 plan = rebuild_plan(reviewed, "dev.copyapp.Clone", str(root / "guest-apps/Independent.app"),
                                     root / "clone-project", ["editing"], root / "plan")
                 self.assertTrue(verify_case(plan))

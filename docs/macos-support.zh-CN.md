@@ -16,6 +16,10 @@ ZIP／DMG 输入使用 `mac import-app`；DMG 在 macOS 27 上以只读、禁止
 并在 `verify` 时重新比对。加密或需要交互接受许可的镜像会被拒绝。以上不等于 App 已安装、
 已运行或已完成界面验收，原始文件仍留在被 Git 忽略的本地案例中。
 
+用户没有预选流程时，先按[代表流程发现](macos-discovery.md)观察、重放并审阅 3–12 个不同流程，
+使用 `mac discover-check` 保存选择理由、已知能力和未知范围。再用 `mac report --discovery`
+生成正式行为报告，保留已验收的流程来源和已发现的能力 ID。发现阶段只证明输入准备就绪。
+
 ## 交给 Agent
 
 在 Codex 或 Claude Code 中打开这个开发分支，把下面的任务复制进去：

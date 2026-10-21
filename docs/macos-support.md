@@ -17,6 +17,11 @@ For a pre-control shared-file probe or ZIP/DMG input, read
 [shared files and distribution import](macos-acquisition.md). These commands keep
 their byte/structure scope separate from runtime identity and UI acceptance.
 
+For requests without preselected flows, follow
+[representative flow discovery](macos-discovery.md) before writing the formal
+report. `mac discover-check` accepts reviewed replay inputs; `mac report --discovery`
+retains their source identity and discovered known-capability IDs.
+
 ## Start with an agent
 
 Open this development checkout in Codex or Claude Code and paste:

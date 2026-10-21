@@ -3,6 +3,12 @@
 This is the input contract for `copyapp mac report` on the development branch.
 It does not change iOS report schemas or claim native function analysis.
 
+When the user has no preselected flows, first follow
+[representative discovery](macos-discovery.md). Pass the verified discovery case
+with `--discovery` instead of `--flow`; the report binds its exact replay evidence
+and retains the discovered known-capability IDs. Discovery is input readiness,
+not the semantic review itself. Explicitly selected jobs can use `--flow` directly.
+
 First collect and verify one to twelve `mac playbook` cases. Each case must start
 with launch, finish successfully and contain at least one explicit `expect_text`,
 `expect_file` or `expect_stopped` assertion. All report flows must use the same

@@ -47,7 +47,9 @@ def configure(parser: argparse.ArgumentParser):
     replay.add_argument("--timeout", type=float, default=30)
     replay.add_argument("--out", required=True, type=Path)
     report = sub.add_parser("report", help="bind a reviewed behavior specification to verified Mac flow evidence")
-    report.add_argument("--flow", action="append", required=True, help="SCENARIO_ID=MAC_PLAYBOOK_CASE")
+    report_source = report.add_mutually_exclusive_group(required=True)
+    report_source.add_argument("--flow", action="append", help="SCENARIO_ID=MAC_PLAYBOOK_CASE")
+    report_source.add_argument("--discovery", type=Path, help="accepted Mac discovery case; use its exact replayed flows")
     report.add_argument("--review", required=True, type=Path)
     report.add_argument("--out", required=True, type=Path)
     plan = sub.add_parser("rebuild-plan", help="freeze known scope and prepare a current-agent implementation task")
@@ -102,9 +104,27 @@ def configure(parser: argparse.ArgumentParser):
     imported.add_argument("--source", required=True, type=Path)
     imported.add_argument("--app-relative", help="explicit .app path within an ambiguous distribution")
     imported.add_argument("--out", required=True, type=Path)
+    discovery = sub.add_parser("discover-check", help="accept three to twelve reviewed representative Mac flow replays")
+    discovery.add_argument("--flow", action="append", required=True, help="SCENARIO_ID=MAC_PLAYBOOK_CASE")
+    discovery.add_argument("--review", required=True, type=Path)
+    discovery.add_argument("--out", required=True, type=Path)
+
+
+def named_flows(items: list) -> dict:
+    flows = {}
+    for item in items or []:
+        key, separator, value = item.partition("=")
+        if not separator or not value or key in flows:
+            raise ValueError("use each SCENARIO_ID=MAC_PLAYBOOK_CASE once")
+        flows[key] = Path(value)
+    return flows
 
 
 def run(args) -> int:
+    if args.mac_command == "discover-check":
+        from copyapp.macos.discovery import discover_check
+        print(discover_check(named_flows(args.flow), args.review, args.out))
+        return 0
     if args.mac_command == "import-app":
         from copyapp.macos.distribution import import_app
         print(import_app(args.source, args.out, args.app_relative))
@@ -147,13 +167,7 @@ def run(args) -> int:
         return 0
     if args.mac_command == "report":
         from copyapp.macos.report import report
-        flows = {}
-        for item in args.flow:
-            key, separator, value = item.partition("=")
-            if not separator or not value or key in flows:
-                raise ValueError("use each SCENARIO_ID=MAC_PLAYBOOK_CASE once")
-            flows[key] = Path(value)
-        print(report(flows, args.review, args.out))
+        print(report(named_flows(args.flow), args.review, args.out, discovery=args.discovery))
         return 0
     if args.mac_command == "rebuild-plan":
         from copyapp.macos.rebuild import rebuild_plan
