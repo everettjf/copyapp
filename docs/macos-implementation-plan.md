@@ -492,15 +492,29 @@ Earlier TextEdit static distribution probes remain separate evidence.
   Together with Stocks this supplies 18 selected behavior comparisons across the
   two samples, not accepted sample delivery or verified capability coverage.
   The fixture check contains 285 full screenshot pairs (457 exact unique complete
-  PNG hashes); 26 exact unique screenshots have been inspected so far. This indexed
-  subset is not a complete fixture visual review or delivery. No full acceptance
-  is claimed. Selected Unicode editor, reopened second document, both inspectors
-  and wrapping Off/relaunch/Reset screens agree in the inspected first-round
-  states. Native save panels retain default-directory, extension-display and
-  transient focus/button-state differences. App names, run-scoped paths and the
-  desktop clock also differ; no masks were declared. Preserve these differences
-  and review every remaining full pair before attempting delivery. Stocks retains
-  its complete adverse 195-pair review, independently of this partial fixture review.
+  PNG hashes). All 457 exact unique full images have now been opened, and
+  `visual-review-2` verifies all 285 explicit pair judgments and nine equivalent
+  declared starting states. Six pairs are major differences: each round's Window
+  menu (`09/after`, `10/before`) omits the original's disabled Enter Full Screen
+  and six tab rows. The remaining 279 retain minor differences in App identity,
+  clock, pointer/caret, Dock state, native-panel history/extension/focus and
+  adaptive Go To geometry. Later panel geometry converges; menu omissions repeat
+  in all three rounds. Text, counts, inspector geometry and saved wrapping state
+  agree within the selected strings/empty-document scope. Rebuilt relaunch
+  sometimes briefly omits the menu title before later rendering. No masks were
+  declared and no accepted fixture delivery exists. `rebuild-plan-3` and
+  `rebuilt-build-4` preserve a separate fresh-path attempt that attaches the
+  complete menu before activation. `rebuilt-install-3`, `rebuilt-acquisition-3`
+  and `menu-recheck-build2-1` verify the new build at `CopyAppEditor3.app`;
+  executable SHA-256 is
+  `673de8ce4127dc51a4c1b200899817d140abedbd17f5a0228a440c5f0e0b17f6`.
+  The targeted 15-step guest replay passes blank/Unicode editing, two documents,
+  both inspectors, Window selection and normal exit. The opened full menu screen
+  restores the missing rows; all 27 direct AX menu rows (including alternates)
+  match the original's titles, selectors, enabled states and frames. This is a
+  targeted regression result, not replacement acceptance. `check-plan-3` freezes
+  the same measured conditions without masks; fresh `check-3` is running. Stocks
+  independently retains its complete adverse 195-pair review.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.

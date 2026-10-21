@@ -115,8 +115,8 @@ final class EditorWorkspace: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.regular)
         installMenus()
+        NSApp.setActivationPolicy(.regular)
         addDocument("")
         NSApp.activate(ignoringOtherApps: true)
     }
@@ -130,7 +130,6 @@ final class EditorWorkspace: NSObject, NSApplicationDelegate {
 
     func installMenus() {
         let bar = NSMenu()
-        NSApp.mainMenu = bar
         func group(_ title: String) -> NSMenu {
             let heading = NSMenuItem(title: title, action: nil, keyEquivalent: "")
             let menu = NSMenu(title: title)
@@ -171,6 +170,9 @@ final class EditorWorkspace: NSObject, NSApplicationDelegate {
         front.target = NSApp
         windows.addItem(front)
         NSApp.windowsMenu = windows
+        // Attach the completed menu tree so AppKit can add its standard window
+        // commands before the application becomes active.
+        NSApp.mainMenu = bar
     }
 
     @objc func newDocument(_ sender: Any?) { addDocument("") }
