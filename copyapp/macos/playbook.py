@@ -184,6 +184,21 @@ def capture(case: Case, prefix: str, computer, collector, params: dict, source: 
             "pid": pid, "tree": observed}
 
 
+def wait_for_stopped(case: Case, prefix: str, collector, params: dict) -> dict:
+    # A quit reply acknowledges the key, not process termination. Stocks has
+    # remained inactive for more than five seconds during graceful shutdown.
+    deadline, attempt = time.monotonic() + 30, 0
+    while True:
+        stopped = collector.call("app_identity", params)
+        if all(row.get("terminated") is True for row in stopped["response"]["result"]["processes"]):
+            return stopped
+        attempt += 1
+        case.add(prefix + "/poll-" + str(attempt) + ".json", stopped)
+        if time.monotonic() >= deadline:
+            raise ValueError("App did not stop within the bounded wait")
+        time.sleep(0.1)
+
+
 def run_playbook(acquisition: Path, script_path: Path, output: Path, timeout: float = 30,
                  expected_ui=None, starting_window=None) -> Path:
     from copyapp.verify import verify_case
@@ -259,16 +274,7 @@ def run_playbook(acquisition: Path, script_path: Path, output: Path, timeout: fl
                             from copyapp.macos.ui import check_window
                             check_window(observed["tree"], starting_window)
                     elif action == "expect_stopped":
-                        deadline, attempt = time.monotonic() + 5, 0
-                        while True:
-                            stopped = collector.call("app_identity", params)
-                            if all(row.get("terminated") is True for row in stopped["response"]["result"]["processes"]):
-                                break
-                            attempt += 1
-                            case.add(prefix + "/poll-" + str(attempt) + ".json", stopped)
-                            if time.monotonic() >= deadline:
-                                raise ValueError("App did not stop within the bounded wait")
-                            time.sleep(0.1)
+                        stopped = wait_for_stopped(case, prefix, collector, params)
                         case.add(prefix + "/stopped.json", stopped)
                         case.manifest["behavior_assertions"] += 1
                     elif action == "expect_file":

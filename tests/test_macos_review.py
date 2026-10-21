@@ -3,10 +3,11 @@ import json
 import os
 import tempfile
 import unittest
+from unittest.mock import Mock, patch
 from pathlib import Path
 
 from copyapp.macos.case import canonical
-from copyapp.macos.playbook import output_bytes, select_node, validate_script
+from copyapp.macos.playbook import output_bytes, select_node, validate_script, wait_for_stopped
 from copyapp.macos.report import validate_review
 from copyapp.macos.ui import check_ui, validate_ui
 
@@ -51,6 +52,28 @@ class MacReviewContractTests(unittest.TestCase):
 
 
 class MacReplayInputTests(unittest.TestCase):
+    def test_graceful_shutdown_can_exceed_five_seconds_without_another_input(self):
+        alive = {"response": {"result": {"processes": [{"active": False, "terminated": False}]}}}
+        stopped = {"response": {"result": {"processes": []}}}
+        collector, case = Mock(), Mock()
+        collector.call.side_effect = [alive, alive, stopped]
+        params = {"bundle_id": "example.original", "binary_sha256": "a" * 64}
+        with patch("copyapp.macos.playbook.time.monotonic", side_effect=[0, 6, 12]), \
+                patch("copyapp.macos.playbook.time.sleep"):
+            self.assertEqual(wait_for_stopped(case, "steps/11", collector, params), stopped)
+        self.assertEqual([call.args for call in collector.call.call_args_list], [("app_identity", params)] * 3)
+        self.assertEqual(case.add.call_count, 2)
+
+    def test_inactive_process_is_not_accepted_as_stopped_and_timeout_retains_poll(self):
+        alive = {"response": {"result": {"processes": [{"active": False, "terminated": False}]}}}
+        collector, case = Mock(), Mock()
+        collector.call.return_value = alive
+        with patch("copyapp.macos.playbook.time.monotonic", side_effect=[0, 31]), \
+                self.assertRaisesRegex(ValueError, "did not stop"):
+            wait_for_stopped(case, "steps/11", collector, {})
+        collector.call.assert_called_once_with("app_identity", {})
+        case.add.assert_called_once_with("steps/11/poll-1.json", alive)
+
     def test_actual_guest_language_list_is_retained_and_order_remains_pinned(self):
         from macos_fakes import UI
         languages = ["en", "fr", "de", "zh-Hans", "zh-Hant", "ja", "es", "it", "nl", "ko", "pt-BR", "pt-PT",

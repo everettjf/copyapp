@@ -410,6 +410,25 @@ Earlier TextEdit static distribution probes remain separate evidence.
   in `physical-host-recheck-1` under the fresh Stocks folder. It establishes no
   physical-Mac behavior. Guest work continues independently; this gate stays open.
 
+
+- Build-4 `check-2` completed five original/rebuild pairs, then stopped during the
+  second-round original watchlist flow: the quit reply succeeded, but 22 retained
+  exact-identity polls still reported the inactive process during the five-second
+  wait. `inspect-after-check2-quit-1` later verified that original process was absent.
+  This does not establish its exact exit time. `cleanup-after-check2-1` deliberately
+  removed only the leftover test list after that inspection; no uncertain input was
+  blindly repeated. The failed parent and partial visual review remain preserved.
+- `expect_stopped` now waits at most 30 seconds for exact process termination,
+  retaining read-only polls. Inactive processes still fail the assertion, and a
+  timeout sends no additional input or force quit. The new tests cover shutdown
+  beyond five seconds and a still-running timeout. Full regression: 396 tests
+  passed in 54.761s; isolated wheel passed, SHA-256
+  `afec2f3077f359214cfd9fcac311c47e6c85efe4b9067ebe1f1542e6bb71542e`.
+  Logs: `/tmp/copyapp-dual-platform-graceful-quit-20261021.log` and
+  `/tmp/copyapp-macos-graceful-quit-wheel-20261021.log`. A fresh paired attempt is
+  required; neither previous behavior success nor this timing change accepts a
+  failed check or completes the remaining visual/physical gates.
+
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.
 Runtime observations additionally bind PID/start time and executable hash. Record

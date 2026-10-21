@@ -79,6 +79,11 @@ and selected flow it runs the original, then the rebuild, using fresh session/ru
 IDs and the exact frozen scripts. Package and environment identities are checked
 again by each playbook. All runs must start after the condition plan was frozen.
 
+`expect_stopped` allows up to 30 seconds for normal process termination after a
+successful quit-key reply. It polls exact App identity read-only and retains each
+still-running observation. Inactive processes do not count as stopped; expiry
+fails the run without sending another quit or forcing termination.
+
 No input or failed run is automatically repeated. Failed/partial child cases and
 the active round/flow/side remain saved. Inspect the guest before creating a new
 attempt. Shared output directories are outside VM snapshots and use fresh run IDs.
