@@ -253,6 +253,11 @@ build/install and three rounds of paired behavior now have named guest evidence.
 All nine selected behavior comparisons passed, but the complete 195-pair screenshot
 review records major differences, including offline data/news substitutions,
 menus, hover feedback and dialog stacking. It has no accepted delivery.
+A later Stocks build retains Manage Watchlists beneath Delete confirmation and
+distinguishes Cancel/Delete styling. A verified 28-step guest regression covers
+cancel, subsequent deletion and normal exit; six full screens were inspected.
+This targeted fix does not replace the earlier complete paired review or resolve
+the remaining content/menu differences.
 
 The owned fixture now has a verified selected-behavior delivery. The editor's
 fresh three-round `check-3` passed nine selected behavior comparisons, and all

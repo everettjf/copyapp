@@ -529,6 +529,24 @@ Earlier TextEdit static distribution probes remain separate evidence.
   This source-available fixture is a workflow acceptance example, not a blind
   reconstruction benchmark or whole-App parity. Stocks independently retains
   its complete adverse 195-pair review and has no accepted delivery.
+- Stocks build 5 fixes the custom Delete confirmation stack: the selected Manage
+  Watchlists table remains underneath, with a bordered table, grouped add/remove
+  controls, blue Cancel and red destructive styling. The new executable is
+  `a53b23aafe349d4f2312f1ddbb06be4a36630e93feda1581fc2c0ae412b5c25c`.
+  `cases/macos-stocks-recheck-20261021/rebuild-plan-4`, `build-4`, `install-5` and
+  `rebuilt-acquisition-3` verify a separate `CopyAppStocks5.app` installation.
+  Initial `install-4` refused the still-running bundle and remains failed with
+  unknown-completion evidence. Exact old identity and missing new target were
+  inspected before `build4-normal-exit-1` stopped the old build normally and the
+  separate install attempt proceeded. No uncertain install was automatically
+  repeated. `modal-cancel-delete-build5-1` verifies 28 steps and nine assertions,
+  including test-list persistence, Cancel retaining the list, subsequent Delete,
+  return to AAPL and normal process exit. Six full images were opened; untruncated
+  AX snapshots retain the list after Cancel and omit it/disable remove after
+  Delete. Only active custom confirmation controls remain exposed while it is
+  shown. See `modal-build5-findings.json`. This is a targeted regression, not a
+  new complete paired review or capability delivery. Independent market/news
+  content, toolbar/menus, hover and native modal semantics remain unresolved.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.

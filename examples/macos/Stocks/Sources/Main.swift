@@ -278,11 +278,14 @@ final class StocksView: NSView, NSTextFieldDelegate {
             text(i == 0 ? "market symbols" : "watchlists on this Mac", x + 14, y + 54, 13, .semibold)
     }
     func drawDialog(_ kind: String) {
+        // Keep the selected list visible beneath its modal confirmation.
+        // Input/AX still expose only the active confirmation's controls.
+        if kind == "delete" { drawDialog("manage") }
         box(bounds, .black.withAlphaComponent(0.18))
         let width: CGFloat = kind == "manage" ? 340 : (kind == "delete" ? 260 : 330)
         let height: CGFloat = kind == "manage" ? 446 : (kind == "delete" ? 146 : 170)
         let r = NSRect(x: bounds.midX - width / 2, y: bounds.midY - height / 2, width: width, height: height)
-        box(r, .textBackgroundColor, radius: 18)
+        box(r, .textBackgroundColor, radius: kind == "delete" ? 26 : 18)
         if kind == "new" {
             text("New Watchlist", r.minX + 119, r.minY + 20, 13, .semibold)
             text("Enter a name for this watchlist.", r.minX + 78, r.minY + 49, 12)
@@ -291,27 +294,33 @@ final class StocksView: NSView, NSTextFieldDelegate {
             drawButton("Save", NSRect(x: r.minX + 244, y: r.minY + 126, width: 66, height: 24), enabled: !nameField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         } else if kind == "manage" {
             text("Manage Watchlists", r.minX + 108, r.minY + 19, 13, .semibold)
-            box(NSRect(x: r.minX + 16, y: r.minY + 72, width: 308, height: 278), .controlBackgroundColor)
+            let table = NSRect(x: r.minX + 16, y: r.minY + 72, width: 308, height: 278)
+            box(table, .controlBackgroundColor)
             for (i, list) in state.lists.enumerated() {
                 let row = NSRect(x: r.minX + 16, y: r.minY + 72 + CGFloat(i * 32), width: 308, height: 32)
                 if selectedList == list { box(row, .selectedContentBackgroundColor) }
                 text(list, row.minX + 10, row.minY + 9, 12, .regular, selectedList == list ? .white : .labelColor)
             }
-            drawButton("+", NSRect(x: r.minX + 14, y: r.minY + 354, width: 31, height: 32))
-            drawButton("−", NSRect(x: r.minX + 45, y: r.minY + 354, width: 32, height: 32), enabled: selectedList != nil)
+            NSColor.separatorColor.setStroke()
+            NSBezierPath(rect: table).stroke()
+            box(NSRect(x: r.minX + 14, y: r.minY + 354, width: 63, height: 32), NSColor.labelColor.withAlphaComponent(0.06), radius: 16)
+            text("+", r.minX + 23, r.minY + 361, 17, .regular, muted)
+            text("−", r.minX + 54, r.minY + 361, 17, .regular, selectedList != nil ? muted : .tertiaryLabelColor)
             drawButton("Done", NSRect(x: r.minX + 268, y: r.minY + 410, width: 56, height: 24))
         } else {
             text("Delete Watchlist", r.minX + 21, r.minY + 19, 13, .semibold)
             text("Are you sure you want to delete", r.minX + 21, r.minY + 48, 12)
             text("this watchlist?", r.minX + 21, r.minY + 65, 12)
-            drawButton("Cancel", NSRect(x: r.minX + 15, y: r.minY + 101, width: 112, height: 30))
-            drawButton("Delete", NSRect(x: r.minX + 133, y: r.minY + 101, width: 112, height: 30))
+            drawButton("Cancel", NSRect(x: r.minX + 16, y: r.minY + 101, width: 110, height: 28), background: .systemBlue, foreground: .white, radius: 14)
+            drawButton("Delete", NSRect(x: r.minX + 134, y: r.minY + 101, width: 110, height: 28), background: NSColor.systemRed.withAlphaComponent(0.24), foreground: .systemRed, radius: 14)
         }
     }
-    func drawButton(_ title: String, _ r: NSRect, enabled: Bool = true) {
-        box(r, NSColor.labelColor.withAlphaComponent(0.06), radius: 6)
+    func drawButton(_ title: String, _ r: NSRect, enabled: Bool = true,
+                    background: NSColor = NSColor.labelColor.withAlphaComponent(0.06),
+                    foreground: NSColor = .labelColor, radius: CGFloat = 6) {
+        box(r, background, radius: radius)
         let size = (title as NSString).size(withAttributes: [.font: NSFont.systemFont(ofSize: 12)])
-        text(title, r.midX - size.width / 2, r.midY - 7, 12, .regular, enabled ? .labelColor : .tertiaryLabelColor)
+        text(title, r.midX - size.width / 2, r.midY - 7, 12, .regular, enabled ? foreground : .tertiaryLabelColor)
     }
     func element(_ role: String, _ label: String, _ rect: NSRect, value: String? = nil,
                  identifier: String? = nil, title: String? = nil, enabled: Bool = true,
@@ -382,8 +391,8 @@ final class StocksView: NSView, NSTextFieldDelegate {
             element("AXRadioButton", "remove", NSRect(x: x + 45, y: y + 354, width: 32, height: 32), enabled: selectedList != nil, press: { [weak self] in self?.dialog = "delete"; self?.refresh() })
             element("AXButton", "Done", NSRect(x: x + 268, y: y + 410, width: 56, height: 24), press: { [weak self] in self?.closeDialog() })
         } else {
-            element("AXButton", "Cancel", NSRect(x: x + 15, y: y + 101, width: 112, height: 30), title: "Cancel", press: { [weak self] in self?.dialog = "manage"; self?.refresh() })
-            element("AXButton", "Delete", NSRect(x: x + 133, y: y + 101, width: 112, height: 30), title: "Delete", press: { [weak self] in self?.removeList() })
+            element("AXButton", "Cancel", NSRect(x: x + 16, y: y + 101, width: 110, height: 28), title: "Cancel", press: { [weak self] in self?.dialog = "manage"; self?.refresh() })
+            element("AXButton", "Delete", NSRect(x: x + 134, y: y + 101, width: 110, height: 28), title: "Delete", press: { [weak self] in self?.removeList() })
         }
         let children = Array(ax.dropFirst())
         sheet.setAccessibilityChildren(children)
