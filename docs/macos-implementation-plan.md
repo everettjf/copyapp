@@ -577,6 +577,26 @@ Earlier TextEdit static distribution probes remain separate evidence.
   against the real guest, not a simulated desktop or an unplanned network failure.
   No production transport code changed. Human takeover, other interruption
   timings, snapshot App-state restoration and physical-Mac acceptance remain open.
+- A subsequent real-guest App-state probe failed and remains preserved at
+  `cases/macos-fixture-snapshot-behavior-20261021/`. Verified `baseline-1` shows
+  unsaved Unicode text and Wrapping Off. `snapshot-take-1` returned an agent-
+  disconnected error after creating manual snapshot
+  `3BF59B3B-6B33-451E-883B-282BCD5B9303`. A separate verified inventory matches
+  the uniquely requested label, addition, current ID and ancestry; the original
+  take stays failed with unknown completion and no retry. No restore was issued.
+  After the desktop became ready, the hash-pinned collector needed explicit
+  relaunch through its verified deployment. `post-relaunch-collector-probe-1`
+  and `cases/macos-snapshot-collector-20261021/environment-3` verify the same VM,
+  guest OS and retained Accessibility grant. Verified editor acquisition/identity
+  and `post-take-ui-inspection-1` show the unchanged executable with a new PID
+  (4806 before, 364 after), blank text and Wrapping Off. Full before/after images
+  were opened. The unsaved document was not preserved; the behavior is consistent
+  with a cold restart, but the exact saved-state failure is unconfirmed.
+  `post-take-observed-cleanup-1` verifies the observed blank Off state, Reset On
+  and normal exit. See `snapshot-app-state-findings.json`. This is an adverse
+  App-state result, not successful memory restoration or a completed take case.
+  The environment is ready again. Further snapshot experiments require saved or
+  discardable test state; resolving take/resume behavior remains a release gate.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.

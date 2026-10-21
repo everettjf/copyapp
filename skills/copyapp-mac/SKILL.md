@@ -51,6 +51,10 @@ IPAs, UIKit observations or iOS-only skills for a Mac target.
   environment. Retain safety snapshots and all failed attempts. Never retry an
   uncertain action or bypass human takeover; the upstream snapshot operation has
   no atomic expected-lease condition. Recheck package and UI after fresh reconnect.
+  The named ChatComputer 0.9.11/macOS 27.0.1 App-state probe lost unsaved editor
+  text after a take despite saved memory metadata; see the recovery guide. Save
+  needed work and use discardable fixture state for further snapshot experiments.
+  A ready desktop or a retained `memoryBytes` field cannot certify App-state recovery.
 
 ## Selected behavior analysis
 

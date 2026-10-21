@@ -276,6 +276,10 @@ remaining data-acquisition checks and a physical
 Mac recheck remain open. The physical-host attempt was blocked before launch by a
 locked host. Runtime/native investigation is separate and unverified. See the ledger
 for exact case paths; keep each gate open until its own evidence passes.
+The later snapshot App-state probe failed: a take created its metadata but returned
+an agent error, and the editor subsequently had a new process and lost unsaved
+test text. The environment was recovered; running-App preservation remains a
+failed gate. Save needed work and use discardable fixture state for snapshot tests.
 
 ## Build and install an independent App
 

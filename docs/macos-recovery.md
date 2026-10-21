@@ -147,6 +147,31 @@ guest; it does not establish human-takeover behavior, an unplanned network failu
 or snapshot App-state restoration. The diagnostic harness is local evidence and
 does not alter production transport code.
 
+A later live App-state probe found a failure, retained at
+`cases/macos-fixture-snapshot-behavior-20261021/`. Its verified `baseline-1`
+contains unsaved `Alpha β` / emoji text and Wrapping Off in the independent editor.
+`snapshot-take-1` created the uniquely requested manual snapshot
+`3BF59B3B-6B33-451E-883B-282BCD5B9303`, but returned an agent-disconnected error.
+It remains a failed unknown-completion case and is rejected by `verify`; it was
+not retried or converted into a successful take. The separate verified metadata
+inventory matches its exact requested name, addition, current ID and ancestry.
+No restore was submitted.
+
+The desktop subsequently became ready. The collector needed an explicit relaunch
+through its same verified deployment; a fresh probe and `environment-3` recheck
+the same guest and retained Accessibility grant. The unchanged editor binary
+has a new PID/start time and a blank document with Wrapping Off, as shown by the
+verified acquisition, identity and `post-take-ui-inspection-1` full screen/AX.
+The unsaved test text was not preserved. These observations are consistent with
+a cold restart; the precise saved-state resume failure is unconfirmed.
+`post-take-observed-cleanup-1` asserts that observed state, resets On and exits
+normally. See `snapshot-app-state-findings.json` for exact source and image hashes.
+
+Treat preservation of running App state as a failed acceptance gate on this named
+ChatComputer/OS combination. Save needed work before snapshot operations and use
+discardable fixture state for further recovery experiments. A metadata record
+with `memoryBytes` is insufficient evidence of memory or App-state restoration.
+
 The checked upstream implementation is revision
 `c774a4ceadc7dc17a589a1de8f5a40fe36c2a649`:
 [tool arguments](https://github.com/chatcomputer/chatcomputer/blob/c774a4ceadc7dc17a589a1de8f5a40fe36c2a649/Packages/ChatComputerKit/Sources/ComputerControl/ControlCommand.swift),
