@@ -17,7 +17,7 @@ MAX_ENTRIES = 40000
 MAX_BYTES = 8 * 1024 ** 3
 
 
-def inventory(app: Path) -> list:
+def inventory(app: Path, *, exclude=()) -> list:
     root = app.resolve(strict=True)
     entries = []
     total = 0
@@ -27,6 +27,8 @@ def inventory(app: Path) -> list:
         for path in sorted(directory.iterdir()):
             info = path.lstat()
             relative = path.relative_to(root).as_posix()
+            if PurePosixPath(relative).parts[0] in exclude:
+                continue
             row = {"path": relative, "mode": stat.S_IMODE(info.st_mode)}
             if stat.S_ISLNK(info.st_mode):
                 target = os.readlink(path)

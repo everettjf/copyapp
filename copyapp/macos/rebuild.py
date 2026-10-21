@@ -28,6 +28,9 @@ def plan_record(report: Path, target: dict, capability_ids: list) -> dict:
     original_paths = {read(report / "evidence" / flow["id"], "playbook.json")["app_path"] for flow in spec["flows"]}
     if app_path in original_paths:
         raise ValueError("refusing to overwrite the original App path")
+    environment = read(report / "evidence" / spec["flows"][0]["id"] / "source/environment", "environment.json")
+    if environment.get("install_root") and str(PurePosixPath(app_path).parent) != environment["install_root"]:
+        raise ValueError("choose a new .app directly inside the registered guest install_root")
     if (not isinstance(capability_ids, list) or not capability_ids or
             any(not isinstance(value, str) for value in capability_ids) or
             len(set(capability_ids)) != len(capability_ids)):

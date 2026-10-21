@@ -59,7 +59,7 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
 - Branch: `codex/macos-chatcomputer-support`.
 - Existing iOS baseline: 346 tests passed before modifications.
 - Separate `copyapp mac` commands now cover doctor, inspect, build/prepare-collector,
-  connect, observe, acquire, playbook, report and rebuild-plan, with versioned
+  connect, observe, acquire, playbook, report, rebuild-plan, build-app and install, with versioned
   `mac_*` semantic validators. These are development commands, not completed
   end-to-end reconstruction or a new release.
 - Local TextEdit package snapshot passed its byte/identity verifier after a
@@ -72,6 +72,13 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
   frozen rebuild task. Rehashed input/script, citation, function-analysis and coverage
   tampering is rejected. Lost input replies are not retried. No simulated desktop
   or local helper test counts as live guest behavior evidence.
+- Build/install development now includes actual Swift and Xcode fixture builds,
+  code-signature checks, source snapshots and a local bounded-collector install into
+  an isolated test directory. Existing targets are refused without mutation; source,
+  log, recipe and install-receipt tampering is rejected. The test's simulated VM
+  registration does not turn this local filesystem test into a guest or physical-Mac
+  behavior result. Failed compiler, Xcode and installation diagnostics are retained
+  under ignored `cases/macos-build-install-debug*-20261021/`.
 - Full regression: 369 tests passed, including the existing iOS tests. The installed
   wheel check passed with the collector source and new Mac CLI entry points;
   development wheel SHA-256:
@@ -79,6 +86,13 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
   Logs: `/tmp/copyapp-dual-platform-report-20261021.log` and
   `/tmp/copyapp-macos-report-wheel-20261021.log`. This is a local development wheel,
   not a published v0.1.2 artifact or a new release.
+- Build/install regression: 373 tests passed, including real local Swift and Xcode
+  builds and refusal to replace an installed fixture. The isolated wheel check
+  includes `build-app` and `install`; development SHA-256:
+  `24e364561c4d0317259eae38636b160153634d3db869e12ad7ea370989a52970`.
+  Logs: `/tmp/copyapp-dual-platform-build-install-20261021.log` and
+  `/tmp/copyapp-macos-build-install-wheel-20261021.log`. No iOS device execution
+  path changed in this stage; these tests do not add a new named-device result.
 - ChatComputer's guest OS and control Agent have been installed. GUI setup is at
   the guest permissions stage, awaiting the user's response to the permission
   request. No guest or host permission grant is inferred from continued coding.
@@ -86,7 +100,7 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
   UI replay, snapshot restore, paired reconstruction and physical-Mac gates remain open.
 - The repository Mac skill and bilingual entry prompts route Mac targets directly
   to this development workflow. Existing iOS skills and historical v1 validation
-  retain their scope. ZIP/DMG, sandbox capture, discovery acceptance, build/install,
+  retain their scope. ZIP/DMG, sandbox capture, discovery acceptance, live guest install/launch,
   paired delivery and actual sample/physical-Mac evidence remain unfinished.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,

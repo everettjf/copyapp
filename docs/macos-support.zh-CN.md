@@ -125,7 +125,46 @@ expect_text、expect_file、expect_stopped 和 wait。元素必须唯一匹配�
 
 ## 尚待完成
 
-尚需完成客体实际重放验收、沙盒／数据采集、流程发现验收、独立构建和安装、成对复验、
+尚需完成客体实际重放验收、沙盒／数据采集、流程发现验收、真实样本构建和客体安装／启动、成对复验、
 完整视觉审阅及交付。验收要求两个样本 App、各三条流程、各三轮对照，
 并对一个样本做实体 Mac 复验。运行时代码分析单独验证权限边界。这些都必须以实际证据
 关闭，不能用本地协议测试代替虚拟机或真机验收。
+
+## 构建并安装独立 App
+
+重建计划中的 App 路径应位于登记环境的 `environment.json` → `install_root` 下，且为
+直接子目录。默认位置是**客体**的 `~/Applications/CopyAppRebuilds`，与原 App 分开。
+旧计划若指定了其他位置，应保留旧证据并重新生成计划。
+
+在计划固定的宿主工程目录实现源码后，选择一种构建方式：
+
+```sh
+# 已配置独立 Bundle ID 和产品名的 Xcode 工程。
+.venv/bin/copyapp mac build-app --plan cases/mac-rebuild-plan \
+  --xcode-project IndependentEditor.xcodeproj --scheme IndependentEditor \
+  --configuration Debug --out cases/mac-build
+
+# 或直接编译带 @main 入口的 Swift 文件，使用源码中的 Info.plist。
+.venv/bin/copyapp mac build-app --plan cases/mac-rebuild-plan \
+  --swift-source Main.swift --info-plist Info.plist \
+  --resources Resources --out cases/mac-build-swift
+.venv/bin/copyapp verify cases/mac-build
+.venv/bin/copyapp mac install --build cases/mac-build --out cases/mac-install
+.venv/bin/copyapp verify cases/mac-install
+```
+
+构建参数中的路径相对于宿主工程目录；多个文件重复 `--swift-source`，没有资源目录时
+不传 `--resources`。直接 Swift 构建使用 Swift 5 语言模式、`@main`、arm64 和默认 macOS
+14.0 最低版本，可选 Debug／Release 优化；最低版本用 `--deployment-target` 修改。
+Xcode 构建读取工程自己的最低版本和 entitlements，不会再替换其完成的签名。
+默认签名为 ad-hoc（`-`），需要时用 `--signing-identity` 指定稳定签名身份。
+
+构建案例保存计划、源码副本、编译器／签名工具身份、SDK 元数据、完整有界日志和带签名
+App 索引。从保存的副本编译，拒绝输入文件变化；Xcode 新建的空 workspace 元数据目录
+单独记录。只在工程顶层排除 `.git`、`.build`、`DerivedData`、`__pycache__` 和 `.DS_Store`。
+构建案例须放在源码目录之外。这证明本机构建及来源关系，不等于公证、安装或行为验收。
+
+安装使用构建来源中的准确登记环境，在新 inbox 会话暂存已验证的包，检查客体副本的签名
+和文件清单，再以禁止覆盖的原子操作创建目标目录；不会启动 App。已有文件、目录或符号
+链接都不能被替换。安装开始标记阻止中断后盲目重放，失败和原始回复会保留。结果未知时
+先观察客体和证据，不要直接重装。成功后仍需重新采集复刻版、成对重放和视觉审阅。

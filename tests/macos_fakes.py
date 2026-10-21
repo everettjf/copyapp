@@ -13,6 +13,48 @@ from copyapp.macos.case import canonical
 from copyapp.macos.chatcomputer import ChatComputer, ChatComputerError, UnknownCompletion
 
 
+def xcode_fixture(project):
+    """Tiny native Mac project used to exercise the real xcodebuild path."""
+    path = project / "Independent.xcodeproj"
+    path.mkdir()
+    (path / "project.pbxproj").write_text('''// !$*UTF8*$!
+{ archiveVersion = 1; classes = {}; objectVersion = 56; objects = {
+  A00000000000000000000001 = { isa = PBXProject;
+    buildConfigurationList = A00000000000000000000002;
+    compatibilityVersion = "Xcode 14.0"; developmentRegion = en;
+    knownRegions = (en, Base); mainGroup = A00000000000000000000003;
+    productRefGroup = A00000000000000000000004;
+    projectDirPath = ""; projectRoot = ""; targets = (A00000000000000000000005); };
+  A00000000000000000000002 = { isa = XCConfigurationList;
+    buildConfigurations = (A00000000000000000000006); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug; };
+  A00000000000000000000003 = { isa = PBXGroup;
+    children = (A00000000000000000000007, A00000000000000000000004); sourceTree = "<group>"; };
+  A00000000000000000000004 = { isa = PBXGroup; children = (A00000000000000000000008); name = Products; sourceTree = "<group>"; };
+  A00000000000000000000005 = { isa = PBXNativeTarget;
+    buildConfigurationList = A00000000000000000000009;
+    buildPhases = (A0000000000000000000000A); buildRules = (); dependencies = ();
+    name = Independent; productName = Independent; productReference = A00000000000000000000008;
+    productType = "com.apple.product-type.application"; };
+  A00000000000000000000006 = { isa = XCBuildConfiguration; name = Debug;
+    buildSettings = { SDKROOT = macosx; MACOSX_DEPLOYMENT_TARGET = 14.0; SWIFT_VERSION = 5.0; }; };
+  A00000000000000000000007 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Main.swift; sourceTree = "<group>"; };
+  A00000000000000000000008 = { isa = PBXFileReference; explicitFileType = wrapper.application;
+    includeInIndex = 0; path = Independent.app; sourceTree = BUILT_PRODUCTS_DIR; };
+  A00000000000000000000009 = { isa = XCConfigurationList;
+    buildConfigurations = (A0000000000000000000000B); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug; };
+  A0000000000000000000000A = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647;
+    files = (A0000000000000000000000C); runOnlyForDeploymentPostprocessing = 0; };
+  A0000000000000000000000B = { isa = XCBuildConfiguration; name = Debug; buildSettings = {
+    PRODUCT_NAME = Independent; PRODUCT_BUNDLE_IDENTIFIER = dev.copyapp.Clone;
+    INFOPLIST_FILE = Info.plist; CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Manual;
+    CODE_SIGNING_ALLOWED = YES; ENABLE_HARDENED_RUNTIME = NO; SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+    LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+  }; };
+  A0000000000000000000000C = { isa = PBXBuildFile; fileRef = A00000000000000000000007; };
+}; rootObject = A00000000000000000000001; }
+''')
+
+
 class Desktop:
     def __init__(self, shared, registered, source, target, *, lose_type_reply=False):
         self.root = shared.resolve()

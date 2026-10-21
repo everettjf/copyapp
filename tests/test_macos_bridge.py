@@ -67,8 +67,10 @@ class BridgeTests(unittest.TestCase):
     def test_timeout_preserves_request_and_does_not_reissue(self):
         with tempfile.TemporaryDirectory() as folder:
             with Collector(Path(folder), "a" * 64, timeout=0.1) as client:
-                with self.assertRaises(UnknownCompletion):
+                with self.assertRaises(UnknownCompletion) as caught:
                     client.call("health")
+                self.assertEqual(caught.exception.collector_evidence["request"]["method"], "health")
+                self.assertIsNone(caught.exception.collector_evidence["response"])
                 self.assertEqual(len(list(client.requests.glob("*.json"))), 1)
                 with self.assertRaises(RuntimeError):
                     client.call("health")
@@ -101,7 +103,7 @@ class NativeCollectorTests(unittest.TestCase):
         from copyapp.macos.observation import observe_app
         from copyapp.macos.acquire import acquire_app
         with tempfile.TemporaryDirectory() as folder:
-            root = Path(folder)
+            root = Path(folder).resolve()
             app = build_collector(root / "build")
             deployment = prepare_collector(root / "build", root / "deployment")
             self.assertTrue(verify_case(deployment))
@@ -124,7 +126,7 @@ class NativeCollectorTests(unittest.TestCase):
                 "CFBundleIdentifier": "app.chatcomputer.ChatComputer",
                 "CFBundleVersion": "1", "CFBundleShortVersionString": "0.9.11"}))
             process = subprocess.Popen([str(app / "Contents/MacOS/CopyAppMacCollector"),
-                                        "--shared-root", str(shared)],
+                                        "--shared-root", str(shared), "--install-root", str(root / "guest-apps")],
                                        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
             try:
                 environment = register_environment(vm, root / "build", root / "environment",
@@ -179,7 +181,7 @@ class NativeCollectorTests(unittest.TestCase):
                 review_path.write_bytes(canonical(review))
                 reviewed = report({flow_id: replay}, review_path, root / "report")
                 self.assertTrue(verify_case(reviewed))
-                plan = rebuild_plan(reviewed, "dev.copyapp.Clone", "/Applications/Independent.app",
+                plan = rebuild_plan(reviewed, "dev.copyapp.Clone", str(root / "guest-apps/Independent.app"),
                                     root / "clone-project", ["editing"], root / "plan")
                 self.assertTrue(verify_case(plan))
                 frozen = json.loads((plan / "rebuild-plan.json").read_text())
@@ -198,6 +200,9 @@ class NativeCollectorTests(unittest.TestCase):
                                  root / "clone-project", ["editing"], root / "same-path")
                 with self.assertRaises(ValueError):
                     rebuild_plan(reviewed, "dev.copyapp.Clone", "/Applications/Independent.app",
+                                 root / "clone-project", ["editing"], root / "outside-install-root")
+                with self.assertRaises(ValueError):
+                    rebuild_plan(reviewed, "dev.copyapp.Clone", str(root / "guest-apps/Independent.app"),
                                  root / "clone-project", ["printing"], root / "blocked-plan")
                 # Semantic gates must reject a rehashed artifact too, including
                 # fabricated coverage or modified generated replay instructions.
@@ -227,6 +232,66 @@ class NativeCollectorTests(unittest.TestCase):
                                  lambda value: value.update(function_analysis="complete"))
                 rejects_rehashed(reviewed, "citations.json",
                                  lambda value: value[0].update(sha256="0" * 64))
+                from copyapp.macos.build import build_app, recipe_for
+                project = root / "clone-project"
+                project.mkdir()
+                (project / "Main.swift").write_text('import AppKit\n@main struct Fixture { static func main() { print("independent build fixture") } }\n')
+                (project / "Info.plist").write_bytes(plistlib.dumps({
+                    "CFBundleIdentifier": "dev.copyapp.Clone", "CFBundlePackageType": "APPL",
+                    "CFBundleExecutable": "Independent", "CFBundleName": "Independent",
+                    "CFBundleShortVersionString": "1.0", "CFBundleVersion": "1"}))
+                (project / ".git").mkdir()
+                (project / ".git/config").write_text("ignored repository metadata")
+                native_build = build_app(plan, root / "native-build", recipe_for(
+                    swift_sources=["Main.swift"], info_plist="Info.plist"))
+                self.assertTrue(verify_case(native_build))
+                self.assertFalse((native_build / "source/.git").exists())
+                build_facts = json.loads((native_build / "build.json").read_text())
+                self.assertIs(build_facts["installed"], False)
+                self.assertIs(build_facts["behavior_checked"], False)
+                self.assertEqual(build_facts["app"]["bundle_id"], "dev.copyapp.Clone")
+                self.assertEqual((native_build / "source/Main.swift").read_bytes(), (project / "Main.swift").read_bytes())
+                rejects_rehashed(native_build, "build.json", lambda value: value.update(installed=True))
+                rejects_rehashed(native_build, "build-log.json", lambda value: value[-1].update(returncode=1))
+                rejects_rehashed(native_build, "recipe.json", lambda value: value.update(swift_sources=["Other.swift"]))
+                from copyapp.macos.install import install_app
+                installed = install_app(native_build, root / "installed", timeout=10)
+                self.assertTrue(verify_case(installed))
+                receipt = json.loads((installed / "install.json").read_text())
+                self.assertIs(receipt["launch_verified"], False)
+                self.assertIs(receipt["behavior_checked"], False)
+                installed_binary = root / "guest-apps/Independent.app/Contents/MacOS/Independent"
+                installed_hash = hashlib.sha256(installed_binary.read_bytes()).hexdigest()
+                self.assertEqual(installed_hash, build_facts["app"]["binary_sha256"])
+                rejects_rehashed(installed, "install.json", lambda value: value.update(launch_verified=True))
+                rejects_rehashed(installed, "install-request.json", lambda value: value.update(app_path="/Applications/Other.app"))
+                # An explicit second request is refused without modifying the
+                # existing App. Neither CLI nor helper treats it as a reinstall.
+                with self.assertRaises(UnknownCompletion):
+                    install_app(native_build, root / "duplicate-install", timeout=10)
+                self.assertEqual(hashlib.sha256(installed_binary.read_bytes()).hexdigest(), installed_hash)
+                self.assertFalse(verify_case(root / "duplicate-install"))
+                rejected = json.loads((root / "duplicate-install/failed-collector-request.json").read_text())
+                self.assertEqual(rejected["request"]["method"], "install_app")
+                self.assertIn("Refusing to replace", rejected["response"]["error"])
+                self.assertTrue(verify_case(installed))
+                from macos_fakes import xcode_fixture
+                xcode_fixture(project)
+                xcode_built = build_app(plan, root / "xcode-build", recipe_for(
+                    xcode_project="Independent.xcodeproj", scheme="Independent"), timeout=180)
+                self.assertTrue(verify_case(xcode_built))
+                (project / "Main.swift").write_text("invalid Swift source for the failed-build evidence test\n")
+                # Later source edits cannot silently alter the saved build.
+                self.assertTrue(verify_case(native_build))
+                with self.assertRaises(RuntimeError):
+                    build_app(plan, root / "failed-native-build", recipe_for(
+                        swift_sources=["Main.swift"], info_plist="Info.plist"))
+                self.assertFalse(verify_case(root / "failed-native-build"))
+                self.assertTrue((root / "failed-native-build/build-log.json").is_file())
+                self.assertNotEqual(json.loads((root / "failed-native-build/build-log.json").read_text())[-1]["returncode"], 0)
+                source_snapshot = native_build / "source/Main.swift"
+                source_snapshot.write_text("changed captured source\n")
+                self.assertFalse(verify_case(native_build))
                 bad_review = json.loads(canonical(review))
                 bad_review["flows"][0]["source_script_sha256"] = "0" * 64
                 review_path.write_bytes(canonical(bad_review))

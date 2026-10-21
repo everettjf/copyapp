@@ -70,7 +70,7 @@ at most 80 characters. The same review must cover exactly the supplied flows.
 .venv/bin/copyapp verify cases/mac-report
 .venv/bin/copyapp mac rebuild-plan --report cases/mac-report \
   --bundle dev.example.IndependentEditor \
-  --app-path /Applications/IndependentEditor.app \
+  --app-path "<GUEST_INSTALL_ROOT>/IndependentEditor.app" \
   --project rebuild/IndependentEditor --capability editing \
   --out cases/mac-rebuild-plan
 .venv/bin/copyapp verify cases/mac-rebuild-plan
@@ -80,6 +80,12 @@ The report preserves its source cases, reviewed JSON, hashed citations, readable
 `report.md` and `feature-spec.json`. Its validator checks provenance and structure;
 the reviewer owns interpretation and inventory completeness.
 
+Use the registered environment's `environment.json` → `install_root` for
+`<GUEST_INSTALL_ROOT>`; do not substitute the host's home directory. With the current
+collector it normally names the guest's `~/Applications/CopyAppRebuilds`. The guest
+installer accepts a new App directly inside that pinned root and never replaces
+an existing file, directory or symbolic link.
+
 The rebuild plan freezes the full known inventory and explicit target capability
 IDs before implementation. Deferred or blocked entries cannot be selected without
 a new review. It selects all flows linked to the target capabilities and records
@@ -87,7 +93,9 @@ omitted report flows. Generated scripts change only the App path and Bundle ID.
 If the example targets one of two known capabilities, the target is 50% of that
 known inventory; verified coverage and flow pass rate remain unavailable.
 
-Read the generated `TASK.md` to continue independent implementation. The plan does
-not create source, run a build, install an App or certify delivery. Changing a
+Read the generated `TASK.md` to continue independent implementation. Use the
+[Mac build/install commands](macos-support.md#build-and-install-an-independent-app)
+after writing the source. The plan itself does not create source, run a build,
+install an App or certify delivery. Changing a
 generated script invalidates that plan; preserve it and prepare a reviewed new
 plan when the selected behavior needs to change.

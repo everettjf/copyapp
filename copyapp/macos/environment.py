@@ -79,6 +79,8 @@ def register_environment(vm: Path, build: Path, output: Path,
                   "guest_machine_id": machine, "guest_os": guest["os_version"],
                   "collector_build_manifest_sha256": digest(case.root / "collector-build/manifest.json"),
                   "scope": "environment_registration", "app_identity_ready": False}
+        if isinstance(guest.get("install_root"), str):
+            record["install_root"] = guest["install_root"]
         case.add("environment.json", record)
         case.finish("complete", scope="environment_registration")
         return case.root
@@ -128,7 +130,8 @@ def validate_environment(root: Path, manifest: dict, names: set) -> bool:
             record.get("collector_build_manifest_sha256") == digest(build / "manifest.json") and
             record.get("collector_sha256") == metadata.get("executable_sha256") and
             record.get("guest_machine_id") == guest.get("guest_machine_id") == reply.get("guest_machine_id") and
-            record.get("guest_os") == guest.get("os_version") and verify_case(build))
+            record.get("guest_os") == guest.get("os_version") and
+            record.get("install_root") == guest.get("install_root") and verify_case(build))
 
 
 @contextmanager
@@ -152,6 +155,6 @@ def environment_session(environment: Path, timeout: float = 30):
             health = collector.call("health")
             guest = health["response"]["result"]
             if (guest.get("guest_machine_id") != record["guest_machine_id"] or
-                    guest.get("os_version") != record["guest_os"]):
+                    guest.get("os_version") != record["guest_os"] or guest.get("install_root") != record.get("install_root")):
                 raise ValueError("collector answered from another guest or OS build")
             yield computer, collector, record, health

@@ -53,12 +53,16 @@ native function semantics or whole-App completeness.
 For a rebuild request, select the known capabilities supported by the reviewed
 report and run `mac rebuild-plan` with a separate Bundle ID, separate guest `.app`
 path and host project directory. Read and execute its `TASK.md` yourself.
+Use the registered environment's `install_root` for the new App path, not a guessed
+guest username or the host's home directory.
 
 The plan freezes source links, target inventory and paired scripts. Its
 `ready_for_current_agent` status proves input readiness only. Continue with
-independent implementation, build, separate installation, paired behavior checks
+independent implementation, `mac build-app`, `mac install`, paired behavior checks
 and screenshot review using the commands actually implemented in this checkout.
-Disclose missing delivery automation and acceptance evidence. Keep target coverage,
+Build from the pinned project using an Xcode scheme or direct Swift `@main` sources;
+verify its case before installation. An unknown installation result must be inspected
+before any new attempt. Disclose missing delivery automation and acceptance evidence. Keep target coverage,
 verified known coverage and selected-flow pass rate separate. VM evidence cannot
 establish physical-Mac compatibility, and protocol tests cannot establish live UI
 acceptance.

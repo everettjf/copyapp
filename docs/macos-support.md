@@ -166,8 +166,56 @@ command proves implementation or delivery, and neither performs deep code analys
 
 ## Remaining acceptance
 
-Live guest replay, sandbox/data acquisition, discovery acceptance, independent
-build/install, paired checks, complete visual review and delivery remain open. Two sample apps,
+Live guest replay, sandbox/data acquisition, discovery acceptance, real-sample
+builds and guest install/launch, paired checks, complete visual review and delivery remain open. Two sample apps,
 three selected flows each and three rounds are required, plus one physical Mac
 recheck. Runtime/native investigation is a separate capability with entitlement
 limits. Keep these gates open until their actual saved evidence passes.
+
+## Build and install an independent App
+
+The rebuild plan's App path must be directly inside the registered guest's
+`install_root`, recorded in `environment.json`. The default collector root is the
+guest's `~/Applications/CopyAppRebuilds`; it is separate from the original App.
+Prepare a new plan if an earlier target path points elsewhere.
+
+Implement the source inside the host project directory pinned by that plan, then
+choose one build mode:
+
+```sh
+# An Xcode project already configured for the independent Bundle ID and product.
+.venv/bin/copyapp mac build-app --plan cases/mac-rebuild-plan \
+  --xcode-project IndependentEditor.xcodeproj --scheme IndependentEditor \
+  --configuration Debug --out cases/mac-build
+
+# Or direct Swift files with an @main entry point and source Info.plist.
+.venv/bin/copyapp mac build-app --plan cases/mac-rebuild-plan \
+  --swift-source Main.swift --info-plist Info.plist \
+  --resources Resources --out cases/mac-build-swift
+.venv/bin/copyapp verify cases/mac-build
+.venv/bin/copyapp mac install --build cases/mac-build --out cases/mac-install
+.venv/bin/copyapp verify cases/mac-install
+```
+
+Paths in the build recipe are project-relative. Repeat `--swift-source` for several
+files; omit `--resources` when absent. Direct Swift builds use Swift 5 language mode,
+`@main`, native arm64 and macOS 14.0 by default, with Debug or Release optimization.
+Set `--deployment-target` for a different Swift minimum; Xcode reads its deployment
+target and entitlements from the project. Signing defaults to ad-hoc (`-`); use
+`--signing-identity` when a suitable stable identity is available.
+
+The build case preserves the plan, a source snapshot, compiler/signing identity,
+SDK metadata, complete bounded command logs and the indexed signed `.app`. It
+builds from its snapshot and rejects source rewrites; Xcode's new empty workspace
+metadata directories are recorded separately. `.git`, `.build`, `DerivedData`,
+`__pycache__` and `.DS_Store` are excluded only at the project root. Keep the build
+case outside that source directory. This is source provenance and a local build,
+not notarization, installation or behavioral acceptance.
+
+Installation uses the build's original registered environment, stages the verified
+package under its fresh inbox session, verifies the guest copy's signature and
+inventories, then atomically creates the new target path without replacement. It
+does not launch the App. A start marker prevents replay of interrupted installs;
+failed attempts and replies remain recorded. After an unknown result, inspect the
+guest and saved evidence instead of rerunning installation. A successful install
+still needs an acquired rebuilt package, paired flow replay and visual review.

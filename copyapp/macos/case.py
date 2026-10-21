@@ -8,7 +8,7 @@ from pathlib import Path, PurePosixPath
 
 KINDS = frozenset({"mac_doctor", "mac_app_index", "mac_collector_build",
                    "mac_collector_deployment", "mac_environment", "mac_observation", "mac_app_acquisition",
-                   "mac_playbook", "mac_behavior_report", "mac_rebuild_plan"})
+                   "mac_playbook", "mac_behavior_report", "mac_rebuild_plan", "mac_build", "mac_install"})
 
 
 def now() -> str:
@@ -133,6 +133,12 @@ def verify_mac_case(root: Path) -> bool:
         if manifest["kind"] == "mac_rebuild_plan":
             from copyapp.macos.rebuild import validate_plan
             return validate_plan(root, manifest, names)
+        if manifest["kind"] == "mac_build":
+            from copyapp.macos.build import validate_build
+            return validate_build(root, manifest, names)
+        if manifest["kind"] == "mac_install":
+            from copyapp.macos.install import validate_install
+            return validate_install(root, manifest, names)
         from copyapp.macos.package import validate_index
         return validate_index(root, manifest, names)
     except (OSError, ValueError, KeyError, TypeError, AttributeError):

@@ -15,7 +15,7 @@ from copyapp.macos.case import canonical
 from copyapp.macos.chatcomputer import UnknownCompletion
 
 
-METHODS = frozenset({"health", "app_identity", "observe", "launch_app", "export_app", "package_identity"})
+METHODS = frozenset({"health", "app_identity", "observe", "launch_app", "export_app", "package_identity", "install_app"})
 MAX_REPLY = 8 * 1024 * 1024
 
 
@@ -37,6 +37,8 @@ class Collector:
         self.timeout = timeout
         self.session = str(uuid4())
         self.instance = None
+        self.last_request = None
+        self.last_response = None
         self.closed = False
         self.requests = self.root / "inbox/copyapp-bridge" / self.session
         self.responses = self.root / "outbox/copyapp-bridge" / self.session
@@ -54,9 +56,12 @@ class Collector:
     def call(self, method: str, params=None) -> dict:
         if self.closed:
             raise RuntimeError("Collector session is closed; establish a new session")
+        self.last_request, self.last_response = None, None
         try:
             return self._call(method, params)
-        except BaseException:
+        except BaseException as exc:
+            if self.last_request is not None:
+                exc.collector_evidence = {"request": self.last_request, "response": self.last_response}
             self.close()
             raise
 
@@ -73,6 +78,7 @@ class Collector:
             request["collector_instance"] = self.instance
         import hashlib
         request_hash = hashlib.sha256(canonical(request)).hexdigest()
+        self.last_request, self.last_response = request, None
         atomic_json(self.requests / (request_id + ".json"), request)
         path = self.responses / (request_id + ".json")
         deadline = time.monotonic() + self.timeout
@@ -86,6 +92,7 @@ class Collector:
                         path.stat().st_size > MAX_REPLY):
                     raise ValueError("invalid collector response file")
                 response = json.loads(path.read_text())
+                self.last_response = response
                 if (response.get("protocol_version") != 2 or
                         response.get("session_id") != self.session or
                         response.get("request_id") != request_id or
@@ -99,7 +106,8 @@ class Collector:
                 self.instance = instance
                 if response.get("status") != "complete":
                     if response.get("completion_unknown") is True:
-                        raise UnknownCompletion("Collector launch outcome is unknown; inspect the guest before replay")
+                        raise UnknownCompletion("Collector action outcome is unknown; inspect the guest before replay: " +
+                                                str(response.get("error", "no detail"))[:2048])
                     raise RuntimeError(str(response.get("error", "collector request failed")))
                 if not isinstance(response.get("result"), dict):
                     raise ValueError("invalid collector result")

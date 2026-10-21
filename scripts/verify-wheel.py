@@ -66,7 +66,7 @@ def main() -> None:
             raise RuntimeError("installed wheel CLI lacks expected commands")
         mac_help = run([str(cli), "mac", "--help"], cwd=root, env=env).stdout
         if not all(command in mac_help for command in ("doctor", "inspect", "build-collector", "acquire",
-                                                       "playbook", "report", "rebuild-plan")):
+                                                       "playbook", "report", "rebuild-plan", "build-app", "install")):
             raise RuntimeError("installed wheel lacks Mac entry points")
         probe = ("import copyapp, pathlib, sys; "
                  "root=pathlib.Path(copyapp.__file__).resolve().parent; "

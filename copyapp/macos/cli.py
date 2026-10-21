@@ -57,9 +57,37 @@ def configure(parser: argparse.ArgumentParser):
     plan.add_argument("--project", required=True, type=Path)
     plan.add_argument("--capability", action="append", required=True, help="explicit reviewed target capability ID")
     plan.add_argument("--out", required=True, type=Path)
+    build = sub.add_parser("build-app", help="build and sign independent Mac source pinned to a verified rebuild plan")
+    build.add_argument("--plan", required=True, type=Path)
+    build.add_argument("--swift-source", action="append", default=[], help="project-relative Swift file (repeatable)")
+    build.add_argument("--info-plist", help="project-relative bundle Info.plist for a direct Swift build")
+    build.add_argument("--resources", help="project-relative resource directory for a direct Swift build")
+    build.add_argument("--xcode-project", help="project-relative .xcodeproj; use with --scheme")
+    build.add_argument("--scheme")
+    build.add_argument("--configuration", default="Debug")
+    build.add_argument("--deployment-target", default="14.0")
+    build.add_argument("--signing-identity", default="-")
+    build.add_argument("--timeout", type=float, default=1200)
+    build.add_argument("--out", required=True, type=Path)
+    install = sub.add_parser("install", help="install a verified independent build into its registered guest; never replaces an App")
+    install.add_argument("--build", required=True, type=Path)
+    install.add_argument("--timeout", type=float, default=60)
+    install.add_argument("--out", required=True, type=Path)
 
 
 def run(args) -> int:
+    if args.mac_command == "install":
+        from copyapp.macos.install import install_app
+        print(install_app(args.build, args.out, args.timeout))
+        return 0
+    if args.mac_command == "build-app":
+        from copyapp.macos.build import build_app, recipe_for
+        recipe = recipe_for(swift_sources=args.swift_source, info_plist=args.info_plist,
+                            resources=args.resources, xcode_project=args.xcode_project, scheme=args.scheme,
+                            configuration=args.configuration, signing_identity=args.signing_identity,
+                            deployment_target=args.deployment_target)
+        print(build_app(args.plan, args.out, recipe, args.timeout))
+        return 0
     if args.mac_command == "report":
         from copyapp.macos.report import report
         flows = {}

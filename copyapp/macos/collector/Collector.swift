@@ -4,11 +4,30 @@ import ApplicationServices
 import CryptoKit
 import Foundation
 import IOKit
+import Darwin
 
 let protocolVersion = 2
 let toolVersion = "0.1.2-macos-development"
-let supportedMethods = ["health", "app_identity", "observe", "launch_app", "export_app", "package_identity"]
+let supportedMethods = ["health", "app_identity", "observe", "launch_app", "export_app", "package_identity", "install_app"]
 let fm = FileManager.default
+
+func canonicalURL(_ url: URL) -> URL {
+    // Foundation's standardizedFileURL can rewrite /private/var to /var only
+    // after a directory exists. Use POSIX realpath for stable identity before
+    // and after installation, resolving the existing parent for future paths.
+    var cursor = url
+    var suffix: [String] = []
+    while true {
+        if let resolved = realpath(cursor.path, nil) {
+            let value = String(cString: resolved)
+            free(resolved)
+            return suffix.reversed().reduce(URL(fileURLWithPath: value)) { $0.appendingPathComponent($1) }
+        }
+        if cursor.path == "/" { return url }
+        suffix.append(cursor.lastPathComponent)
+        cursor.deleteLastPathComponent()
+    }
+}
 
 struct Failure: Error, CustomStringConvertible {
     let description: String
@@ -58,7 +77,7 @@ func appURL(_ params: [String: Any]) throws -> URL {
           let bundleID = params["bundle_id"] as? String, !bundleID.isEmpty else {
         throw Failure("An absolute app_path and exact bundle_id are required")
     }
-    let url = URL(fileURLWithPath: path).resolvingSymlinksInPath().standardizedFileURL
+    let url = canonicalURL(URL(fileURLWithPath: path))
     guard url.pathExtension == "app", let bundle = Bundle(url: url), bundle.bundleIdentifier == bundleID else {
         throw Failure("App path does not identify the requested bundle")
     }
@@ -70,15 +89,15 @@ func identity(_ params: [String: Any]) throws -> [String: Any] {
     guard let bundle = Bundle(url: url), let binary = bundle.executableURL else {
         throw Failure("App executable is unavailable")
     }
-    let executable = binary.resolvingSymlinksInPath().standardizedFileURL
+    let executable = canonicalURL(binary)
     guard executable.path.hasPrefix(url.path + "/") else { throw Failure("Executable escapes app bundle") }
     let hash = try sha256(executable)
     if let expected = params["binary_sha256"] as? String, expected != hash {
         throw Failure("Installed executable hash differs from requested build")
     }
     let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundle.bundleIdentifier!).filter {
-        $0.bundleURL?.resolvingSymlinksInPath().standardizedFileURL == url &&
-        $0.executableURL?.resolvingSymlinksInPath().standardizedFileURL == executable
+        $0.bundleURL.map { canonicalURL($0).path } == url.path &&
+        $0.executableURL.map { canonicalURL($0).path } == executable.path
     }
     let processes: [[String: Any]] = running.map {
         ["pid": Int($0.processIdentifier), "started_at": $0.launchDate?.timeIntervalSince1970 as Any? ?? NSNull(),
@@ -101,7 +120,7 @@ func identity(_ params: [String: Any]) throws -> [String: Any] {
     if let front = NSWorkspace.shared.frontmostApplication {
         result["foreground"] = ["pid": Int(front.processIdentifier),
             "bundle_id": front.bundleIdentifier as Any? ?? NSNull(),
-            "app_path": front.bundleURL?.resolvingSymlinksInPath().standardizedFileURL.path as Any? ?? NSNull()]
+            "app_path": front.bundleURL.map { canonicalURL($0).path } as Any? ?? NSNull()]
     } else { result["foreground"] = NSNull() }
     return result
 }
@@ -216,7 +235,7 @@ func launchApp(_ params: [String: Any]) throws -> [String: Any] {
 }
 
 func bundleInventory(_ originalRoot: URL) throws -> [[String: Any]] {
-    let root = originalRoot.resolvingSymlinksInPath().standardizedFileURL
+    let root = canonicalURL(originalRoot)
     // Foundation may return /private/var children for a /var parent URL. Build
     // relative names while walking rather than slicing absolute path strings.
     var pending: [(URL, String)] = [(root, "")]
@@ -232,7 +251,7 @@ func bundleInventory(_ originalRoot: URL) throws -> [[String: Any]] {
                 row["kind"] = "directory"; pending.append((file, path))
             case .typeSymbolicLink:
                 let target = try fm.destinationOfSymbolicLink(atPath: file.path)
-                let resolved = file.resolvingSymlinksInPath().standardizedFileURL
+                let resolved = canonicalURL(file)
                 guard !target.hasPrefix("/"), resolved.path.hasPrefix(root.path + "/"),
                       fm.fileExists(atPath: resolved.path) else { throw Failure("Bundle symlink escapes or is dangling") }
                 row["kind"] = "symlink"; row["target"] = target
@@ -255,16 +274,7 @@ func bundleInventory(_ originalRoot: URL) throws -> [[String: Any]] {
     return rows.sorted { ($0["path"] as! String).utf8.lexicographicallyPrecedes(($1["path"] as! String).utf8) }
 }
 
-func exportApp(_ params: [String: Any], output: URL, requestID: String) throws -> [String: Any] {
-    guard params["binary_sha256"] is String else { throw Failure("Export requires the observed executable hash") }
-    let source = try appURL(params), beforeIdentity = try identity(params)
-    let before = try bundleInventory(source)
-    let staging = output.appendingPathComponent(".export-" + requestID)
-    let final = output.appendingPathComponent("exports/" + requestID)
-    guard !fm.fileExists(atPath: staging.path), !fm.fileExists(atPath: final.path) else {
-        throw Failure("An export attempt already exists; preserve it and use a new request")
-    }
-    let target = staging.appendingPathComponent(source.lastPathComponent)
+func copyBundle(_ source: URL, target: URL, entries before: [[String: Any]]) throws {
     try fm.createDirectory(at: target, withIntermediateDirectories: true)
     let directories = before.filter { $0["kind"] as? String == "directory" }.sorted {
         ($0["path"] as! String).split(separator: "/").count < ($1["path"] as! String).split(separator: "/").count
@@ -301,6 +311,19 @@ func exportApp(_ params: [String: Any], output: URL, requestID: String) throws -
         try fm.setAttributes([.posixPermissions: row["mode"] as! Int],
                              ofItemAtPath: target.appendingPathComponent(row["path"] as! String).path)
     }
+}
+
+func exportApp(_ params: [String: Any], output: URL, requestID: String) throws -> [String: Any] {
+    guard params["binary_sha256"] is String else { throw Failure("Export requires the observed executable hash") }
+    let source = try appURL(params), beforeIdentity = try identity(params)
+    let before = try bundleInventory(source)
+    let staging = output.appendingPathComponent(".export-" + requestID)
+    let final = output.appendingPathComponent("exports/" + requestID)
+    guard !fm.fileExists(atPath: staging.path), !fm.fileExists(atPath: final.path) else {
+        throw Failure("An export attempt already exists; preserve it and use a new request")
+    }
+    let target = staging.appendingPathComponent(source.lastPathComponent)
+    try copyBundle(source, target: target, entries: before)
     guard try json(before) == json(bundleInventory(target)), try json(before) == json(bundleInventory(source)) else {
         throw Failure("Bundle snapshot did not match two source inventories")
     }
@@ -317,15 +340,107 @@ func exportApp(_ params: [String: Any], output: URL, requestID: String) throws -
             "package_sha256": hash, "entry_count": before.count, "consistency": "matching_source_copy_source_inventories"]
 }
 
+func signatureCheck(_ app: URL) throws -> [String: Any] {
+    let process = Process(), output = Pipe()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/codesign")
+    process.arguments = ["--verify", "--deep", "--strict", app.path]
+    process.standardOutput = output; process.standardError = output
+    process.standardInput = FileHandle.nullDevice
+    var data = Data(), exceeded = false
+    let lock = NSLock()
+    output.fileHandleForReading.readabilityHandler = { handle in
+        let next = handle.availableData
+        lock.lock(); defer { lock.unlock() }
+        if data.count + next.count <= 65536 { data.append(next) } else { exceeded = true }
+    }
+    try process.run()
+    let deadline = ProcessInfo.processInfo.systemUptime + 15
+    while process.isRunning && ProcessInfo.processInfo.systemUptime < deadline {
+        RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+    }
+    if process.isRunning {
+        process.terminate()
+        let stopped = ProcessInfo.processInfo.systemUptime + 2
+        while process.isRunning && ProcessInfo.processInfo.systemUptime < stopped {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+        }
+        if process.isRunning { kill(process.processIdentifier, SIGKILL) }
+        process.waitUntilExit()
+        output.fileHandleForReading.readabilityHandler = nil
+        throw Failure("Code signature verification timed out")
+    }
+    process.waitUntilExit()
+    output.fileHandleForReading.readabilityHandler = nil
+    lock.lock(); defer { lock.unlock() }
+    guard process.terminationStatus == 0, !exceeded else { throw Failure("Code signature verification failed or exceeded its output bound") }
+    return ["executable": "/usr/bin/codesign", "arguments": process.arguments!,
+            "returncode": Int(process.terminationStatus), "output": String(data: data, encoding: .utf8) ?? ""]
+}
+
+func installApp(_ params: [String: Any], requests: URL, installRoot: URL, requestID: String) throws -> [String: Any] {
+    guard let relative = params["source_relative_path"] as? String,
+          let destinationPath = params["app_path"] as? String, destinationPath.hasPrefix("/"),
+          let bundleID = params["bundle_id"] as? String,
+          let originalID = params["original_bundle_id"] as? String, originalID != bundleID,
+          let packageHash = params["package_sha256"] as? String,
+          params["binary_sha256"] is String else { throw Failure("Install requires separate target and exact package identity") }
+    let parts = relative.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+    guard parts.count == 3, parts[0] == "packages", UUID(uuidString: parts[1]) != nil,
+          parts[2].hasSuffix(".app"), !parts.contains(".."), !parts.contains("."),
+          !parts.contains("") else { throw Failure("Invalid run-scoped source package path") }
+    let source = requests.appendingPathComponent(relative)
+    guard canonicalURL(source).path == source.path,
+          source.path.hasPrefix(requests.path + "/") else { throw Failure("Source package path is linked or escapes its session") }
+    let destination = URL(fileURLWithPath: destinationPath)
+    guard destination.path == destinationPath, destination.pathExtension == "app",
+          destination.deletingLastPathComponent().path == installRoot.path, destination.lastPathComponent == source.lastPathComponent,
+          canonicalURL(installRoot).path == installRoot.path else {
+        throw Failure("Install target must be a new .app directly inside the registered install root")
+    }
+    guard (try? fm.attributesOfItem(atPath: destination.path)) == nil,
+          NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty else {
+        throw Failure("Refusing to replace an existing path or a running bundle")
+    }
+    var sourceParams = params
+    sourceParams["app_path"] = source.path
+    let sourceIdentity = try identity(sourceParams)
+    let before = try bundleInventory(source)
+    let actual = SHA256.hash(data: try json(before)).map { String(format: "%02x", $0) }.joined()
+    guard actual == packageHash else { throw Failure("Staged package differs from the requested inventory") }
+    try fm.createDirectory(at: installRoot, withIntermediateDirectories: true)
+    let staging = installRoot.appendingPathComponent(".copyapp-install-" + requestID + ".app")
+    guard (try? fm.attributesOfItem(atPath: staging.path)) == nil else { throw Failure("Install staging path already exists") }
+    try copyBundle(source, target: staging, entries: before)
+    guard try json(before) == json(bundleInventory(staging)), try json(before) == json(bundleInventory(source)) else {
+        throw Failure("Package changed during install staging")
+    }
+    let signature = try signatureCheck(staging)
+    // RENAME_EXCL atomically refuses every existing destination, including a
+    // dangling symlink or a path created after the earlier preflight check.
+    guard renamex_np(staging.path, destination.path, UInt32(RENAME_EXCL)) == 0 else {
+        throw Failure("Atomic install refused destination (errno \(errno)); preserve the staging attempt")
+    }
+    let installed = try identity(params), after = try bundleInventory(destination)
+    guard try json(before) == json(after) else { throw Failure("Installed package inventory differs") }
+    for key in ["bundle_id", "binary_sha256", "info_plist_sha256", "version", "build"] {
+        guard (sourceIdentity[key] as? String) == (installed[key] as? String) else { throw Failure("Installed build identity differs") }
+    }
+    return ["app": installed, "package_sha256": actual, "entry_count": before.count,
+            "source_relative_path": relative, "install_root": installRoot.path, "signature": signature,
+            "consistency": "matching_staged_source_copy_installed_inventories", "launched": false]
+}
+
 final class Server {
     let shared: URL
     let instance = UUID().uuidString.lowercased()
     let executableHash: String
     let guestMachine = machineID()
+    let installRoot: URL
     var busy = false
-    init(shared: URL) throws {
-        self.shared = shared.resolvingSymlinksInPath().standardizedFileURL
-        executableHash = try sha256(URL(fileURLWithPath: CommandLine.arguments[0]).resolvingSymlinksInPath())
+    init(shared: URL, installRoot: URL) throws {
+        self.shared = canonicalURL(shared)
+        executableHash = try sha256(canonicalURL(URL(fileURLWithPath: CommandLine.arguments[0])))
+        self.installRoot = canonicalURL(installRoot)
     }
     func poll() {
         guard !busy else { return }
@@ -363,7 +478,7 @@ final class Server {
                         response["result"] = ["tool_version": toolVersion, "guest_machine_id": guestMachine,
                             "os_version": ProcessInfo.processInfo.operatingSystemVersionString,
                             "accessibility_granted": AXIsProcessTrusted(), "pid": Int(getpid()),
-                            "capabilities": supportedMethods]
+                            "capabilities": supportedMethods, "install_root": installRoot.path]
                     case "app_identity": response["result"] = try identity(params)
                     case "observe": response["result"] = try observe(params)
                     case "export_app": response["result"] = try exportApp(params, output: output, requestID: id)
@@ -384,6 +499,16 @@ final class Server {
                         response["completion_unknown"] = true
                         response["result"] = try launchApp(params)
                         response.removeValue(forKey: "completion_unknown")
+                    case "install_app":
+                        let started = output.appendingPathComponent(id + ".started.json")
+                        guard !fm.fileExists(atPath: started.path) else {
+                            response["completion_unknown"] = true
+                            throw Failure("Install attempt already started; inspect the guest instead of replaying it")
+                        }
+                        try writeJSON(["request_sha256": hash, "collector_instance": instance], to: started)
+                        response["completion_unknown"] = true
+                        response["result"] = try installApp(params, requests: requests, installRoot: installRoot, requestID: id)
+                        response.removeValue(forKey: "completion_unknown")
                     default: throw Failure("Unknown bounded collector method")
                     }
                     response["status"] = "complete"
@@ -401,7 +526,13 @@ if CommandLine.arguments.contains("--self-test") {
     print(String(data: try json(["protocol_version": protocolVersion, "methods": supportedMethods]), encoding: .utf8)!)
 } else if let flag = CommandLine.arguments.firstIndex(of: "--shared-root"), CommandLine.arguments.count > flag + 1 {
     do {
-        let server = try Server(shared: URL(fileURLWithPath: CommandLine.arguments[flag + 1]))
+        var installRoot = fm.homeDirectoryForCurrentUser.appendingPathComponent("Applications/CopyAppRebuilds")
+        // Explicit alternate roots support isolated fixture tests. The root is
+        // returned by health and pinned by environment registration.
+        if let rootFlag = CommandLine.arguments.firstIndex(of: "--install-root"), CommandLine.arguments.count > rootFlag + 1 {
+            installRoot = URL(fileURLWithPath: CommandLine.arguments[rootFlag + 1])
+        }
+        let server = try Server(shared: URL(fileURLWithPath: CommandLine.arguments[flag + 1]), installRoot: installRoot)
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
         if CommandLine.arguments.contains("--request-accessibility") {
