@@ -21,6 +21,15 @@ let symbols: [Symbol] = [
     Symbol(ticker: "MSFT", company: "Microsoft Corporation", price: 532.50, change: 0.63)
 ]
 
+let relatedSymbols = [
+    Symbol(ticker: "^MSFT", company: "Cboe Microsoft Call Writing Ind", price: 73.33, change: 0.07),
+    Symbol(ticker: "^MSFTIO", company: "Cboe Microsoft Income Only Inde", price: 101.29, change: 0),
+    Symbol(ticker: "^MSFTCW", company: "Cboe Microsoft Call Writing Ind", price: 73.38, change: 0.05),
+    Symbol(ticker: "^MSFTDI", company: "Cboe Microsoft Defined Income I", price: 265.29, change: 0.46),
+    Symbol(ticker: "MSFTD.BA", company: "Microsoft Corporation", price: 18.73, change: 0.20),
+    Symbol(ticker: "MSFTC.BA", company: "Microsoft Corporation", price: 17.76, change: 0.07)
+]
+
 final class State {
     let defaults = UserDefaults.standard
     var selected = "news"
@@ -39,7 +48,7 @@ final class State {
         defaults.set(periods, forKey: "periods")
         defaults.set(activeList, forKey: "activeWatchlist")
     }
-    var symbol: Symbol { symbols.first { $0.ticker == selected } ?? symbols[2] }
+    var symbol: Symbol { (symbols + relatedSymbols).first { $0.ticker == selected } ?? symbols[2] }
     var period: String { periods[selected] ?? "1 day" }
 }
 
@@ -139,8 +148,9 @@ final class StocksView: NSView, NSTextFieldDelegate {
     }
     var resultSymbols: [Symbol] {
         let query = state.query.trimmingCharacters(in: .whitespacesAndNewlines)
-        return symbols.filter { $0.ticker.localizedCaseInsensitiveContains(query) || $0.company.localizedCaseInsensitiveContains(query) }
+        return (symbols + relatedSymbols).filter { $0.ticker.localizedCaseInsensitiveContains(query) || $0.company.localizedCaseInsensitiveContains(query) }
     }
+    func resultY(_ index: Int) -> CGFloat { index == 0 ? 108 : 172 + CGFloat(index - 1) * 92 }
     override func draw(_ dirtyRect: NSRect) {
         box(bounds, NSColor.windowBackgroundColor)
         box(NSRect(x: 0, y: 0, width: 330, height: bounds.height), NSColor.windowBackgroundColor)
@@ -151,7 +161,7 @@ final class StocksView: NSView, NSTextFieldDelegate {
         text("•••⌄", 287, 17, 13, .semibold)
         if !state.query.isEmpty {
             for (i, symbol) in resultSymbols.enumerated() {
-                drawRow(symbol, y: CGFloat(108 + i * 64), searchResult: true)
+                if resultY(i) < bounds.height - 56 { drawRow(symbol, y: resultY(i), searchResult: true) }
             }
             if resultSymbols.isEmpty { text("No Results", 115, 220, 16, .semibold, muted) }
         } else if let list = state.activeList {
@@ -173,16 +183,25 @@ final class StocksView: NSView, NSTextFieldDelegate {
     }
     func drawRow(_ symbol: Symbol, y: CGFloat, searchResult: Bool) {
         let selected = symbol.ticker == state.selected
-        if selected { box(NSRect(x: 10, y: y, width: 310, height: searchResult ? 64 : 61), NSColor.labelColor.withAlphaComponent(0.10), radius: 12) }
+        let height: CGFloat = searchResult ? (symbol.ticker == "MSFT" ? 64 : 92) : 61
+        if selected { box(NSRect(x: 10, y: y, width: 310, height: height), NSColor.labelColor.withAlphaComponent(0.10), radius: 12) }
         let left: CGFloat = searchResult ? 56 : 26
         text(symbol.ticker, left, y + 11, 14, .semibold)
-        text(String(symbol.company.prefix(27)), left, y + 32, 11, .regular, muted)
+        if searchResult {
+            let exchange = symbol.ticker.hasPrefix("^") ? "Chicago Board Options Exchange" : (symbol.ticker.contains(".BA") ? "Buenos Aires · USD" : "NASDAQ · USD")
+            if symbol.ticker == "MSFT" { text(exchange, left + 47, y + 14, 10, .regular, muted) }
+            else { text(String(exchange.prefix(29)), left, y + 30, 11, .regular, muted) }
+            text(String(symbol.company.prefix(28)), left, y + (symbol.ticker == "MSFT" ? 34 : 60), 11, .regular, muted)
+            text(String(format: "%+.2f", symbol.change), 266, y + 34, 13, .medium, symbol.change >= 0 ? green : .systemRed)
+        } else { text(String(symbol.company.prefix(27)), left, y + 32, 11, .regular, muted) }
         text(String(format: "%.2f", symbol.price), 247, y + 11, 14, .semibold)
         let color: NSColor = symbol.change >= 0 ? green : .systemRed
-        box(NSRect(x: 245, y: y + 33, width: 59, height: 18), color, radius: 3)
-        text(String(format: "%+.2f", symbol.change), 250, y + 34, 11, .semibold, .white)
-        if !searchResult { chart(NSRect(x: 167, y: y + 30, width: 45, height: 20), seed: symbol.ticker.count, color: color, fill: false) }
-        line(20, y + (searchResult ? 64 : 61), 290)
+        if !searchResult {
+            box(NSRect(x: 245, y: y + 33, width: 59, height: 18), color, radius: 3)
+            text(String(format: "%+.2f", symbol.change), 250, y + 34, 11, .semibold, .white)
+            chart(NSRect(x: 167, y: y + 30, width: 45, height: 20), seed: symbol.ticker.count, color: color, fill: false)
+        }
+        line(20, y + height, 290)
     }
     func drawOverview() {
         text("Stocks", bodyX, 72, 28, .bold)
@@ -190,11 +209,14 @@ final class StocksView: NSView, NSTextFieldDelegate {
         text("Market Overview", bodyX, 150, 23, .bold)
         for i in 0..<2 {
             let x = bodyX + CGFloat(i) * (bodyWidth / 2 + 8)
-            let r = NSRect(x: x, y: 198, width: bodyWidth / 2 - 8, height: 330)
+            let r = NSRect(x: x, y: 192, width: bodyWidth / 2 - 8, height: 381)
             box(r, .textBackgroundColor, radius: 18)
-            chart(NSRect(x: x + 20, y: 230, width: r.width - 40, height: 150), seed: i + 2, color: i == 0 ? green : .systemBlue, fill: true)
-            text(i == 0 ? "An independent Stocks example" : "Your watchlists, on this Mac", x + 16, 420, 17, .bold)
-            text("Illustrative data. No live news service.", x + 16, 466, 12, .regular, muted)
+            box(NSRect(x: x, y: 192, width: r.width, height: 246), (i == 0 ? NSColor.systemGreen : NSColor.systemBlue).withAlphaComponent(0.08), radius: 16)
+            chart(NSRect(x: x + 20, y: 224, width: r.width - 40, height: 185), seed: i + 2, color: i == 0 ? green : .systemBlue, fill: true)
+            text("Copy APP · Local example", x + 16, 452, 11, .semibold, muted)
+            text(i == 0 ? "An independent Stocks example" : "Your watchlists, on this Mac", x + 16, 474, 16, .bold)
+            text("Illustrative data. No live news service.", x + 16, 505, 11, .regular, muted)
+            drawPreviewCard(x, 589, i)
         }
     }
     let periods = [("1D", "1 day"), ("1W", "1 week"), ("1M", "1 month"), ("3M", "3 months"),
@@ -219,9 +241,19 @@ final class StocksView: NSView, NSTextFieldDelegate {
         }
         let plot = NSRect(x: bodyX, y: 220, width: bodyWidth - 36, height: 192)
         for i in 0...4 { line(plot.minX, plot.minY + CGFloat(i) * 48, bodyWidth) }
-        chart(plot, seed: state.period == "1 day" ? 3 : 7, color: green, fill: true)
+        let periodIndex = periods.firstIndex { $0.1 == state.period } ?? 0
+        let symbolSeed = symbol.ticker.utf8.reduce(0) { $0 + Int($1) }
+        chart(plot, seed: symbolSeed + periodIndex * 7, color: symbol.change >= 0 ? green : .systemRed, fill: true)
+        let interval: Double = state.period == "1 day" ? (symbol.ticker == "MSFT" ? 2 : 1) : 25
+        for i in 0...4 {
+            text(String(format: "%.0f", ceil(symbol.price) - Double(i) * interval), plot.maxX + 8, plot.minY + CGFloat(i * 48) - 8, 13, .semibold)
+        }
         for (i, label) in (state.period == "1 day" ? ["7", "8", "9", "10", "11", "12"] : ["October", "February", "June", "October"]).enumerated() {
             text(label, bodyX + CGFloat(i) * (state.period == "1 day" ? 110 : 205), 419, 12, .semibold)
+        }
+        for i in 0..<100 {
+            let height = CGFloat((i * 7 + 3) % 9 + 1)
+            box(NSRect(x: bodyX + CGFloat(i) * (bodyWidth - 36) / 100, y: 452 - height, width: 2, height: height), muted.withAlphaComponent(0.5), radius: 1)
         }
         for col in 0..<4 {
             let names = [["Open", "High", "Low"], ["Vol", "P/E", "Mkt Cap"], ["52W H", "52W L", "Avg Vol"], ["Yield", "Beta", "EPS"]][col]
@@ -233,10 +265,17 @@ final class StocksView: NSView, NSTextFieldDelegate {
         text("Generated curves and sample values · no market connection", bodyX, 548, 12, .regular, muted)
         for i in 0..<2 {
             let x = bodyX + CGFloat(i) * (bodyWidth / 2 + 8)
-            box(NSRect(x: x, y: 578, width: bodyWidth / 2 - 8, height: 150), .textBackgroundColor, radius: 16)
-            text(i == 0 ? "Local sample" : "Selected behavior", x + 16, 592, 12, .semibold, .systemBlue)
-            text(i == 0 ? "Search and explore symbols" : "Charts and saved watchlists", x + 16, 616, 16, .bold)
+            drawPreviewCard(x, 578, i)
         }
+    }
+    func drawPreviewCard(_ x: CGFloat, _ y: CGFloat, _ i: Int) {
+            box(NSRect(x: x, y: y, width: bodyWidth / 2 - 8, height: 178), .textBackgroundColor, radius: 16)
+            let imageRect = NSRect(x: x + bodyWidth / 2 - 120, y: y + 14, width: 96, height: 100)
+            box(imageRect, (i == 0 ? NSColor.systemGreen : NSColor.systemBlue).withAlphaComponent(0.08), radius: 8)
+            chart(imageRect.insetBy(dx: 7, dy: 15), seed: i + 3, color: i == 0 ? green : .systemBlue, fill: true)
+            text(i == 0 ? "Copy APP" : "Local Demo", x + 14, y + 14, 11, .semibold)
+            text(i == 0 ? "Search and explore" : "Charts and saved", x + 14, y + 36, 13, .semibold)
+            text(i == 0 ? "market symbols" : "watchlists on this Mac", x + 14, y + 54, 13, .semibold)
     }
     func drawDialog(_ kind: String) {
         box(bounds, .black.withAlphaComponent(0.18))
@@ -299,7 +338,8 @@ final class StocksView: NSView, NSTextFieldDelegate {
         if !state.query.isEmpty {
             element("AXButton", "Clear text", NSRect(x: 294, y: 70, width: 20, height: 20), press: { [weak self] in self?.clearSearch() })
             for (i, symbol) in resultSymbols.enumerated() {
-                element("AXGenericElement", symbol.ticker, NSRect(x: 6, y: 108 + i * 64, width: 318, height: 64), value: "\(symbol.company), NASDAQ · USD, \(symbol.price)", identifier: symbol.ticker, press: { [weak self] in self?.select(symbol.ticker) })
+                guard resultY(i) < bounds.height - 56 else { continue }
+                element("AXGenericElement", symbol.ticker, NSRect(x: 6, y: resultY(i), width: 318, height: symbol.ticker == "MSFT" ? 64 : 92), value: "\(symbol.company), NASDAQ · USD, \(symbol.price)", identifier: symbol.ticker, press: { [weak self] in self?.select(symbol.ticker) })
             }
         } else if let list = state.activeList {
             element("AXGenericElement", "Search Stocks\nAdd symbols to “\(list).”", NSRect(x: 0, y: 110, width: 330, height: 470))
