@@ -9,6 +9,14 @@ with `--discovery` instead of `--flow`; the report binds its exact replay eviden
 and retains the discovered known-capability IDs. Discovery is input readiness,
 not the semantic review itself. Explicitly selected jobs can use `--flow` directly.
 
+For preferences or database structure, follow
+[data acquisition and structure](macos-acquisition.md#extract-structure-and-cite-it-in-a-behavior-report).
+Pass verified structure cases with repeated `--data ID=CASE` and cite
+`{"data_id":"ID","path":"structure.json"}` in findings. These must match the
+flow evidence's exact App/package/environment. Data-only findings cannot satisfy
+a flow's behavior evidence requirement. Raw values/rows remain outside structure
+citations, and their full archived sources still stay local.
+
 First collect and verify one to twelve `mac playbook` cases. Each case must start
 with launch, finish successfully and contain at least one explicit `expect_text`,
 `expect_file` or `expect_stopped` assertion. All report flows must use the same

@@ -138,7 +138,7 @@ class NativeCollectorTests(unittest.TestCase):
                                           root / "acquisition", timeout=5)
                 self.assertTrue(verify_case(acquisition))
                 from macos_data_checks import exercise_data_capture
-                exercise_data_capture(self, root, acquisition)
+                data_schemas = exercise_data_capture(self, root, acquisition)
                 from macos_fakes import Desktop
                 from copyapp.macos.playbook import run_playbook
                 from copyapp.macos.chatcomputer import UnknownCompletion
@@ -185,6 +185,8 @@ class NativeCollectorTests(unittest.TestCase):
                 review_path.write_bytes(canonical(review))
                 reviewed = report({flow_id: replay}, review_path, root / "report")
                 self.assertTrue(verify_case(reviewed))
+                from macos_data_checks import exercise_schema_report
+                exercise_schema_report(self, root, {flow_id: replay}, review, data_schemas)
                 from macos_discovery_checks import exercise_discovery
                 exercise_discovery(self, root, acquisition, registered, source_index, target, replay, review)
                 plan = rebuild_plan(reviewed, "dev.copyapp.Clone", str(root / "guest-apps/Independent.app"),

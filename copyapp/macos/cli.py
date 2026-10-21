@@ -52,6 +52,7 @@ def configure(parser: argparse.ArgumentParser):
     report_source.add_argument("--discovery", type=Path, help="accepted Mac discovery case; use its exact replayed flows")
     report.add_argument("--review", required=True, type=Path)
     report.add_argument("--out", required=True, type=Path)
+    report.add_argument("--data", action="append", help="DATA_ID=MAC_DATA_SCHEMA_CASE; structure citations only")
     plan = sub.add_parser("rebuild-plan", help="freeze known scope and prepare a current-agent implementation task")
     plan.add_argument("--report", required=True, type=Path)
     plan.add_argument("--bundle", required=True, help="separate Bundle ID for the independent rebuild")
@@ -114,6 +115,10 @@ def configure(parser: argparse.ArgumentParser):
     data.add_argument("--path", required=True, help="canonical file path relative to the selected guest Library location")
     data.add_argument("--timeout", type=float, default=60)
     data.add_argument("--out", required=True, type=Path)
+    schema = sub.add_parser("data-schema", help="extract key/type or SQLite metadata from one verified Mac data file")
+    schema.add_argument("--data", required=True, type=Path)
+    schema.add_argument("--format", choices=("plist", "sqlite"), required=True)
+    schema.add_argument("--out", required=True, type=Path)
 
 
 def named_flows(items: list) -> dict:
@@ -127,6 +132,10 @@ def named_flows(items: list) -> dict:
 
 
 def run(args) -> int:
+    if args.mac_command == "data-schema":
+        from copyapp.macos.data_schema import data_schema
+        print(data_schema(args.data, args.format, args.out))
+        return 0
     if args.mac_command == "data-file":
         from copyapp.macos.data import data_file
         print(data_file(args.acquisition, args.location, args.path, args.out, args.timeout))
@@ -177,7 +186,7 @@ def run(args) -> int:
         return 0
     if args.mac_command == "report":
         from copyapp.macos.report import report
-        print(report(named_flows(args.flow), args.review, args.out, discovery=args.discovery))
+        print(report(named_flows(args.flow), args.review, args.out, discovery=args.discovery, data=named_flows(args.data)))
         return 0
     if args.mac_command == "rebuild-plan":
         from copyapp.macos.rebuild import rebuild_plan

@@ -130,6 +130,70 @@ Source deletion or later changes cannot silently alter that saved case.
 This is **one file observation**, not an atomic database snapshot, proof of file
 ownership or complete App data. Matching two reads cannot establish transactional
 consistency across SQLite, WAL and SHM or across several files. Keep raw bytes in
-ignored `cases/`; they may contain private data. Structured schema extraction and
-formal-report data citations remain separate implementation work. Do not present
-a passing byte verifier as a database or preference interpretation.
+ignored `cases/`; they may contain private data. Do not present a passing byte
+verifier as a database or preference interpretation.
+
+## Extract structure and cite it in a behavior report
+
+Select the format explicitly after reviewing the captured file's origin:
+
+```sh
+.venv/bin/copyapp mac data-schema --data cases/mac-selected-container-plist \
+  --format plist --out cases/mac-preference-structure
+.venv/bin/copyapp verify cases/mac-preference-structure
+.venv/bin/copyapp mac data-schema --data cases/mac-selected-database \
+  --format sqlite --out cases/mac-database-structure
+.venv/bin/copyapp verify cases/mac-database-structure
+```
+
+Each structure case retains the verified data-file case, source identity,
+`structure.json` and a readable `schema.md`. Verification recomputes the structure
+from the saved bytes, rather than trusting a refreshed hash on a generated JSON.
+
+Plist extraction accepts binary/XML files up to 4 MiB. It describes key paths and
+types, merging repeated array shapes and recording bounded-walk truncation. It
+omits scalar values, array lengths and data bytes. A truncated walk cannot establish
+the absence of a key. Names/paths may themselves contain private information.
+
+SQLite extraction accepts the saved main file up to 64 MiB. It opens a detached
+copy read-only/immutable, disables trusted schema and denies SQL function execution
+and attachment. It queries object names/types, column types/constraints, foreign
+keys, user_version and application_id. It omits rows, SQL bodies and defaults,
+and bounds schema objects/columns/foreign keys and query work. Unsupported or
+malformed schemas fail with diagnostics. It merges no WAL/SHM; structure committed
+only to an uncollected WAL may therefore be absent. This cannot establish the
+complete schema or current transactional state of the live database.
+
+In a formal review, add a finding with a structure citation:
+
+```json
+{
+  "id": "stored-editor-keys",
+  "certainty": "observed",
+  "statement": "The saved plist has the cited editor key/type structure; its writer is not proven.",
+  "evidence": [{"data_id": "preferences", "path": "structure.json"}]
+}
+```
+
+Supply that structure case alongside the normal accepted flow inputs:
+
+```sh
+.venv/bin/copyapp mac report --discovery cases/mac-discovery \
+  --data preferences=cases/mac-preference-structure \
+  --data store=cases/mac-database-structure \
+  --review cases/mac-formal-review.json --out cases/mac-report
+.venv/bin/copyapp verify cases/mac-report
+```
+
+Use one explicit reviewed citation for every supplied data case. Each `data_id`
+must identify a verified `mac_data_schema` for the same exact App path, package,
+Bundle ID and registered environment as the flow evidence. Only `structure.json`
+is a permitted data citation; raw `data.bin` and arbitrary paths are excluded.
+A flow's own findings still need captured UI/flow evidence: a data structure alone
+cannot prove a visible behavior or persistence. The report preserves all source
+cases and rechecks their chain. UI and data observations remain separate-time;
+the agent must inspect their meaning and association before drawing a conclusion.
+
+The report's data JSON/Markdown omit values/rows, but its archived child cases
+include original raw bytes. Keep the entire case local; these rules do not turn
+the archive into a sanitized sharing artifact.

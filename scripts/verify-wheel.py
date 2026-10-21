@@ -68,7 +68,7 @@ def main() -> None:
         if not all(command in mac_help for command in ("doctor", "inspect", "build-collector", "acquire",
                                                        "playbook", "report", "rebuild-plan", "build-app", "install",
                                                        "check-plan", "rebuild-check", "visual-review", "delivery",
-                                                       "share-probe", "share-probe-check", "import-app", "discover-check", "data-file")):
+                                                       "share-probe", "share-probe-check", "import-app", "discover-check", "data-file", "data-schema")):
             raise RuntimeError("installed wheel lacks Mac entry points")
         probe = ("import copyapp, pathlib, sys; "
                  "root=pathlib.Path(copyapp.__file__).resolve().parent; "

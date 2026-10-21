@@ -17,6 +17,9 @@ ZIP／DMG 输入使用 `mac import-app`；DMG 在 macOS 27 上以只读、禁止
 已运行或已完成界面验收，原始文件仍留在被 Git 忽略的本地案例中。
 `mac data-file` 可根据已验证的客体 App 采集案例读取一个明确指定的数据文件，保留两次读取的
 一致性与来源记录。它只接受受限位置的普通文件，不代表文件归属已被证明、数据完整或数据库快照原子一致。
+`mac data-schema --format plist|sqlite` 从已验证的数据案例提取键／类型或数据库元数据，
+正式报告通过 `--data ID=CASE` 引用其中的 `structure.json`。生成结构不输出取值、表行或 SQL 正文；
+原始字节仍在本地子案例中。结构证据不能替代界面行为证据，也不能证明不同时间的观察同时发生。
 
 用户没有预选流程时，先按[代表流程发现](macos-discovery.md)观察、重放并审阅 3–12 个不同流程，
 使用 `mac discover-check` 保存选择理由、已知能力和未知范围。再用 `mac report --discovery`

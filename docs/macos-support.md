@@ -18,6 +18,8 @@ For a pre-control shared-file probe or ZIP/DMG input, read
 their byte/structure scope separate from runtime identity and UI acceptance.
 The same guide describes `mac data-file` for a selected guest data file, including
 path association limits and the lack of atomic database or complete-data coverage.
+`mac data-schema` extracts bounded plist/SQLite structure for source-linked
+`mac report --data` citations, with values/rows omitted from generated structure.
 
 For requests without preselected flows, follow
 [representative flow discovery](macos-discovery.md) before writing the formal

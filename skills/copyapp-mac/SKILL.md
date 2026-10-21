@@ -27,6 +27,11 @@ IPAs, UIKit observations or iOS-only skills for a Mac target.
   guest acquisition and read the acquisition guide's location/association limits.
   Preserve raw data locally, record uncertain ownership and do not call sequential
   SQLite/WAL reads an atomic snapshot. Missing files or denied access remain gaps.
+  Run `mac data-schema --format plist|sqlite` on the verified data case before a
+  structure conclusion. Cite `structure.json` through `mac report --data ID=CASE`;
+  keep unresolved ownership, truncated plist walks and absent WAL state explicit.
+  Structure alone cannot certify a UI flow, and archived children still contain
+  raw bytes even though generated structure reports omit values/rows.
 - ChatComputer owns guest input and screenshots. Work in the current coding-agent
   session; do not start ChatComputer's model loop or another coding-agent CLI.
 - Build/prepare the bounded collector, deploy it inside the intended guest and

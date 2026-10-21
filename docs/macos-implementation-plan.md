@@ -61,7 +61,7 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
 - Separate `copyapp mac` commands now cover doctor, inspect, build/prepare-collector,
   connect, observe, acquire, playbook, report, rebuild-plan, build-app, install,
   check-plan, rebuild-check, visual-review, delivery, share-probe,
-  share-probe-check, import-app, discover-check and data-file, with versioned
+  share-probe-check, import-app, discover-check, data-file and data-schema, with versioned
   `mac_*` semantic validators. These are development commands, not completed
   end-to-end reconstruction or a new release.
 - Local TextEdit package snapshot passed its byte/identity verifier after a
@@ -168,9 +168,26 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
   `1d0eb05cbb6e886be4a312ef4c104a8908f50232484c2b60b9d1b1b3b6ab52a2`.
   Logs: `/tmp/copyapp-dual-platform-data-20261021.log` and
   `/tmp/copyapp-macos-data-wheel-20261021.log`.
+- Data-structure development adds bounded binary/XML plist key/type extraction
+  and detached read-only SQLite metadata extraction, without scalar values, rows,
+  SQL bodies/defaults or merged WAL/SHM. `mac report --data ID=CASE` requires
+  verified structure cases from the same exact App path, package and environment;
+  data findings cannot stand in for a flow's captured behavior. Reports retain
+  immutable source cases and revalidate structure from their raw bytes. Their
+  archived children still contain private raw data and stay local.
+- Structure/report regression: all 384 tests passed, including the unchanged iOS
+  suite and expanded local-collector integration. Binary/XML plist, SQLite quoted
+  identifiers/foreign keys, omission of marked values/rows/SQL, source/structure
+  tampering, a separate valid environment registration, forbidden raw citations
+  and data-only behavior claims are checked. A report with data evidence and its
+  rebuild plan both verify; these are local/simulated protocol checks, not live
+  guest or physical-Mac acceptance. The installed wheel passed; development SHA-256:
+  `55a2794d5868ee9874cfaedf471c0ea476cebbac3a9713bcf33bf1cc7b9fe23e`.
+  Logs: `/tmp/copyapp-dual-platform-data-schema-20261021.log` and
+  `/tmp/copyapp-macos-data-schema-wheel-20261021.log`.
 - The repository Mac skill and bilingual entry prompts route Mac targets directly
   to this development workflow. Existing iOS skills and historical v1 validation
-  retain their scope. Structured data schemas/report citations, live sandbox capture,
+  retain their scope. Live sandbox capture,
   live discovery acceptance, live guest install/launch,
   live paired delivery and actual sample/physical-Mac evidence remain unfinished.
 

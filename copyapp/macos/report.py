@@ -56,7 +56,8 @@ def flow_source(root: Path, flow_id: str) -> dict:
             "assertion_steps": steps}
 
 
-def validate_review(review: dict, sources: dict, source_roots: dict) -> list:
+def validate_review(review: dict, sources: dict, source_roots: dict, data_roots: dict = None) -> list:
+    data_roots = data_roots or {}
     canonical(review)
     if (type(review.get("schema_version")) is not int or review["schema_version"] != 2 or review.get("platform") != "macos" or
             review.get("scope") != "behavior_analysis" or
@@ -76,6 +77,7 @@ def validate_review(review: dict, sources: dict, source_roots: dict) -> list:
     if flow_ids != set(sources):
         raise ValueError("review must cover exactly the supplied flow evidence")
     citations = []
+    cited_data = set()
     finding_flows = {}
     for finding in findings:
         if set(finding) != {"id", "statement", "certainty", "evidence"}:
@@ -88,6 +90,13 @@ def validate_review(review: dict, sources: dict, source_roots: dict) -> list:
             raise ValueError("each finding needs bounded source citations")
         linked = set()
         for ref in refs:
+            if set(ref) == {"data_id", "path"}:
+                if ref["data_id"] not in data_roots or ref["path"] != "structure.json":
+                    raise ValueError("data citations must refer to a supplied verified structure.json")
+                root = data_roots[ref["data_id"]]
+                citations.append({"finding_id": finding["id"], **ref, "sha256": digest(root / "structure.json")})
+                cited_data.add(ref["data_id"])
+                continue
             if set(ref) != {"flow_id", "path"} or ref["flow_id"] not in sources:
                 raise ValueError("citation refers to an unknown flow")
             name = ref["path"]
@@ -102,6 +111,8 @@ def validate_review(review: dict, sources: dict, source_roots: dict) -> list:
             citations.append({"finding_id": finding["id"], **ref, "sha256": digest(root / name)})
             linked.add(ref["flow_id"])
         finding_flows[finding["id"]] = linked
+    if cited_data != set(data_roots):
+        raise ValueError("each supplied data structure needs an explicit reviewed citation")
     for flow in review["flows"]:
         if set(flow) != {"id", "source_script_sha256", "expected_behavior", "findings"}:
             raise ValueError("invalid specification flow")
@@ -147,19 +158,43 @@ def report_markdown(review: dict, citations: list) -> str:
         for cite in citations:
             if cite["finding_id"] == finding["id"]:
                 from urllib.parse import quote
-                path = "evidence/" + cite["flow_id"] + "/" + cite["path"]
-                lines.append("- [" + cite["flow_id"] + ": " + cite["path"] + "](" + quote(path) + ")")
+                source_id = cite.get("flow_id", cite.get("data_id"))
+                prefix = "evidence/" if "flow_id" in cite else "data-evidence/"
+                path = prefix + source_id + "/" + cite["path"]
+                lines.append("- [" + source_id + ": " + cite["path"] + "](" + quote(path) + ")")
         lines.append("")
     lines.extend(["## Known inventory", "", review["inventory_note"], ""])
     for capability in review["capabilities"]:
         lines.append("- " + capability["id"] + ": " + capability["title"] + " — " +
                      capability["disposition"] + "; " + capability["reason"])
     lines.extend(["", "## Unknown behavior", ""] + ["- " + value for value in review["unknowns"]])
+    if any("data_id" in cite for cite in citations):
+        lines.extend(["", "Data citations describe saved key/type or SQLite structure only. They do not prove",
+                      "App ownership, transactional database consistency or simultaneous UI/file observations.",
+                      "Scalar values, rows and SQL bodies were omitted; structure names may themselves be private."])
     lines.extend(["", "Hash verification checks source consistency, not the truth or completeness of this review.", ""])
     return "\n".join(lines)
 
 
-def report(flows: dict, review_path: Path, output: Path, *, discovery: Path = None) -> Path:
+def data_sources(data: dict, sources: dict, roots: dict) -> tuple:
+    from copyapp.macos.data_schema import report_data_source
+    if not isinstance(data, dict) or len(data) > 12:
+        raise ValueError("supply at most twelve named Mac data structure cases")
+    paths, records = {}, {}
+    for source_id, value in data.items():
+        identifier(source_id)
+        root = Path(value).resolve(strict=True)
+        record = report_data_source(root, source_id)
+        signatures = {(row["package_sha256"], row["environment_manifest_sha256"],
+                       read(roots[key], "playbook.json")["app_path"], row["app"]["bundle_id"]) for key, row in sources.items()}
+        if signatures != {(record["package_sha256"], record["environment_manifest_sha256"],
+                           record["guest_app_path"], record["bundle_id"])}:
+            raise ValueError("data evidence must identify the same exact App, package and environment as report flows")
+        paths[source_id], records[source_id] = root, record
+    return paths, records
+
+
+def report(flows: dict, review_path: Path, output: Path, *, discovery: Path = None, data: dict = None) -> Path:
     if discovery is not None:
         from copyapp.macos.discovery import accepted_flows
         if flows:
@@ -181,8 +216,11 @@ def report(flows: dict, review_path: Path, output: Path, *, discovery: Path = No
     signatures = {(row["package_sha256"], row["environment_manifest_sha256"]) for row in sources.values()}
     if len(signatures) != 1:
         raise ValueError("report flows must use the same package and registered environment")
+    data_roots, data_records = data_sources(data if data is not None else {}, sources, roots)
+    if any(output.resolve() == root or root in output.resolve().parents for root in data_roots.values()):
+        raise ValueError("report must be outside its data structure inputs")
     review = json.loads(review_path.read_text())
-    citations = validate_review(review, sources, roots)
+    citations = validate_review(review, sources, roots, data_roots)
     link = None
     if discovery is not None:
         from copyapp.macos.discovery import report_link
@@ -193,6 +231,11 @@ def report(flows: dict, review_path: Path, output: Path, *, discovery: Path = No
             shutil.copytree(discovery, case.root / "discovery", symlinks=True)
             case.record("discovery/manifest.json")
             case.add("discovery-link.json", link)
+        if data_records:
+            for source_id, root in data_roots.items():
+                shutil.copytree(root, case.root / "data-evidence" / source_id, symlinks=True)
+                case.record("data-evidence/" + source_id + "/manifest.json")
+            case.add("data-sources.json", [data_records[key] for key in sorted(data_records)])
         for flow_id, root in roots.items():
             shutil.copytree(root, case.root / "evidence" / flow_id, symlinks=True)
             case.record("evidence/" + flow_id + "/manifest.json")
@@ -233,7 +276,22 @@ def verify_report(root: Path, manifest: dict, names: set) -> bool:
             len({(row["package_sha256"], row["environment_manifest_sha256"]) for row in saved}) != 1):
         return False
     review = read(root, "review.json")
-    citations = validate_review(review, sources, roots)
+    data_roots = {}
+    if "data-sources.json" in names or (root / "data-evidence").exists() or (root / "data-sources.json").exists():
+        if "data-sources.json" not in names:
+            return False
+        saved_data = read(root, "data-sources.json")
+        if not isinstance(saved_data, list) or not 1 <= len(saved_data) <= 12:
+            return False
+        for source in saved_data:
+            source_id = identifier(source["id"])
+            if source_id in data_roots or "data-evidence/" + source_id + "/manifest.json" not in names:
+                return False
+            data_roots[source_id] = root / "data-evidence" / source_id
+        data_roots, actual = data_sources(data_roots, sources, roots)
+        if saved_data != [actual[key] for key in sorted(actual)]:
+            return False
+    citations = validate_review(review, sources, roots, data_roots)
     discovery_fields = {"discovery/manifest.json", "discovery-link.json"}
     if discovery_fields & names or (root / "discovery").exists() or (root / "discovery-link.json").exists():
         from copyapp.macos.discovery import report_link
