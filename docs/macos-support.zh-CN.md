@@ -79,6 +79,12 @@ chatcomputer share add "$PWD/cases/mac-collector-deployment/payload"
 仅编译和执行协议自检不会请求这些权限。默认使用 ad-hoc 签名；需要稳定 TCC 身份时用
 `--signing-identity` 指定合适的稳定签名并保留该构建。签名变化可能需要重新授权。
 
+更新临时签名的采集器后，要重新核对客体权限。本次 macOS 27 客体的系统开关仍指向
+旧哈希目录；经已授权的单 App 权限重置，再在系统设置中添加准确的新 App 路径后，
+新采集器的 AX 探针才变为 true。单 App 重置使用
+[Apple 文档中的系统工具](https://developer.apple.com/documentation/xcode/resetting-access-to-protected-resources-in-macos)。
+Copy APP 不会自动重置隐私权限；蓝色开关不能代替新构建的健康检查。
+
 doctor 的 `needs_setup` 案例可以通过文件一致性校验，但表示环境尚未就绪。成功 doctor
 只证明传输和截图可用，不等于 App 身份、深度分析或复刻已经就绪。
 

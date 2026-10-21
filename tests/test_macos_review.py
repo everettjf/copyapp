@@ -8,6 +8,7 @@ from pathlib import Path
 from copyapp.macos.case import canonical
 from copyapp.macos.playbook import output_bytes, select_node, validate_script
 from copyapp.macos.report import validate_review
+from copyapp.macos.ui import check_ui, validate_ui
 
 
 class MacReviewContractTests(unittest.TestCase):
@@ -50,6 +51,20 @@ class MacReviewContractTests(unittest.TestCase):
 
 
 class MacReplayInputTests(unittest.TestCase):
+    def test_actual_guest_language_list_is_retained_and_order_remains_pinned(self):
+        from macos_fakes import UI
+        languages = ["en", "fr", "de", "zh-Hans", "zh-Hant", "ja", "es", "it", "nl", "ko", "pt-BR", "pt-PT",
+                     "da", "fi", "nb", "sv", "ru", "pl", "tr", "ar", "th", "cs", "hu", "ca", "hr", "el",
+                     "he", "ro", "sk", "uk", "id", "ms", "vi", "es-419"]
+        expected = dict(UI, preferred_languages=languages)
+        check_ui(expected, {"response": {"result": {"ui_environment": expected}}})
+        for changed in (languages[::-1], languages[:32]):
+            with self.subTest(changed=changed), self.assertRaises(ValueError):
+                check_ui(expected, {"response": {"result": {"ui_environment": dict(expected, preferred_languages=changed)}}})
+        for invalid in (["en"] * 129, [True]):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                validate_ui(dict(expected, preferred_languages=invalid))
+
     def test_catalyst_description_selector_requires_a_unique_exact_match(self):
         selector = {"role": "AXButton", "description": "Continue"}
         validate_script({"schema_version": 2, "platform": "macos", "bundle_id": "example.catalyst",

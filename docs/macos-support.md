@@ -103,6 +103,15 @@ suitable stable `--signing-identity` and retain the exact build; changing the
 signature can require a new guest permission grant. A successful build is not a
 notarized distribution or proof of installation.
 
+In the named macOS 27 guest, the existing permission row still resolved to the old
+hashed collector even after adding the new build. A per-App permission reset using
+[Apple's documented utility](https://developer.apple.com/documentation/xcode/resetting-access-to-protected-resources-in-macos),
+followed by adding the exact new guest App in System Settings, restored the new
+collector's measured AX access. This was an authorized guest setup repair for
+`dev.copyapp.MacCollector`; the CLI does not reset privacy permissions automatically.
+Inspect the selected App path and the later collector health rather than relying
+on a blue switch or granting access to an unrelated copy.
+
 ### Probe the collector without requesting UI permissions
 
 For an explicitly limited setup probe, omit `--request-accessibility` when preparing

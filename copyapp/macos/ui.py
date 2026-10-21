@@ -11,7 +11,7 @@ def validate_ui(value: dict):
             not isinstance(value.get("locale"), str) or not 1 <= len(value["locale"]) <= 128):
         raise ValueError("invalid measured Mac UI settings")
     languages = value["preferred_languages"]
-    if (not isinstance(languages, list) or not 1 <= len(languages) <= 32 or
+    if (not isinstance(languages, list) or not 1 <= len(languages) <= 128 or
             any(not isinstance(item, str) or not 1 <= len(item) <= 128 for item in languages)):
         raise ValueError("invalid preferred languages")
     frame(value["display_bounds"])

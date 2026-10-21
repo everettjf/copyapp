@@ -379,6 +379,37 @@ Earlier TextEdit static distribution probes remain separate evidence.
   `/tmp/copyapp-dual-platform-post-snapshot-health-20261021.log` and
   `/tmp/copyapp-macos-post-snapshot-health-20261021.log`.
 
+
+- The updated collector's permission row still selected the earlier ad-hoc build.
+  An authorized, guest-only per-bundle permission reset and exact-path regrant
+  restored AX access. Fresh registration is
+  `cases/macos-snapshot-collector-20261021/environment-2`; old false-health probes
+  remain unchanged. The existing VM and its official credential store were kept.
+- The actual guest reports 34 ordered preferred languages. The bounded UI validator
+  now accepts up to 128 without truncation; equality and order remain pinned.
+  Regression tests reject reordered, truncated, oversized and non-string lists.
+  Full regression: 394 tests passed in 68.498s; installed wheel passed, SHA-256
+  `2c9d03a99a4d02c2b3a70299bc2e6139b7be336c52b6e26be247a4d0b3ce421c`.
+  Logs: `/tmp/copyapp-dual-platform-language-bound-20261021.log` and
+  `/tmp/copyapp-macos-language-bound-wheel-20261021.log`.
+- Fresh Stocks evidence under `cases/macos-stocks-recheck-20261021/` uses that new
+  registration. Original acquisition, three replay flows, discovery, report and
+  rebuild planning verified. `check-1` completed all nine original/rebuild behavior
+  comparisons across three rounds (100% selected-flow pass rate, not whole-App
+  coverage). An early full-image inspection found a chart-seed collision: the
+  sample's 1-day and 1-year trajectories were identical. The 195-pair review was
+  stopped after this concrete defect; this build has no accepted visual review or
+  delivery. Its evidence and partial review index remain local.
+- The independent Stocks example now uses an explicit period index for distinct
+  generated curves, with improved local search rows, axes, volume and preview
+  layout. Build 4 compiled/signed and was installed under another fresh guest path;
+  renewed paired acceptance is pending. Offline quotes, generated curves, limited
+  catalog, independent overview cards and native control differences remain explicit.
+- A physical-host recheck attempt was blocked before App launch because the host
+  was locked and the computer-use tool could not unlock it. The diagnostic is saved
+  in `physical-host-recheck-1` under the fresh Stocks folder. It establishes no
+  physical-Mac behavior. Guest work continues independently; this gate stays open.
+
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.
 Runtime observations additionally bind PID/start time and executable hash. Record
