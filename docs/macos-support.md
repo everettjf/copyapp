@@ -261,6 +261,12 @@ the remaining content/menu differences.
 Build 6 also restores the cold empty-list page and its Add Symbol search entry;
 a separate verified 31-step guest regression covers that state and the modal
 flow, with the failed diagnostic attempt preserved. It has no new paired delivery.
+A subsequent paired attempt stopped in the original search flow when a visible AAPL
+row was temporarily absent from the AX tree. After inspecting the saved failure,
+a revised search flow passed separately on both Apps using asserted ticker-text
+points and settling waits. It requires the reviewed 1080×670 window at (100,56)
+on the 1280×800 screenshot display. The refreshed report retains the same 11 known
+capabilities and three targets; this replay repair does not establish visual parity.
 
 The owned fixture now has a verified selected-behavior delivery. The editor's
 fresh three-round `check-3` passed nine selected behavior comparisons, and all

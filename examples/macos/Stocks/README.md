@@ -31,6 +31,12 @@ search MSFT, switch the AAPL chart period, and create then remove the test-only
 requires inspection. Generated rebuild plans change only App identity/path; do not
 edit a frozen plan's scripts to make a clone pass.
 
+The search script uses reviewed ticker-text click points after unique AX assertions
+and bounded settling waits. It requires the observed 1080×670 window at (100, 56)
+on the 1280×800 screenshot display. Inspect that frame before a standalone run;
+paired checks freeze and validate it. If the frame or interface changes, prepare
+a new reviewed script and evidence chain instead of editing a frozen case.
+
 To build a local demo without the evidence workflow:
 
 ```sh

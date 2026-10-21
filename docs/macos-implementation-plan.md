@@ -598,6 +598,28 @@ Earlier TextEdit static distribution probes remain separate evidence.
   The environment is ready again. Further snapshot experiments require saved or
   discardable test state; resolving take/resume behavior remains a release gate.
 
+
+- The later Stocks `check-4` stopped in round one's original search: after clearing
+  MSFT, the visible AAPL row was temporarily missing from the AX tree, so no
+  return click was sent. A fresh read-only observation found the row. All 37 exact
+  unique full PNGs from this partial attempt were opened; this is not a complete
+  paired comparison or visual-review case. Further diagnostic attempts retain
+  intermittent row-center misses and unsuccessful keyboard navigation rather than
+  claiming universal AX timing or keyboard behavior.
+- `search-original-point-1` and `search-rebuilt-point-1` separately verified a revised
+  16-step search flow with six assertions. The script asserts a unique result,
+  waits for settling, clicks reviewed ticker-text points and returns to AAPL.
+  Its explicit geometry is a 1080×670 window at (100,56) on a 1280×800 screenshot.
+  `discovery-2` and `report-2` retain the original 11-capability inventory and three
+  targets, reuse verified chart/watchlist evidence, and disclose different
+  observation times. `rebuild-plan-6`, `build-6`, `install-7` and
+  `rebuilt-acquisition-5` verify the version-7 example at `CopyAppStocks7.app`,
+  executable SHA-256 `026f3621cbbf7c91aed44e29e2b04c3bb7c70332819fd8abef7d5224f6bfce17`.
+  The first refreshed check-plan request was rejected before case creation/input
+  because old clock masks referenced removed captures. `conditions-2.json`
+  regenerates the same clock-only masks from the frozen script; full images still
+  require review. No new Stocks delivery is claimed by these preparation stages.
+
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.
 Runtime observations additionally bind PID/start time and executable hash. Record
