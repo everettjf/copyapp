@@ -146,7 +146,9 @@ class NativeCollectorTests(unittest.TestCase):
                 target = json.loads((acquisition / "acquisition.json").read_text())["guest_app_path"]
                 script = {"schema_version": 2, "platform": "macos", "bundle_id": "dev.copyapp.MacCollector",
                           "app_path": target, "scenario_id": "edit-save-quit", "steps": [
-                              {"action": "launch"}, {"action": "type", "text": "hello"},
+                              {"action": "launch"},
+                              {"action": "expect_text", "selector": {"identifier": "editor"}, "text": ""},
+                              {"action": "type", "text": "hello"},
                               {"action": "expect_text", "selector": {"identifier": "editor"}, "text": "hello"},
                               {"action": "key", "combo": "cmd+s"},
                               {"action": "expect_file", "path": "output.json", "json_equals": {"text": "hello"}},
@@ -159,7 +161,7 @@ class NativeCollectorTests(unittest.TestCase):
                 with patch("copyapp.macos.playbook.environment_session", desktop.session_context):
                     replay = run_playbook(acquisition, script_path, root / "replay")
                 self.assertTrue(verify_case(replay))
-                self.assertEqual(json.loads((replay / "manifest.json").read_text())["behavior_assertions"], 3)
+                self.assertEqual(json.loads((replay / "manifest.json").read_text())["behavior_assertions"], 4)
                 from copyapp.macos.report import report
                 from copyapp.macos.rebuild import rebuild_plan
                 flow_id = script["scenario_id"]
@@ -167,7 +169,7 @@ class NativeCollectorTests(unittest.TestCase):
                           "reviewer": "simulated-contract-test", "summary": "Simulated edit/save/quit evidence only.",
                           "findings": [{"id": "saved-text", "statement": "The asserted output contains hello.",
                                         "certainty": "observed", "evidence": [
-                                            {"flow_id": flow_id, "path": "steps/05/output.bin"}]}],
+                                            {"flow_id": flow_id, "path": "steps/06/output.bin"}]}],
                           "flows": [{"id": flow_id, "source_script_sha256": hashlib.sha256((replay / "playbook.json").read_bytes()).hexdigest(),
                                      "expected_behavior": "Edit text, save JSON and quit.", "findings": ["saved-text"]}],
                           "capabilities": [
@@ -275,6 +277,121 @@ class NativeCollectorTests(unittest.TestCase):
                 self.assertEqual(rejected["request"]["method"], "install_app")
                 self.assertIn("Refusing to replace", rejected["response"]["error"])
                 self.assertTrue(verify_case(installed))
+                from macos_fakes import UI, WINDOW
+                from copyapp.macos.checks import check_plan, rebuild_check
+                from copyapp.macos.visual import visual_review
+                from copyapp.macos.delivery import delivery
+                conditions = {"schema_version": 2, "platform": "macos", "reviewer": "simulated-contract-test",
+                              "expected_ui": UI, "network_expectation": "This simulated fixture uses no network.",
+                              "flows": [{"id": flow_id, "starting_state": "A simulated blank editor is focused.",
+                                         "window_frame": WINDOW, "input_data": "hello",
+                                         "reset_policy": "The simulated fixture opens a fresh blank document after quit."}],
+                              "masks": []}
+                conditions_path = root / "conditions.json"
+                conditions_path.write_bytes(canonical(conditions))
+                paired_plan = check_plan(installed, conditions_path, root / "check-plan", rounds=3)
+                self.assertTrue(verify_case(paired_plan))
+                bad_conditions = json.loads(canonical(conditions))
+                bad_conditions["masks"] = [{"flow_id": flow_id, "capture": "steps/01/after", "rect": [0, 0, 16, 12],
+                                            "reason": "An invalid full-screen mask."}]
+                conditions_path.write_bytes(canonical(bad_conditions))
+                with self.assertRaises(ValueError):
+                    check_plan(installed, conditions_path, root / "full-mask-plan", rounds=1)
+                replay_share = root / "paired-simulated-share"
+                replay_share.mkdir()
+                all_desktops = []
+                bad_ui = False
+
+                def simulated_session(environment_path, *_):
+                    parent = environment_path.parent
+                    acquired_package = json.loads((parent / "package/app-index.json").read_text())
+                    acquired_target = json.loads((parent / "acquisition.json").read_text())["guest_app_path"]
+                    desktop = Desktop(replay_share, registered, acquired_package, acquired_target)
+                    all_desktops.append(desktop)
+                    if bad_ui:
+                        original_rpc = desktop.rpc
+
+                        def changed_health(method, params=None):
+                            result = original_rpc(method, params)
+                            if method == "health":
+                                result["response"]["result"]["ui_environment"]["appearance"] = "dark"
+                            return result
+
+                        desktop.rpc = changed_health
+                    return desktop.session_context()
+
+                with patch("copyapp.macos.playbook.environment_session", simulated_session):
+                    paired = rebuild_check(paired_plan, root / "paired-check", timeout=10)
+                self.assertTrue(verify_case(paired))
+                comparison = json.loads((paired / "comparison.json").read_text())
+                self.assertEqual(comparison["selected_comparisons"], 3)
+                self.assertEqual(comparison["behavior_passed"], 3)
+                self.assertEqual(len(comparison["screenshot_pairs"]), 24)
+                self.assertEqual(comparison["visual_review"], "not_reviewed")
+                self.assertTrue((paired / "VISUAL_REVIEW.md").is_file())
+                rejects_rehashed(paired, "comparison.json", lambda value: value.update(behavior_passed=0))
+                rejects_rehashed(paired, "comparison.json", lambda value: value.update(selected_comparisons=True))
+                rejects_rehashed(paired, "comparison.json",
+                                 lambda value: value["screenshot_pairs"][0]["metrics"].update(mean_absolute_error=0.5))
+                judgments_path = root / "visual-judgments.json"
+                judgments = json.loads((paired / "visual-judgments-template.json").read_text())
+                judgments["reviewer"] = "simulated-contract-test"
+                judgments_path.write_bytes(canonical(judgments))
+                with self.assertRaises(ValueError):
+                    visual_review(paired, judgments_path, root / "unreviewed-visual")
+                for judgment in judgments["judgments"]:
+                    judgment.update(verdict="equivalent", notes="Both simulated blue frames are present; no live guest claim.", reviewed_full_screens=True)
+                judgments["judgments"][0].update(verdict="minor_difference", notes="Simulated minor judgment retained despite zero pixel error.")
+                for state in judgments["starting_states"]:
+                    state.update(judgment="equivalent", notes="Both simulated initial text assertions and window frames match.")
+                judgments_path.write_bytes(canonical(judgments))
+                reviewed_visual = visual_review(paired, judgments_path, root / "visual-review")
+                self.assertTrue(verify_case(reviewed_visual))
+                self.assertEqual(json.loads((reviewed_visual / "visual-review.json").read_text())["minor_differences"], 1)
+                rejects_rehashed(reviewed_visual, "visual-review.json", lambda value: value.update(minor_differences=0))
+                coverage = {"schema_version": 2, "platform": "macos", "reviewer": "simulated-contract-test",
+                            "capabilities": [
+                                {"id": "editing", "decision": "verified", "evidence_flow_ids": [flow_id],
+                                 "reason": "Selected simulated behavior and review contract gates passed."},
+                                {"id": "printing", "decision": "deferred", "evidence_flow_ids": [],
+                                 "reason": "No selected printing evidence."}]}
+                coverage_path = root / "coverage-review.json"
+                coverage_path.write_bytes(canonical(coverage))
+                delivered = delivery(reviewed_visual, coverage_path, root / "delivery")
+                self.assertTrue(verify_case(delivered))
+                delivered_data = json.loads((delivered / "delivery.json").read_text())
+                self.assertEqual(delivered_data["coverage"]["verified_known_percent"], 50)
+                self.assertEqual(delivered_data["coverage"]["selected_flow_pass_rate"], 100)
+                self.assertFalse(delivered_data["physical_mac_verified"])
+                self.assertFalse(delivered_data["whole_app_parity"])
+                self.assertEqual(delivered_data["visual_review"]["minor_differences"], 1)
+                rejects_rehashed(delivered, "delivery.json", lambda value: value["coverage"].update(verified_known_capabilities=2))
+                for variant in ("major", "unknown-start"):
+                    adverse = json.loads(canonical(judgments))
+                    if variant == "major":
+                        adverse["judgments"][0].update(verdict="major_difference", notes="Simulated major difference for rejection coverage.")
+                    else:
+                        adverse["starting_states"][0].update(judgment="unknown", notes="Simulated starting-state uncertainty.")
+                    judgments_path.write_bytes(canonical(adverse))
+                    adverse_visual = visual_review(paired, judgments_path, root / (variant + "-visual"))
+                    self.assertTrue(verify_case(adverse_visual))
+                    with self.assertRaises(ValueError):
+                        delivery(adverse_visual, coverage_path, root / (variant + "-delivery"))
+                bad_coverage = json.loads(canonical(coverage))
+                bad_coverage["capabilities"][0].update(decision="deferred", evidence_flow_ids=[])
+                coverage_path.write_bytes(canonical(bad_coverage))
+                with self.assertRaises(ValueError):
+                    delivery(reviewed_visual, coverage_path, root / "missing-target-delivery")
+                # A measured UI mismatch is rejected before acquiring the input
+                # lease, and the failed first side is not replayed automatically.
+                before_desktops = len(all_desktops)
+                bad_ui = True
+                with patch("copyapp.macos.playbook.environment_session", simulated_session):
+                    with self.assertRaises(ValueError):
+                        rebuild_check(paired_plan, root / "wrong-ui-check", timeout=10)
+                self.assertEqual(len(all_desktops), before_desktops + 1)
+                self.assertEqual(all_desktops[-1].calls, [])
+                self.assertFalse(verify_case(root / "wrong-ui-check"))
                 from macos_fakes import xcode_fixture
                 xcode_fixture(project)
                 xcode_built = build_app(plan, root / "xcode-build", recipe_for(
@@ -283,6 +400,10 @@ class NativeCollectorTests(unittest.TestCase):
                 (project / "Main.swift").write_text("invalid Swift source for the failed-build evidence test\n")
                 # Later source edits cannot silently alter the saved build.
                 self.assertTrue(verify_case(native_build))
+                self.assertTrue(verify_case(delivered))
+                coverage_path.write_bytes(canonical(coverage))
+                with self.assertRaisesRegex(ValueError, "current project differs"):
+                    delivery(reviewed_visual, coverage_path, root / "stale-source-delivery")
                 with self.assertRaises(RuntimeError):
                     build_app(plan, root / "failed-native-build", recipe_for(
                         swift_sources=["Main.swift"], info_plist="Info.plist"))
@@ -305,13 +426,13 @@ class NativeCollectorTests(unittest.TestCase):
                 self.assertTrue(verify_case(plan))
                 # Changing the executed command and refreshing its file hash
                 # cannot bypass the original saved playbook's input semantics.
-                input_path = replay / "steps/02/input.json"
+                input_path = replay / "steps/03/input.json"
                 changed_input = json.loads(input_path.read_text())
                 changed_input["arguments"]["text"] = "different input"
                 input_path.write_bytes(canonical(changed_input))
                 replay_manifest = json.loads((replay / "manifest.json").read_text())
                 for item in replay_manifest["evidence"]:
-                    if item["path"] == "steps/02/input.json":
+                    if item["path"] == "steps/03/input.json":
                         item["sha256"] = hashlib.sha256(input_path.read_bytes()).hexdigest()
                 (replay / "manifest.json").write_bytes(canonical(replay_manifest))
                 self.assertFalse(verify_case(replay))

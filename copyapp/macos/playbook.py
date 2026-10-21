@@ -52,7 +52,8 @@ def validate_script(script: dict):
                     any(not isinstance(value, str) or not value for value in selector.values())):
                 raise ValueError("an explicit bounded element selector is required")
         if action == "expect_text":
-            if (not isinstance(step.get("text"), str) or not step["text"] or
+            if (not isinstance(step.get("text"), str) or len(step["text"]) > 16384 or
+                    (step.get("match", "equals") == "contains" and not step["text"]) or
                     step.get("attribute", "value") not in ATTRIBUTES or
                     step.get("match", "equals") not in {"equals", "contains"}):
                 raise ValueError("invalid text assertion")
@@ -183,7 +184,8 @@ def capture(case: Case, prefix: str, computer, collector, params: dict, source: 
             "pid": pid, "tree": observed}
 
 
-def run_playbook(acquisition: Path, script_path: Path, output: Path, timeout: float = 30) -> Path:
+def run_playbook(acquisition: Path, script_path: Path, output: Path, timeout: float = 30,
+                 expected_ui=None, starting_window=None) -> Path:
     from copyapp.verify import verify_case
     acquisition = acquisition.resolve(strict=True)
     if output.resolve() == acquisition or acquisition in output.resolve().parents:
@@ -199,7 +201,17 @@ def run_playbook(acquisition: Path, script_path: Path, output: Path, timeout: fl
     source = json.loads((acquisition / "package/app-index.json").read_text())
     if script["bundle_id"] != target["bundle_id"] or script["app_path"] != target["guest_app_path"]:
         raise ValueError("playbook target differs from acquisition")
+    if expected_ui is not None:
+        from copyapp.macos.ui import validate_ui
+        validate_ui(expected_ui)
+    if starting_window is not None:
+        from copyapp.macos.ui import frame
+        frame(starting_window)
     case = Case(output, "mac_playbook")
+    if expected_ui is not None:
+        case.add("expected-ui.json", expected_ui)
+    if starting_window is not None:
+        case.add("starting-window.json", starting_window)
     case.add("playbook.json", script)
     shutil.copytree(acquisition, case.root / "source", symlinks=True)
     case.record("source/manifest.json")
@@ -212,6 +224,9 @@ def run_playbook(acquisition: Path, script_path: Path, output: Path, timeout: fl
     try:
         with environment_session(acquisition / "environment", timeout) as (computer, collector, environment, health):
             case.add("session-health.json", health)
+            if expected_ui is not None:
+                from copyapp.macos.ui import check_ui
+                check_ui(expected_ui, health)
             if not {"observe", "launch_app", "package_identity"}.issubset(health["response"]["result"].get("capabilities", [])):
                 raise ValueError("collector build lacks Mac replay capabilities")
             outbox = collector.root / "outbox"
@@ -240,6 +255,9 @@ def run_playbook(acquisition: Path, script_path: Path, output: Path, timeout: fl
                         case.add(prefix + "/launch.json", launched)
                         same_build(launched["response"]["result"], source)
                         observed = capture(case, prefix + "/after", computer, collector, params, source)
+                        if index == 1 and starting_window is not None:
+                            from copyapp.macos.ui import check_window
+                            check_window(observed["tree"], starting_window)
                     elif action == "expect_stopped":
                         deadline, attempt = time.monotonic() + 5, 0
                         while True:
@@ -318,6 +336,10 @@ def run_playbook(acquisition: Path, script_path: Path, output: Path, timeout: fl
                 case.add("package-after.json", package)
                 if package["response"]["result"]["package_sha256"] != source["package_sha256"]:
                     raise ValueError("installed package changed during replay")
+                if expected_ui is not None:
+                    ending = collector.call("health")
+                    case.add("ending-health.json", ending)
+                    check_ui(expected_ui, ending)
             finally:
                 import sys
                 primary_failure = sys.exc_info()[0] is not None
@@ -331,6 +353,8 @@ def run_playbook(acquisition: Path, script_path: Path, output: Path, timeout: fl
         case.finish("complete", scope="selected_flow_only")
         return case.root
     except BaseException as exc:
+        if isinstance(getattr(exc, "collector_evidence", None), dict):
+            case.add("failed-collector-request.json", exc.collector_evidence)
         case.add("failure.json", {"error": type(exc).__name__, "message": str(exc)})
         case.finish("failed", scope="selected_flow_only")
         raise
@@ -453,6 +477,9 @@ def validate_playbook(root: Path, manifest: dict, names: set) -> bool:
             observed = captured(prefix + "/after")
             if launched.get("process", {}).get("pid") != observed["pid"]:
                 return False
+            if index == 1 and "starting-window.json" in names:
+                from copyapp.macos.ui import check_window
+                check_window(observed["tree"], saved("starting-window.json"))
         elif action == "expect_stopped":
             stopped = rpc(prefix + "/stopped.json", "app_identity", params)
             same_build(stopped, source)
@@ -512,5 +539,11 @@ def validate_playbook(root: Path, manifest: dict, names: set) -> bool:
                 if action != "quit":
                     captured(prefix + "/after")
     package("package-after.json")
+    if "expected-ui.json" in names:
+        from copyapp.macos.ui import check_ui
+        expected_ui = saved("expected-ui.json")
+        check_ui(expected_ui, health)
+        rpc("ending-health.json", "health", {})
+        check_ui(expected_ui, saved("ending-health.json"))
     mcp("control-release.json")
     return type(manifest.get("behavior_assertions")) is int and manifest["behavior_assertions"] == assertions

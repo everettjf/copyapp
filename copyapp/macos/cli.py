@@ -73,9 +73,42 @@ def configure(parser: argparse.ArgumentParser):
     install.add_argument("--build", required=True, type=Path)
     install.add_argument("--timeout", type=float, default=60)
     install.add_argument("--out", required=True, type=Path)
+    check_plan = sub.add_parser("check-plan", help="freeze UI conditions and masks before fresh paired runs")
+    check_plan.add_argument("--install", required=True, type=Path)
+    check_plan.add_argument("--conditions", required=True, type=Path)
+    check_plan.add_argument("--rounds", type=int, default=3)
+    check_plan.add_argument("--out", required=True, type=Path)
+    check = sub.add_parser("rebuild-check", help="acquire the installed rebuild and replay each original/rebuilt flow; no automatic retries")
+    check.add_argument("--plan", required=True, type=Path)
+    check.add_argument("--timeout", type=float, default=30)
+    check.add_argument("--out", required=True, type=Path)
+    visual = sub.add_parser("visual-review", help="bind explicit full-screen judgments to every paired Mac image")
+    visual.add_argument("--check", required=True, type=Path)
+    visual.add_argument("--judgments", required=True, type=Path)
+    visual.add_argument("--out", required=True, type=Path)
+    delivery = sub.add_parser("delivery", help="bind selected Mac behavior delivery to source, install, paired checks and capability review")
+    delivery.add_argument("--visual-review", required=True, type=Path)
+    delivery.add_argument("--coverage", required=True, type=Path)
+    delivery.add_argument("--out", required=True, type=Path)
 
 
 def run(args) -> int:
+    if args.mac_command == "delivery":
+        from copyapp.macos.delivery import delivery
+        print(delivery(args.visual_review, args.coverage, args.out))
+        return 0
+    if args.mac_command == "visual-review":
+        from copyapp.macos.visual import visual_review
+        print(visual_review(args.check, args.judgments, args.out))
+        return 0
+    if args.mac_command == "check-plan":
+        from copyapp.macos.checks import check_plan
+        print(check_plan(args.install, args.conditions, args.out, args.rounds))
+        return 0
+    if args.mac_command == "rebuild-check":
+        from copyapp.macos.checks import rebuild_check
+        print(rebuild_check(args.plan, args.out, args.timeout))
+        return 0
     if args.mac_command == "install":
         from copyapp.macos.install import install_app
         print(install_app(args.build, args.out, args.timeout))

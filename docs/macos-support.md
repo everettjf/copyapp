@@ -26,9 +26,10 @@ implementation, and report the actual acceptance scope and unfinished gates.
 ```
 
 For an independent rebuild, add the desired behavior and ask the agent to continue
-through a reviewed rebuild plan and implementation. The current development
-commands do not yet provide verified paired delivery. See the ledger before
-treating a prepared task as a completed App.
+through a reviewed rebuild plan, implementation, paired replay and delivery.
+The development commands have local/simulated protocol tests; live guest and
+physical-Mac acceptance remain open. See the ledger before treating a prepared
+task or passing protocol check as a completed App.
 
 ## Check the environment
 
@@ -167,7 +168,7 @@ command proves implementation or delivery, and neither performs deep code analys
 ## Remaining acceptance
 
 Live guest replay, sandbox/data acquisition, discovery acceptance, real-sample
-builds and guest install/launch, paired checks, complete visual review and delivery remain open. Two sample apps,
+builds and guest install/launch, live paired checks, actual visual review and delivery acceptance remain open. Two sample apps,
 three selected flows each and three rounds are required, plus one physical Mac
 recheck. Runtime/native investigation is a separate capability with entitlement
 limits. Keep these gates open until their actual saved evidence passes.
@@ -219,3 +220,15 @@ does not launch the App. A start marker prevents replay of interrupted installs;
 failed attempts and replies remain recorded. After an unknown result, inspect the
 guest and saved evidence instead of rerunning installation. A successful install
 still needs an acquired rebuilt package, paired flow replay and visual review.
+
+## Compare and deliver selected behavior
+
+Follow [paired replay and delivery](macos-checks.md) to freeze measured UI conditions
+and masks with `mac check-plan`, run fresh pairs with `mac rebuild-check`, review
+every full screenshot through `mac visual-review`, then bind capability decisions
+and the current source with `mac delivery`. The check produces a review task and
+judgment template. It never retries a failed input automatically.
+
+These commands verify source links and explicit gates. They do not certify a
+reviewer's interpretation, whole-App parity or physical-Mac behavior. Actual
+ChatComputer/sample acceptance is still required by the implementation ledger.

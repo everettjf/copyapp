@@ -45,7 +45,7 @@ separate capability and cannot be invented to satisfy a gate.
 | P1 | `copyapp mac` CLI; target/environment identity; versioned cases and validators; old iOS compatibility | Positive cases and negative tampering/cross-platform tests; baseline and final iOS suite | In progress |
 | P2 | Guest collector; app/package/data acquisition; AX/window observations; bounded playbooks | Same-name app rejection, ambiguous element rejection, output and persistence assertions | In progress |
 | P3 | Discovery, reviewed report/specification, coverage plan, agent task, host build, guest install, paired check, visual review, delivery | End-to-end source-linked cases with explicit scope and remaining differences | In progress |
-| P4 | Control takeover, interrupted action, reconnect, snapshot restore, time and data resets | No blind action retries; new run/session identity; rejected old results | Pending |
+| P4 | Control takeover, interrupted action, reconnect, snapshot restore, time and data resets | No blind action retries; new run/session identity; rejected old results | In progress |
 | P5 | Agent-first bilingual docs, wheel resources, examples and clean installation | Installed-wheel checks; two sample applications and one physical Mac recheck | In progress |
 | M2 | Optional runtime/native function investigation | Debug fixture first, then named third-party build; report actual entitlement limits | Pending |
 
@@ -59,7 +59,8 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
 - Branch: `codex/macos-chatcomputer-support`.
 - Existing iOS baseline: 346 tests passed before modifications.
 - Separate `copyapp mac` commands now cover doctor, inspect, build/prepare-collector,
-  connect, observe, acquire, playbook, report, rebuild-plan, build-app and install, with versioned
+  connect, observe, acquire, playbook, report, rebuild-plan, build-app, install,
+  check-plan, rebuild-check, visual-review and delivery, with versioned
   `mac_*` semantic validators. These are development commands, not completed
   end-to-end reconstruction or a new release.
 - Local TextEdit package snapshot passed its byte/identity verifier after a
@@ -93,15 +94,30 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
   Logs: `/tmp/copyapp-dual-platform-build-install-20261021.log` and
   `/tmp/copyapp-macos-build-install-wheel-20261021.log`. No iOS device execution
   path changed in this stage; these tests do not add a new named-device result.
+- Paired-delivery regression: 376 tests passed. The simulated desktop runs one
+  selected flow on both sides for three rounds, checks all 24 screenshot pairs,
+  retains a minor judgment despite zero pixel error and binds explicit capability
+  decisions to the installed source. Missing review, major differences, unknown
+  starting states, source drift, forged counts/metrics/coverage and changed UI
+  settings are rejected. This is protocol evidence, not one of the required live
+  sample-app comparisons. The installed wheel passed; development SHA-256:
+  `56fbbd89cbc7cd045e4d457ad309704d10eb3cea68c872e4632e58f27bd2ef3e`.
+  Logs: `/tmp/copyapp-dual-platform-paired-delivery-20261021.log` and
+  `/tmp/copyapp-macos-paired-delivery-wheel-20261021.log`.
 - ChatComputer's guest OS and control Agent have been installed. GUI setup is at
   the guest permissions stage, awaiting the user's response to the permission
   request. No guest or host permission grant is inferred from continued coding.
   The earlier transport probe correctly records `needs_setup`. Live guest identity,
   UI replay, snapshot restore, paired reconstruction and physical-Mac gates remain open.
+- The live GUI was rechecked at step 4. Guest Finder can open
+  `/Volumes/My Shared Files/inbox` through the visible VM window, while the CLI
+  still reports incomplete setup. This unbound UI observation does not establish
+  collector identity, a file roundtrip or a complete P0 probe. No security grant
+  was clicked; the existing permission question remains unanswered.
 - The repository Mac skill and bilingual entry prompts route Mac targets directly
   to this development workflow. Existing iOS skills and historical v1 validation
   retain their scope. ZIP/DMG, sandbox capture, discovery acceptance, live guest install/launch,
-  paired delivery and actual sample/physical-Mac evidence remain unfinished.
+  live paired delivery and actual sample/physical-Mac evidence remain unfinished.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.

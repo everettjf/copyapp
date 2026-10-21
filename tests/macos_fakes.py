@@ -13,6 +13,12 @@ from copyapp.macos.case import canonical
 from copyapp.macos.chatcomputer import ChatComputer, ChatComputerError, UnknownCompletion
 
 
+UI = {"schema_version": 1, "appearance": "light", "locale": "en_US", "preferred_languages": ["en-US"],
+      "display_bounds": {"x": 0, "y": 0, "width": 16, "height": 12},
+      "display_pixels": {"width": 16, "height": 12}, "backing_scale": 1}
+WINDOW = {"x": 0, "y": 0, "width": 16, "height": 10}
+
+
 def xcode_fixture(project):
     """Tiny native Mac project used to exercise the real xcodebuild path."""
     path = project / "Independent.xcodeproj"
@@ -82,19 +88,22 @@ class Desktop:
                    "collector_sha256": self.registered["collector_sha256"], "method": method, "params": params or {}}
         if method == "health":
             result = {"capabilities": ["observe", "launch_app", "package_identity"],
-                      "guest_machine_id": self.registered["guest_machine_id"], "os_version": self.registered["guest_os"]}
+                      "guest_machine_id": self.registered["guest_machine_id"], "os_version": self.registered["guest_os"],
+                      "ui_environment": UI}
         elif method == "package_identity":
             result = {"app": self.facts(), "package_sha256": self.source["package_sha256"],
                       "entry_count": len(self.source["entries"]), "consistency": "two_matching_inventories"}
         elif method == "launch_app":
+            if not self.running:
+                self.value = ""  # This simulated fixture opens a new blank document.
             self.running = True
             result = self.facts(exact=True)
         elif method == "app_identity": result = self.facts(exact="pid" in (params or {}))
         elif method == "observe":
             result = {"app": self.facts(exact=True), "source_channel": "ax", "coordinate_space": "display_points",
-                      "display": {"x": 0, "y": 0, "width": 16, "height": 12}, "truncated": False,
+                      "display": {"x": 0, "y": 0, "width": 16, "height": 12}, "truncated": False, "focused_window_node": 1,
                       "nodes": [{"id": 0, "parent": None, "role": "AXApplication", "enabled": True},
-                                {"id": 1, "parent": 0, "role": "AXWindow", "title": "Document", "enabled": True},
+                                {"id": 1, "parent": 0, "role": "AXWindow", "title": "Document", "enabled": True, "frame": WINDOW},
                                 {"id": 2, "parent": 1, "role": "AXTextField", "identifier": "editor", "value": self.value,
                                  "enabled": True, "frame": {"x": 1, "y": 1, "width": 12, "height": 8}}]}
         else: raise ValueError("unknown simulated RPC")
@@ -116,8 +125,8 @@ class Desktop:
         if method == "key" and params["combo"] == "cmd+q": self.running = False
         if method == "key" and params["combo"] == "cmd+s":
             runs = list((self.root / "outbox/copyapp-runs").iterdir())
-            assert len(runs) == 1
-            (runs[0] / "output.json").write_bytes(canonical({"text": self.value}))
+            latest = max(runs, key=lambda path: path.stat().st_mtime_ns)
+            (latest / "output.json").write_bytes(canonical({"text": self.value}))
         content = [{"type": "text", "text": "simulated command completed"}]
         if method == "screenshot":
             data = io.BytesIO()
@@ -127,6 +136,7 @@ class Desktop:
 
     @contextmanager
     def session_context(self, *_):
+        self.session = str(uuid4())
         desktop = self
 
         class Computer:

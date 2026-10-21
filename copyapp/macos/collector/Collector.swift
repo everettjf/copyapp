@@ -72,6 +72,16 @@ func machineID() -> String {
         .takeRetainedValue() as? String ?? "unavailable"
 }
 
+func uiEnvironment() -> [String: Any] {
+    let display = CGMainDisplayID(), bounds = CGDisplayBounds(display)
+    let dark = NSApplication.shared.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+    return ["schema_version": 1, "appearance": dark ? "dark" : "light", "locale": Locale.current.identifier,
+            "preferred_languages": Locale.preferredLanguages,
+            "display_bounds": ["x": bounds.minX, "y": bounds.minY, "width": bounds.width, "height": bounds.height],
+            "display_pixels": ["width": CGDisplayPixelsWide(display), "height": CGDisplayPixelsHigh(display)],
+            "backing_scale": NSScreen.main?.backingScaleFactor ?? 1]
+}
+
 func appURL(_ params: [String: Any]) throws -> URL {
     guard let path = params["app_path"] as? String, path.hasPrefix("/"),
           let bundleID = params["bundle_id"] as? String, !bundleID.isEmpty else {
@@ -478,7 +488,7 @@ final class Server {
                         response["result"] = ["tool_version": toolVersion, "guest_machine_id": guestMachine,
                             "os_version": ProcessInfo.processInfo.operatingSystemVersionString,
                             "accessibility_granted": AXIsProcessTrusted(), "pid": Int(getpid()),
-                            "capabilities": supportedMethods, "install_root": installRoot.path]
+                            "capabilities": supportedMethods, "install_root": installRoot.path, "ui_environment": uiEnvironment()]
                     case "app_identity": response["result"] = try identity(params)
                     case "observe": response["result"] = try observe(params)
                     case "export_app": response["result"] = try exportApp(params, output: output, requestID: id)

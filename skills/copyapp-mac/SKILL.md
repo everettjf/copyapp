@@ -62,7 +62,15 @@ independent implementation, `mac build-app`, `mac install`, paired behavior chec
 and screenshot review using the commands actually implemented in this checkout.
 Build from the pinned project using an Xcode scheme or direct Swift `@main` sources;
 verify its case before installation. An unknown installation result must be inspected
-before any new attempt. Disclose missing delivery automation and acceptance evidence. Keep target coverage,
+before any new attempt.
+
+For paired acceptance, read [the check/delivery contract](../../docs/macos-checks.md).
+Freeze measured UI settings and masks before fresh runs with `mac check-plan`, then
+use `mac rebuild-check`. Each selected flow needs an exact initial text assertion
+before its first input. Inspect all full image pairs in its generated review task,
+fill explicit judgments and run `mac visual-review`. Review every frozen capability
+before `mac delivery`; source changes, uncertain starting states and major visual
+differences prevent accepted delivery. Disclose missing live acceptance evidence. Keep target coverage,
 verified known coverage and selected-flow pass rate separate. VM evidence cannot
 establish physical-Mac compatibility, and protocol tests cannot establish live UI
 acceptance.

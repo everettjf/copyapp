@@ -407,7 +407,7 @@ async def _command_survey(udid: str, bundle: str, output: Path, launch: bool,
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Copy APP USB survey (v0.1)")
+    parser = argparse.ArgumentParser(description="Copy APP: iOS workflows and experimental macOS App support")
     sub = parser.add_subparsers(dest="command", required=True)
     mac = sub.add_parser("mac", help="macOS App support through ChatComputer (experimental)")
     from copyapp.macos.cli import configure as configure_mac
