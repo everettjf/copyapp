@@ -502,7 +502,7 @@ Earlier TextEdit static distribution probes remain separate evidence.
   in all three rounds. Text, counts, inspector geometry and saved wrapping state
   agree within the selected strings/empty-document scope. Rebuilt relaunch
   sometimes briefly omits the menu title before later rendering. No masks were
-  declared and no accepted fixture delivery exists. `rebuild-plan-3` and
+  declared and that historical attempt has no accepted delivery. `rebuild-plan-3` and
   `rebuilt-build-4` preserve a separate fresh-path attempt that attaches the
   complete menu before activation. `rebuilt-install-3`, `rebuilt-acquisition-3`
   and `menu-recheck-build2-1` verify the new build at `CopyAppEditor3.app`;
@@ -513,8 +513,22 @@ Earlier TextEdit static distribution probes remain separate evidence.
   restores the missing rows; all 27 direct AX menu rows (including alternates)
   match the original's titles, selectors, enabled states and frames. This is a
   targeted regression result, not replacement acceptance. `check-plan-3` freezes
-  the same measured conditions without masks; fresh `check-3` is running. Stocks
-  independently retains its complete adverse 195-pair review.
+  the same measured conditions without masks. Fresh `check-3` completed and
+  verified all nine selected behavior comparisons and 18 complete playbooks.
+  All 459 exact unique full unmasked PNGs were opened for its 285 pairs;
+  `visual-review-3` verifies zero major differences, 285 minor differences and
+  nine equivalent declared starting states. The complete standard Window rows
+  and App menu title are present in the new rounds. Minor independent identity,
+  clock/caret/Dock phase, native-panel path/history and focus differences remain.
+  `capability-review-check3.json` reviews all nine frozen capability units in
+  order; `delivery-1` passes verification with seven verified known capabilities
+  out of nine (77.78%), the same seven-of-nine target, and a separate 9/9 selected
+  comparison pass rate. Undo/clipboard and general window-management actions
+  remain deferred. Arbitrary Unicode, long-line wrapping, file errors/cancel/
+  overwrite, native semantics and physical-Mac behavior remain unknown.
+  This source-available fixture is a workflow acceptance example, not a blind
+  reconstruction benchmark or whole-App parity. Stocks independently retains
+  its complete adverse 195-pair review and has no accepted delivery.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.

@@ -254,16 +254,17 @@ All nine selected behavior comparisons passed, but the complete 195-pair screens
 review records major differences, including offline data/news substitutions,
 menus, hover feedback and dialog stacking. It has no accepted delivery.
 
-The owned fixture has three original guest flows, a reviewed report, a frozen
-seven-of-nine known-capability target and a separately built/installed editor;
-its three-round check passed nine selected behavior comparisons. All 285 full
-screenshot pairs have been reviewed (457 exact unique PNGs): six pairs show the
-same material omission of standard Window menu rows, so delivery remains blocked
-by visual differences. Native-panel history/geometry, focus and transient menu
-title differences are also retained. A fresh editor build restores the menu rows
-in a verified targeted guest replay; its complete three-round recheck is running.
-Both sample deliveries, live
-takeover/input interruption, restored App behavior, remaining data-acquisition checks and a physical
+The owned fixture now has a verified selected-behavior delivery. The editor's
+fresh three-round `check-3` passed nine selected behavior comparisons, and all
+285 full screenshot pairs were reviewed (459 exact unique PNGs). Standard Window
+menu rows are restored. The review records zero major and 285 minor differences,
+including independent App identity, clock/caret/Dock phases and native-panel
+directory history/focus. `delivery-1` verifies seven of nine reviewed known
+capabilities (77.78%); undo/clipboard and general window management remain deferred.
+That denominator does not cover every AppKit behavior, and the fixture source was
+available to the author. Earlier `check-2` and its six major menu differences remain
+preserved. Stocks delivery, live takeover/input interruption, restored App behavior,
+remaining data-acquisition checks and a physical
 Mac recheck remain open. The physical-host attempt was blocked before launch by a
 locked host. Runtime/native investigation is separate and unverified. See the ledger
 for exact case paths; keep each gate open until its own evidence passes.
