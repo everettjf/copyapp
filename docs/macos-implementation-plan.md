@@ -547,6 +547,23 @@ Earlier TextEdit static distribution probes remain separate evidence.
   shown. See `modal-build5-findings.json`. This is a targeted regression, not a
   new complete paired review or capability delivery. Independent market/news
   content, toolbar/menus, hover and native modal semantics remain unresolved.
+- Stocks build 6 separates the newly-created-list search page from the persisted
+  empty-list page after cold launch. The latter now shows Business News, the list
+  label, No Symbols and Add Symbol; Add Symbol focuses search and opens its empty
+  prompt. `rebuild-plan-5`, `build-5`, `install-6` and `rebuilt-acquisition-4` in
+  the same Stocks case root verify `CopyAppStocks6.app`, executable
+  `69421969027231451726578e4fe84f34e5da352a86a31c762a3775b0652ebee7`.
+  `empty-list-and-modal-build6-2` verifies 31 steps and 11 behavior assertions;
+  six full screenshots were opened. It includes cold-list restoration, Add Symbol,
+  Cancel retaining the list, subsequent Delete, return to AAPL and normal exit.
+  The earlier `empty-list-and-modal-build6-1` is retained as failed: its added
+  diagnostic step requested Business News after entering a search page where
+  that element is absent, so it stopped before dispatch. The screenshot was
+  inspected before the separate verified `build6-inspected-cleanup-1` removed
+  the test list and quit; only then was the reviewed script run in a new case.
+  See `empty-list-build6-findings.json`. This is still a targeted regression,
+  not a complete new paired delivery; content/menu/hover differences, list-header
+  menu behavior and actual symbol membership remain unresolved.
 - Controlled real-guest reply-loss evidence is retained at
   `cases/macos-live-response-loss-20261021/`. A local diagnostic harness withholds
   one matching genuine successful `type` reply at the client receive boundary

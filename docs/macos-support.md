@@ -258,6 +258,9 @@ distinguishes Cancel/Delete styling. A verified 28-step guest regression covers
 cancel, subsequent deletion and normal exit; six full screens were inspected.
 This targeted fix does not replace the earlier complete paired review or resolve
 the remaining content/menu differences.
+Build 6 also restores the cold empty-list page and its Add Symbol search entry;
+a separate verified 31-step guest regression covers that state and the modal
+flow, with the failed diagnostic attempt preserved. It has no new paired delivery.
 
 The owned fixture now has a verified selected-behavior delivery. The editor's
 fresh three-round `check-3` passed nine selected behavior comparisons, and all

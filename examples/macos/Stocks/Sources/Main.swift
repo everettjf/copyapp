@@ -37,6 +37,8 @@ final class State {
     var lists: [String]
     var activeList: String?
     var periods: [String: String]
+    // Creating a list opens search; a cold launch restores the empty-list page.
+    var showingEmptyListSearch = false
     init() {
         lists = defaults.stringArray(forKey: "watchlists") ?? []
         periods = defaults.dictionary(forKey: "periods") as? [String: String] ?? [:]
@@ -165,14 +167,23 @@ final class StocksView: NSView, NSTextFieldDelegate {
             }
             if resultSymbols.isEmpty { text("No Results", 115, 220, 16, .semibold, muted) }
         } else if let list = state.activeList {
-            text(list, 26, 142, 15, .semibold)
-            text("⌕", 132, 256, 58, .regular, muted)
-            text("Search Stocks", 96, 358, 21)
-            text("Add symbols to “\(list).”", 54, 391, 13, .regular, muted)
+            if state.showingEmptyListSearch {
+                let lens = NSBezierPath(ovalIn: NSRect(x: 138, y: 269, width: 42, height: 42))
+                lens.move(to: NSPoint(x: 174, y: 305))
+                lens.line(to: NSPoint(x: 191, y: 322))
+                muted.withAlphaComponent(0.4).setStroke()
+                lens.lineWidth = 4.5; lens.lineCapStyle = .round; lens.stroke()
+                text("Search Stocks", 96, 358, 21)
+                text("Add symbols to “\(list).”", 54, 391, 13, .regular, muted)
+            } else {
+                drawBusinessNews()
+                text(list, 24, 214, 15, .semibold)
+                text("No Symbols", 112, 326, 16, .semibold)
+                text("Add symbols to see price quotes.", 65, 351, 12, .regular, muted)
+                drawButton("Add Symbol", NSRect(x: 62, y: 372, width: 194, height: 24))
+            }
         } else {
-            if state.selected == "news" { box(NSRect(x: 10, y: 130, width: 310, height: 60), NSColor.selectedContentBackgroundColor.withAlphaComponent(0.15), radius: 12) }
-            text("Business News", 26, 141, 14, .semibold)
-            text("Local demo overview", 26, 162, 11, .regular, muted)
+            drawBusinessNews()
             for (i, symbol) in symbols.prefix(7).enumerated() { drawRow(symbol, y: CGFloat(190 + i * 61), searchResult: false) }
         }
         box(NSRect(x: 0, y: bounds.height - 56, width: 330, height: 56), NSColor.windowBackgroundColor)
@@ -180,6 +191,11 @@ final class StocksView: NSView, NSTextFieldDelegate {
         text("Demo data · offline", 167, bounds.height - 35, 11, .medium, muted)
         if state.selected == "news" { drawOverview() } else { drawDetail() }
         if let dialog { drawDialog(dialog) }
+    }
+    func drawBusinessNews() {
+        if state.selected == "news" { box(NSRect(x: 10, y: 130, width: 310, height: 60), NSColor.selectedContentBackgroundColor.withAlphaComponent(0.15), radius: 12) }
+        text("Business News", 26, 141, 14, .semibold)
+        text("Local demo overview", 26, 162, 11, .regular, muted)
     }
     func drawRow(_ symbol: Symbol, y: CGFloat, searchResult: Bool) {
         let selected = symbol.ticker == state.selected
@@ -351,7 +367,18 @@ final class StocksView: NSView, NSTextFieldDelegate {
                 element("AXGenericElement", symbol.ticker, NSRect(x: 6, y: resultY(i), width: 318, height: symbol.ticker == "MSFT" ? 64 : 92), value: "\(symbol.company), NASDAQ · USD, \(symbol.price)", identifier: symbol.ticker, press: { [weak self] in self?.select(symbol.ticker) })
             }
         } else if let list = state.activeList {
-            element("AXGenericElement", "Search Stocks\nAdd symbols to “\(list).”", NSRect(x: 0, y: 110, width: 330, height: 470))
+            if state.showingEmptyListSearch {
+                element("AXGenericElement", "Search Stocks\nAdd symbols to “\(list).”", NSRect(x: 0, y: 110, width: 330, height: 470))
+            } else {
+                element("AXStaticText", "Business News\nLocal demo overview", NSRect(x: 10, y: 130, width: 310, height: 60), press: { [weak self] in self?.select("news") })
+                element("AXStaticText", list, NSRect(x: 24, y: 206, width: 280, height: 31))
+                element("AXStaticText", "No Symbols", NSRect(x: 62, y: 326, width: 194, height: 19))
+                element("AXButton", "Add Symbol", NSRect(x: 62, y: 372, width: 194, height: 24), press: { [weak self] in
+                    guard let self else { return }
+                    self.state.showingEmptyListSearch = true
+                    self.refresh(); self.window?.makeFirstResponder(self.search)
+                })
+            }
         } else {
             element("AXStaticText", "Business News\nLocal demo overview", NSRect(x: 10, y: 130, width: 310, height: 60), press: { [weak self] in self?.select("news") })
             for (i, symbol) in symbols.prefix(7).enumerated() {
@@ -404,7 +431,7 @@ final class StocksView: NSView, NSTextFieldDelegate {
         if let hit = hits.last(where: { $0.0.contains(point) }) { hit.1() }
     }
     func clearSearch() { state.query = ""; search.stringValue = ""; refresh() }
-    func select(_ ticker: String) { state.selected = ticker; refresh() }
+    func select(_ ticker: String) { state.selected = ticker; state.showingEmptyListSearch = false; refresh() }
     func newList() {
         dialog = "new"; nameField.stringValue = ""; nameField.isHidden = false
         refresh(); layoutSubtreeIfNeeded(); window?.makeFirstResponder(nameField)
@@ -416,7 +443,7 @@ final class StocksView: NSView, NSTextFieldDelegate {
         let name = nameField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
         if !state.lists.contains(name) { state.lists.append(name) }
-        state.activeList = name; clearSearch(); closeDialog()
+        state.activeList = name; state.showingEmptyListSearch = true; clearSearch(); closeDialog()
         window?.makeFirstResponder(search)
     }
     func removeList() {
