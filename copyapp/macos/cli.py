@@ -130,6 +130,11 @@ def configure(parser: argparse.ArgumentParser):
     restore.add_argument("--snapshot", type=Path, required=True)
     restore.add_argument("--timeout", type=float, default=120)
     restore.add_argument("--out", type=Path, required=True)
+    collector_probe = sub.add_parser("probe-collector", help="observe collector identity through the share without claiming desktop readiness")
+    collector_probe.add_argument("--vm-directory", type=Path, required=True)
+    collector_probe.add_argument("--collector-build", type=Path, required=True)
+    collector_probe.add_argument("--timeout", type=float, default=30)
+    collector_probe.add_argument("--out", type=Path, required=True)
 
 
 def named_flows(items: list) -> dict:
@@ -143,6 +148,10 @@ def named_flows(items: list) -> dict:
 
 
 def run(args) -> int:
+    if args.mac_command == "probe-collector":
+        from copyapp.macos.probe import probe_collector
+        print(probe_collector(args.vm_directory, args.collector_build, args.out, args.timeout))
+        return 0
     if args.mac_command == "snapshot-inspect":
         from copyapp.macos.snapshots import snapshot_inventory
         print(snapshot_inventory(args.vm_directory, args.out))

@@ -69,7 +69,7 @@ def main() -> None:
                                                        "playbook", "report", "rebuild-plan", "build-app", "install",
                                                        "check-plan", "rebuild-check", "visual-review", "delivery",
                                                        "share-probe", "share-probe-check", "import-app", "discover-check", "data-file", "data-schema",
-                                                       "snapshot-inspect", "snapshot-take", "snapshot-restore")):
+                                                       "snapshot-inspect", "snapshot-take", "snapshot-restore", "probe-collector")):
             raise RuntimeError("installed wheel lacks Mac entry points")
         probe = ("import copyapp, pathlib, sys; "
                  "root=pathlib.Path(copyapp.__file__).resolve().parent; "

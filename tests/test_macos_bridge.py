@@ -125,9 +125,24 @@ class NativeCollectorTests(unittest.TestCase):
             app = build_collector(root / "build")
             deployment = prepare_collector(root / "build", root / "deployment")
             self.assertTrue(verify_case(deployment))
+            # A refreshed file hash cannot silently change a no-prompt launcher
+            # into an Accessibility-prompting or arbitrary command launcher.
+            launcher = deployment / "payload/Start Collector.command"
+            old_launcher, old_deployment = launcher.read_bytes(), (deployment / "manifest.json").read_bytes()
+            launcher.write_bytes(old_launcher.replace(b'--shared-root "/Volumes/My Shared Files"',
+                                                      b'--shared-root "/Volumes/My Shared Files" --request-accessibility'))
+            updated = json.loads(old_deployment)
+            for row in updated["evidence"]:
+                if row["path"] == "payload/Start Collector.command": row["sha256"] = hashlib.sha256(launcher.read_bytes()).hexdigest()
+            (deployment / "manifest.json").write_bytes(canonical(updated))
+            self.assertFalse(verify_case(deployment))
+            launcher.write_bytes(old_launcher)
+            (deployment / "manifest.json").write_bytes(old_deployment)
             vm = root / "data/ChatComputer.vm"
             shared = vm / "Shared"
             shared.mkdir(parents=True)
+            (shared / "inbox").mkdir()
+            (shared / "outbox").mkdir()
             spec = {"id": str(uuid4()), "stage": "ready", "displayWidth": 32,
                     "displayHeight": 24, "cpuCount": 2, "memoryBytes": 2 << 30}
             (vm / "spec.json").write_bytes(canonical(spec))
@@ -147,6 +162,20 @@ class NativeCollectorTests(unittest.TestCase):
                                         "--shared-root", str(shared), "--install-root", str(root / "guest-apps")],
                                        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
             try:
+                from copyapp.macos.probe import probe_collector
+                probe = probe_collector(vm, root / "build", root / "collector-probe", timeout=5)
+                self.assertTrue(verify_case(probe))
+                probe_path = probe / "probe.json"
+                original_probe, original_probe_manifest = probe_path.read_bytes(), (probe / "manifest.json").read_bytes()
+                changed = json.loads(original_probe); changed["complete_environment_acceptance"] = True
+                probe_path.write_bytes(canonical(changed))
+                updated = json.loads(original_probe_manifest)
+                for row in updated["evidence"]:
+                    if row["path"] == "probe.json": row["sha256"] = hashlib.sha256(probe_path.read_bytes()).hexdigest()
+                (probe / "manifest.json").write_bytes(canonical(updated))
+                self.assertFalse(verify_case(probe))
+                probe_path.write_bytes(original_probe)
+                (probe / "manifest.json").write_bytes(original_probe_manifest)
                 environment = register_environment(vm, root / "build", root / "environment",
                                                    str(command), timeout=5)
                 self.assertTrue(verify_case(environment))

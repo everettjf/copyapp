@@ -62,7 +62,7 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
   connect, observe, acquire, playbook, report, rebuild-plan, build-app, install,
   check-plan, rebuild-check, visual-review, delivery, share-probe,
   share-probe-check, import-app, discover-check, data-file, data-schema,
-  snapshot-inspect, snapshot-take and snapshot-restore, with versioned
+  snapshot-inspect, snapshot-take, snapshot-restore and probe-collector, with versioned
   `mac_*` semantic validators. These are development commands, not completed
   end-to-end reconstruction or a new release.
 - Local TextEdit package snapshot passed its byte/identity verifier after a
@@ -226,6 +226,28 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
   `5e34680164ba45059ae831c48c967d558e0636a3f5ee077753eef64d3f8bfc2c`.
   Logs: `/tmp/copyapp-dual-platform-snapshots-20261021.log` and
   `/tmp/copyapp-macos-snapshots-wheel-20261021.log`.
+- A no-prompt collector deployment was verified, published only into the VM's
+  existing read-only inbox and opened once through the visible guest Finder.
+  `probe-collector` then received two distinct, source-bound health replies from
+  the actual guest and its case verified:
+  `cases/macos-p0-20261021/collector-identity-probe-1`.
+  Collector SHA-256:
+  `4e2f81c07646c06ec4cf06b7f05b7efa50ce175fef68d9d948f3c9ef22f5559f`.
+  The guest reports macOS **27.0.1 (26A434)** and Accessibility **false**; this is
+  more specific than the earlier macOS 27 planning assumption and differs from
+  the host's build. The public stage remains `agentInstalled`, GUI step 4. No
+  capture/Accessibility grant or permission request was made. Exact launcher
+  content is now checked against its build and permission-request flag, including
+  rejection of a rehashed no-prompt-to-prompt change. The source deployment and
+  published copy both verified. The observed guest identity is first bound to
+  this shared root, not a substitute for complete environment registration.
+- Collector-probe regression: 388 tests passed with expanded actual-local-collector
+  probe and launcher checks, alongside existing iOS tests. Probe completion cannot
+  assert desktop control, transport readiness or full environment acceptance. The
+  installed wheel passed; development SHA-256:
+  `59ec07db7c7b686aec387577208e2f5013936df8918fac0fc217f2eb8f1b70f2`.
+  Logs: `/tmp/copyapp-dual-platform-collector-probe-20261021.log` and
+  `/tmp/copyapp-macos-collector-probe-wheel-20261021.log`.
 - The repository Mac skill and bilingual entry prompts route Mac targets directly
   to this development workflow. Existing iOS skills and historical v1 validation
   retain their scope. Live sandbox capture,

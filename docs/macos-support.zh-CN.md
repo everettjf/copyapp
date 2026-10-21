@@ -48,6 +48,13 @@ ZIP／DMG 输入使用 `mac import-app`；DMG 在 macOS 27 上以只读、禁止
 验收开发可使用[自有 AppKit 样例](../examples/macos/BehaviorFixture/README.md)。它是原始测试 App，
 包含原生文件对话框、编辑与统计、设置持久化和多窗口；宿主冒烟测试不等于客体采集、独立重建或对照交付。
 
+在完整控制权限尚未就绪时，可准备**不带 `--request-accessibility`** 的采集器，
+把经过校验的部署目录放入客体已有共享 inbox，核对后从客体 Finder 打开其启动器。
+`mac probe-collector --vm-directory <VM> --collector-build <BUILD> --out <CASE>`
+只做两次新的健康请求，校验构建、会话、实例和从该共享目录首次观察到的客体身份，并记录实际客体 OS。
+它不申请或授予权限，不能替代 `mac connect`、桌面控制或行为验收。真实客体探针已观察到
+macOS 27.0.1（26A434）、辅助功能权限为 false；初始化仍在第 4 步。
+
 ## 环境与采集器
 
 在 Apple Silicon Mac 上安装 ChatComputer，完成图形界面中的客体初始化。然后运行：

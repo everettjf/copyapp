@@ -37,6 +37,10 @@ IPAs, UIKit observations or iOS-only skills for a Mac target.
 - Build/prepare the bounded collector, deploy it inside the intended guest and
   register the exact VM with `mac connect`. Follow the support guide for the shared
   payload and permissions. Do not read model credentials or guest pairing secrets.
+- Before full control readiness, an explicitly no-prompt deployment can use
+  `mac probe-collector` for two health observations only. Do not add the
+  Accessibility-request flag or treat that probe as a ready environment. Keep
+  the actual observed guest OS build; it may differ from the host.
 - `mac inspect` snapshots a local native-arm64 `.app` without execution.
   `mac acquire` binds a guest package to its registered environment; use that
   acquisition for replay. A static index cannot substitute for guest provenance.

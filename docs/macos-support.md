@@ -95,6 +95,37 @@ suitable stable `--signing-identity` and retain the exact build; changing the
 signature can require a new guest permission grant. A successful build is not a
 notarized distribution or proof of installation.
 
+### Probe the collector without requesting UI permissions
+
+For an explicitly limited setup probe, omit `--request-accessibility` when preparing
+the collector. Copy only that verified deployment into a fresh directory in the
+VM's existing shared inbox, then open its `payload/Start Collector.command` in the
+guest Finder. This starts the bounded helper without invoking its permission prompt;
+it does not grant or bypass ChatComputer/collector capture or Accessibility access.
+Verify the published deployment again before running it. The launcher and its
+permission-request flag are checked against the exact verified build.
+
+```sh
+.venv/bin/copyapp mac probe-collector \
+  --vm-directory "$HOME/.chatcomputer/ChatComputer.vm" \
+  --collector-build cases/mac-collector-build --out cases/mac-collector-probe
+.venv/bin/copyapp verify cases/mac-collector-probe
+```
+
+The probe uses two fresh health requests, binding their request hashes, session,
+instance, executable build and first guest identity observed on this shared root.
+It pins the public VM files and actual guest OS; it does not assume the guest has
+the host's OS build. Its complete scope is `shared_collector_identity_probe`.
+`chatcomputer_transport_verified`, `desktop_control_verified`, `app_behavior_verified`
+and `complete_environment_acceptance` remain false. A failed read is retained and
+not retried. This pre-control observation cannot be substituted for a ready
+`mac connect` environment or passed directly to replay/report/delivery.
+
+The named live probe at `cases/macos-p0-20261021/collector-identity-probe-1`
+verified the actual guest on macOS 27.0.1 (26A434), while the upstream GUI remained
+at setup step 4 and collector Accessibility was false. No permission request or
+grant was made. See the implementation ledger for the remaining live gates.
+
 ## Register one exact VM
 
 ```sh
