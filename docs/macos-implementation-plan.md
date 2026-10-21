@@ -248,6 +248,20 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
   `59ec07db7c7b686aec387577208e2f5013936df8918fac0fc217f2eb8f1b70f2`.
   Logs: `/tmp/copyapp-dual-platform-collector-probe-20261021.log` and
   `/tmp/copyapp-macos-collector-probe-wheel-20261021.log`.
+- Interrupted-input development now preserves the failed MCP transport/server,
+  exact request and last response separately from cleanup failures in a replay
+  case. The pinned upstream wraps pre-dispatch refusals and post-dispatch failures
+  in the same unstructured error channel. Input/file/VM mutation error replies
+  therefore remain unknown outcomes, close that transport and are not retried;
+  read-only errors remain distinct. Actual stdio-process error tests and simulated
+  replay interruption check one action submission and retained raw failure
+  evidence. This is protocol recovery evidence, not a live guest interruption.
+- Interrupted-input regression: 390 tests passed, including the unchanged iOS
+  suite. The installed wheel passed; development SHA-256:
+  `77c884b28ecd9836f0c2a5cd9637bddd3cbd2b270fff331d408980c1d9b27e17`.
+  Logs: `/tmp/copyapp-dual-platform-input-failure-20261021.log` and
+  `/tmp/copyapp-macos-input-failure-wheel-20261021.log`. Guest permission consent
+  remains pending; no guest or host security permission was granted in this work.
 - The repository Mac skill and bilingual entry prompts route Mac targets directly
   to this development workflow. Existing iOS skills and historical v1 validation
   retain their scope. Live sandbox capture,

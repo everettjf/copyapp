@@ -75,6 +75,16 @@ outputs with actual playbooks; a reconnect is not a behavior comparison.
 
 ## Takeover and unknown results
 
+Replay retains `failed-mcp-request.json` when a ChatComputer call fails: the
+transport ID, server identity, exact JSON-RPC request and last received response
+(or null when none arrived). This is separate from cleanup failure evidence, so a
+failed release cannot replace the interrupted input's diagnostic. Its failed
+case records `completion_unknown`, `needs_inspection` and `action_retried: false`.
+ChatComputer's unstructured error replies can represent either a refusal before
+dispatch or a failure after dispatch. For input/file/VM mutations, Copy APP treats
+such a reply as an unknown outcome, closes that MCP transport and does not infer
+non-execution from its text. Read-only errors do not assert an unknown mutation.
+
 The snapshot API has **no atomic expected-input-lease condition**. The preflight
 move detects an existing takeover but cannot close a race where someone takes
 over immediately before the queued snapshot command. The case explicitly records

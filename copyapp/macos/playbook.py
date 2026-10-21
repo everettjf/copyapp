@@ -355,7 +355,12 @@ def run_playbook(acquisition: Path, script_path: Path, output: Path, timeout: fl
     except BaseException as exc:
         if isinstance(getattr(exc, "collector_evidence", None), dict):
             case.add("failed-collector-request.json", exc.collector_evidence)
-        case.add("failure.json", {"error": type(exc).__name__, "message": str(exc)})
+        if isinstance(getattr(exc, "chatcomputer_evidence", None), dict):
+            case.add("failed-mcp-request.json", exc.chatcomputer_evidence)
+        from copyapp.macos.chatcomputer import UnknownCompletion
+        case.add("failure.json", {"error": type(exc).__name__, "message": str(exc),
+                                  "completion_unknown": isinstance(exc, UnknownCompletion),
+                                  "action_retried": False, "needs_inspection": True})
         case.finish("failed", scope="selected_flow_only")
         raise
 

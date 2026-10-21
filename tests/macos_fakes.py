@@ -121,7 +121,14 @@ class Desktop:
             self.value = params["text"]
             if self.lose_type_reply:
                 self.closed = True
-                raise UnknownCompletion("simulated input executed but reply was lost")
+                error = UnknownCompletion("simulated input executed but reply was lost")
+                error.chatcomputer_evidence = {
+                    "transport_id": self.session,
+                    "server_info": {"name": "chatcomputer", "version": "0.9.11"},
+                    "request": {"jsonrpc": "2.0", "id": len(self.calls), "method": "tools/call",
+                                "params": {"name": method, "arguments": copy.deepcopy(params)}},
+                    "response": None}
+                raise error
         if method == "key" and params["combo"] == "cmd+q": self.running = False
         if method == "key" and params["combo"] == "cmd+s":
             runs = list((self.root / "outbox/copyapp-runs").iterdir())

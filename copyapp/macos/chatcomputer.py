@@ -173,12 +173,16 @@ class ChatComputer:
                 error.chatcomputer_evidence = evidence
                 raise error from exc
             if result.get("isError"):
-                # Snapshot APIs can commit the snapshot and then fail to ready
-                # the guest. An error reply is not proof of no state change.
-                error = (UnknownCompletion("Snapshot result needs inspection: " + self.text(result))
-                         if name in {"snapshot_take", "snapshot_restore", "snapshot_delete"}
+                # ExternalControl wraps both preflight refusals and failures
+                # after dispatch in the same unstructured isError response.
+                # Text cannot prove that an input or file/VM mutation did not
+                # happen. Preserve the envelope before closing this transport.
+                error = (UnknownCompletion("Completion needs inspection for " + name + ": " + self.text(result))
+                         if name in MUTATING_TOOLS
                          else ChatComputerError(self.text(result)))
                 error.chatcomputer_evidence = self.evidence()
+                if isinstance(error, UnknownCompletion):
+                    self.close()
                 raise error
             return result
 

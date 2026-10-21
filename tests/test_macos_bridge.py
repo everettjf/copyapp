@@ -499,6 +499,17 @@ class NativeCollectorTests(unittest.TestCase):
                 self.assertEqual([method for method, _ in lost.calls].count("type"), 1)
                 failure = json.loads((root / "interrupted/failure.json").read_text())
                 self.assertEqual(failure["error"], "UnknownCompletion")
+                self.assertTrue(failure["completion_unknown"])
+                self.assertTrue(failure["needs_inspection"])
+                self.assertFalse(failure["action_retried"])
+                interrupted = root / "interrupted"
+                failed_mcp = json.loads((interrupted / "failed-mcp-request.json").read_text())
+                self.assertEqual(failed_mcp["request"]["params"], {"name": "type", "arguments": {"text": "hello"}})
+                self.assertIsNone(failed_mcp["response"])
+                self.assertTrue((interrupted / "control-release-failure.json").is_file())
+                records = json.loads((interrupted / "manifest.json").read_text())["evidence"]
+                self.assertIn({"path": "failed-mcp-request.json", "sha256": hashlib.sha256(
+                    (interrupted / "failed-mcp-request.json").read_bytes()).hexdigest()}, records)
                 self.assertFalse(verify_case(root / "interrupted"))
                 export = json.loads((acquisition / "export.json").read_text())
                 self.assertEqual(export["response"]["result"]["source_app"]["binary_sha256"],

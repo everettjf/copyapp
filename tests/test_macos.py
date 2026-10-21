@@ -58,6 +58,7 @@ for line in sys.stdin:
         if name=='click' and BEHAVIOR=='timeout': time.sleep(5)
         if name=='screenshot': result={'isError':False,'content':[{'type':'image','mimeType':'image/png','data':IMAGE}]}
         else: result={'isError':False,'content':[{'type':'text','text':'Virtual Mac: running, desktop ready'}]}
+        if BEHAVIOR=='tool-error': result={'isError':True,'content':[{'type':'text','text':'Guest channel failed after dispatch'}]}
     ident=request['id']+1 if BEHAVIOR=='wrong-id' else request['id']
     print(json.dumps({'jsonrpc':'2.0','id':ident,'result':result}),flush=True)
 '''
@@ -183,6 +184,32 @@ class MacMCPTests(unittest.TestCase):
             with self.assertRaises(ChatComputerError):
                 with ChatComputer(executable, timeout=2):
                     self.fail("must not admit a mismatched JSON-RPC response")
+
+    def test_mutating_error_reply_retains_envelope_and_closes_without_retry(self):
+        with tempfile.TemporaryDirectory() as folder:
+            executable, log = make_server(Path(folder), behavior="tool-error")
+            with ChatComputer(executable, timeout=2) as client:
+                with self.assertRaises(UnknownCompletion) as caught:
+                    client.call("click", {"x": 1, "y": 2})
+                evidence = caught.exception.chatcomputer_evidence
+                self.assertEqual(evidence["request"]["params"], {"name": "click", "arguments": {"x": 1, "y": 2}})
+                self.assertEqual(evidence["request"]["id"], evidence["response"]["id"])
+                self.assertTrue(evidence["response"]["result"]["isError"])
+                self.assertEqual(evidence["transport_id"], client.transport_id)
+                self.assertIsNone(client.process)
+                with self.assertRaises(ChatComputerError): client.call("click", {"x": 1, "y": 2})
+            self.assertEqual(len(log.read_text().splitlines()), 1)
+
+    def test_read_only_error_reply_is_not_unknown_mutation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            executable, log = make_server(Path(folder), behavior="tool-error")
+            with ChatComputer(executable, timeout=2) as client:
+                with self.assertRaises(ChatComputerError) as caught:
+                    client.call("status")
+                self.assertNotIsInstance(caught.exception, UnknownCompletion)
+                self.assertEqual(caught.exception.chatcomputer_evidence["request"]["params"]["name"], "status")
+                self.assertIsNotNone(client.process)
+            self.assertEqual(len(log.read_text().splitlines()), 1)
 
     def test_doctor_ready_is_only_transport_and_image_tampering_fails(self):
         with tempfile.TemporaryDirectory() as folder:
