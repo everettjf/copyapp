@@ -547,6 +547,19 @@ Earlier TextEdit static distribution probes remain separate evidence.
   shown. See `modal-build5-findings.json`. This is a targeted regression, not a
   new complete paired review or capability delivery. Independent market/news
   content, toolbar/menus, hover and native modal semantics remain unresolved.
+- Controlled real-guest reply-loss evidence is retained at
+  `cases/macos-live-response-loss-20261021/`. A local diagnostic harness withholds
+  one matching genuine successful `type` reply at the client receive boundary
+  and terminates that MCP process. Production `interrupted-playbook-1` retains
+  its exact request, null response, unknown completion, inspection requirement
+  and no retry; `verify` rejects the incomplete case. The withheld real envelope
+  remains separate. A new collector session's verified
+  `post-loss-readonly-observation-1` shows exactly one probe string; its full
+  screenshot was opened. After inspection, `observed-normal-exit-1` verifies the
+  observed text and normal process exit. This is controlled fault injection
+  against the real guest, not a simulated desktop or an unplanned network failure.
+  No production transport code changed. Human takeover, other interruption
+  timings, snapshot App-state restoration and physical-Mac acceptance remain open.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.

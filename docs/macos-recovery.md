@@ -131,6 +131,22 @@ restoration, live takeover/interrupted input and all paired sample comparisons
 remain separate acceptance requirements; the operation still records
 `behavior_restoration_verified: false` and `shared_data_reset: false`.
 
+The named guest also has a controlled reply-loss diagnostic at
+`cases/macos-live-response-loss-20261021/`. Its local harness submits one real
+`type` request to the pinned ChatComputer/collector environment, withholds the
+matching genuine successful reply at the client receive boundary, and closes
+that MCP process. Production replay saves `interrupted-playbook-1` with a null
+last response, `completion_unknown`, `needs_inspection` and `action_retried: false`;
+`verify` rejects it as incomplete. The harness retains the withheld envelope
+separately rather than adding it to the failed production case. A fresh collector
+session's verified `post-loss-readonly-observation-1` shows exactly one copy of the
+probe text, and its complete screenshot was opened. Only after that inspection,
+`observed-normal-exit-1` asserts the observed text and quits normally. The input
+was never repeated. This tests controlled post-dispatch reply loss against a real
+guest; it does not establish human-takeover behavior, an unplanned network failure
+or snapshot App-state restoration. The diagnostic harness is local evidence and
+does not alter production transport code.
+
 The checked upstream implementation is revision
 `c774a4ceadc7dc17a589a1de8f5a40fe36c2a649`:
 [tool arguments](https://github.com/chatcomputer/chatcomputer/blob/c774a4ceadc7dc17a589a1de8f5a40fe36c2a649/Packages/ChatComputerKit/Sources/ComputerControl/ControlCommand.swift),
