@@ -110,8 +110,11 @@ App 版本分开记录。本次 App 为 0.9.11；通过 CLI 别名的 doctor 自
 不从 App 版本推导它。每次连接重新检查身份；变化时新建审阅过的登记，不覆盖旧证据。
 
 `inspect` 只采集本地 `.app` 静态包，记录完整文件清单和安全的内部符号链接，分别固定
-完整可执行文件和 arm64 分片哈希，并检查 Mach-O 声明的 macOS 平台。它拒绝 iOS 和
+完整可执行文件和 arm64 分片哈希，并检查 Mach-O 平台声明：接受 1（macOS）或
+6（Mac Catalyst），拒绝 iOS、iOS Simulator、冲突的平台声明和
 Intel-only 输入，不会把受保护系统文件标志传播到研究副本；原 App 不变。
+Catalyst 索引单独记录 `macho_platform: 6` 和 `runtime: mac_catalyst`；包采集通过
+不能证明界面重放或复刻通过。
 
 `observe --ax` 要求准确的前台进程和启动时间，保存有界 AX 树、原始 MCP 截图及前后
 身份。不传 `--ax` 时只采集 App 身份。截图和 AX 为先后观察，不能声称同时采集；截断

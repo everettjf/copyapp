@@ -28,7 +28,9 @@ Every new case kind needs a semantic validator; unknown Mac kinds must fail.
 
 First acceptance environment: Apple Silicon macOS 27 host and macOS 27 guest,
 ChatComputer v0.9.11 (record actual version and hash). Native arm64 AppKit/SwiftUI
-apps; universal bundles retain full-file and selected-slice hashes. Begin with
+apps, plus explicitly identified arm64 Mac Catalyst packages for the requested
+Stocks sample; Catalyst UI acceptance still needs live evidence. Universal bundles
+retain full-file and selected-slice hashes. Begin with
 independent `.app`, ZIP and DMG distribution. No initial promise for Intel/Rosetta,
 encrypted store packages, drivers, system extensions, hardware-dependent or
 account/payment workflows. Electron behavior compatibility is a later named test.
@@ -306,6 +308,16 @@ Earlier TextEdit static distribution probes remain separate evidence.
   `cases/macos-stocks-20261021/acquisition-1`. Add explicit Mac Catalyst package
   facts and rejection tests for iOS/simulator inputs before a new acquisition;
   do not relabel the failed case as accepted or infer UI compatibility from it.
+- Mac package inspection now accepts platform 6 exclusively as Mac Catalyst,
+  records its runtime separately and rejects iOS, simulator and conflicting platform
+  declarations. Native platform-1 index facts retain their historical shape.
+  A rehashed Catalyst-to-native fact substitution is rejected. Fresh guest Stocks
+  acquisition `cases/macos-stocks-20261021/acquisition-2` verified; its first
+  launch/observation cases show the welcome sheet, not a completed behavior flow.
+  Full regression: 392 tests passed in 46.490s; installed wheel passed, SHA-256
+  `49a08be256f8a702c97ead1d56265ff19ab133a26c3b44a28b11e64b1a9e4894`.
+  Logs: `/tmp/copyapp-dual-platform-catalyst-20261021.log` and
+  `/tmp/copyapp-macos-catalyst-wheel-20261021.log`.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.

@@ -85,13 +85,17 @@ def app_facts(app: Path) -> dict:
         elif command == 0x24:  # LC_VERSION_MIN_MACOSX
             platforms.add(1)
         cursor += length
-    if platforms != {1}:
-        raise ValueError("executable does not declare the macOS platform")
-    return {"bundle_id": bundle, "version": str(info.get("CFBundleShortVersionString", "")),
+    if platforms not in ({1}, {6}):
+        raise ValueError("executable must declare macOS or Mac Catalyst exclusively")
+    result = {"bundle_id": bundle, "version": str(info.get("CFBundleShortVersionString", "")),
             "build": str(info.get("CFBundleVersion", "")), "executable": relative,
             "binary_sha256": hashlib.sha256(data).hexdigest(),
             "arm64_sha256": hashlib.sha256(body).hexdigest(), "platform": "macos",
             "architecture": "arm64", "macho": facts}
+    # Preserve historical native-macOS facts; Catalyst has its own explicit runtime.
+    if platforms == {6}:
+        result.update(macho_platform=6, runtime="mac_catalyst")
+    return result
 
 
 def snapshot_bundle(source: Path, target: Path, entries: list):

@@ -175,7 +175,10 @@ old files must not be accepted as fresh results after restore.
 
 `inspect` snapshots a local `.app`, inventories regular files and safe internal
 symlinks, and distinguishes the whole executable hash from its arm64 slice hash.
-It requires a macOS Mach-O platform, rejecting iOS and Intel-only binaries. It
+It accepts arm64 Mach-O platform 1 (macOS) or 6 (Mac Catalyst), rejecting iOS,
+iOS Simulator, conflicting platform declarations and Intel-only binaries. Catalyst
+indices explicitly record `macho_platform: 6` and `runtime: mac_catalyst`; accepting
+their package does not establish UI replay compatibility. It
 copies package bytes and permissions without propagating protected system flags.
 Its scope is **static package only**, never guest installation or execution.
 

@@ -104,10 +104,42 @@ class MacPackageTests(unittest.TestCase):
             self.assertTrue(verify_case(case))
 
     def test_rejects_ios_and_intel_as_native_mac(self):
-        for platform, cpu in ((2, 0x0100000C), (1, 0x01000007)):
+        for platform, cpu in ((2, 0x0100000C), (7, 0x0100000C),
+                              (0, 0x0100000C), (1, 0x01000007)):
             with self.subTest(platform=platform, cpu=cpu), tempfile.TemporaryDirectory() as folder:
                 with self.assertRaises(ValueError):
                     app_facts(make_app(Path(folder), platform=platform, cpu=cpu))
+
+    def test_catalyst_runtime_is_bound_to_binary_even_after_rehash(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            case = index_app(make_app(root, platform=6), root / "case")
+            self.assertTrue(verify_case(case))
+            index_path = case / "app-index.json"
+            index = json.loads(index_path.read_text())
+            self.assertEqual(index["app"]["runtime"], "mac_catalyst")
+            self.assertEqual(index["app"]["macho_platform"], 6)
+            del index["app"]["runtime"]
+            del index["app"]["macho_platform"]
+            index_path.write_bytes(canonical(index))
+            manifest_path = case / "manifest.json"
+            manifest = json.loads(manifest_path.read_text())
+            for item in manifest["evidence"]:
+                if item["path"] == "app-index.json":
+                    item["sha256"] = digest(index_path)
+            manifest_path.write_bytes(canonical(manifest))
+            self.assertFalse(verify_case(case))
+
+    def test_conflicting_mac_and_catalyst_platforms_are_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            app = make_app(Path(folder), platform=6)
+            binary = app / "Contents/MacOS/Example"
+            data = bytearray(binary.read_bytes())
+            struct.pack_into("<II", data, 16, 2, 48)
+            data.extend(struct.pack("<6I", 0x32, 24, 1, 0x0e0000, 0x0e0000, 0))
+            binary.write_bytes(data)
+            with self.assertRaises(ValueError):
+                app_facts(app)
 
     def test_rejects_external_bundle_symlink_and_nested_output(self):
         with tempfile.TemporaryDirectory() as folder:
