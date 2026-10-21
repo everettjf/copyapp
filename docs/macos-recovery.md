@@ -24,7 +24,8 @@ Mutation commands refuse those conditions or missing ancestry.
 The named development inventory at
 `cases/macos-p0-20261021/snapshot-inventory-1` verified the actual VM at
 `agentInstalled`, with zero snapshots and no restore in progress. No take/restore
-was performed. The existing guest permission question remains unanswered.
+was performed in that early inventory. Guest permissions were granted later;
+the named live snapshot results below remain separate from this historical case.
 
 ## Take a reviewed baseline
 
@@ -112,9 +113,23 @@ The complete operation scope is `snapshot_metadata_and_reconnect`, with
 `disk_or_memory_bytes_verified` all false. Hashes establish saved evidence
 consistency, not the truth of a UI interpretation or hidden VM state. The current
 snapshot transition/reconnect tests use a simulated metadata controller and a real
-local collector; no actual VM disk/memory was restored in those tests. Live
-takeover, interrupted connection, restored App/data state and all paired sample
-comparisons remain acceptance requirements.
+local collector; no actual VM disk/memory was restored in those tests.
+
+On the named macOS 27.0.1 guest, the first actual take saved its snapshot but the
+collector's new shared-file session timed out. Both failed attempts remain under
+`cases/macos-p0-20261021/snapshot-take-live-{1,2}`. A GUI refresh of the bridge
+directory restored health without restarting the collector; session rotation alone
+did not resolve the failure. The collector now enumerates that directory before
+reading the host's atomically replaced active epoch. This changes no request ID,
+start marker or retry rule.
+
+With the new pinned collector, `snapshot-take-directory-refresh-1` and
+`snapshot-restore-directory-refresh-1` in that same local directory verified actual
+save/restore metadata and fresh MCP/collector sessions, with one retained safety
+snapshot on restore. This is evidence for this named VM and build. App-state
+restoration, live takeover/interrupted input and all paired sample comparisons
+remain separate acceptance requirements; the operation still records
+`behavior_restoration_verified: false` and `shared_data_reset: false`.
 
 The checked upstream implementation is revision
 `c774a4ceadc7dc17a589a1de8f5a40fe36c2a649`:

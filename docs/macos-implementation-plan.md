@@ -355,6 +355,29 @@ Earlier TextEdit static distribution probes remain separate evidence.
   overview content; preserve these differences in review. `build-2` adds normal
   startup overview behavior and an independently drawn dock icon. Its install and
   paired checks remain pending; all earlier build/run cases remain separate.
+- Actual snapshot testing exposed stale shared-directory observations after memory
+  resume. `snapshot-take-live-1` saved a snapshot but timed out on collector health;
+  `snapshot-take-live-2` retained another failure. A fresh Finder directory read
+  restored health with the same collector; rotating sessions alone was insufficient.
+  The collector now enumerates the bridge directory before reading the active
+  epoch. Its request IDs, mutation start markers and no-retry rules remain intact.
+  New collector SHA-256:
+  `c0f5274ba212847062cd586d5ba7a82e78cc7246c2d9fce3808865cda07b24de`;
+  source build/deployment/probe/registration are under
+  `cases/macos-snapshot-collector-20261021/`. Its AX permission must be checked
+  separately after this ad-hoc build change.
+- The new collector passed actual take and restore in
+  `cases/macos-p0-20261021/snapshot-take-directory-refresh-1` and
+  `snapshot-restore-directory-refresh-1`, including fresh sessions and a retained
+  safety snapshot. These cases verify metadata/reconnect only; App restoration,
+  live input interruption/takeover and complete P0/P4 acceptance remain open.
+  Serialized full regression: 393 tests passed in 51.696s; installed wheel passed,
+  SHA-256 `060a9201a1eb7496ab99a4826a61fa41e21e910f25888687efeb85cabe00832a`.
+  Logs: `/tmp/copyapp-dual-platform-directory-refresh-20261021.log` and
+  `/tmp/copyapp-macos-directory-refresh-wheel-20261021.log`. Earlier concurrent
+  runs had short MCP startup-deadline failures; their retained logs are
+  `/tmp/copyapp-dual-platform-post-snapshot-health-20261021.log` and
+  `/tmp/copyapp-macos-post-snapshot-health-20261021.log`.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.

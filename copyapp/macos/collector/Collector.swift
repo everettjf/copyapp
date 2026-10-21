@@ -559,7 +559,13 @@ final class Server {
         guard !busy else { return }
         busy = true; defer { busy = false }
         do {
-            let active = try readJSON(shared.appendingPathComponent("inbox/copyapp-bridge/active.json"))
+            let bridge = shared.appendingPathComponent("inbox/copyapp-bridge")
+            // Re-enumerate the parent before resolving the active epoch. A resumed
+            // macOS virtio-fs mount can otherwise retain a stale directory entry
+            // for the host's atomically replaced active.json. This is read-only;
+            // request IDs/start markers still prevent replay of old mutations.
+            _ = try fm.contentsOfDirectory(at: bridge, includingPropertiesForKeys: nil)
+            let active = try readJSON(bridge.appendingPathComponent("active.json"))
             guard active["protocol_version"] as? Int == protocolVersion,
                   let session = active["session_id"] as? String, UUID(uuidString: session) != nil else { return }
             let requests = shared.appendingPathComponent("inbox/copyapp-bridge/" + session)
