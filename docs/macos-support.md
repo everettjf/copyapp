@@ -256,8 +256,10 @@ menus, hover feedback and dialog stacking. It has no accepted delivery.
 
 The owned fixture has three original guest flows, a reviewed report, a frozen
 seven-of-nine known-capability target and a separately built/installed editor;
-paired acceptance is still in progress. Both sample deliveries, live takeover/input
-interruption, restored App behavior, remaining data-acquisition checks and a physical
+its three-round check passed nine selected behavior comparisons. Full review of
+its 285 screenshot pairs remains open; the inspected subset retains native-panel
+directory, extension-display and focus differences. Both sample deliveries, live
+takeover/input interruption, restored App behavior, remaining data-acquisition checks and a physical
 Mac recheck remain open. The physical-host attempt was blocked before launch by a
 locked host. Runtime/native investigation is separate and unverified. See the ledger
 for exact case paths; keep each gate open until its own evidence passes.

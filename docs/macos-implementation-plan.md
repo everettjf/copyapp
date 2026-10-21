@@ -485,6 +485,22 @@ Earlier TextEdit static distribution probes remain separate evidence.
   load. The action-timeout test now applies its 0.3s bound after initialization;
   its lost/late-input/no-retry assertions are unchanged. No iOS device execution
   code changed and no fresh physical-iPhone regression is claimed.
+- Fixture `check-2` subsequently completed and verified all three rounds: nine of nine selected
+  behavior comparisons passed, with 18 complete original/rebuilt playbooks. The
+  rebuilt executable is
+  `6bc8fa8be0f6d08294b2e81af820b5e4bd545dabc8565be5fff81f822b681bdc`.
+  Together with Stocks this supplies 18 selected behavior comparisons across the
+  two samples, not accepted sample delivery or verified capability coverage.
+  The fixture check contains 285 full screenshot pairs (457 exact unique complete
+  PNG hashes); 26 exact unique screenshots have been inspected so far. This indexed
+  subset is not a complete fixture visual review or delivery. No full acceptance
+  is claimed. Selected Unicode editor, reopened second document, both inspectors
+  and wrapping Off/relaunch/Reset screens agree in the inspected first-round
+  states. Native save panels retain default-directory, extension-display and
+  transient focus/button-state differences. App names, run-scoped paths and the
+  desktop clock also differ; no masks were declared. Preserve these differences
+  and review every remaining full pair before attempting delivery. Stocks retains
+  its complete adverse 195-pair review, independently of this partial fixture review.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.
