@@ -329,6 +329,9 @@ def run_playbook(acquisition: Path, script_path: Path, output: Path, timeout: fl
                             result = computer.call(tool, arguments)
                             case.add(prefix + "/input-result.json", result)
                             if action != "quit":
+                                # Let native sheet/menu transitions begin before the strict
+                                # observation. This never repeats an input or relaxes identity.
+                                time.sleep(0.35)
                                 capture(case, prefix + "/after", computer, collector, params, source)
                     entry.update(status="complete", finished_at=now())
                     case.finish("collecting")

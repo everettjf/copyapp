@@ -327,6 +327,17 @@ Earlier TextEdit static distribution probes remain separate evidence.
   `d067e0cebc6752e1bd962d2bef5437ea031f353fbebcc2b14172e754c442924d`.
   Logs: `/tmp/copyapp-dual-platform-description-selector-20261021.log` and
   `/tmp/copyapp-macos-description-selector-wheel-20261021.log`.
+- A live new-watchlist click changed the focused window during the immediate AX
+  observation. Its failed case is preserved; a fresh read confirmed the dialog
+  before further input. Replay now waits 350 ms after a successful input reply
+  before strict post-input capture, without retrying the input or relaxing
+  identity/focus checks. Subsequent save/manage sheet exploration succeeded.
+  The original Stocks search flow and chart-range/quit/reselect flow have now
+  replayed with assertions; discovery review and reconstruction are still pending.
+  Full regression: 393 tests passed in 52.830s; installed wheel passed, SHA-256
+  `e9dc83a80208441dad3aeb6f1b3c1c6ca8d67bbd8a58e1a109c77e063bcbff75`.
+  Logs: `/tmp/copyapp-dual-platform-ui-settle-20261021.log` and
+  `/tmp/copyapp-macos-ui-settle-wheel-20261021.log`.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.
