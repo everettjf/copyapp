@@ -52,6 +52,18 @@ separate capability and cannot be invented to satisfy a gate.
 First-stage effort estimate is 13–20 developer days, revised after P0. This is not
 a deadline or a reason to reduce scope. No tag/release until acceptance completes.
 
+The branch remains unmerged at the user's request. Open an issue and a draft PR
+for review while development and acceptance continue. The requested real-app
+sample is now Apple Stocks (`com.apple.stocks`), alongside the owned fixture.
+The host has Stocks 8.0 (2028); acquire the actual guest build before choosing
+flows. Discover and review at least three representative flows, freeze their
+known-capability inventory, then implement the independent selected behavior under
+`examples/macos/Stocks/` with a separate Bundle ID. Search, watchlist changes,
+chart ranges and persistence are candidates for observation, not accepted flows.
+Retain market-data/network dependencies and remaining differences explicitly;
+captured prices do not establish a live data service or complete App parity.
+Earlier TextEdit static distribution probes remain separate evidence.
+
 ## Required evidence model
 
 ### Development evidence recorded on 2026-10-21
@@ -267,6 +279,33 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
   retain their scope. Live sandbox capture,
   live discovery acceptance, live guest install/launch,
   live paired delivery and actual sample/physical-Mac evidence remain unfinished.
+- After explicit guest-permission authorization, ChatComputer onboarding saved its
+  initial snapshot. Normal quit/reopen enabled external MCP without a configured
+  built-in model. `transport-ready-attempt-1` and `environment-1` under
+  `cases/macos-p0-20261021/` verified. Collector authorization then completed;
+  the earlier `collector-after-authorization-1` retains a false permission
+  observation, while `collector-authorized-1` records true. The actual guest's
+  `settings-ax-1` verified exact foreground System Settings identity, a screenshot
+  and 323 untruncated AX nodes on macOS 27.0.1 (26A434). This is live environment
+  and AX collection evidence, not a completed sample reconstruction or P0/P4 gate.
+- Registration now retains the raw MCP initialization envelope and self-reported
+  server identity independently of App version; reconnect and snapshot validation
+  use that pinned server identity. The actual CLI-alias doctor reported server
+  version `0`; resolved-App registration reported `0.9.11`. Simulated snapshot
+  tests now deliberately use server `0` with App `0.9.11`, reject a rehashed
+  substitution and reject a changed server on reconnect. Full regression: 390
+  tests passed; installed-wheel SHA-256:
+  `76a882ce9457d6e73d69aac76aac4315832346a89be903b9d36b621508a36e9b`.
+  Logs: `/tmp/copyapp-dual-platform-live-registration-20261021.log` and
+  `/tmp/copyapp-macos-live-registration-wheel-20261021.log`. The first Mac-only
+  recheck failed on a test import-order mistake; the retained log is
+  `/tmp/copyapp-macos-live-server-20261021.log`; its corrected recheck passed.
+- The first actual guest Stocks acquisition exported 124 package entries and
+  identified Stocks 8.0 (2028), but the host index rejected its Mach-O platform
+  **6 (Mac Catalyst)**. The failed attempt remains at
+  `cases/macos-stocks-20261021/acquisition-1`. Add explicit Mac Catalyst package
+  facts and rejection tests for iOS/simulator inputs before a new acquisition;
+  do not relabel the failed case as accepted or infer UI compatibility from it.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.

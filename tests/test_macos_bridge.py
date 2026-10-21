@@ -10,6 +10,7 @@ import threading
 import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 from uuid import uuid4
 
 from copyapp.macos.bridge import Collector, atomic_json
@@ -179,6 +180,26 @@ class NativeCollectorTests(unittest.TestCase):
                 environment = register_environment(vm, root / "build", root / "environment",
                                                    str(command), timeout=5)
                 self.assertTrue(verify_case(environment))
+                environment_path = environment / "environment.json"
+                saved_environment = environment_path.read_bytes()
+                saved_manifest = (environment / "manifest.json").read_bytes()
+                registered_versions = json.loads(saved_environment)
+                self.assertEqual(registered_versions["chatcomputer"]["version"], "0.9.11")
+                self.assertEqual(registered_versions["mcp_server_info"], {"name": "chatcomputer", "version": "0"})
+                changed_versions = json.loads(saved_environment)
+                changed_versions["mcp_server_info"]["version"] = "0.9.11"
+                environment_path.write_bytes(canonical(changed_versions))
+                changed_manifest = json.loads(saved_manifest)
+                for row in changed_manifest["evidence"]:
+                    if row["path"] == "environment.json": row["sha256"] = hashlib.sha256(environment_path.read_bytes()).hexdigest()
+                (environment / "manifest.json").write_bytes(canonical(changed_manifest))
+                self.assertFalse(verify_case(environment))
+                environment_path.write_bytes(saved_environment)
+                (environment / "manifest.json").write_bytes(saved_manifest)
+                from copyapp.macos.environment import environment_session
+                with patch.dict("os.environ", {"COPYAPP_TEST_MCP_VERSION": "changed"}):
+                    with self.assertRaisesRegex(ValueError, "MCP server identity changed"):
+                        with environment_session(environment): self.fail("must reject changed MCP server")
                 exercise_snapshot_protocol(self, root, environment, vm)
                 case = observe_app(environment, str(app), "dev.copyapp.MacCollector", root / "observation")
                 self.assertTrue(verify_case(case))
@@ -190,7 +211,6 @@ class NativeCollectorTests(unittest.TestCase):
                 from macos_fakes import Desktop
                 from copyapp.macos.playbook import run_playbook
                 from copyapp.macos.chatcomputer import UnknownCompletion
-                from unittest.mock import patch
                 registered = json.loads((environment / "environment.json").read_text())
                 source_index = json.loads((acquisition / "package/app-index.json").read_text())
                 target = json.loads((acquisition / "acquisition.json").read_text())["guest_app_path"]

@@ -82,6 +82,11 @@ chatcomputer share add "$PWD/cases/mac-collector-deployment/payload"
 doctor 的 `needs_setup` 案例可以通过文件一致性校验，但表示环境尚未就绪。成功 doctor
 只证明传输和截图可用，不等于 App 身份、深度分析或复刻已经就绪。
 
+本次 ChatComputer 0.9.11 实测中，保存初始快照后 VM 状态已为 `ready`，但首次运行界面
+仍显示模型配置。正常退出并重新打开 ChatComputer 后，外部 MCP 可以直接使用桌面，
+无需配置其内置模型；重新打开后仍需运行 doctor 核实实际传输状态。客体账户凭据保留在
+ChatComputer 自己的本机存储中，不作为 Copy APP 案例、报告或 GitHub 材料的输入。
+
 ## 登记虚拟机与观察 App
 
 ```sh
@@ -99,7 +104,10 @@ doctor 的 `needs_setup` 案例可以通过文件一致性校验，但表示环�
 
 非默认 ChatComputer 数据目录须显式指定。登记会固定 VM ID、机器／硬件标识哈希、测试
 配置、ChatComputer 可执行文件、采集器构建、客体身份及系统版本；不会复制口令、模型
-密钥或 pairing token。每次连接重新检查身份；变化时新建审阅过的登记，不覆盖旧证据。
+密钥或 pairing token。同时保存 MCP 初始化原始请求／响应及其自报服务身份，与安装的
+App 版本分开记录。本次 App 为 0.9.11；通过 CLI 别名的 doctor 自报 MCP 版本 `0`，
+登记时通过解析后的 App 可执行文件自报 `0.9.11`。后续连接比较保存的服务身份，
+不从 App 版本推导它。每次连接重新检查身份；变化时新建审阅过的登记，不覆盖旧证据。
 
 `inspect` 只采集本地 `.app` 静态包，记录完整文件清单和安全的内部符号链接，分别固定
 完整可执行文件和 arm64 分片哈希，并检查 Mach-O 声明的 macOS 平台。它拒绝 iOS 和

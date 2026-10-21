@@ -46,7 +46,7 @@ for line in sys.stdin:
     request=json.loads(line)
     if 'id' not in request: continue
     method=request['method']
-    if method=='initialize': result={'serverInfo':{'name':'chatcomputer','version':'0.9.11'}}
+    if method=='initialize': result={'serverInfo':{'name':'chatcomputer','version':os.environ.get('COPYAPP_TEST_MCP_VERSION','0')}}
     elif method=='tools/list':
         result={'tools':[{'name':name,'inputSchema':{'type':'object','properties':schemas.get(name,{})}}
                          for name in ['status','screenshot','release','click','move','snapshot_take','snapshot_restore','snapshot_list']]}

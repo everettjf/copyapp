@@ -68,6 +68,14 @@ successful doctor establishes transport and screenshot availability only; it doe
 not identify an app, validate runtime tracing or prove behavior. `--data-dir`
 selects a non-default ChatComputer data directory explicitly.
 
+On the named ChatComputer 0.9.11 build, saving the initial snapshot changes the
+VM stage to `ready`, while the first-run window still shows model configuration.
+Normally quitting and reopening ChatComputer then exposes the ready desktop to
+external MCP without configuring its built-in model. This was observed with the
+named development VM; verify your actual transport with `doctor` after reopening.
+Keep the existing guest credential in ChatComputer's own local storage. It is not
+an input to Copy APP cases, reports or GitHub artifacts.
+
 ## Build and prepare the collector
 
 ```sh
@@ -137,6 +145,11 @@ grant was made. See the implementation ledger for the remaining live gates.
 
 Registration pins VM ID and machine/hardware identifier hashes, test configuration,
 ChatComputer executable identity, collector executable hash, guest identity and OS.
+It also saves the exact MCP initialization envelope and the server's self-reported
+identity separately from the installed App's version. In the named 0.9.11 runs,
+doctor through the CLI alias reported MCP version `0`, while registration using
+the resolved App executable reported `0.9.11`. Reconnect checks the saved server
+identity rather than deriving it from the App version.
 It copies no password, model credential or pairing token. Reconnect checks these
 identities again. A changed app/tool/OS needs a reviewed new registration, not a
 silent rewrite of old evidence.

@@ -61,6 +61,8 @@ def register_environment(vm: Path, build: Path, output: Path,
         shutil.copytree(build, case.root / "collector-build", symlinks=True)
         case.record("collector-build/manifest.json")
         with ChatComputer(str(tool["path"]), timeout, vm.parent) as computer:
+            case.add("mcp-initialize.json", computer.initialization)
+            server_info = computer.server_info
             status = computer.call("status")
             case.add("mcp-status.json", status)
             shot = computer.call("screenshot")
@@ -75,7 +77,8 @@ def register_environment(vm: Path, build: Path, output: Path,
         UUID(machine)
         record = {"schema_version": 2, "platform": "macos", "execution_environment": "chatcomputer_vm",
                   "vm_directory": str(vm), "vm": vm_facts,
-                  "chatcomputer": tool, "collector_sha256": collector_build["executable_sha256"],
+                  "chatcomputer": tool, "mcp_server_info": server_info,
+                  "collector_sha256": collector_build["executable_sha256"],
                   "guest_machine_id": machine, "guest_os": guest["os_version"],
                   "collector_build_manifest_sha256": digest(case.root / "collector-build/manifest.json"),
                   "scope": "environment_registration", "app_identity_ready": False}
@@ -93,11 +96,25 @@ def register_environment(vm: Path, build: Path, output: Path,
 def validate_environment(root: Path, manifest: dict, names: set) -> bool:
     from copyapp.verify import verify_case
     required = {"environment.json", "vm/spec.json", "vm/MachineIdentifier.bin", "vm/HardwareModel.bin",
-                "collector-build/manifest.json", "collector-health.json", "mcp-status.json", "mcp-screenshot.json"}
+                "collector-build/manifest.json", "collector-health.json", "mcp-status.json", "mcp-screenshot.json",
+                "mcp-initialize.json"}
     if (manifest.get("status") != "complete" or manifest.get("scope") != "environment_registration" or
             not required.issubset(names)):
         return False
     record = json.loads((root / "environment.json").read_text())
+    initialize = json.loads((root / "mcp-initialize.json").read_text())
+    UUID(initialize["transport_id"])
+    request, reply = initialize["request"], initialize["response"]
+    server_info = record.get("mcp_server_info")
+    if (not isinstance(server_info, dict) or server_info.get("name") != "chatcomputer" or
+            not isinstance(server_info.get("version"), str) or not server_info["version"] or
+            initialize.get("server_info") != server_info or request.get("jsonrpc") != "2.0" or
+            request.get("method") != "initialize" or type(request.get("id")) is not int or
+            request.get("params") != {"protocolVersion": "2025-06-18", "capabilities": {},
+                                     "clientInfo": {"name": "Copy APP", "version": "0.1.2"}} or
+            reply.get("jsonrpc") != "2.0" or type(reply.get("id")) is not int or reply["id"] != request["id"] or
+            "error" in reply or reply.get("result", {}).get("serverInfo") != server_info):
+        return False
     build = root / "collector-build"
     metadata = json.loads((build / "collector-build.json").read_text())
     response = json.loads((root / "collector-health.json").read_text())
@@ -151,6 +168,8 @@ def environment_session(environment: Path, timeout: float = 30):
     if tool != record["chatcomputer"]:
         raise ValueError("ChatComputer changed; review and register the new build")
     with ChatComputer(tool["path"], timeout, vm.parent) as computer:
+        if computer.server_info != record["mcp_server_info"]:
+            raise ValueError("MCP server identity changed; review and register the new session")
         with Collector(vm / "Shared", record["collector_sha256"], timeout) as collector:
             health = collector.call("health")
             guest = health["response"]["result"]

@@ -339,7 +339,7 @@ def snapshot_operation(source: Path, output: Path, action: str, timeout: float =
 def mcp_result(value: dict, tool: str, arguments: dict, record: dict):
     uid(value["transport_id"])
     request, reply = value["request"], value["response"]
-    if (value["server_info"] != {"name": "chatcomputer", "version": record["chatcomputer"]["version"]} or
+    if (value["server_info"] != record["mcp_server_info"] or
             request.get("jsonrpc") != "2.0" or request.get("method") != "tools/call" or
             request.get("params") != {"name": tool, "arguments": arguments} or type(request.get("id")) is not int or
             reply.get("jsonrpc") != "2.0" or type(reply.get("id")) is not int or reply["id"] != request["id"] or "error" in reply):

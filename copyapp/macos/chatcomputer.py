@@ -54,6 +54,7 @@ class ChatComputer:
         self._lock = threading.Lock()
         self.transport_id = None
         self.server_info = None
+        self.initialization = None
         self.catalog = None
         self.last_request = None
         self.last_response = None
@@ -78,8 +79,11 @@ class ChatComputer:
                 "protocolVersion": "2025-06-18", "capabilities": {},
                 "clientInfo": {"name": "Copy APP", "version": "0.1.2"}}).get("serverInfo")
             if (not isinstance(self.server_info, dict) or
-                    self.server_info.get("name") != "chatcomputer"):
+                    self.server_info.get("name") != "chatcomputer" or
+                    not isinstance(self.server_info.get("version"), str) or
+                    not self.server_info["version"]):
                 raise ChatComputerError("unexpected MCP server identity")
+            self.initialization = self.evidence()
             self._write({"jsonrpc": "2.0", "method": "notifications/initialized"})
             catalog = self._request("tools/list", {})
             if not isinstance(catalog.get("tools"), list):
