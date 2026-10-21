@@ -90,9 +90,33 @@ def configure(parser: argparse.ArgumentParser):
     delivery.add_argument("--visual-review", required=True, type=Path)
     delivery.add_argument("--coverage", required=True, type=Path)
     delivery.add_argument("--out", required=True, type=Path)
+    share = sub.add_parser("share-probe", help="publish a nonce for a manual guest Finder shared-file probe")
+    share.add_argument("--vm-directory", required=True, type=Path)
+    share.add_argument("--out", required=True, type=Path)
+    reply = sub.add_parser("share-probe-check", help="record the returned nonce bytes; does not establish runtime identity")
+    reply.add_argument("--request", required=True, type=Path)
+    reply.add_argument("--reviewer", required=True)
+    reply.add_argument("--notes", required=True)
+    reply.add_argument("--out", required=True, type=Path)
+    imported = sub.add_parser("import-app", help="snapshot and statically index one App from a ZIP or read-only DMG; no execution")
+    imported.add_argument("--source", required=True, type=Path)
+    imported.add_argument("--app-relative", help="explicit .app path within an ambiguous distribution")
+    imported.add_argument("--out", required=True, type=Path)
 
 
 def run(args) -> int:
+    if args.mac_command == "import-app":
+        from copyapp.macos.distribution import import_app
+        print(import_app(args.source, args.out, args.app_relative))
+        return 0
+    if args.mac_command == "share-probe":
+        from copyapp.macos.share import share_request
+        print(share_request(args.vm_directory, args.out))
+        return 0
+    if args.mac_command == "share-probe-check":
+        from copyapp.macos.share import share_result
+        print(share_result(args.request, args.out, args.reviewer, args.notes))
+        return 0
     if args.mac_command == "delivery":
         from copyapp.macos.delivery import delivery
         print(delivery(args.visual_review, args.coverage, args.out))

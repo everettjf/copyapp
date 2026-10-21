@@ -19,6 +19,10 @@ IPAs, UIKit observations or iOS-only skills for a Mac target.
 
 - `mac doctor` checks transport and screenshots only. A verifiable `needs_setup`
   case still means setup is incomplete. Inspect the repairs before proceeding.
+- For shared-file setup probes or ZIP/DMG input, read
+  [the acquisition guide](../../docs/macos-acquisition.md). A Finder byte probe can
+  run before control permissions, but cannot replace exact guest/collector identity.
+  `mac import-app` preserves distribution provenance without executing its App.
 - ChatComputer owns guest input and screenshots. Work in the current coding-agent
   session; do not start ChatComputer's model loop or another coding-agent CLI.
 - Build/prepare the bounded collector, deploy it inside the intended guest and

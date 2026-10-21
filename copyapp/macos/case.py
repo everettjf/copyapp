@@ -9,7 +9,8 @@ from pathlib import Path, PurePosixPath
 KINDS = frozenset({"mac_doctor", "mac_app_index", "mac_collector_build",
                    "mac_collector_deployment", "mac_environment", "mac_observation", "mac_app_acquisition",
                    "mac_playbook", "mac_behavior_report", "mac_rebuild_plan", "mac_build", "mac_install",
-                   "mac_check_plan", "mac_rebuild_check", "mac_visual_review", "mac_delivery"})
+                   "mac_check_plan", "mac_rebuild_check", "mac_visual_review", "mac_delivery",
+                   "mac_share_request", "mac_share_result", "mac_distribution"})
 
 
 def now() -> str:
@@ -152,6 +153,15 @@ def verify_mac_case(root: Path) -> bool:
         if manifest["kind"] == "mac_delivery":
             from copyapp.macos.delivery import validate_delivery
             return validate_delivery(root, manifest, names)
+        if manifest["kind"] == "mac_share_request":
+            from copyapp.macos.share import validate_request
+            return validate_request(root, manifest, names)
+        if manifest["kind"] == "mac_share_result":
+            from copyapp.macos.share import validate_result
+            return validate_result(root, manifest, names)
+        if manifest["kind"] == "mac_distribution":
+            from copyapp.macos.distribution import validate_import
+            return validate_import(root, manifest, names)
         from copyapp.macos.package import validate_index
         return validate_index(root, manifest, names)
     except (OSError, ValueError, KeyError, TypeError, AttributeError):

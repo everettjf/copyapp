@@ -60,7 +60,8 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
 - Existing iOS baseline: 346 tests passed before modifications.
 - Separate `copyapp mac` commands now cover doctor, inspect, build/prepare-collector,
   connect, observe, acquire, playbook, report, rebuild-plan, build-app, install,
-  check-plan, rebuild-check, visual-review and delivery, with versioned
+  check-plan, rebuild-check, visual-review, delivery, share-probe,
+  share-probe-check and import-app, with versioned
   `mac_*` semantic validators. These are development commands, not completed
   end-to-end reconstruction or a new release.
 - Local TextEdit package snapshot passed its byte/identity verifier after a
@@ -111,12 +112,34 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
   UI replay, snapshot restore, paired reconstruction and physical-Mac gates remain open.
 - The live GUI was rechecked at step 4. Guest Finder can open
   `/Volumes/My Shared Files/inbox` through the visible VM window, while the CLI
-  still reports incomplete setup. This unbound UI observation does not establish
-  collector identity, a file roundtrip or a complete P0 probe. No security grant
-  was clicked; the existing permission question remains unanswered.
+  still reports incomplete setup. A fresh nonce was then copied once through guest
+  Finder from inbox to outbox; the returned bytes matched and both cases verified:
+  `cases/macos-p0-20261021/shared-request-1` and `shared-result-1`.
+  The payload SHA-256 is
+  `78f5ca048c14584c38e05f7df3004fe4a252ca214ceb19ab74d81233bbb0d0cd`.
+  Navigating out of and back into the inbox refreshed Finder's view after host
+  publication. This is a shared-byte roundtrip with a self-declared transfer actor,
+  not verified collector identity, automated input recovery or complete P0
+  acceptance. No security grant was clicked; the permission question is unanswered.
+- Static ZIP and DMG imports of the saved TextEdit 1.21 (419) package both verified
+  against the source's 118 inventory entries and package SHA-256
+  `a262263b53e27e9db6ca505d81f0fe54d0352267e3ddb97c2ec0be82978627c5`.
+  Cases: `cases/macos-real-distribution-20261021/imported-zip` and `imported-dmg`.
+  The native DMG mount retained read-only/noexec/nosuid/nodev/nobrowse restrictions
+  and was ejected. DMG re-verification remounts the saved image read-only; this
+  currently requires macOS 27's diskutil image interface. These static cases prove
+  neither launch nor behavior. See [the acquisition guide](macos-acquisition.md).
+- Distribution/share regression: 384 tests passed, including existing iOS tests,
+  ZIP traversal/collision/link and rehashed-provenance rejection, a native DMG
+  import, and simulated shared-byte checks. The installed wheel passed with all
+  three new commands; development SHA-256:
+  `1cf5e788e7d98f68bc59e993ee637889fcd082bf1d71f3a5f7f062c6dbbb10e3`.
+  Logs: `/tmp/copyapp-dual-platform-distribution-20261021.log` and
+  `/tmp/copyapp-macos-distribution-wheel-20261021.log`. This is not a release or
+  a new iPhone device result; no iOS device execution path changed in this stage.
 - The repository Mac skill and bilingual entry prompts route Mac targets directly
   to this development workflow. Existing iOS skills and historical v1 validation
-  retain their scope. ZIP/DMG, sandbox capture, discovery acceptance, live guest install/launch,
+  retain their scope. Sandbox capture, discovery acceptance, live guest install/launch,
   live paired delivery and actual sample/physical-Mac evidence remain unfinished.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,

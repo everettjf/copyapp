@@ -13,6 +13,10 @@ model loop or nest another coding-agent CLI. Its external MCP currently returns
 text/images. Copy APP's bounded guest collector adds structured app identity and AX
 observations without depending on a future upstream shell API.
 
+For a pre-control shared-file probe or ZIP/DMG input, read
+[shared files and distribution import](macos-acquisition.md). These commands keep
+their byte/structure scope separate from runtime identity and UI acceptance.
+
 ## Start with an agent
 
 Open this development checkout in Codex or Claude Code and paste:

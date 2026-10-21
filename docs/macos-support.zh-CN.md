@@ -10,6 +10,12 @@ ChatComputer 负责虚拟桌面和键鼠输入；当前 Coding Agent 负责解�
 Agent 或 ChatComputer 内置模型循环。上游 MCP 目前主要返回文本和图片，Copy APP 的
 有界客体采集器补充精确 App 身份与结构化 AX 观察，不依赖上游尚未实现的 shell 接口。
 
+控制权限尚未就绪时，可按[共享文件与分发包采集](macos-acquisition.md)运行 `mac share-probe`
+和 `mac share-probe-check`，由客体 Finder 完成一次唯一探针文件的复制，记录字节往返。
+ZIP／DMG 输入使用 `mac import-app`；DMG 在 macOS 27 上以只读、禁止执行的方式挂载，
+并在 `verify` 时重新比对。加密或需要交互接受许可的镜像会被拒绝。以上不等于 App 已安装、
+已运行或已完成界面验收，原始文件仍留在被 Git 忽略的本地案例中。
+
 ## 交给 Agent
 
 在 Codex 或 Claude Code 中打开这个开发分支，把下面的任务复制进去：
