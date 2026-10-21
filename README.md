@@ -8,6 +8,10 @@ Copy APP analyzes an installed iOS app on a jailbroken iPhone and helps a coding
 
 Development branch: [macOS support through ChatComputer](docs/macos-support.md) is being added alongside iOS. Its [acceptance ledger](docs/macos-implementation-plan.md) distinguishes implemented foundations from pending end-to-end validation; published v0.1.2 remains the iOS release.
 
+Mac examples: [owned behavior fixture](examples/macos/BehaviorFixture/) and
+[independent Stocks demo](examples/macos/Stocks/) (selected local behavior;
+illustrative offline data, with live acceptance limits recorded).
+
 For a **Mac App** task on this branch, ask your agent to read `AGENTS.md` and `skills/copyapp-mac/SKILL.md`. Use the [Mac agent prompt](docs/macos-support.md#start-with-an-agent); the iPhone prompt below continues to use the existing iOS workflow.
 
 <a id="start-here"></a>

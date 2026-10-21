@@ -8,6 +8,9 @@ Copy APP 对越狱 iPhone 上已安装的 iOS App 取证分析，并协助 Codin
 
 开发分支正在保留 iOS 支持的同时新增 [ChatComputer／macOS 支持](docs/macos-support.zh-CN.md)。[实施清单](docs/macos-implementation-plan.md)区分已实现基础设施与尚待完成的闭环验收；正式发布的 v0.1.2 仍为 iOS 版本。
 
+Mac 样例：[自有行为夹具](examples/macos/BehaviorFixture/)和
+[独立 Stocks 演示](examples/macos/Stocks/)；Stocks 仅覆盖选定本地行为，使用标明的离线演示数据，验收边界见样例说明。
+
 在此分支处理 **Mac App** 时，让 Agent 阅读 `AGENTS.md` 和 `skills/copyapp-mac/SKILL.md`，可直接复制 [Mac 专用任务](docs/macos-support.zh-CN.md#交给-agent)。下方 iPhone 任务继续走原有 iOS 流程。
 
 <a id="从这里开始"></a>

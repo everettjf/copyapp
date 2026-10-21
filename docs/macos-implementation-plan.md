@@ -338,6 +338,23 @@ Earlier TextEdit static distribution probes remain separate evidence.
   `e9dc83a80208441dad3aeb6f1b3c1c6ca8d67bbd8a58e1a109c77e063bcbff75`.
   Logs: `/tmp/copyapp-dual-platform-ui-settle-20261021.log` and
   `/tmp/copyapp-macos-ui-settle-wheel-20261021.log`.
+- Stocks now has three verified original assertion-bearing replays:
+  `search-flow-1`, `chart-range-flow-2` and `watchlist-flow-1` under
+  `cases/macos-stocks-20261021/`. Their `discovery-1`, `report-1` and rebuild
+  plans verified. The known inventory freezes 11 capabilities; the reconstruction
+  targets 3/11 (27.27%), not whole-App parity or verified coverage. Range persistence
+  requires reselecting AAPL after relaunch; the initial unsupported assumption
+  remains in failed `chart-range-flow-1`.
+- `examples/macos/Stocks/` supplies independent AppKit source, illustrative offline
+  data, generated curves, local search/watchlists/period preferences, original
+  playbooks and a standalone builder. No original binary, artwork, article or
+  account data is included. The first source-linked guest build/install/acquisition
+  verified and all three frozen clone scripts replayed with assertions. Those
+  single runs are not the required three-round paired check or visual acceptance.
+  The example visibly differs in catalog, curves, metrics, modal rendering and
+  overview content; preserve these differences in review. `build-2` adds normal
+  startup overview behavior and an independently drawn dock icon. Its install and
+  paired checks remain pending; all earlier build/run cases remain separate.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.
