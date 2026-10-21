@@ -23,6 +23,10 @@ IPAs, UIKit observations or iOS-only skills for a Mac target.
   [the acquisition guide](../../docs/macos-acquisition.md). A Finder byte probe can
   run before control permissions, but cannot replace exact guest/collector identity.
   `mac import-app` preserves distribution provenance without executing its App.
+- For one evidence-selected data file, use `mac data-file` against the verified
+  guest acquisition and read the acquisition guide's location/association limits.
+  Preserve raw data locally, record uncertain ownership and do not call sequential
+  SQLite/WAL reads an atomic snapshot. Missing files or denied access remain gaps.
 - ChatComputer owns guest input and screenshots. Work in the current coding-agent
   session; do not start ChatComputer's model loop or another coding-agent CLI.
 - Build/prepare the bounded collector, deploy it inside the intended guest and

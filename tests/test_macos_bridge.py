@@ -137,6 +137,8 @@ class NativeCollectorTests(unittest.TestCase):
                 acquisition = acquire_app(environment, str(app), "dev.copyapp.MacCollector",
                                           root / "acquisition", timeout=5)
                 self.assertTrue(verify_case(acquisition))
+                from macos_data_checks import exercise_data_capture
+                exercise_data_capture(self, root, acquisition)
                 from macos_fakes import Desktop
                 from copyapp.macos.playbook import run_playbook
                 from copyapp.macos.chatcomputer import UnknownCompletion

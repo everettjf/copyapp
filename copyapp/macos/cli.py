@@ -108,6 +108,12 @@ def configure(parser: argparse.ArgumentParser):
     discovery.add_argument("--flow", action="append", required=True, help="SCENARIO_ID=MAC_PLAYBOOK_CASE")
     discovery.add_argument("--review", required=True, type=Path)
     discovery.add_argument("--out", required=True, type=Path)
+    data = sub.add_parser("data-file", help="capture one explicitly selected App data file; not a complete or atomic DB snapshot")
+    data.add_argument("--acquisition", required=True, type=Path)
+    data.add_argument("--location", required=True, choices=("sandbox", "preferences", "support"))
+    data.add_argument("--path", required=True, help="canonical file path relative to the selected guest Library location")
+    data.add_argument("--timeout", type=float, default=60)
+    data.add_argument("--out", required=True, type=Path)
 
 
 def named_flows(items: list) -> dict:
@@ -121,6 +127,10 @@ def named_flows(items: list) -> dict:
 
 
 def run(args) -> int:
+    if args.mac_command == "data-file":
+        from copyapp.macos.data import data_file
+        print(data_file(args.acquisition, args.location, args.path, args.out, args.timeout))
+        return 0
     if args.mac_command == "discover-check":
         from copyapp.macos.discovery import discover_check
         print(discover_check(named_flows(args.flow), args.review, args.out))

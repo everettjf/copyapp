@@ -15,7 +15,7 @@ from copyapp.macos.case import canonical
 from copyapp.macos.chatcomputer import UnknownCompletion
 
 
-METHODS = frozenset({"health", "app_identity", "observe", "launch_app", "export_app", "package_identity", "install_app"})
+METHODS = frozenset({"health", "app_identity", "observe", "launch_app", "export_app", "package_identity", "install_app", "data_file"})
 MAX_REPLY = 8 * 1024 * 1024
 
 

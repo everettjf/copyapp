@@ -61,7 +61,7 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
 - Separate `copyapp mac` commands now cover doctor, inspect, build/prepare-collector,
   connect, observe, acquire, playbook, report, rebuild-plan, build-app, install,
   check-plan, rebuild-check, visual-review, delivery, share-probe,
-  share-probe-check, import-app and discover-check, with versioned
+  share-probe-check, import-app, discover-check and data-file, with versioned
   `mac_*` semantic validators. These are development commands, not completed
   end-to-end reconstruction or a new release.
 - Local TextEdit package snapshot passed its byte/identity verifier after a
@@ -151,9 +151,27 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
   `35989922638368abc290d5e68405ca47abe2aea66216948f4f4e695b93857bc9`.
   Logs: `/tmp/copyapp-dual-platform-discovery-20261021.log` and
   `/tmp/copyapp-macos-discovery-wheel-20261021.log`.
+- Selected-data development adds `mac data-file` for one bounded regular file at
+  an explicit sandbox, exact Bundle-ID preference or support-folder path. The
+  native collector binds the App build, rejects linked/special/oversized files,
+  compares two source reads and exports the matching bytes. Association conventions
+  and explicit support paths do not prove App ownership; the case explicitly denies
+  atomic database and complete-App-data coverage. A newly compiled/signed collector
+  passed verification at `cases/macos-data-collector-20261021/build-2`; the first
+  failed compiler attempt is retained as `build-1`.
+- Data-capture regression: all 384 tests passed. Expanded integration checks use
+  the actual local collector and a uniquely owned temporary support directory;
+  they request no TCC grants and do not count as guest data acceptance. Empty-file
+  capture, linked/FIFO/oversized/missing rejection, byte/source/claim tampering and
+  independence from later external file changes are checked. Existing iOS tests
+  remain passing. The installed wheel passed with `data-file`; development SHA-256:
+  `1d0eb05cbb6e886be4a312ef4c104a8908f50232484c2b60b9d1b1b3b6ab52a2`.
+  Logs: `/tmp/copyapp-dual-platform-data-20261021.log` and
+  `/tmp/copyapp-macos-data-wheel-20261021.log`.
 - The repository Mac skill and bilingual entry prompts route Mac targets directly
   to this development workflow. Existing iOS skills and historical v1 validation
-  retain their scope. Sandbox capture, live discovery acceptance, live guest install/launch,
+  retain their scope. Structured data schemas/report citations, live sandbox capture,
+  live discovery acceptance, live guest install/launch,
   live paired delivery and actual sample/physical-Mac evidence remain unfinished.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,

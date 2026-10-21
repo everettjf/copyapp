@@ -93,7 +93,7 @@ def validate_script(script: dict):
                 raise ValueError("file hash must be a lowercase SHA-256 digest")
 
 
-def output_bytes(path: Path, run_folder: Path) -> bytes:
+def output_bytes(path: Path, run_folder: Path, limit: int = 8 << 20) -> bytes:
     """Bounded, stable output read; do not assert against a changing save file."""
     import os
     import stat
@@ -104,11 +104,11 @@ def output_bytes(path: Path, run_folder: Path) -> bytes:
     descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     with os.fdopen(descriptor, "rb") as stream:
         before = os.fstat(stream.fileno())
-        if not stat.S_ISREG(before.st_mode) or before.st_size > 8 << 20:
+        if not stat.S_ISREG(before.st_mode) or before.st_size > limit:
             raise ValueError("output must be a bounded regular file")
-        data = stream.read((8 << 20) + 1)
+        data = stream.read(limit + 1)
         after = os.fstat(stream.fileno())
-    current = path.stat()
+    current = path.lstat()
     stamp = lambda info: (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
     if len(data) != before.st_size or stamp(before) != stamp(after) or stamp(after) != stamp(current):
         raise ValueError("output changed during capture; inspect state before a new run")

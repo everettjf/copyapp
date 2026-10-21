@@ -8,7 +8,7 @@ import Darwin
 
 let protocolVersion = 2
 let toolVersion = "0.1.2-macos-development"
-let supportedMethods = ["health", "app_identity", "observe", "launch_app", "export_app", "package_identity", "install_app"]
+let supportedMethods = ["health", "app_identity", "observe", "launch_app", "export_app", "package_identity", "install_app", "data_file"]
 let fm = FileManager.default
 
 func canonicalURL(_ url: URL) -> URL {
@@ -350,6 +350,109 @@ func exportApp(_ params: [String: Any], output: URL, requestID: String) throws -
             "package_sha256": hash, "entry_count": before.count, "consistency": "matching_source_copy_source_inventories"]
 }
 
+func dataPath(_ params: [String: Any]) throws -> (URL, String, String) {
+    guard let bundle = params["bundle_id"] as? String, !bundle.isEmpty,
+          bundle.utf8.count <= 255, bundle != ".", bundle != "..",
+          bundle.allSatisfy({ $0.isASCII && ($0.isLetter || $0.isNumber || ".-_".contains($0)) }),
+          let location = params["location"] as? String,
+          let relative = params["relative_path"] as? String, !relative.isEmpty,
+          relative.utf8.count <= 4096, !relative.contains("\0"), !relative.contains("\\") else {
+        throw Failure("Data collection requires a bounded bundle ID, location and relative path")
+    }
+    let parts = relative.split(separator: "/", omittingEmptySubsequences: false)
+    guard parts.allSatisfy({ !$0.isEmpty && $0 != "." && $0 != ".." && $0.utf8.count <= 255 }) else {
+        throw Failure("Data path must be canonical and relative")
+    }
+    let library = canonicalURL(fm.homeDirectoryForCurrentUser).appendingPathComponent("Library")
+    let base: URL, association: String
+    switch location {
+    case "sandbox":
+        base = library.appendingPathComponent("Containers/" + bundle + "/Data")
+        association = "bundle_named_container_convention"
+    case "preferences":
+        guard relative == bundle + ".plist" else { throw Failure("Preferences collection only accepts this exact bundle's plist") }
+        base = library.appendingPathComponent("Preferences")
+        association = "bundle_named_preferences_convention"
+    case "support":
+        guard parts.count >= 2 else { throw Failure("Support collection needs an explicitly selected folder and file") }
+        base = library.appendingPathComponent("Application Support")
+        association = "explicit_path_not_proof_of_app_ownership"
+    default: throw Failure("Unsupported data location; group containers and arbitrary home paths are excluded")
+    }
+    let source = base.appendingPathComponent(relative)
+    // Refuse linked roots/ancestors as well as a linked final file. We do not
+    // resolve a selected path into an unrelated container or home directory.
+    guard canonicalURL(source).path == source.path else { throw Failure("Data path contains a link or noncanonical ancestor") }
+    return (source, association, library.path)
+}
+
+func boundedDataRead(_ source: URL, writer: FileHandle? = nil) throws -> (String, UInt64, [String: Any]) {
+    let fd = open(source.path, O_RDONLY | O_NOFOLLOW | O_NONBLOCK)
+    guard fd >= 0 else { throw Failure("Cannot open the selected data file without following links") }
+    let input = FileHandle(fileDescriptor: fd, closeOnDealloc: true)
+    defer { try? input.close() }
+    var before = stat(), after = stat(), named = stat()
+    guard fstat(fd, &before) == 0, before.st_mode & S_IFMT == S_IFREG,
+          before.st_size >= 0, before.st_size <= 64 << 20 else {
+        throw Failure("Data source must be a regular file of at most 64 MiB")
+    }
+    var hash = SHA256(), count: UInt64 = 0
+    while let bytes = try input.read(upToCount: 1 << 20), !bytes.isEmpty {
+        count += UInt64(bytes.count)
+        guard count <= 64 << 20, count <= UInt64(before.st_size) else { throw Failure("Data file grew during reading") }
+        hash.update(data: bytes)
+        try writer?.write(contentsOf: bytes)
+    }
+    guard fstat(fd, &after) == 0, lstat(source.path, &named) == 0,
+          before.st_dev == after.st_dev, before.st_ino == after.st_ino, before.st_ino == named.st_ino,
+          before.st_dev == named.st_dev, named.st_mode & S_IFMT == S_IFREG,
+          before.st_size == after.st_size, count == UInt64(before.st_size),
+          before.st_mtimespec.tv_sec == after.st_mtimespec.tv_sec, before.st_mtimespec.tv_nsec == after.st_mtimespec.tv_nsec,
+          before.st_ctimespec.tv_sec == after.st_ctimespec.tv_sec, before.st_ctimespec.tv_nsec == after.st_ctimespec.tv_nsec else {
+        throw Failure("Data source changed during reading")
+    }
+    let metadata: [String: Any] = ["device": UInt64(before.st_dev), "inode": UInt64(before.st_ino), "size": count,
+                                 "mtime_seconds": before.st_mtimespec.tv_sec, "mtime_nanoseconds": before.st_mtimespec.tv_nsec,
+                                 "ctime_seconds": before.st_ctimespec.tv_sec, "ctime_nanoseconds": before.st_ctimespec.tv_nsec]
+    return (hash.finalize().map { String(format: "%02x", $0) }.joined(), count, metadata)
+}
+
+func exportDataFile(_ params: [String: Any], output: URL, requestID: String) throws -> [String: Any] {
+    guard params["binary_sha256"] is String else { throw Failure("Data collection requires the acquired App executable hash") }
+    let before = try identity(params)
+    let (source, association, library) = try dataPath(params)
+    let staging = output.appendingPathComponent(".data-" + requestID)
+    let final = output.appendingPathComponent("data-files/" + requestID)
+    guard !fm.fileExists(atPath: staging.path), !fm.fileExists(atPath: final.path) else {
+        throw Failure("Data export attempt already exists; preserve it")
+    }
+    try fm.createDirectory(at: staging, withIntermediateDirectories: true)
+    let exported = staging.appendingPathComponent("file.bin")
+    guard fm.createFile(atPath: exported.path, contents: nil, attributes: [.posixPermissions: 0o600]) else {
+        throw Failure("Cannot stage the selected data file")
+    }
+    let writer = try FileHandle(forWritingTo: exported)
+    let first: (String, UInt64, [String: Any])
+    do { first = try boundedDataRead(source, writer: writer); try writer.close() }
+    catch { try? writer.close(); throw error }
+    let second = try boundedDataRead(source)
+    guard first.0 == second.0, first.1 == second.1, try json(first.2) == json(second.2),
+          first.0 == (try sha256(exported)), try dataPath(params).0.path == source.path else {
+        throw Failure("Data export did not match both source reads")
+    }
+    let after = try identity(params)
+    for key in ["bundle_id", "app_path", "executable_path", "binary_sha256", "info_plist_sha256", "version", "build"] {
+        guard (before[key] as? String) == (after[key] as? String) else { throw Failure("App changed during data export") }
+    }
+    try fm.createDirectory(at: final.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try fm.moveItem(at: staging, to: final)
+    return ["source_app": before, "guest_library": library, "guest_source_path": source.path,
+            "location": params["location"]!, "relative_source_path": params["relative_path"]!, "association": association,
+            "relative_path": "data-files/" + requestID + "/file.bin", "sha256": first.0, "size": first.1,
+            "source_metadata": first.2, "consistency": "two_matching_reads_and_export",
+            "atomic_database_snapshot": false, "complete_app_data": false]
+}
+
 func signatureCheck(_ app: URL) throws -> [String: Any] {
     let process = Process(), output = Pipe()
     process.executableURL = URL(fileURLWithPath: "/usr/bin/codesign")
@@ -492,6 +595,7 @@ final class Server {
                     case "app_identity": response["result"] = try identity(params)
                     case "observe": response["result"] = try observe(params)
                     case "export_app": response["result"] = try exportApp(params, output: output, requestID: id)
+                    case "data_file": response["result"] = try exportDataFile(params, output: output, requestID: id)
                     case "package_identity":
                         let source = try appURL(params), app = try identity(params)
                         let first = try bundleInventory(source), second = try bundleInventory(source)

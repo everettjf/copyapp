@@ -90,3 +90,46 @@ compare its full package hash with the static package when linking the two.
 `mac install` consumes a reviewed independent build, with separate target identity.
 Live App discovery, sandbox data, behavior review and paired delivery still have
 their own required evidence.
+
+## Capture one explicitly selected App data file
+
+`mac data-file` uses a verified guest acquisition and a collector build that
+advertises `data_file`. Rebuild/deploy/register the new collector explicitly if
+the registered build lacks this method; do not replace its identity in an old
+environment case. This operation requests no new Accessibility permission and
+does not grant filesystem access. If macOS denies a read, the failure is retained.
+
+```sh
+.venv/bin/copyapp mac data-file --acquisition cases/mac-original \
+  --location sandbox --path Library/Preferences/dev.example.Editor.plist \
+  --out cases/mac-selected-container-plist
+.venv/bin/copyapp verify cases/mac-selected-container-plist
+```
+
+The three locations are relative to the collector's actual guest home Library:
+
+| Location | Selected file | Association limit |
+| --- | --- | --- |
+| `sandbox` | `Containers/<Bundle ID>/Data/<path>` | Bundle-named container convention; not proof the App wrote every file |
+| `preferences` | `Preferences/<Bundle ID>.plist` | `--path` must equal the acquired Bundle ID plus `.plist` |
+| `support` | `Application Support/<explicit folder>/<file>` | Explicitly selected path; ownership by the App is not certified |
+
+Group containers, ByHost preferences, external documents and arbitrary home paths
+are not selected by these locations. No directory crawl or complete data inventory
+is performed. A missing default plist does not establish that an App has no settings.
+Discover the requested file from actual evidence and record any uncertain ownership.
+
+Only one regular file of at most 64 MiB is accepted. Linked paths, devices, FIFOs,
+traversal and changing/replaced files are rejected. The collector compares two
+source reads, file metadata and the exported bytes, and checks the acquired App's
+binary/Info.plist identity across the operation. The host copies and hashes the
+returned file through its exact run/session/request exchange. The case preserves
+the source acquisition, request/result, source path/metadata and local `data.bin`.
+Source deletion or later changes cannot silently alter that saved case.
+
+This is **one file observation**, not an atomic database snapshot, proof of file
+ownership or complete App data. Matching two reads cannot establish transactional
+consistency across SQLite, WAL and SHM or across several files. Keep raw bytes in
+ignored `cases/`; they may contain private data. Structured schema extraction and
+formal-report data citations remain separate implementation work. Do not present
+a passing byte verifier as a database or preference interpretation.
