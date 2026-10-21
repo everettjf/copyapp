@@ -4,5 +4,7 @@ These are source examples, not prebuilt IPAs or full-app replicas. Read each pro
 
 - [Independent iOS app sources and probes](rebuild/README.md)
 - [Pilot report input formats](report-inputs/README.md)
+- [Owned macOS behavior fixture](macos/BehaviorFixture/README.md) — an original
+  AppKit sample for development acceptance, not a rebuilt delivery.
 
 `rebuild/<NEW_PROJECT>` in the main workflow is a suggested workspace for **your new output**. Curated source examples live under `examples/rebuild/`.

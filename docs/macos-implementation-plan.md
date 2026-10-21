@@ -185,6 +185,20 @@ a deadline or a reason to reduce scope. No tag/release until acceptance complete
   `55a2794d5868ee9874cfaedf471c0ea476cebbac3a9713bcf33bf1cc7b9fe23e`.
   Logs: `/tmp/copyapp-dual-platform-data-schema-20261021.log` and
   `/tmp/copyapp-macos-data-schema-wheel-20261021.log`.
+- An [owned original AppKit sample](../examples/macos/BehaviorFixture/README.md)
+  now supplies native panels, editor/counts, wrapping persistence, multiple
+  document/inspector windows and JSON export. The failed first compilation is
+  retained. Build-2 (1.0/1) received a manual host original-only smoke check:
+  32-byte UTF-8 save/open, asserted summary fields, inspector counts and setting
+  quit/relaunch persistence. Build-3 (1.0/2) adds a native Window menu; actual host
+  UI listed two documents and switched exactly between them. Both static package
+  indexes verified; test processes were quit and exact-path absence checked.
+  Files: `cases/macos-owned-fixture-20261021/`, including the explicitly manual
+  `manual-smoke-1/notes.json`. No screenshots were archived into a flow case.
+  These observations from different builds are not merged into one acceptance,
+  do not certify guest replay, and do not satisfy paired reconstruction or the
+  required physical-Mac reconstruction recheck. The current original needs its
+  own guest acquisition, reviewed flows and independent rebuild before comparison.
 - The repository Mac skill and bilingual entry prompts route Mac targets directly
   to this development workflow. Existing iOS skills and historical v1 validation
   retain their scope. Live sandbox capture,
