@@ -8,7 +8,7 @@
   <title>Copy APP — Observe. Understand. Rebuild.</title>
   <link rel="icon" href="favicon.svg?v=0.2.0-light-1" type="image/svg+xml">
   <link rel="stylesheet" href="style.css?v=0.2.0-light-1">
-  <script src="site.js?v=0.2.0-tools-1" defer></script>
+  <script src="site.js?v=0.2.0-platforms-1" defer></script>
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -58,7 +58,7 @@
       </div>
       <div class="start-console">
         <div class="platform-picker" role="group" aria-label="Target platform">
-          <button type="button" data-platform="macos" aria-pressed="true" aria-controls="agentPrompt"><span>macOS</span><small data-i18n="startExperimental">EXPERIMENTAL</small></button>
+          <button type="button" data-platform="macos" aria-pressed="true" aria-controls="agentPrompt"><span>macOS</span><small data-i18n="startMacBackend">CHATCOMPUTER</small></button>
           <button type="button" data-platform="ios" aria-pressed="false" aria-controls="agentPrompt"><span data-i18n="startIOS">Jailbroken iOS</span><small>USB / iPhone</small></button>
         </div>
         <div class="setup-requirements">
@@ -108,10 +108,10 @@ Use a unique output/ job with project/ and evidence/. Follow docs/fidelity.md: d
     </section>
 
     <section id="platforms" class="section-shell platforms-section">
-      <div class="section-heading"><div><p class="kicker">// PLATFORM SUPPORT</p><h2 data-i18n="platformsTitle">Jailbroken iOS. macOS, too.</h2></div><p data-i18n="platformsIntro">One evidence workflow, separate platform tools. macOS support remains experimental in v0.2.0.</p></div>
+      <div class="section-heading"><div><p class="kicker">// PLATFORM SUPPORT</p><h2 data-i18n="platformsTitle">Jailbroken iOS. macOS, too.</h2></div><p data-i18n="platformsIntro">One evidence workflow, separate platform tools.</p></div>
       <div class="platform-grid">
         <article class="platform-card"><span class="phase-tag">USB / REAL IPHONE</span><h3 data-i18n="iosPlatformTitle">Jailbroken iOS</h3><p data-i18n="iosPlatformText">Keep the existing iOS 16 / 17 / 26 workflows: installed packages, sandbox evidence, bounded UI replay and independent signed rebuilds.</p><a class="text-link" href="#devices"><span data-i18n="iosPlatformLink">Named phone evidence and limits</span> &rarr;</a></article>
-        <article class="platform-card"><span class="phase-tag">CHATCOMPUTER / APPLE SILICON</span><h3 data-i18n="macPlatformTitle">macOS / experimental</h3><p data-i18n="macPlatformText">Computer use through ChatComputer, exact App and AX evidence, independent .app builds, paired checks and reviewed snapshots in a dedicated virtual Mac.</p><p class="platform-note" data-i18n="macPlatformScope">Owned editor: 9/9 selected comparisons and a named physical-Mac recheck. These results do not establish arbitrary-Mac or whole-App compatibility.</p><a class="text-link" id="macGuideLink" href="https://github.com/everettjf/copyapp/blob/main/docs/macos-support.md" target="_blank" rel="noopener"><span data-i18n="macPlatformLink">Mac setup and agent task</span> &#8599;</a></article>
+        <article class="platform-card"><span class="phase-tag">CHATCOMPUTER / APPLE SILICON</span><h3 data-i18n="macPlatformTitle">macOS</h3><p data-i18n="macPlatformText">Computer use through ChatComputer, exact App and AX evidence, independent .app builds, paired checks and reviewed snapshots in a dedicated virtual Mac.</p><p class="platform-note" data-i18n="macPlatformScope">Owned editor: 9/9 selected comparisons and a named physical-Mac recheck. These results do not establish arbitrary-Mac or whole-App compatibility.</p><a class="text-link" id="macGuideLink" href="https://github.com/everettjf/copyapp/blob/main/docs/macos-support.md" target="_blank" rel="noopener"><span data-i18n="macPlatformLink">Mac setup and agent task</span> &#8599;</a></article>
       </div>
       <article class="stocks-example">
         <a class="stocks-preview" href="assets/macos/stocks-demo.jpg" target="_blank" rel="noopener" aria-label="Open the independent macOS Stocks demo screenshot"><img src="assets/macos/stocks-demo.jpg" alt="Actual independent AppKit Stocks demo with local watchlist, AAPL detail and illustrative offline chart" width="2160" height="1340" loading="lazy"><span data-i18n="stocksImageLabel">ACTUAL APP / INDEPENDENT OFFLINE EXAMPLE</span></a>

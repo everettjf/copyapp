@@ -2,7 +2,7 @@
 
 [English](README.md) · 简体中文 · [项目首页](../README.zh-CN.md)
 
-Copy APP 的 **v0.2.0** 正式版支持越狱 iOS 与实验性 macOS；**v0.1.2** 为上一版仅支持 iOS 的版本。新用户从 README 的[双平台 AI 任务](../README.zh-CN.md#从这里开始)或[手动 iOS 安装指南](setup.zh-CN.md)开始，再按任务查阅下表。历史检查点保留在 Git 历史，原始设备证据仅留本地忽略目录。
+Copy APP 的 **v0.2.0** 正式版支持越狱 iOS 与macOS；**v0.1.2** 为上一版仅支持 iOS 的版本。新用户从 README 的[双平台 AI 任务](../README.zh-CN.md#从这里开始)或[手动 iOS 安装指南](setup.zh-CN.md)开始，再按任务查阅下表。历史检查点保留在 Git 历史，原始设备证据仅留本地忽略目录。
 
 | 主题 | 文档 |
 | --- | --- |

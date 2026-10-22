@@ -1,7 +1,7 @@
 # macOS support implementation and acceptance plan
 
-This ledger records implementation and named acceptance for the experimental
-macOS support in v0.2.0; its experimental scope is unchanged. Keep the
+This ledger records implementation and named acceptance for macOS support in
+v0.2.0. Keep the measured scope and limitations explicit. Preserve the
 published iOS v0.1.2 commands, USB transports, historical cases and verification
 semantics working. Add macOS alongside iOS; do not reinterpret a Mac as an iPhone.
 

@@ -4,14 +4,14 @@
 
 [项目网站](https://xnu.app/copyapp/) · [图文介绍](docs/articles/copyapp-overview.zh-CN.md) · [文档目录](docs/README.zh-CN.md) · [逆向工具](docs/reverse-engineering-tools.zh-CN.md) · [最新版本](docs/releases/v0.2.0.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md) · [Apache-2.0 许可证](LICENSE)
 
-Copy APP 帮助 Codex 或 Claude Code **分析已安装 App，并独立实现选定行为**，支持 **越狱 iOS 和 macOS**。结论、源码与对照结果保留可复查的证据来源。当前正式版本为 **v0.2.0**。macOS 支持仍为实验性；[v0.1.2](docs/releases/v0.1.2.zh-CN.md) 为上一版仅支持 iOS 的版本。
+Copy APP 帮助 Codex 或 Claude Code **分析已安装 App，并独立实现选定行为**，支持 **越狱 iOS 和 macOS**。结论、源码与对照结果保留可复查的证据来源。当前正式版本为 **v0.2.0**。[v0.1.2](docs/releases/v0.1.2.zh-CN.md) 为上一版仅支持 iOS 的版本。
 
 **第一次使用？** [选 iOS 或 macOS，复制任务给 Agent](#从这里开始)。依赖检查和本地工具安装交给 Agent，设备信任与系统授权按提示完成。
 
 | 目标 | 使用方式 | 状态 |
 | --- | --- | --- |
 | 越狱 iOS | USB 真机、OpenSSH、iOS MCP／iCTRL，按需使用 Frida | 保留已测 iOS 16／17／26 工作流 |
-| macOS | Apple Silicon Mac 上的 ChatComputer、独立虚拟 Mac 和有界 App／AX 采集器 | 实验性支持；已记录指定流程、恢复与实体 Mac 复验 |
+| macOS | Apple Silicon Mac 上的 ChatComputer、独立虚拟 Mac 和有界 App／AX 采集器 | 已记录指定流程、恢复与实体 Mac 复验 |
 
 Mac 行为报告不代表深层函数分析或任意 Mac 兼容。详见 [Mac 安装与 AI 任务](docs/macos-support.zh-CN.md)和[验收账本](docs/macos-implementation-plan.md)。
 
@@ -36,7 +36,7 @@ Mac 协调 Coding Agent、证据与构建；目标可以是通过 USB 连接的�
 | 目标 | 你需要准备 | Agent 安装与检查 |
 | --- | --- | --- |
 | 越狱 iOS | Mac、USB 连接并解锁的越狱 iPhone，目标 App 已装在手机上 | Python 3.9+、仓库 CLI、准确手机／App，再按设备配置 SSH、界面／运行时工具和签名路线 |
-| macOS（实验性） | 满足 ChatComputer 要求的宿主 Mac；完成虚拟 Mac 初始化和必要授权；目标 App 在客体中可用 | Python 3.9+、仓库 CLI、Swift／macOS SDK、ChatComputer、客体采集器和准确环境／App 身份 |
+| macOS | 满足 ChatComputer 要求的宿主 Mac；完成虚拟 Mac 初始化和必要授权；目标 App 在客体中可用 | Python 3.9+、仓库 CLI、Swift／macOS SDK、ChatComputer、客体采集器和准确环境／App 身份 |
 
 ### 越狱 iOS
 

@@ -4,14 +4,14 @@ English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_
 
 [Project website](https://xnu.app/copyapp/) · [Illustrated overview (简体中文)](docs/articles/copyapp-overview.zh-CN.md) · [Documentation](docs/README.md) · [Reverse-engineering tools](docs/reverse-engineering-tools.md) · [Latest release](docs/releases/v0.2.0.md) · [Contributing](CONTRIBUTING.md) · [Apache-2.0 license](LICENSE)
 
-Copy APP helps Codex or Claude Code **analyze installed apps and build independent, runnable implementations of selected behavior** on **jailbroken iOS and macOS**. Conclusions, source and comparisons stay linked to inspectable evidence. The current release is **v0.2.0**. macOS support remains experimental; [v0.1.2](docs/releases/v0.1.2.md) is the previous iOS-only release.
+Copy APP helps Codex or Claude Code **analyze installed apps and build independent, runnable implementations of selected behavior** on **jailbroken iOS and macOS**. Conclusions, source and comparisons stay linked to inspectable evidence. The current release is **v0.2.0**. [v0.1.2](docs/releases/v0.1.2.md) is the previous iOS-only release.
 
 **First time?** [Choose iOS or macOS and copy the agent task](#start-here). The agent checks dependencies and installs the local tools; you complete the required device/system confirmations.
 
 | Target | How it works | Status |
 | --- | --- | --- |
 | Jailbroken iOS | USB-connected iPhone, OpenSSH, iOS MCP / iCTRL and optional Frida | Existing named iOS 16 / 17 / 26 workflows preserved |
-| macOS | ChatComputer on an Apple Silicon Mac, a dedicated virtual Mac and bounded App/AX collector | Experimental; named selected-flow, recovery and physical-Mac checks documented |
+| macOS | ChatComputer on an Apple Silicon Mac, a dedicated virtual Mac and bounded App/AX collector | Named selected-flow, recovery and physical-Mac checks documented |
 
 Mac behavior reports do not imply deep native function analysis or arbitrary-Mac compatibility. See [Mac setup and AI task](docs/macos-support.md) and the [acceptance ledger](docs/macos-implementation-plan.md).
 
@@ -36,7 +36,7 @@ Keep a source checkout: it includes the skills, device components and examples a
 | Target | You prepare | The agent sets up and checks |
 | --- | --- | --- |
 | Jailbroken iOS | A Mac, an unlocked jailbroken iPhone connected by USB, and the target App on that phone | Python 3.9+, repository CLI, exact phone/App identity, then the required SSH/UI/runtime tools and signing route |
-| macOS (experimental) | A host meeting ChatComputer's requirements; initialize its virtual Mac and approve required permissions; make the target App available in that guest | Python 3.9+, repository CLI, Swift/macOS SDK, ChatComputer, guest collector and exact environment/App identity |
+| macOS | A host meeting ChatComputer's requirements; initialize its virtual Mac and approve required permissions; make the target App available in that guest | Python 3.9+, repository CLI, Swift/macOS SDK, ChatComputer, guest collector and exact environment/App identity |
 
 ### Jailbroken iOS
 

@@ -2,7 +2,7 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [Project README](../README.md)
 
-Copy APP supports jailbroken iOS and macOS in **v0.2.0**; macOS support remains experimental. **v0.1.2** is the previous iOS-only release. Begin with the [agent-led first task](first-run-agent.md) or [manual setup guide](setup.md), then use the guides below for the task at hand. Historical development checkpoints and superseded experiment documents have been removed from the working tree; Git history retains their original commits. Raw device evidence remains local under ignored `cases/`.
+Copy APP supports jailbroken iOS and macOS in **v0.2.0**. **v0.1.2** is the previous iOS-only release. Begin with the [agent-led first task](first-run-agent.md) or [manual setup guide](setup.md), then use the guides below for the task at hand. Historical development checkpoints and superseded experiment documents have been removed from the working tree; Git history retains their original commits. Raw device evidence remains local under ignored `cases/`.
 
 | Topic | Read this |
 | --- | --- |

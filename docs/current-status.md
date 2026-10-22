@@ -2,13 +2,13 @@
 
 [English](current-status.md) · [简体中文](current-status.zh-CN.md) · [Documentation](README.md)
 
-**Current release:** [v0.2.0](releases/v0.2.0.md) supports jailbroken iOS and experimental macOS through ChatComputer. **Previous iOS-only release:** [v0.1.2](releases/v0.1.2.md). The phone table below retains its named-device evidence and dates; this release does not add new iPhone executions.
+**Current release:** [v0.2.0](releases/v0.2.0.md) supports jailbroken iOS and macOS through ChatComputer. **Previous iOS-only release:** [v0.1.2](releases/v0.1.2.md). The phone table below retains its named-device evidence and dates; this release does not add new iPhone executions.
 
-## macOS preview
+## macOS support
 
 The named ChatComputer 0.9.11 / macOS 27.0.1 guest has two sample Apps, each with three selected flows across three rounds (9/9 comparisons per sample), full screenshot review, takeover/refusal and controlled reply-loss evidence, and one quiesced running-editor snapshot take/restore. The owned editor has a 7/9 known-capability strict delivery and a same-binary manual selected-flow recheck on one physical Mac. Stocks meets the later offline-prototype target at 81/100, with 207 major visual differences retained; it has no strict delivery or verified capability coverage. See [Mac support](macos-support.md), [the ledger](macos-implementation-plan.md) and [Stocks source](../examples/macos/Stocks/README.md).
 
-macOS is experimental: no arbitrary-Mac compatibility, whole-App parity, deep native function analysis, complete data or live Stocks service is claimed. The release passes 410 local tests and an isolated wheel check; named live records precede the final version-metadata update.
+Mac support does not establish arbitrary-Mac compatibility, whole-App parity, deep native function analysis, complete data or a live Stocks service. The release passes 410 local tests and an isolated wheel check; named live records precede the final version-metadata update.
 
 
 ## Named-device results

@@ -409,9 +409,9 @@ async def _command_survey(udid: str, bundle: str, output: Path, launch: bool,
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Copy APP: iOS workflows and experimental macOS App support")
+    parser = argparse.ArgumentParser(description="Copy APP: iOS workflows and macOS App support")
     sub = parser.add_subparsers(dest="command", required=True)
-    mac = sub.add_parser("mac", help="macOS App support through ChatComputer (experimental)")
+    mac = sub.add_parser("mac", help="macOS App support through ChatComputer")
     from copyapp.macos.cli import configure as configure_mac
     configure_mac(mac)
     sub.add_parser("devices", help="list connected USB devices")

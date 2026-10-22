@@ -2,7 +2,7 @@
 
 [简体中文](macos-support.zh-CN.md) · [Implementation ledger](macos-implementation-plan.md)
 
-The **v0.2.0** release supports experimental macOS **alongside jailbroken iOS**; v0.1.2 is the previous iOS-only release. Existing iOS
+The **v0.2.0** release supports macOS **alongside jailbroken iOS**; v0.1.2 is the previous iOS-only release. Existing iOS
 commands and v1 cases keep their original meaning. This preview supplies
 collection, bounded replay, reviewed reports, independent builds and selected
 delivery. The owned fixture has a named selected-behavior delivery; this does not

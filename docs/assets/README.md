@@ -15,7 +15,7 @@ than dark backgrounds or neon glows.
 | Panels | `#E5F6EB`, `#E8F5FF`, `#F2EBFF`, `#FFF2E3` |
 
 `readme-architecture.svg` is the shared English, dual-platform architecture.
-Keep its iOS branch and experimental macOS scope explicit. The concept artwork in
+Keep both platform branches and their measured scope explicit. The concept artwork in
 `macos/dual-platform.svg` is mirrored at `web/assets/macos/dual-platform.svg`;
 update both copies together. Concept artwork must remain labelled as illustration.
 
