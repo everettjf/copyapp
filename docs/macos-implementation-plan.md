@@ -93,6 +93,13 @@ Earlier TextEdit static distribution probes remain separate evidence.
   or prove App-state recovery. Historical collectors and cases keep their prior
   validation semantics. Live snapshot verification with the upgraded collector
   remains pending its guest Accessibility grant. See [recovery](macos-recovery.md).
+- A separate real-guest protocol observation at
+  `output/macos-quiesced-snapshot-20261021/live-quiesce-protocol-1/` now confirms
+  the deployed collector acknowledged a 30-second polling pause and answered
+  health in a fresh epoch after 30.158 seconds, retaining its instance identity.
+  Production response validators pass. No desktop input or snapshot was submitted;
+  Accessibility remains false. This verifies deployed pause/resume only, not the
+  live snapshot mitigation or recovery gate.
 - Native protocol checks pass, including pause/resume and tampering rejection.
   Full regression: **410 tests in 57.299s**; isolated installed wheel passed,
   SHA-256 `e92b6c52187e14bbb8d63fa066ca5b9c8f096ba77666882632c3639d5aa85c94`.
