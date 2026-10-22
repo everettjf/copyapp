@@ -2,7 +2,14 @@
 
 [English](current-status.md) · [简体中文](current-status.zh-CN.md) · [Documentation](README.md)
 
-**Published version:** [v0.1.2](releases/v0.1.2.md). This page describes the named-device scope tested through 2026-10-18 and the remaining limits. v0.1.2 includes the iCTRL session fix below; its new device regression covers the named iPhone 14 only. The [v0.1.0 notes](releases/v0.1.0.md) retain the original release record.
+**Preview:** [v0.2.0-beta.1](releases/v0.2.0-beta.1.md) supports jailbroken iOS and experimental macOS through ChatComputer. **Latest stable iOS:** [v0.1.2](releases/v0.1.2.md). The phone table below retains its named-device evidence and dates; this preview does not add new iPhone executions.
+
+## macOS preview
+
+The named ChatComputer 0.9.11 / macOS 27.0.1 guest has two sample Apps, each with three selected flows across three rounds (9/9 comparisons per sample), full screenshot review, takeover/refusal and controlled reply-loss evidence, and one quiesced running-editor snapshot take/restore. The owned editor has a 7/9 known-capability strict delivery and a same-binary manual selected-flow recheck on one physical Mac. Stocks meets the later offline-prototype target at 81/100, with 207 major visual differences retained; it has no strict delivery or verified capability coverage. See [Mac support](macos-support.md), [the ledger](macos-implementation-plan.md) and [Stocks source](../examples/macos/Stocks/README.md).
+
+macOS is experimental: no arbitrary-Mac compatibility, whole-App parity, deep native function analysis, complete data or live Stocks service is claimed. The release passes 410 local tests and an isolated wheel check; named live records precede the final version-metadata update.
+
 
 ## Named-device results
 

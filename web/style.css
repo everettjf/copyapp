@@ -21,6 +21,16 @@ footer{border-top:1px solid var(--line);background:#111111}.footer-inner{display
 .device-display{background:radial-gradient(circle at 50% 46%,#16331f,#0a0a0a 67%)}
 
 /* Public workflow illustrations. Each opens at full resolution for smaller screens. */
+.platforms-section{padding-top:70px;padding-bottom:80px}
+.platform-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.platform-card,.stocks-example{border:1px solid #3b5141;background:linear-gradient(135deg,#131b16,#0b0e0c);padding:30px}
+.platform-card h3,.stocks-example h3{font:600 28px var(--display);letter-spacing:-.04em;margin:17px 0 13px}
+.platform-card p,.stocks-example p{font-size:14px;line-height:1.75;color:#bac7bd;margin:0 0 12px}
+.platform-note{font-size:12px!important;color:#93a398!important}
+.stocks-example{display:flex;align-items:center;justify-content:space-between;gap:35px;margin-top:18px}
+.stocks-example>div{max-width:790px}.stocks-example .button{flex-shrink:0}
+.terminal pre{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.85}
+@media(max-width:760px){.platforms-section{padding-top:40px;padding-bottom:55px}.platform-grid{grid-template-columns:1fr}.platform-card,.stocks-example{padding:24px}.stocks-example{display:block}.stocks-example .button{margin-top:12px}.platform-card h3,.stocks-example h3{font-size:25px}}
 .visual-guide-section{padding-top:30px;padding-bottom:95px}
 .visual-guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
 .visual-guide-card{min-width:0;margin:0;border:1px solid #3b5141;background:#131a15;overflow:hidden}

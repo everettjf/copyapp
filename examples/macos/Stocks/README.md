@@ -15,7 +15,7 @@ build. Review and replay its three example playbooks from an inspected AAPL deta
 with a blank search field. Preserve failures and freeze the reviewed known scope
 before changing this independent example. Build, install at a separate guest path,
 compare the selected flows and disclose visual/data differences. Keep iOS support
-intact. Do not merge the development branch.
+intact. Use the current agent session and keep original and independent Apps separate.
 ```
 
 The current selected scope is symbol search/detail navigation, chart-period
@@ -40,7 +40,8 @@ a new reviewed script and evidence chain instead of editing a frozen case.
 To build a local demo without the evidence workflow:
 
 ```sh
-.venv/bin/python examples/macos/Stocks/build.py --out cases/stocks-demo-build
+.venv/bin/python examples/macos/Stocks/build.py --out output/stocks-demo-build
+open output/stocks-demo-build/CopyAppStocks.app
 ```
 
 This compiles/signs a fresh `.app` and retains source/build diagnostics. Open the
@@ -65,4 +66,10 @@ Remaining differences include the restricted local symbol catalog, generated
 charts, illustrative metrics, independent overview cards, simplified modal UI,
 and unimplemented symbol membership/reordering, article reading, sharing, calendar,
 additional viewer windows and iCloud sync. Native function semantics and a
-physical-Mac reconstruction recheck are not established. Keep the parent PR in draft.
+physical-Mac Stocks reconstruction recheck are not established.
+
+The version-7 named guest comparison passed three selected flows across three
+rounds (9/9 behavior checks). All 207 screenshot pairs were reviewed and retain
+major visual differences. The later requested offline-prototype milestone scored
+81/100 against target 80; this is a reviewed grade, not objective similarity,
+capability coverage or strict delivery. See [the acceptance ledger](../../../docs/macos-implementation-plan.md).

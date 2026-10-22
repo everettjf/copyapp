@@ -1,6 +1,6 @@
 # Bounded reconstruction quality
 
-The development branch adds a reviewed **grade target**, default **80/100**, and
+The v0.2.0-beta.1 preview adds a reviewed **grade target**, default **80/100**, and
 **three implementation/check cycles including the first**. Use 70 for a quick
 prototype or 90 for closer detail. This does not measure objective image similarity
 or the proportion of an App's known capabilities. Keep coverage and selected-flow
@@ -80,12 +80,12 @@ keep all those ignored local cases. Creation requires current source to match th
 paired build/delivery. Later verification checks saved source evidence, allowing
 subsequent implementation changes without rewriting history.
 
-This is the default bounded path for agent-led development in this branch.
+This is the default bounded path for agent-led tasks in this preview.
 Historical `mac delivery`, standalone `copy` and `agent-run --verify-rebuild` keep
 their strict acceptance rules; a fidelity milestone does not turn an incomplete
 strict parent into success. Use stages directly for a bounded current-agent task.
 Release, physical-device and capability-coverage gates remain separate. This is
-not part of the published iOS v0.1.2 release.
+not part of the older stable iOS v0.1.2 release.
 
 ## 中文要点
 

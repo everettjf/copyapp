@@ -1,6 +1,7 @@
 # macOS support implementation and acceptance plan
 
-This is an implementation plan, not a claim of released macOS support. Keep the
+This ledger records implementation and named acceptance for the experimental
+macOS preview in v0.2.0-beta.1. Keep the
 published iOS v0.1.2 commands, USB transports, historical cases and verification
 semantics working. Add macOS alongside iOS; do not reinterpret a Mac as an iPhone.
 
@@ -55,7 +56,9 @@ The requested development milestone now has implementation and named evidence
 for P0–P5, including the selected checks in acceptance items 1–8 below. The user's
 bounded Stocks prototype target is met; its strict delivery remains a separate
 later scope. This is neither whole-App parity nor general macOS compatibility.
-The branch and PR remain unmerged/draft; no tag or release is part of this task.
+The later user instruction authorizes merging this branch and publishing
+`v0.2.0-beta.1`. Earlier no-merge/no-release entries below describe the preceding
+development phase; they no longer block this authorized release.
 The latest local completion evidence check revalidates 42 conditions, including
 retained failed-case rejection, current collector source identity, unchanged
 tested runtime code, source-linked deliveries and manual evidence hashes.
@@ -63,8 +66,8 @@ tested runtime code, source-linked deliveries and manual evidence hashes.
 First-stage effort estimate is 13–20 developer days, revised after P0. This is not
 a deadline or a reason to reduce scope. No tag/release until acceptance completes.
 
-The branch remains unmerged at the user's request. Open an issue and a draft PR
-for review while development and acceptance continue. The requested real-app
+Issue #1 and PR #2 retain development review; the later user instruction
+authorizes merge and prerelease after the final release checks. The requested real-app
 sample is now Apple Stocks (`com.apple.stocks`), alongside the owned fixture.
 The host has Stocks 8.0 (2028); acquire the actual guest build before choosing
 flows. Discover and review at least three representative flows, freeze their

@@ -1,9 +1,9 @@
-# macOS development support
+# macOS preview support
 
 [简体中文](macos-support.zh-CN.md) · [Implementation ledger](macos-implementation-plan.md)
 
-macOS is being added **alongside** the published iOS workflows. Existing iOS
-commands and v1 cases keep their original meaning. This branch currently supplies
+The **v0.2.0-beta.1** preview supports macOS **alongside jailbroken iOS**; v0.1.2 remains the latest stable iOS release. Existing iOS
+commands and v1 cases keep their original meaning. This preview supplies
 collection, bounded replay, reviewed reports, independent builds and selected
 delivery. The owned fixture has a named selected-behavior delivery; this does not
 certify whole-App or arbitrary-Mac reconstruction. Do not use an iOS UDID or IPA
@@ -30,7 +30,7 @@ retains their source identity and discovered known-capability IDs.
 
 ## Start with an agent
 
-Open this development checkout in Codex or Claude Code and paste:
+Open this source checkout in Codex or Claude Code and paste:
 
 ```text
 Analyze the macOS App “APP NAME” using this Copy APP checkout and ChatComputer.

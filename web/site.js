@@ -1,20 +1,36 @@
 const translations = {
   zh: {
-    navWorkflow: '工作流程', navArchitecture: '架构', navEvidence: '证据示例', navDevices: '实测设备', navStart: '开始使用',
-    eyebrow: '开源项目 · 真机证据', heroOne: '看见内部。', heroTwo: '构建新可能。',
-    heroSub: '在越狱 iPhone 上分析真实 iOS App；把选定行为实现成独立 App。每一项结论都能追溯到证据。',
-    heroStart: '开始探索', heroDocs: '阅读文档', heroDiscord: '到 Discord 交流', factPhases: '相连的阶段', factTested: '台真机已测', factProgress: 'iOS 世代',
+    navWorkflow: '工作流程', navArchitecture: '架构', navEvidence: '证据示例', navDevices: '支持平台', navStart: '开始使用',
+    eyebrow: 'v0.2.0-beta.1 · 越狱 iOS + macOS', heroOne: '看见内部。', heroTwo: '构建新可能。',
+    heroSub: '分析越狱 iPhone 上的 App，或通过 ChatComputer 分析 macOS App。独立实现选定行为，交付可运行 App，每一项结论都有证据来源。',
+    heroStart: '开始探索', heroDocs: '阅读文档', heroDiscord: '到 Discord 交流', factPhases: '个支持平台', factTested: '台指定 iPhone 已测', factProgress: '默认原型评分',
     workflowTitle: '两个阶段，一条证据链。', workflowIntro: '从观察原版到审阅独立实现；每个阶段都留下可复查的案例。',
-    phaseOneTag: '理解原版', phaseOneTitle: '深度分析', phaseOneText: '采集 App 包、沙盒、界面和运行时证据。检查 Mach-O 与选定方法，写出有来源的报告与功能规格。',
-    phaseOneA: '已安装包与沙盒', phaseOneB: '界面流程与截图', phaseOneC: 'Frida 跟踪与原生代码', phaseOneD: '审阅报告与功能规格',
-    phaseTwoTag: '构建独立 APP', phaseTwoTitle: '按目标复刻', phaseTwoText: '制定现实的覆盖目标，构建并安装独立 iOS App，在真机上重放同样流程并审阅差异。',
-    phaseTwoA: '能力清单与目标', phaseTwoB: '新 Xcode 工程与签名 IPA', phaseTwoC: '成对行为与视觉检查', phaseTwoD: '经验证交付与已知缺口',
+    phaseOneTag: '理解原版', phaseOneTitle: '理解真实行为', phaseOneText: 'iOS 采集安装包、沙盒和运行时证据；macOS 采集 App 包、AX 和界面证据。审阅有来源的报告与功能规格。',
+    phaseOneA: '已安装包与沙盒', phaseOneB: '界面流程与截图', phaseOneC: 'iOS 运行时／macOS 辅助功能', phaseOneD: '审阅报告与功能规格',
+    phaseTwoTag: '构建独立 APP', phaseTwoTitle: '按目标复刻', phaseTwoText: '构建独立的 iOS 或 macOS App。对照相同流程并逐图审阅，达到评分目标或耗尽轮数就停止。',
+    phaseTwoA: '能力清单与目标', phaseTwoB: '独立源码、IPA 或 .app', phaseTwoC: '成对行为与视觉检查', phaseTwoD: '经验证交付与已知缺口',
     principle: '一张通过的截图只是一个数据点。可信的复刻来自连续的观察、判断和可重复检查。',
-    architectureTitle: '把真实设备变成分析工具。', architectureIntro: 'Coding Agent 驱动工作流；Mac 协调采集与构建，手机提供事实依据。',
-    archAgent: '规划与解释', archMac: '调度、分析、构建', archOutputTitle: '可校验的产物', archOutput: '报告 · 源码 · IPA · 对照结果',
+    architectureTitle: '把真实设备变成分析工具。', architectureIntro: '当前 Coding Agent 负责规划与实现，Copy APP 记录证据和检查；指定 iPhone 或 ChatComputer 虚拟 Mac 提供观察结果。',
+    archAgent: '规划与解释', archMac: '调度、分析、构建', archOutputTitle: '可校验的产物', archOutput: '报告 · 源码 · IPA／.app · 对照',
+    archTarget: '越狱 iPhone／虚拟 Mac',
     noteOneTitle: '看清实际发生的事。', noteOneText: '指定设备身份、安装包哈希、有界操作、截图和运行时跟踪都保存到本地证据案例。',
-    noteTwoTitle: '每个结论都能找到依据。', noteTwoText: '原生分析可使用项目工具、Ghidra 或 Hopper。伪代码是待审阅证据，不是原始源码。',
-    noteThreeTitle: '只衡量选定的范围。', noteThreeText: '原版与复刻版分别在同一台手机上运行。最终交付列出通过项、视觉差异与未知项。',
+    noteTwoTitle: '每个结论都能找到依据。', noteTwoText: '可选的 iOS 原生分析使用 Ghidra 或 Hopper；macOS 界面证据证明选定行为，不代表深层函数语义。',
+    noteThreeTitle: '只衡量选定的范围。', noteThreeText: '原版与独立 App 在同一准确环境中分别运行。交付明确列出通过行为、可见差异与未知范围。',
+    platformsTitle: '越狱 iOS，也支持 macOS。',
+    platformsIntro: '共用证据工作流，平台工具各自独立。v0.2.0-beta.1 中的 macOS 为实验性预览支持。',
+    iosPlatformTitle: '越狱 iOS',
+    iosPlatformText: '保留已有 iOS 16／17／26 工作流：已安装 App、沙盒取证、有界界面重放和独立签名复刻。',
+    iosPlatformLink: '指定手机证据与限制',
+    macPlatformTitle: 'macOS · 实验性支持',
+    macPlatformText: '通过 ChatComputer 使用电脑，采集准确 App／AX 证据，独立构建 .app，在专用虚拟 Mac 内对照流程并审阅快照恢复。',
+    macPlatformScope: '自有编辑器 9/9 组选定对照通过，并有指定实体 Mac 复验；不代表任意 Mac 兼容或整 App 等价。',
+    macPlatformLink: 'Mac 安装与 Agent 任务',
+    stocksTitle: '构建 Stocks 示例。',
+    stocksText: '搜索股票、切换图表周期、管理本地自选列表。独立源码使用明确标注的离线数据，不含实时行情或 Apple 资产。',
+    stocksScope: '客体 9/9 组选定行为检查通过；审阅原型评分 81/100，达到目标 80，仍保留可见差异，不是整 App 覆盖率。',
+    stocksSource: '查看 Stocks 源码',
+    macSetupGuide: 'macOS 安装指南', footerReleases: '版本下载 ↗',
+    agentPrompt: '请用 https://github.com/everettjf/copyapp 分析越狱 iOS 或 macOS 上的「App 名称」，并独立实现选定行为。\n先读 AGENTS.md；iOS 加载 skills/copyapp-start/SKILL.md，macOS 与 ChatComputer 加载 skills/copyapp-mac/SKILL.md。在当前 Agent 会话执行。\n默认使用 output/，分开 project/ 与 evidence/；目标 80 分，最多三轮。对照选定流程、逐图审阅，并交付可运行产物与剩余差异。',
     visualTitle: '四张图看懂工作流。', visualIntro: '从手机证据到可衡量的独立复刻。点击图片可查看原图。',
     visualOneTitle: '01 / 系统架构', visualOneCaption: 'Mac 协调分析与构建，指定的 iPhone 提供观察数据。',
     visualTwoTitle: '02 / 证据', visualTwoCaption: '结论关联具体案例；Hopper 片段展示已保存证据，不是原始源码。',
@@ -30,21 +46,20 @@ const translations = {
     verified: '流程已验证', inProgress: '验证进行中', device16: '已验证分析、包恢复、界面和选定复刻流程。',
     device17: '已验证分析、签名安装以及原版与复刻版对照。', device26: 'Calculator 与 Clock 的选定复刻流程已通过；仍有轻微视觉差异。',
     validationLabel: '尚待验证', validationTitle: '这些测试尚未证明什么',
-    validationOne: 'iOS 17 复刻版上 iCTRL 多步重放的稳定性',
+    validationOne: 'iOS 17 指定回归之外，iOS 16／26 上改动后的 iCTRL 清理逻辑',
     validationTwo: 'XR 可选开发者文件列表，以及重启／重新越狱后的持续可用性',
     validationThree: '第二台实体 Mac 的首次手机配置',
     validationFour: '任意 App 的覆盖、整 App 功能等价和像素级一致',
     validationLink: '当前状态与验收门槛',
-    deviceEvidence: '阅读真机证据与限制', startTitle: '第一份观察，从一条命令开始。',
-    startText: '连接、解锁并信任 iPhone。在 Mac 安装 CLI，运行引导式 USB 检查。需要深度分析时再增加越狱服务。',
-    setupGuide: '完整安装指南', contribute: '参与贡献', copy: '复制', terminalReady: '已检查设备身份及截图能力',
+    deviceEvidence: '阅读真机证据与限制', startTitle: '把一个任务交给你的 Agent。',
+    startText: '在 Mac 上复制给 Codex 或 Claude Code，替换 App 名称并选择越狱 iOS 或 macOS，Agent 会加载对应仓库 Skill。',
+    setupGuide: 'iOS 安装指南', contribute: '参与贡献', copy: '复制', terminalReady: '已检查设备身份及截图能力',
     footerLine: '可以复查的证据。可以实测的软件。', footerDiscord: 'Discord ↗', footerDocs: '文档 ↗', footerContribute: '贡献指南 ↗'
   }
 };
 
 const languageButton = document.querySelector('#language');
 const copyButton = document.querySelector('#copyCommand');
-const commands = 'git clone https://github.com/everettjf/copyapp.git\ncd copyapp\nsh scripts/bootstrap-macos.sh\n.venv/bin/copyapp onboard';
 
 function setLanguage(language) {
   const zh = language === 'zh';
@@ -62,6 +77,10 @@ function setLanguage(language) {
     const link = document.getElementById(id);
     if (link) link.href = statusUrl;
   }
+  for (const id of ['macGuideLink', 'macSetupLink']) {
+    document.getElementById(id).href = 'https://github.com/everettjf/copyapp/blob/main/docs/macos-support' + (zh ? '.zh-CN' : '') + '.md';
+  }
+  copyButton.setAttribute('aria-label', zh ? '复制 Agent 任务' : 'Copy agent task');
   languageButton.setAttribute('aria-label', zh ? 'Switch to English' : '切换到中文');
   try { localStorage.setItem('copyapp-language', language); } catch (_) { /* private mode */ }
 }
@@ -73,11 +92,11 @@ setLanguage(initialLanguage);
 languageButton.addEventListener('click', () => setLanguage(document.documentElement.lang === 'en' ? 'zh' : 'en'));
 copyButton.addEventListener('click', async () => {
   try {
-    await navigator.clipboard.writeText(commands);
+    await navigator.clipboard.writeText(document.querySelector('#agentPrompt').textContent.trim());
     const original = copyButton.textContent;
     copyButton.textContent = document.documentElement.lang === 'en' ? 'COPIED' : '已复制';
     setTimeout(() => { copyButton.textContent = original; }, 1800);
   } catch (_) {
-    copyButton.textContent = document.documentElement.lang === 'en' ? 'SELECT COMMANDS' : '请选中命令';
+    copyButton.textContent = document.documentElement.lang === 'en' ? 'SELECT TASK' : '请选中任务';
   }
 });

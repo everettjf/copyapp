@@ -1,8 +1,8 @@
-# macOS 开发支持
+# macOS 预览支持
 
 [English](macos-support.md) · [实施与验收清单](macos-implementation-plan.md)
 
-macOS 支持是在现有 iOS 支持之上新增。iOS 命令、设备链路和 v1 历史 case 保留原有含义。
+**v0.2.0-beta.1** 预览版同时支持越狱 iOS 和实验性 macOS；v0.1.2 仍为最新 iOS 稳定版。iOS 命令、设备链路和 v1 历史 case 保留原有含义。
 当前分支已有采集、有界重放、报告、独立构建和选定交付；自有样例已完成指定行为交付，
 不代表整 App 等价、深层函数分析或任意 Mac 兼容。
 不要用虚拟 UDID 或 IPA 来表示 Mac。
@@ -28,7 +28,7 @@ ZIP／DMG 输入使用 `mac import-app`；DMG 在 macOS 27 上以只读、禁止
 
 ## 交给 Agent
 
-在 Codex 或 Claude Code 中打开这个开发分支，把下面的任务复制进去：
+在 Codex 或 Claude Code 中打开源码检出，把下面的任务复制进去：
 
 ```text
 请用当前 Copy APP 项目和 ChatComputer 分析 macOS 上的「App 名称」。

@@ -2,7 +2,13 @@
 
 [English](current-status.md) · 简体中文 · [文档目录](README.zh-CN.md)
 
-**正式版本：**[v0.1.2](releases/v0.1.2.zh-CN.md)。本页描述截至 2026-10-18 在指定设备上已测的范围和剩余限制；v0.1.2 纳入下述 iCTRL 会话修复，本次新增真机回归只覆盖指定 iPhone 14。[v0.1.0 说明](releases/v0.1.0.zh-CN.md)保留当时的原始发布记录。
+**预览版：**[v0.2.0-beta.1](releases/v0.2.0-beta.1.zh-CN.md) 支持越狱 iOS 和通过 ChatComputer 的实验性 macOS。**最新 iOS 稳定版：**[v0.1.2](releases/v0.1.2.zh-CN.md)。下方手机记录保留原设备与时间范围，本预览版不增加新的 iPhone 真机执行声明。
+
+## macOS 预览
+
+指定 ChatComputer 0.9.11／macOS 27.0.1 客体已完成两个样例各三条流程、各三轮（每个 9/9）、完整截图审阅、真人接管／输入拒绝、受控回复丢失和一次暂停轮询后的运行中编辑器快照取回／恢复。自有编辑器完成 7/9 已知能力严格交付，并在指定实体 Mac 以相同二进制手动复验选定行为。Stocks 达到后来要求的 81/100 离线原型目标，207 项明显差异保留，尚无严格交付或已验证能力覆盖。详见 [Mac 支持](macos-support.zh-CN.md)、[实施账本](macos-implementation-plan.md)及 [Stocks 源码](../examples/macos/Stocks/README.md)。
+
+macOS 为实验性支持，不声称任意 Mac 兼容、整 App 等价、深层函数分析、完整数据或实时行情。本版通过 410 项本地测试和隔离 wheel 检查；指定真实记录早于最终版本元数据更新。
 
 ## 指定手机的结果
 

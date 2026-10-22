@@ -24,7 +24,7 @@ def build_collector(output: Path, signing_identity: str = "-") -> Path:
     (app / "Contents/Info.plist").write_bytes(plistlib.dumps({
         "CFBundleIdentifier": "dev.copyapp.MacCollector",
         "CFBundleName": "Copy APP Mac Collector", "CFBundleExecutable": executable.name,
-        "CFBundlePackageType": "APPL", "CFBundleShortVersionString": "0.1.2",
+        "CFBundlePackageType": "APPL", "CFBundleShortVersionString": "0.2.0",
         "CFBundleVersion": "1", "LSUIElement": True, "LSMinimumSystemVersion": "14.0"}))
     commands = [["xcrun", "swiftc", "-swift-version", "5", "-target", "arm64-apple-macos14.0",
                  str(saved), "-o", str(executable)],

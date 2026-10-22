@@ -4,6 +4,7 @@
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -31,14 +32,21 @@ def main():
     logs = []
     record = {"scope": "independent_offline_demo_build_only", "inputs": inputs, "launched": False}
     try:
+        sdk_result = subprocess.run(["xcrun", "--sdk", "macosx", "--show-sdk-path"],
+                                    stdin=subprocess.DEVNULL, capture_output=True, text=True,
+                                    check=True, timeout=30)
+        sdk = str(Path(sdk_result.stdout.strip()).resolve(strict=True))
+        record["sdkroot"] = sdk
+        build_env = dict(os.environ, SDKROOT=sdk)
         commands = [
             ["xcrun", "swiftc", "-parse-as-library", "-swift-version", "5", "-target", "arm64-apple-macos14.0",
-             str(snapshot / "Sources/Main.swift"), "-o", str(binary)],
+             "-sdk", sdk, str(snapshot / "Sources/Main.swift"), "-o", str(binary)],
             ["/usr/bin/codesign", "--sign", "-", "--identifier", "dev.copyapp.examples.Stocks", str(app)],
             ["/usr/bin/codesign", "--verify", "--strict", str(app)],
         ]
         for argv in commands:
-            result = subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=180)
+            result = subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, text=True,
+                                    env=build_env, timeout=180)
             logs.append({"argv": argv, "returncode": result.returncode, "stdout": result.stdout, "stderr": result.stderr})
             if result.returncode:
                 raise RuntimeError("demo build failed; inspect build-log.json")
