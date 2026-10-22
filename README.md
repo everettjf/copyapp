@@ -25,11 +25,19 @@ Use https://github.com/everettjf/copyapp to analyze and rebuild “APP NAME” o
 Clone the project into a new directory if needed, or work in its existing checkout.
 Read AGENTS.md and skills/copyapp-start/SKILL.md first. Check and configure the environment, identify the exact phone and app, then complete analysis, independent implementation, device installation and same-device comparison.
 Execute the steps you can perform yourself. Tell me the specific action only when you need phone-side confirmation or missing target information. Deliver the report, runnable project, verified behavior and remaining differences.
+Use docs/fidelity.md: target grade 80/100, at most three implementation/check cycles including the first. Stop when the target is met or the cycle budget is exhausted; disclose any unmet target and remaining differences.
 ```
 
 The agent reads the repository's [first-use skill](skills/copyapp-start/SKILL.md) and follows the analysis, rebuild and verification workflows. **You do not need to type every CLI command below or install a provider-specific extension first.** The agent checks and configures the Mac; phone trust, initial permissions and signing access may still require your participation.
 
 For analysis only, change the first sentence to “Analyze …; do not rebuild it in this task.” For a connection check, ask it to stop after a verified USB survey. See [first-run agent tasks](docs/first-run-agent.md) for more examples, or use the [manual CLI entry](#manual-installation-and-first-survey) if you prefer.
+
+Development default: **80/100 reviewed fidelity grade, three cycles**. Ask for 70
+for a quick prototype or 90 for finer detail. Core selected behavior must pass;
+remaining visual differences stay explicit. This grade is separate from objective
+image similarity and known-capability coverage. The [bounded workflow](docs/fidelity.md)
+uses `fidelity-plan --fidelity 80 --max-iterations 3`; historical strict delivery
+and standalone parent workflows retain their existing rules.
 
 ## Architecture at a glance
 

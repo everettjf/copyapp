@@ -651,6 +651,42 @@ Earlier TextEdit static distribution probes remain separate evidence.
   every key's writer and establishes neither complete App data nor SQLite/WAL
   consistency. Raw bytes remain in ignored local child cases.
 
+- The later user request bounds prototype fidelity instead of indefinite visual
+  polishing. New cross-platform `fidelity-plan`, `fidelity-template` and
+  `fidelity-check` commands freeze a default reviewed grade of **80/100** and
+  **three implementation/check cycles including the first**. Behavior/layout/detail
+  weights are 40/40/20; core selected behavior and full image review remain required.
+  Every difference retains its verdict plus an explicit blocking impact. Results
+  distinguish `target_met`, `continue` and `iteration_limit` (CLI exits 0/2/3);
+  supported failed attempts consume cycles without gaining behavior/visual points.
+  The retained predecessor chain enforces the submitted budget and stop decision,
+  rather than claiming a global process/time limiter. Historical iOS/Mac strict
+  delivery validators and standalone parent completion semantics are unchanged.
+  See [the bounded workflow](fidelity.md), updated AI entry prompts and skills.
+- Stocks `fidelity-plan-1` and `fidelity-check-1` under the same recheck case root
+  verify the user-requested selected offline-prototype milestone: behavior 100,
+  layout 80 and details 45 yield **81/100**, meeting target 80. This explicitly
+  reuses version-7 `visual-review-5` after the new target request; it is not a
+  threshold predeclared before that original run or a fresh guest test. All
+  **207 major visual judgments remain unchanged** and are acknowledged with
+  reasons. Further cosmetic polishing stops at this milestone. It certifies no
+  objective similarity percentage, known-capability coverage, strict Stocks
+  delivery or release gate. `fidelity-policy-timing-1.json` records these limits.
+- `cases/macos-fidelity-contract-20261021/limit-check-1` verifies a diagnostic
+  one-cycle plan against retained failed `check-4`: the CLI exits 3 with
+  `iteration_limit`, zero points and no target achievement. No guest action was
+  submitted. Unit tests also cover 80/90/100 boundaries, core/starting-state
+  blockers, complete difference acknowledgment, fabricated scores/citations,
+  predecessor budgets and rehashed result tampering. Mac integration accepts an
+  explicitly non-blocking major difference at an 80 milestone while the old strict
+  delivery still rejects it. Current full regression: **404 tests in 107.954s**
+  (`/tmp/copyapp-dual-platform-fidelity-20261021.log`); final report formatting was
+  separately covered by the eight fidelity tests. The isolated installed wheel
+  includes the new commands/options and passed with SHA-256
+  `8a981dbf2f1ca60af31d5ec8c469d40fd36fd68122d8ab6d1920366403c79b07`
+  (`/tmp/copyapp-fidelity-wheel-final-20261021.log`). The three revised skills pass
+  their frontmatter/reference review. No new iPhone or physical-Mac result is claimed.
+
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.
 Runtime observations additionally bind PID/start time and executable hash. Record

@@ -459,6 +459,25 @@ class NativeCollectorTests(unittest.TestCase):
                     self.assertTrue(verify_case(adverse_visual))
                     with self.assertRaises(ValueError):
                         delivery(adverse_visual, coverage_path, root / (variant + "-delivery"))
+                    from copyapp.fidelity import create_plan, create_check, review_template, visual_context, read
+                    grade_plan = create_plan(native_build / "plan", root / (variant + "-fidelity-plan"))
+                    self.assertTrue(verify_case(grade_plan))
+                    grade_context = visual_context(adverse_visual, read(grade_plan, "fidelity-plan.json")["contract"])
+                    grade_review = review_template(grade_context)
+                    grade_review["reviewer"] = "simulated-contract-test"
+                    grade_review["dimensions"]["layout"].update(score=85, notes="Simulated selected layout judged close; no live UI claim.")
+                    grade_review["dimensions"]["details"].update(score=40, notes="Simulated detail differences retained for threshold testing.")
+                    for row in grade_review["differences"]:
+                        row.update(impact="non_blocking", reason="Simulated visible difference is retained and non-blocking for this milestone.")
+                    grade_path = root / (variant + "-grade.json")
+                    grade_path.write_bytes(canonical(grade_review))
+                    milestone = create_check(grade_plan, adverse_visual, grade_path, root / (variant + "-milestone"))
+                    self.assertTrue(verify_case(milestone))
+                    grade = read(milestone, "fidelity-check.json")["result"]
+                    self.assertEqual(grade["grade"], 82)
+                    self.assertEqual(grade["decision"], "target_met" if variant == "major" else "continue")
+                    self.assertFalse(grade["strict_delivery_certified"])
+                    rejects_rehashed(milestone, "fidelity-check.json", lambda value: value["result"].update(grade=99))
                 bad_coverage = json.loads(canonical(coverage))
                 bad_coverage["capabilities"][0].update(decision="deferred", evidence_flow_ids=[])
                 coverage_path.write_bytes(canonical(bad_coverage))

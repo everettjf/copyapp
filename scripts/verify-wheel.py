@@ -14,6 +14,7 @@ from pathlib import Path
 SOURCE = Path(__file__).resolve().parent.parent
 REQUIRED_DATA = {
     "copyapp/macos/collector/Collector.swift",
+    "copyapp/fidelity.py",
     "copyapp/ictrl_runner_stop.py",
     "copyapp/ghidra_scripts/CopyAppAnalysisOptions.java",
     "copyapp/ghidra_scripts/CopyAppDecompile.java",
@@ -62,8 +63,12 @@ def main() -> None:
         env.pop("COPYAPP_SOURCE_ROOT", None)
         run([str(python), "-m", "pip", "install", str(wheel)], cwd=root, env=env)
         help_text = run([str(cli), "--help"], cwd=root, env=env).stdout
-        if not all(command in help_text for command in ("onboard", "analyze", "copy", "mac")):
+        if not all(command in help_text for command in ("onboard", "analyze", "copy", "mac",
+                                                       "fidelity-plan", "fidelity-template", "fidelity-check")):
             raise RuntimeError("installed wheel CLI lacks expected commands")
+        fidelity_help = run([str(cli), "fidelity-plan", "--help"], cwd=root, env=env).stdout
+        if "--fidelity" not in fidelity_help or "--max-iterations" not in fidelity_help:
+            raise RuntimeError("installed wheel lacks bounded fidelity options")
         mac_help = run([str(cli), "mac", "--help"], cwd=root, env=env).stdout
         if not all(command in mac_help for command in ("doctor", "inspect", "build-collector", "acquire",
                                                        "playbook", "report", "rebuild-plan", "build-app", "install",

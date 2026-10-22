@@ -687,6 +687,21 @@ def main() -> None:
     agent_delivery.add_argument("--run", type=Path)
     agent_delivery.add_argument("--visual-review", type=Path)
     agent_delivery.add_argument("--out", required=True, type=Path)
+    fidelity_plan = sub.add_parser("fidelity-plan", help="freeze a bounded reconstruction grade target for an iOS task or Mac plan")
+    fidelity_plan.add_argument("--task", required=True, type=Path)
+    fidelity_plan.add_argument("--fidelity", type=int, default=80, help="reviewed selected-scope grade, 0–100 (default 80); not image similarity percent")
+    fidelity_plan.add_argument("--max-iterations", type=int, default=3, help="implementation/check cycles including the first (default 3)")
+    fidelity_plan.add_argument("--out", required=True, type=Path)
+    fidelity_template = sub.add_parser("fidelity-template", help="write a grade review template bound to verified images")
+    fidelity_template.add_argument("--plan", required=True, type=Path)
+    fidelity_template.add_argument("--evidence", required=True, type=Path, help="Mac visual-review or iOS agent-delivery with full visual review")
+    fidelity_template.add_argument("--out", required=True, type=Path, help="new review JSON file")
+    fidelity_check = sub.add_parser("fidelity-check", help="record target_met, continue or iteration_limit without relaxing strict delivery")
+    fidelity_check.add_argument("--plan", required=True, type=Path)
+    fidelity_check.add_argument("--evidence", required=True, type=Path)
+    fidelity_check.add_argument("--review", required=True, type=Path)
+    fidelity_check.add_argument("--previous", type=Path, help="previous cycle of this frozen plan; required after the first")
+    fidelity_check.add_argument("--out", required=True, type=Path)
     coverage_plan = sub.add_parser("coverage-plan",
                                    help="freeze a weighted, revisable known-capability target")
     coverage_plan.add_argument("--report", required=True, type=Path)
@@ -1191,6 +1206,27 @@ def main() -> None:
             print(create_agent_delivery(args.task, args.install, args.check,
                                         args.out, args.run, args.visual_review))
             code = 0
+        elif args.command == "fidelity-plan":
+            from copyapp.fidelity import create_plan
+            print(create_plan(args.task, args.out, args.fidelity, args.max_iterations))
+            code = 0
+        elif args.command == "fidelity-template":
+            from copyapp.fidelity import require, read, visual_context, review_template
+            require(args.plan, {"fidelity_plan"})
+            context = visual_context(args.evidence, read(args.plan, "fidelity-plan.json")["contract"], live_source=True)
+            args.out.parent.mkdir(parents=True, exist_ok=True)
+            with args.out.open("x", encoding="utf-8") as stream:
+                json.dump(review_template(context), stream, ensure_ascii=False, indent=2)
+                stream.write("\n")
+            print(args.out)
+            code = 0
+        elif args.command == "fidelity-check":
+            from copyapp.fidelity import create_check, read
+            path = create_check(args.plan, args.evidence, args.review, args.out, args.previous)
+            print(path)
+            decision = read(path, "fidelity-check.json")["result"]["decision"]
+            print(decision)
+            code = {"target_met": 0, "continue": 2, "iteration_limit": 3}[decision]
         elif args.command == "coverage-plan":
             print(create_coverage_plan(args.report, args.plan, args.inventory,
                                        args.out, args.previous))

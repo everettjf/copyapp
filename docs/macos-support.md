@@ -248,6 +248,15 @@ command proves implementation or delivery, and neither performs deep code analys
 
 ## Remaining acceptance
 
+Agent-led development now uses [bounded fidelity](fidelity.md): default reviewed
+grade 80/100 and three implementation/check cycles including the first. Stocks
+version 7 meets this selected offline-prototype milestone at **81/100** (behavior
+100, layout 80, details 45), reusing the already verified full paired review after
+the user's new target request. No new guest run or original visual verdict was
+substituted. Further cosmetic polishing stops at this milestone. This is separate
+from the strict delivery/release gates below, objective similarity and capability
+coverage; all 207 recorded major visual differences remain explicit.
+
 Stocks acquisition, three original flows, reviewed discovery/report, independent
 build/install and three rounds of paired behavior now have named guest evidence.
 The historical build-4 comparison passed all nine selected behavior comparisons,

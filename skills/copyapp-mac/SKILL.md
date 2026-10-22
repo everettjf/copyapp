@@ -89,6 +89,17 @@ path and host project directory. Read and execute its `TASK.md` yourself.
 Use the registered environment's `install_root` for the new App path, not a guessed
 guest username or the host's home directory.
 
+For agent-led reconstruction, follow [bounded fidelity](../../docs/fidelity.md).
+Create `copyapp fidelity-plan --task <MAC_REBUILD_PLAN> --out <NEW_CASE>` before
+implementation: default target 80/100 and at most three implementation/check cycles
+including the first, unless the user specifies otherwise. Use verified Mac visual
+review as `fidelity-check --evidence`; retain every difference and its impact.
+Stop at `target_met` or `iteration_limit`, disclosing an unmet target at the limit.
+This grade is separate from known-capability coverage and strict delivery. Do not
+keep polishing solely because a non-blocking visual difference exists. Complete
+image review and core behavior are still required. Count supported failed attempts
+too; uncertain inputs still require inspection before another action.
+
 The plan freezes source links, target inventory and paired scripts. Its
 `ready_for_current_agent` status proves input readiness only. Continue with
 independent implementation, `mac build-app`, `mac install`, paired behavior checks
@@ -102,8 +113,10 @@ Freeze measured UI settings and masks before fresh runs with `mac check-plan`, t
 use `mac rebuild-check`. Each selected flow needs an exact initial text assertion
 before its first input. Inspect all full image pairs in its generated review task,
 fill explicit judgments and run `mac visual-review`. Review every frozen capability
-before `mac delivery`; source changes, uncertain starting states and major visual
-differences prevent accepted delivery. Disclose missing live acceptance evidence. Keep target coverage,
+before strict `mac delivery`; source changes, uncertain starting states and major visual
+differences prevent that strict delivery. A bounded fidelity milestone can instead
+finish with explicitly acknowledged non-blocking differences; it does not change
+the strict case's status. Disclose missing live acceptance evidence. Keep target coverage,
 verified known coverage and selected-flow pass rate separate. VM evidence cannot
 establish physical-Mac compatibility, and protocol tests cannot establish live UI
 acceptance.
