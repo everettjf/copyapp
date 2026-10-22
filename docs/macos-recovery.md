@@ -203,10 +203,37 @@ a cold restart; the precise saved-state resume failure is unconfirmed.
 `post-take-observed-cleanup-1` asserts that observed state, resets On and exits
 normally. See `snapshot-app-state-findings.json` for exact source and image hashes.
 
-Treat preservation of running App state as a failed acceptance gate on this named
-ChatComputer/OS combination. Save needed work before snapshot operations and use
-discardable fixture state for further recovery experiments. A metadata record
-with `memoryBytes` is insufficient evidence of memory or App-state restoration.
+That historical App-state attempt remains failed. Save needed work before snapshot
+operations and use discardable fixture state for recovery experiments. A metadata
+record with `memoryBytes` is insufficient evidence of memory or App-state restoration.
+
+## Named quiesced App-state observation
+
+A later experiment under `output/macos-quiesced-snapshot-20261021/` uses the exact
+upgraded collector `f6356939…` with measured guest Accessibility access. Its
+`environment-1`, `baseline-1`, `snapshot-take-1`, `post-take-ui-1`,
+`mutated-state-2`, `snapshot-restore-1`, `post-restore-ui-1` and
+`restored-cleanup-1` verify. The take is
+`CC589797-EC03-4E2D-B98F-2198E960EF25`; restore preserves safety snapshot
+`F55D3D5B-EF73-4E53-9955-E6C955764DB6`.
+
+The unchanged editor process (PID 1997 and identical start time/hash) retains its
+unsaved Unicode text and Wrapping Off after take. The intervening playbook changes
+the text and sets Wrapping On. Restore returns the original text, 14-character /
+four-word status and Wrapping Off, with fresh MCP/collector epochs and unchanged
+collector instance. Full cited screens and structured AX were reviewed. Final
+normal input resets wrapping On and quits; the stopped-process assertion passes.
+The initial mutation's disabled AX text-area selection was rejected before input;
+its failure remains preserved, and the revised coordinate script followed actual
+state inspection. See `snapshot-app-state-review.json` and its companion report
+for the 26 source/image hashes.
+
+This is a separate manual App-state conclusion for one document and one named
+take/restore cycle. The operation cases still describe metadata/reconnect only,
+with their existing false behavior and disk/memory-verification flags. Quiescence
+is limited to the collector's polling and does not establish all-guest I/O safety,
+shared-folder rollback, universal reliability or the cause of earlier failures.
+Those failed cases are unchanged.
 
 The checked upstream implementation is revision
 `c774a4ceadc7dc17a589a1de8f5a40fe36c2a649`:

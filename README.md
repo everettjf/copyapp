@@ -6,7 +6,7 @@ English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_
 
 Copy APP analyzes an installed iOS app on a jailbroken iPhone and helps a coding agent build an **independent, runnable iOS app** that reproduces a reviewed set of behaviors. It collects package, sandbox, UI and runtime evidence; produces a source-linked report and feature specification; then checks the new app against the original on the same phone. The current release is **v0.1.2**.
 
-Development branch: [macOS support through ChatComputer](docs/macos-support.md) is being added alongside iOS. Its [acceptance ledger](docs/macos-implementation-plan.md) distinguishes implemented foundations from pending end-to-end validation; published v0.1.2 remains the iOS release.
+Development branch: [macOS support through ChatComputer](docs/macos-support.md) is being added alongside iOS. Its [acceptance ledger](docs/macos-implementation-plan.md) records the owned-fixture delivery, bounded Stocks prototype, named live recovery/physical checks and remaining limits; published v0.1.2 remains the iOS release.
 
 Mac examples: [owned behavior fixture](examples/macos/BehaviorFixture/) and
 [independent Stocks demo](examples/macos/Stocks/) (selected local behavior;

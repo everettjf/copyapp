@@ -4,8 +4,10 @@
 
 macOS is being added **alongside** the published iOS workflows. Existing iOS
 commands and v1 cases keep their original meaning. This branch currently supplies
-collection, bounded replay and reviewed report/planning commands; it does not yet certify an end-to-end
-Mac reconstruction. Do not use an iOS UDID or IPA case to represent a Mac.
+collection, bounded replay, reviewed reports, independent builds and selected
+delivery. The owned fixture has a named selected-behavior delivery; this does not
+certify whole-App or arbitrary-Mac reconstruction. Do not use an iOS UDID or IPA
+case to represent a Mac.
 
 ChatComputer owns the virtual desktop and all keyboard/mouse input. The current
 coding agent does analysis and implementation; do not start ChatComputer's built-in
@@ -47,8 +49,10 @@ job layout and `--output-dir`; there is no `mac copy` wrapper yet.
 For an independent rebuild, add the desired behavior and ask the agent to continue
 through a reviewed rebuild plan, implementation, paired replay and delivery.
 The development commands have local/simulated protocol tests and named live guest
-evidence; complete sample delivery and physical-Mac acceptance remain open. See the ledger before treating a prepared
-task or passing protocol check as a completed App.
+evidence, an owned-fixture selected delivery and a named manual physical-Mac
+selected-flow recheck. Stocks has a bounded offline-prototype milestone; strict
+Stocks delivery remains deferred. See the ledger before treating a prepared task
+or passing protocol check as a completed App.
 
 For bounded snapshot metadata, safety-preserving restore and interrupted-operation
 handling, read [Mac recovery](macos-recovery.md). A metadata/reconnect case does not
@@ -300,15 +304,17 @@ directory history/focus. `delivery-1` verifies seven of nine reviewed known
 capabilities (77.78%); undo/clipboard and general window management remain deferred.
 That denominator does not cover every AppKit behavior, and the fixture source was
 available to the author. Earlier `check-2` and its six major menu differences remain
-preserved. Stocks delivery, live takeover/input interruption, restored App behavior,
-remaining data-acquisition checks and a physical
-Mac recheck remain open. The physical-host attempt was blocked before launch by a
-locked host. Runtime/native investigation is separate and unverified. See the ledger
-for exact case paths; keep each gate open until its own evidence passes.
-The later snapshot App-state probe failed: a take created its metadata but returned
-an agent error, and the editor subsequently had a new process and lost unsaved
-test text. The environment was recovered; running-App preservation remains a
-failed gate. Save needed work and use discardable fixture state for snapshot tests.
+preserved. Stocks strict delivery and broader data/runtime scope remain deferred.
+The same guest original and rebuilt editor binaries later passed a manual
+three-behavior recheck on one physical Mac. Real human takeover and input refusal,
+controlled reply loss and explicitly user-authorized agent hand-back recovery
+also have separate live evidence. The early failed snapshot probe remains failed;
+a new quiesced take/restore preserves the running editor's unsaved Unicode text,
+wrapping and exact process identity through an intervening state change. Its
+operation cases and separate manual App-state review retain their own scope.
+See [recovery](macos-recovery.md) and the ledger for exact cases and limits. Save
+needed work and use discardable fixture state for snapshot tests. Runtime/native
+investigation is separate and unverified; named evidence is not arbitrary-Mac support.
 
 A later live guest data check captured the owned fixture's explicitly selected
 Bundle-ID preference plist. The single-file case, value-free key/type structure

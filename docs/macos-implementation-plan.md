@@ -43,13 +43,22 @@ separate capability and cannot be invented to satisfy a gate.
 
 | Stage | Required work | Acceptance evidence | State |
 | --- | --- | --- | --- |
-| P0 | Pin ChatComputer; ready desktop, input lease, screenshots, coordinates; file exchange; exact identity; snapshot recovery | Live probe cases, including failures; restart must not accept stale results | Named guest ready; snapshot App-state preservation failed |
+| P0 | Pin ChatComputer; ready desktop, input lease, screenshots, coordinates; file exchange; exact identity; snapshot recovery | Live probe cases, including failures; restart must not accept stale results | Named guest ready; one quiesced take/restore preserves the running editor state; earlier failures retained |
 | P1 | `copyapp mac` CLI; target/environment identity; versioned cases and validators; old iOS compatibility | Positive cases and negative tampering/cross-platform tests; baseline and final iOS suite | Implemented; 410-test regression and isolated wheel passed |
 | P2 | Guest collector; app/package/data acquisition; AX/window observations; bounded playbooks | Same-name app rejection, ambiguous element rejection, output and persistence assertions | Selected guest/UI and one preference-file evidence verified; broader data limits remain explicit |
 | P3 | Discovery, reviewed report/specification, coverage plan, agent task, host build, guest install, paired check, visual review, delivery | End-to-end source-linked cases with explicit scope and remaining differences | Owned-fixture selected delivery verified; Stocks bounded 80-grade milestone met, strict delivery deferred |
-| P4 | Control takeover, interrupted action, reconnect, snapshot restore, time and data resets | No blind action retries; new run/session identity; rejected old results | Controlled reply-loss/reconnect, real takeover refusal and explicitly authorized agent hand-back recovery verified; App-state recovery unresolved |
+| P4 | Control takeover, interrupted action, reconnect, snapshot restore, time and data resets | No blind action retries; new run/session identity; rejected old results | Controlled reply-loss/reconnect, real takeover refusal, explicitly authorized agent hand-back and one named editor snapshot recovery verified |
 | P5 | Agent-first bilingual docs, wheel resources, examples and clean installation | Installed-wheel checks; two sample applications and one physical Mac recheck | Docs/wheel/two guest samples ready; named same-binary physical selected-flow recheck passed |
 | M2 | Optional runtime/native function investigation | Debug fixture first, then named third-party build; report actual entitlement limits | Pending |
+
+The requested development milestone now has implementation and named evidence
+for P0–P5, including the selected checks in acceptance items 1–8 below. The user's
+bounded Stocks prototype target is met; its strict delivery remains a separate
+later scope. This is neither whole-App parity nor general macOS compatibility.
+The branch and PR remain unmerged/draft; no tag or release is part of this task.
+The latest local completion evidence check revalidates 42 conditions, including
+retained failed-case rejection, current collector source identity, unchanged
+tested runtime code, source-linked deliveries and manual evidence hashes.
 
 First-stage effort estimate is 13–20 developer days, revised after P0. This is not
 a deadline or a reason to reduce scope. No tag/release until acceptance completes.
@@ -65,6 +74,41 @@ chart ranges and persistence are candidates for observation, not accepted flows.
 Retain market-data/network dependencies and remaining differences explicitly;
 captured prices do not establish a live data service or complete App parity.
 Earlier TextEdit static distribution probes remain separate evidence.
+
+## Live quiesced snapshot follow-up (2026-10-21)
+
+- The upgraded collector's exact guest App now has measured Accessibility access;
+  `environment-1` pins its `f6356939…` executable and the same named VM/guest.
+  The user explicitly requested retrieval of this VM's existing administrator
+  password. It was not changed or copied into project evidence. Native window
+  input failed a nonsecret mixed-case probe; the guest input channel preserved
+  case and completed authentication. That upstream channel can retain local input
+  records. The exact new hashed App was selected in Settings and collector health
+  confirmed the grant. See `permission-followup-1/review.json` under the root below.
+- `output/macos-quiesced-snapshot-20261021/` now contains verified baseline,
+  take, post-take UI, mutated state, safety-preserving restore, post-restore UI
+  and normal cleanup cases. Take snapshot is `CC589797-EC03-4E2D-B98F-2198E960EF25`;
+  restore retains safety snapshot `F55D3D5B-EF73-4E53-9955-E6C955764DB6`.
+- Before/after take and after restore, the editor retains PID 1997, the same start
+  time and executable hash `673de8ce…`, unsaved Unicode text and Wrapping Off
+  (14 characters/four words). A separately verified intervening playbook changed
+  both text and wrapping; restore returned them to the original state. Fresh
+  pinned MCP/collector epochs succeed after both operations, with the same
+  collector instance. A final verified playbook asserts restored state, resets
+  wrapping On and quits normally.
+- `snapshot-app-state-review.json` and `snapshot-app-state-report.md` retain the
+  manual conclusion and 26 source/image hashes; all five cited full images were
+  opened. Twelve complete child cases verify. The first mutation diagnostic
+  rejected an AX text-area click before dispatch; after full state inspection,
+  a separate script used the observed editor coordinate and passed. The failed
+  case remains rejected. No uncertain snapshot was retried.
+- This closes the named running-App recovery observation for one discardable
+  document and one quiesced take/restore cycle. The operation cases themselves
+  retain their narrower metadata/reconnect scope and false behavior-restoration
+  flags. Other guest file I/O, shared folders and external services are not
+  quiesced or rolled back. Earlier failed cases and unconfirmed root cause remain
+  intact; this does not promise universal saved-state reliability or arbitrary
+  Mac compatibility. No further Stocks polishing or new release is implied.
 
 ## Snapshot diagnostics and bounded collector polling (2026-10-21)
 
@@ -98,14 +142,14 @@ Earlier TextEdit static distribution probes remain separate evidence.
   polling for 30 guest-clock seconds before take/restore. It binds the exact
   session, instance and executable; it does not pause other guest filesystem I/O
   or prove App-state recovery. Historical collectors and cases keep their prior
-  validation semantics. Live snapshot verification with the upgraded collector
-  remains pending its guest Accessibility grant. See [recovery](macos-recovery.md).
+  validation semantics. Live verification was initially pending its guest
+  Accessibility grant; the later result is above. See [recovery](macos-recovery.md).
 - A separate real-guest protocol observation at
   `output/macos-quiesced-snapshot-20261021/live-quiesce-protocol-1/` now confirms
   the deployed collector acknowledged a 30-second polling pause and answered
   health in a fresh epoch after 30.158 seconds, retaining its instance identity.
   Production response validators pass. No desktop input or snapshot was submitted;
-  Accessibility remains false. This verifies deployed pause/resume only, not the
+  Accessibility was false at that probe. It verifies deployed pause/resume only, not the
   live snapshot mitigation or recovery gate.
 - Native protocol checks pass, including pause/resume and tampering rejection.
   Full regression: **410 tests in 57.299s**; isolated installed wheel passed,
