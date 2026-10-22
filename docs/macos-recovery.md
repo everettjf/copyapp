@@ -53,6 +53,42 @@ preserved. Metadata, guest/OS/build identity and both sessions are source-linked
 into the case. A memory restore can retain the same collector instance UUID;
 instance change is recorded rather than asserted as a requirement.
 
+## Bound the collector's file polling around snapshots
+
+New collector builds advertise optional `quiesce` support. After the input-lease
+preflight succeeds, snapshot take/restore asks that collector to pause its own
+shared-filesystem polling for 30 guest-clock seconds, then submits the VM operation
+once. The collector closes its acknowledgment before pausing; it resumes polling
+automatically after the bound. The host retains its exclusive bridge lock and
+rotates to a fresh epoch as before. Interrupted calls still require inspection.
+
+The case records `before/quiesce.json` and binds the request, acknowledgment,
+collector instance and pre-snapshot session. It records
+`collector_polling_quiesced: true` and `all_guest_file_io_quiesced: false`. This
+does not quiesce Finder, other processes or external services. The mitigation
+targets a hypothesis about in-flight shared-filesystem I/O; passing local protocol
+tests alone cannot establish that it fixes live VM resume. Historical collectors
+and cases without this advertised capability retain their existing semantics.
+
+A separate unlocked-host diagnostic at
+`output/macos-snapshot-unlocked-20261021/` obtained a successful snapshot RPC and
+full post-take images retaining the synthetic unsaved text and Wrapping Off. Its
+collector reconnection nevertheless timed out, and Finder could not finish opening
+the bridge directory. The case stays failed, no restore was submitted, and no
+snapshot input was repeated. A temporary readonly nonce share did not visibly
+resolve the problem and was removed. After observed normal editor cleanup, normal
+guest restart and relaunch of the unchanged verified collector restored health.
+This supports visual preservation in that experiment, not a complete snapshot
+acceptance or a proven quiescence fix.
+
+A wider, bounded query of the Virtualization service for the original failed
+operation found a `NSOSStatusErrorDomain` `-25308` decryption failure at
+15:48:19 PDT. Apple's [error definition](https://developer.apple.com/documentation/security/errsecinteractionnotallowed)
+means security-service interaction was not allowed. Host lock observations from
+that development run make lock-related key access a hypothesis; the exact cause
+and exact-instant lock state remain unproven. No keychain or secret contents were
+read or altered. Raw diagnostic messages remain local.
+
 ## Restore a pinned Copy APP snapshot with a safety save
 
 ```sh

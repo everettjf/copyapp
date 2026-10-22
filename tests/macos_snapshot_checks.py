@@ -79,6 +79,7 @@ for line in sys.stdin:
     return str(script), log
 
 
+@patch("copyapp.macos.snapshots.QUIESCE_SECONDS", 1)
 def exercise_snapshot_protocol(test, root: Path, environment: Path, vm: Path):
     # A real local collector checks reconnect/session binding. Only the public
     # snapshot metadata controller is simulated; no saved machine is restored.
@@ -91,6 +92,8 @@ def exercise_snapshot_protocol(test, root: Path, environment: Path, vm: Path):
     test.assertFalse(record["shared_data_reset"])
     test.assertFalse(record["behavior_restoration_verified"])
     test.assertFalse(record["atomic_takeover_exclusion_verified"])
+    test.assertTrue(record["collector_polling_quiesced"])
+    test.assertFalse(record["all_guest_file_io_quiesced"])
     test.assertEqual(record["safety_snapshot"]["kind"], "safety")
     log = root / "fake/calls.jsonl"
 
@@ -149,6 +152,8 @@ def exercise_snapshot_protocol(test, root: Path, environment: Path, vm: Path):
     finally: blocked.rmdir()
 
     for relative, change in (("snapshot-operation.json", lambda value: value.update(shared_data_reset=True)),
+                             ("before/quiesce.json", lambda value: value["request"].update(session_id="00000000-0000-0000-0000-000000000000")),
+                             ("snapshot-operation.json", lambda value: value.update(all_guest_file_io_quiesced=True)),
                              ("snapshot-operation.json", lambda value: value.update(safety_snapshot=None)),
                              ("operation.json", lambda value: value["request"]["params"]["arguments"].update(save_current=False))):
         path, manifest_path = restored / relative, restored / "manifest.json"

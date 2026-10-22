@@ -44,10 +44,10 @@ separate capability and cannot be invented to satisfy a gate.
 | Stage | Required work | Acceptance evidence | State |
 | --- | --- | --- | --- |
 | P0 | Pin ChatComputer; ready desktop, input lease, screenshots, coordinates; file exchange; exact identity; snapshot recovery | Live probe cases, including failures; restart must not accept stale results | Named guest ready; snapshot App-state preservation failed |
-| P1 | `copyapp mac` CLI; target/environment identity; versioned cases and validators; old iOS compatibility | Positive cases and negative tampering/cross-platform tests; baseline and final iOS suite | Implemented; 409-test regression and isolated wheel passed |
+| P1 | `copyapp mac` CLI; target/environment identity; versioned cases and validators; old iOS compatibility | Positive cases and negative tampering/cross-platform tests; baseline and final iOS suite | Implemented; 410-test regression and isolated wheel passed |
 | P2 | Guest collector; app/package/data acquisition; AX/window observations; bounded playbooks | Same-name app rejection, ambiguous element rejection, output and persistence assertions | Selected guest/UI and one preference-file evidence verified; broader data limits remain explicit |
 | P3 | Discovery, reviewed report/specification, coverage plan, agent task, host build, guest install, paired check, visual review, delivery | End-to-end source-linked cases with explicit scope and remaining differences | Owned-fixture selected delivery verified; Stocks bounded 80-grade milestone met, strict delivery deferred |
-| P4 | Control takeover, interrupted action, reconnect, snapshot restore, time and data resets | No blind action retries; new run/session identity; rejected old results | Controlled reply-loss/reconnect verified; human takeover missing and App-state recovery unresolved |
+| P4 | Control takeover, interrupted action, reconnect, snapshot restore, time and data resets | No blind action retries; new run/session identity; rejected old results | Controlled reply-loss/reconnect and real takeover refusal verified; manual hand-back recovery pending and App-state recovery unresolved |
 | P5 | Agent-first bilingual docs, wheel resources, examples and clean installation | Installed-wheel checks; two sample applications and one physical Mac recheck | Docs/wheel/two guest samples ready; named same-binary physical selected-flow recheck passed |
 | M2 | Optional runtime/native function investigation | Debug fixture first, then named third-party build; report actual entitlement limits | Pending |
 
@@ -65,6 +65,41 @@ chart ranges and persistence are candidates for observation, not accepted flows.
 Retain market-data/network dependencies and remaining differences explicitly;
 captured prices do not establish a live data service or complete App parity.
 Earlier TextEdit static distribution probes remain separate evidence.
+
+## Snapshot diagnostics and bounded collector polling (2026-10-21)
+
+- The user clicked the live ChatComputer virtual desktop during a held neutral
+  pointer lease and confirmed taking over. Raw status changed to user control;
+  the next single neutral pointer request returned an explicit takeover error.
+  The client stopped, with no retry or programmatic hand-back. Host UI separately
+  displayed the real-click takeover notice. The local manual review is
+  `output/macos-human-takeover-live-20261021/attempt-3/manual-review.json`.
+  The earlier two waits timed out and remain unsuccessful attempts. Manual
+  hand-back and subsequent fresh-session recovery are still pending.
+- A bounded review of the original failure window found Security error `-25308`
+  in the host Virtualization service. It does not establish the exact host lock
+  state or a root cause. Raw diagnostics stay local under
+  `output/macos-snapshot-error-diagnostic-20261021/`.
+- A fresh experiment after host unlock retained the synthetic unsaved editor text
+  and wrapping preference in the post-take screenshot. The snapshot RPC succeeded,
+  but subsequent collector health timed out and Finder could not reopen the
+  bridge. Therefore `output/macos-snapshot-unlocked-20261021/snapshot-take-1`
+  remains failed; no restore was submitted. After observed cleanup and a normal
+  guest restart, the unchanged old collector recovered. Failed evidence and the
+  snapshot remain preserved.
+- A new optional `quiesce` acknowledgment pauses only the collector's shared-file
+  polling for 30 guest-clock seconds before take/restore. It binds the exact
+  session, instance and executable; it does not pause other guest filesystem I/O
+  or prove App-state recovery. Historical collectors and cases keep their prior
+  validation semantics. Live snapshot verification with the upgraded collector
+  remains pending its guest Accessibility grant. See [recovery](macos-recovery.md).
+- Native protocol checks pass, including pause/resume and tampering rejection.
+  Full regression: **410 tests in 57.299s**; isolated installed wheel passed,
+  SHA-256 `e92b6c52187e14bbb8d63fa066ca5b9c8f096ba77666882632c3639d5aa85c94`.
+  Logs: `/tmp/copyapp-quiesce-regression-20261021.log` and
+  `/tmp/copyapp-quiesce-wheel-20261021.log`. These local checks do not certify
+  the live mitigation or a new iPhone run. A timed-out wait is not takeover
+  evidence.
 
 ## Output defaults and unlocked-host follow-up (2026-10-21)
 

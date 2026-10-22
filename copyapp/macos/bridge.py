@@ -15,7 +15,7 @@ from copyapp.macos.case import canonical
 from copyapp.macos.chatcomputer import UnknownCompletion
 
 
-METHODS = frozenset({"health", "app_identity", "observe", "launch_app", "export_app", "package_identity", "install_app", "data_file"})
+METHODS = frozenset({"health", "app_identity", "observe", "launch_app", "export_app", "package_identity", "install_app", "data_file", "quiesce"})
 MAX_REPLY = 8 * 1024 * 1024
 
 
@@ -84,6 +84,9 @@ class Collector:
             raise ValueError("unsupported collector method")
         if params is not None and not isinstance(params, dict):
             raise ValueError("collector parameters must be an object")
+        if method == "quiesce" and (not isinstance(params, dict) or set(params) != {"seconds"} or
+                type(params["seconds"]) is not int or not 1 <= params["seconds"] <= 60):
+            raise ValueError("collector quiesce requires integer seconds in [1, 60]")
         request_id = str(uuid4())
         request = {"protocol_version": 2, "session_id": self.session,
                    "request_id": request_id, "collector_sha256": self.hash,

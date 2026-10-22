@@ -18,6 +18,23 @@ from copyapp.macos.environment import VM_FILES, vm_identity
 from copyapp.macos.observation import validate_reply
 from copyapp.macos.report import read, text
 
+QUIESCE_SECONDS = 30
+
+
+def validate_quiesce(reply: dict, health: dict, record: dict):
+    if (not validate_reply(reply, record, "quiesce", health["response"]["collector_instance"]) or
+            reply["request"]["session_id"] != health["request"]["session_id"] or
+            reply["request"]["params"] != {"seconds": QUIESCE_SECONDS}):
+        raise ValueError("collector quiesce is not bound to the pre-snapshot session")
+    result = reply["response"]["result"]
+    stamp = reply["response"].get("recorded_at")
+    until = result.get("until")
+    if (set(result) != {"scope", "seconds", "until"} or result["scope"] != "collector_polling_only" or
+            type(result["seconds"]) is not int or result["seconds"] != QUIESCE_SECONDS or
+            type(stamp) not in (int, float) or type(until) not in (int, float) or
+            not 0 <= until - stamp <= QUIESCE_SECONDS + 1):
+        raise ValueError("invalid bounded collector quiesce acknowledgment")
+
 
 def uid(value):
     result = str(UUID(value))
@@ -259,7 +276,7 @@ def transition(before: dict, after: dict, action: str, chosen: dict = None, labe
 
 def operation_record(environment: Path, before: dict, after: dict, first: dict, last: dict,
                      action: str, chosen: dict, safety: dict, label: str) -> dict:
-    return {"schema_version": 2, "platform": "macos", "scope": "snapshot_metadata_and_reconnect",
+    result = {"schema_version": 2, "platform": "macos", "scope": "snapshot_metadata_and_reconnect",
             "operation": action, "label": label, "snapshot": chosen, "safety_snapshot": safety,
             "environment_manifest_sha256": digest(environment / "manifest.json"),
             "before_catalog_sha256": hashlib.sha256(canonical(before)).hexdigest(),
@@ -269,6 +286,10 @@ def operation_record(environment: Path, before: dict, after: dict, first: dict, 
             "takeover_guard": "preflight_input_lease_only", "atomic_takeover_exclusion_verified": False,
             "shared_data_reset": False, "behavior_restoration_verified": False,
             "disk_or_memory_bytes_verified": False, "action_retried": False}
+    if "quiesce" in first["response"]["result"].get("capabilities", []):
+        result.update(collector_polling_quiesced=True, collector_quiesce_seconds=QUIESCE_SECONDS,
+                      all_guest_file_io_quiesced=False)
+    return result
 
 
 def snapshot_operation(source: Path, output: Path, action: str, timeout: float = 120) -> Path:
@@ -303,6 +324,10 @@ def snapshot_operation(source: Path, output: Path, action: str, timeout: float =
                 check_catalog_tools(computer.catalog, action)
                 first = phase(case, "before", computer, collector, record)
                 traced(case, "control.json", computer, "move", {"x": 0, "y": 0})
+                if "quiesce" in first["response"]["result"].get("capabilities", []):
+                    paused = collector.call("quiesce", {"seconds": QUIESCE_SECONDS})
+                    case.add("before/quiesce.json", paused)
+                    validate_quiesce(paused, first, record)
                 # A takeover already active here blocks the normal input lease.
                 # Upstream snapshots have no atomic expected-lease precondition;
                 # do not claim this closes a later human-takeover race.
@@ -394,6 +419,9 @@ def validate_operation(root: Path, manifest: dict, names: set) -> bool:
         transports.append(status["transport_id"]); healths.append(health)
     if transports[0] == transports[1] or healths[0]["request"]["session_id"] == healths[1]["request"]["session_id"]:
         return False
+    if "quiesce" in healths[0]["response"]["result"].get("capabilities", []):
+        if "before/quiesce.json" not in names: return False
+        validate_quiesce(read(root, "before/quiesce.json"), healths[0], record)
     control, operation = read(root, "control.json"), read(root, "operation.json")
     mcp_result(control, "move", {"x": 0, "y": 0}, record)
     arguments = {"name": label} if action == "take" else {"snapshot": chosen["id"], "save_current": True}

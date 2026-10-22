@@ -8,7 +8,7 @@ import Darwin
 
 let protocolVersion = 2
 let toolVersion = "0.1.2-macos-development"
-let supportedMethods = ["health", "app_identity", "observe", "launch_app", "export_app", "package_identity", "install_app", "data_file"]
+let supportedMethods = ["health", "app_identity", "observe", "launch_app", "export_app", "package_identity", "install_app", "data_file", "quiesce"]
 let fm = FileManager.default
 
 func canonicalURL(_ url: URL) -> URL {
@@ -550,6 +550,7 @@ final class Server {
     let guestMachine = machineID()
     let installRoot: URL
     var busy = false
+    var quiesceUntil: Date?
     init(shared: URL, installRoot: URL) throws {
         self.shared = canonicalURL(shared)
         executableHash = try sha256(canonicalURL(URL(fileURLWithPath: CommandLine.arguments[0])))
@@ -557,6 +558,11 @@ final class Server {
     }
     func poll() {
         guard !busy else { return }
+        // Do no shared-filesystem I/O while the host suspends this VM. The
+        // acknowledgment below is written/closed before this guard takes effect.
+        // This bounds our own polling only, not Finder or other guest processes.
+        if let until = quiesceUntil, Date() < until { return }
+        quiesceUntil = nil
         busy = true; defer { busy = false }
         do {
             let bridge = shared.appendingPathComponent("inbox/copyapp-bridge")
@@ -593,6 +599,16 @@ final class Server {
                     }
                     let params = request["params"] as? [String: Any] ?? [:]
                     switch request["method"] as? String {
+                    case "quiesce":
+                        guard params.count == 1, let number = params["seconds"] as? NSNumber,
+                              CFGetTypeID(number) != CFBooleanGetTypeID(),
+                              let seconds = params["seconds"] as? Int, (1...60).contains(seconds) else {
+                            throw Failure("Quiesce requires integer seconds in [1, 60]")
+                        }
+                        let until = Date().addingTimeInterval(Double(seconds))
+                        quiesceUntil = until
+                        response["result"] = ["scope": "collector_polling_only", "seconds": seconds,
+                                              "until": until.timeIntervalSince1970]
                     case "health":
                         response["result"] = ["tool_version": toolVersion, "guest_machine_id": guestMachine,
                             "os_version": ProcessInfo.processInfo.operatingSystemVersionString,
@@ -637,6 +653,7 @@ final class Server {
                     response["error"] = String(describing: error)
                 }
                 try writeJSON(response, to: target)
+                if quiesceUntil != nil { return }
             }
         } catch { /* A half-created or unavailable share is retried on the next poll; no actions exist here. */ }
     }

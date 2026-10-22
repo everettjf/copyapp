@@ -39,6 +39,15 @@ def answer(client, *, change=None):
 
 
 class BridgeTests(unittest.TestCase):
+    def test_invalid_quiesce_never_writes_a_request(self):
+        for params in ({"seconds": 0}, {"seconds": 61}, {"seconds": True},
+                       {"seconds": 1.5}, {"seconds": "1"}, {"seconds": 1, "extra": 2}):
+            with self.subTest(params=params), tempfile.TemporaryDirectory() as folder:
+                with Collector(Path(folder), "a" * 64) as client:
+                    with self.assertRaises(ValueError): client.call("quiesce", params)
+                    self.assertIsNone(client.last_request)
+                    self.assertEqual(list(client.requests.glob("*.json")), [])
+
     def test_new_epoch_keeps_lock_and_rejects_old_reply(self):
         with tempfile.TemporaryDirectory() as folder:
             with Collector(Path(folder), "a" * 64, timeout=2) as client:
@@ -601,6 +610,16 @@ class NativeCollectorTests(unittest.TestCase):
                         "app_path": str(app), "bundle_id": "dev.copyapp.MacCollector",
                         "binary_sha256": metadata["executable_sha256"]})["response"]["result"]
                     self.assertEqual(identity["binary_sha256"], metadata["executable_sha256"])
+                    self.assertIn("quiesce", health["capabilities"])
+                    paused = client.call("quiesce", {"seconds": 1})
+                    self.assertEqual(paused["response"]["result"]["scope"], "collector_polling_only")
+                    old_session = client.session
+                    started = time.monotonic()
+                    client.new_session()
+                    resumed = client.call("health")
+                    self.assertGreaterEqual(time.monotonic() - started, 0.5)
+                    self.assertNotEqual(resumed["request"]["session_id"], old_session)
+                    self.assertEqual(resumed["response"]["collector_instance"], paused["response"]["collector_instance"])
             finally:
                 process.terminate()
                 process.communicate(timeout=5)
