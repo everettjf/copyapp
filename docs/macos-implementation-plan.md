@@ -47,7 +47,7 @@ separate capability and cannot be invented to satisfy a gate.
 | P1 | `copyapp mac` CLI; target/environment identity; versioned cases and validators; old iOS compatibility | Positive cases and negative tampering/cross-platform tests; baseline and final iOS suite | Implemented; 410-test regression and isolated wheel passed |
 | P2 | Guest collector; app/package/data acquisition; AX/window observations; bounded playbooks | Same-name app rejection, ambiguous element rejection, output and persistence assertions | Selected guest/UI and one preference-file evidence verified; broader data limits remain explicit |
 | P3 | Discovery, reviewed report/specification, coverage plan, agent task, host build, guest install, paired check, visual review, delivery | End-to-end source-linked cases with explicit scope and remaining differences | Owned-fixture selected delivery verified; Stocks bounded 80-grade milestone met, strict delivery deferred |
-| P4 | Control takeover, interrupted action, reconnect, snapshot restore, time and data resets | No blind action retries; new run/session identity; rejected old results | Controlled reply-loss/reconnect and real takeover refusal verified; manual hand-back recovery pending and App-state recovery unresolved |
+| P4 | Control takeover, interrupted action, reconnect, snapshot restore, time and data resets | No blind action retries; new run/session identity; rejected old results | Controlled reply-loss/reconnect, real takeover refusal and explicitly authorized agent hand-back recovery verified; App-state recovery unresolved |
 | P5 | Agent-first bilingual docs, wheel resources, examples and clean installation | Installed-wheel checks; two sample applications and one physical Mac recheck | Docs/wheel/two guest samples ready; named same-binary physical selected-flow recheck passed |
 | M2 | Optional runtime/native function investigation | Debug fixture first, then named third-party build; report actual entitlement limits | Pending |
 
@@ -74,8 +74,15 @@ Earlier TextEdit static distribution probes remain separate evidence.
   The client stopped, with no retry or programmatic hand-back. Host UI separately
   displayed the real-click takeover notice. The local manual review is
   `output/macos-human-takeover-live-20261021/attempt-3/manual-review.json`.
-  The earlier two waits timed out and remain unsuccessful attempts. Manual
-  hand-back and subsequent fresh-session recovery are still pending.
+  The earlier two waits timed out and remain unsuccessful attempts.
+- The user subsequently explicitly instructed the agent to click the native
+  hand-back button. That observed UI action succeeded; a fresh MCP status was
+  free, a new screenshot was opened and one neutral pointer move succeeded before
+  releasing the agent's own lease. Evidence and the exact user instruction are
+  retained in `attempt-3/authorized-agent-handback/`. This completes the authorized
+  input-recovery check; the hand-back actor was the agent, not the human. It does
+  not rewrite the earlier genuine human takeover/refusal or establish manual
+  human hand-back. The original takeover blocker is resolved.
 - A bounded review of the original failure window found Security error `-25308`
   in the host Virtualization service. It does not establish the exact host lock
   state or a root cause. Raw diagnostics stay local under
