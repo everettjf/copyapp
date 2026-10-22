@@ -6,6 +6,8 @@
 
 Copy APP 帮助 Codex 或 Claude Code **分析已安装 App，并独立实现选定行为**，支持 **越狱 iOS 和 macOS**。结论、源码与对照结果保留可复查的证据来源。当前正式版本为 **v0.2.0**。macOS 支持仍为实验性；[v0.1.2](docs/releases/v0.1.2.zh-CN.md) 为上一版仅支持 iOS 的版本。
 
+**第一次使用？** [选 iOS 或 macOS，复制任务给 Agent](#从这里开始)。依赖检查和本地工具安装交给 Agent，设备信任与系统授权按提示完成。
+
 | 目标 | 使用方式 | 状态 |
 | --- | --- | --- |
 | 越狱 iOS | USB 真机、OpenSSH、iOS MCP／iCTRL，按需使用 Frida | 保留已测 iOS 16／17／26 工作流 |
@@ -23,39 +25,53 @@ Mac 协调 Coding Agent、证据与构建；目标可以是通过 USB 连接的�
 
 <a id="从这里开始"></a>
 
-## 从这里开始：交给 Codex 或 Claude Code
+## 快速上手：选平台，复制一个任务
 
-先选择目标平台。Agent 直接读取仓库 Skill，无需安装专属扩展。
+1. 在 Mac 上打开**能执行本地命令的 Codex 或 Claude Code**。
+2. 选择下面的目标平台，把任务中的 **App 名称**换成自己的目标。
+3. 复制任务给 Agent。它检查依赖、安装仓库 CLI，并读取对应 Skill；你按提示完成设备信任和系统授权。
+
+保留源码检出：CLI、Skill、设备组件和示例都在仓库里。**无需安装某个专属 Agent 扩展。**
+
+| 目标 | 你需要准备 | Agent 安装与检查 |
+| --- | --- | --- |
+| 越狱 iOS | Mac、USB 连接并解锁的越狱 iPhone，目标 App 已装在手机上 | Python 3.9+、仓库 CLI、准确手机／App，再按设备配置 SSH、界面／运行时工具和签名路线 |
+| macOS（实验性） | 满足 ChatComputer 要求的宿主 Mac；完成虚拟 Mac 初始化和必要授权；目标 App 在客体中可用 | Python 3.9+、仓库 CLI、Swift／macOS SDK、ChatComputer、客体采集器和准确环境／App 身份 |
 
 ### 越狱 iOS
 
-在 Mac 上打开能执行本地命令的 **Codex 或 Claude Code**，用 USB 连接并解锁已越狱的 iPhone。把下面这段任务复制到 Agent 对话里，将 App 名称换成你的目标即可；不知道 Bundle ID 也没关系。
+连接并解锁手机。不知道 Bundle ID 也没关系，Agent 会识别。复制：
 
 ```text
-请使用 https://github.com/everettjf/copyapp，帮我分析并复刻 USB 连接的越狱 iPhone 上的「App 名称」。
-如果还没有检出项目，请克隆到一个新目录；已有检出则在其中工作。
-先阅读 AGENTS.md 和 skills/copyapp-start/SKILL.md，检查并配置环境，识别准确的手机和 App，再完成分析、独立实现、真机安装与同机对照。
-能直接执行的步骤请替我完成；需要我在手机上确认或补充目标信息时，再告诉我具体操作。最后给我报告、可运行工程、已验证的功能和剩余差异。
-按 docs/fidelity.md 执行：目标默认 80/100 分，最多三轮实现／检查（首轮计入）。达标或耗尽轮数就停止；未达标和剩余差异如实报告。
+请使用 https://github.com/everettjf/copyapp，分析并独立复刻 USB 连接的越狱 iPhone 上「App 名称」的选定行为。
+需要时克隆到新目录，或复用已有检出。先阅读 AGENTS.md 和 skills/copyapp-start/SKILL.md。
+检查 Python 3.9+；仓库 CLI 未安装时执行 sh scripts/bootstrap-macos.sh。识别准确的手机和 App，先完成 USB 首次检查，再按这台设备配置分析／复刻需要的依赖。
+在当前 Agent 会话完成报告审阅、独立实现、安装与同机对照。需要手机信任、系统授权或签名条件时，告诉我具体操作。
+在 output/ 下建立唯一任务目录，分开 project/ 和 evidence/。按 docs/fidelity.md 执行：默认 80 分，最多三轮实现／检查，首轮计入；达标或轮数耗尽就停止，交付源码、可运行产物、已验证范围与剩余差异。
 ```
 
-Agent 会读取仓库里的[首次使用 Skill](skills/copyapp-start/SKILL.md)，再按任务调用分析、复刻和验收流程。**你不需要逐条输入下方的 CLI 命令，也不需要先安装某个专属扩展。** Mac 环境由 Agent 检查和配置；手机信任、首次授权和签名条件仍可能需要你参与。
-
-只想先分析，把第一句改成“帮我分析……，这次先不复刻”；只想检查连接，改成“完成并校验首次 USB survey 后停止”。更多任务示例见[交给 Agent 的首次运行任务](docs/first-run-agent.zh-CN.md)。喜欢自己操作 CLI，可以直接看[手动安装与首次采集](#手动安装与首次采集)。
+首次使用可能需要你在手机上确认**信任此电脑**、核对 SSH 指纹、授予权限，以及提供签名条件。宿主 CLI 安装不会替手机越狱或自动装好手机服务。详见 [iOS 安装指南](docs/setup.zh-CN.md)。
 
 ### macOS 与 ChatComputer
 
-在 Apple Silicon Mac 上打开本地 Codex 或 Claude Code，复制以下任务：
+截至 **2026-10-22**，[ChatComputer 官方要求](https://github.com/chatcomputer/chatcomputer#install)为 **Apple Silicon、macOS 27、至少 16GB 内存和约 70GB 可用空间**。Copy APP 另需 Python 3.9+ 和可用的 Swift／macOS SDK；构建 Xcode 工程需要完整 Xcode。Agent 会先检查这些条件。
+
+ChatComputer 可通过 `brew install --cask chatcomputer/tap/chatcomputer` 安装，也可从官方 Release 下载并把 `ChatComputer.app` 放入“应用程序”。[Mac 安装步骤](docs/macos-support.zh-CN.md#安装与首次使用)说明两种方式、命令可用性和客体授权。可以直接让 Agent 完成安装：
 
 ```text
-请用 https://github.com/everettjf/copyapp 和 ChatComputer 分析 macOS 上的「App 名称」，并独立复刻选定行为。
-需要时检出仓库，先读 AGENTS.md 和 skills/copyapp-mac/SKILL.md，确认准确的虚拟 Mac、App 与构建。在当前 Agent 会话完成流程发现、报告审阅和实现，不启动另一个 Agent 或 ChatComputer 模型循环。
-构建并独立安装新 App，对照相同流程、逐图审阅，交付源码、可运行产物与剩余差异。
-默认输出到 output/<app>-<unique-run>/，分开 project/ 和 evidence/。按 docs/fidelity.md 执行：默认 80 分，最多三轮实现／检查（首轮计入），达标或轮数耗尽就停止。
+请使用 https://github.com/everettjf/copyapp 和 ChatComputer，分析并独立复刻 macOS 上「App 名称」的选定行为。
+需要时克隆到新目录，或复用已有检出。先阅读 AGENTS.md、skills/copyapp-mac/SKILL.md 和 docs/macos-support.zh-CN.md。
+检查宿主是否满足 ChatComputer 当前要求，以及 Python 3.9+、Swift／macOS SDK。需要时运行 sh scripts/bootstrap-macos.sh 安装仓库 CLI，并从官方渠道安装 ChatComputer。
+引导我完成虚拟 Mac 初始化及必要系统授权。执行 .venv/bin/copyapp mac doctor，部署有界采集器并登记准确客体；确认目标 App 已安装在虚拟 Mac 中，识别准确构建后再分析。
+在当前 Agent 会话完成流程发现、报告审阅和实现。新 App 分开安装，对照相同流程并逐张审阅截图。保留 iOS 支持，不启动另一个 Agent 或 ChatComputer 内置模型循环。
+在 output/ 下建立唯一任务目录，分开 project/ 和 evidence/。按 docs/fidelity.md 执行：默认 80 分，最多三轮实现／检查，首轮计入；达标或轮数耗尽就停止，交付源码、可运行产物、已验证范围与剩余差异。
 ```
 
-[Mac 指南](docs/macos-support.zh-CN.md)说明 ChatComputer、客体授权和独立的 `copyapp mac` 命令。
-Mac 不使用 iPhone UDID 或 IPA。[Stocks 示例](examples/macos/Stocks/README.md)包含源码与本地构建命令。
+**目标 App 要在虚拟 Mac 内可用。** 首次运行需完成客体初始化，以及 ChatComputer／采集器所需的录屏、辅助功能等授权。当前 Agent 已有自己的模型配置，这条工作流不要求再启动 ChatComputer 内置聊天模型。
+
+只想检查安装，可在任务末尾加：**“完成经校验的环境登记和一次目标 App 截图／AX 观察后停止，先不分析或复刻。”** 只想分析，改成**“交付审阅后的行为报告，先不复刻。”** doctor 通过只代表传输和截图可用，不代表完整配置或 App 已验收。
+
+[完整 Mac 安装指南](docs/macos-support.zh-CN.md) · [iOS 首次运行任务](docs/first-run-agent.zh-CN.md) · [源码示例](examples/README.md)
 
 ### 两个平台的默认设置
 

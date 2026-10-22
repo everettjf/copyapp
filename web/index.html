@@ -7,8 +7,8 @@
   <meta name="description" content="Analyze apps and independently rebuild selected behavior on jailbroken iOS and macOS with Codex, Claude Code and ChatComputer.">
   <title>Copy APP — Observe. Understand. Rebuild.</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=0.2.0-logo-1">
-  <script src="site.js?v=0.2.0-visuals-1" defer></script>
+  <link rel="stylesheet" href="style.css?v=0.2.0-onboarding-1">
+  <script src="site.js?v=0.2.0-onboarding-1" defer></script>
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -30,7 +30,7 @@
         <div class="eyebrow"><span class="live-dot"></span><span data-i18n="eyebrow">v0.2.0 / JAILBROKEN iOS + macOS</span></div>
         <h1><span data-i18n="heroOne">See inside.</span><br><span class="gradient-text" data-i18n="heroTwo">Build beyond.</span></h1>
         <p class="hero-sub" data-i18n="heroSub">Analyze apps on a jailbroken iPhone or a Mac with ChatComputer. Build independent, runnable implementations of selected behavior, with every conclusion tied to evidence.</p>
-        <div class="hero-actions"><a class="button button-primary" href="#start"><span data-i18n="heroStart">Start exploring</span><span aria-hidden="true">↗</span></a><a class="button button-ghost" href="https://github.com/everettjf/copyapp/blob/main/docs/README.md" target="_blank" rel="noopener"><span data-i18n="heroDocs">Read the docs</span><span aria-hidden="true">→</span></a></div>
+        <div class="hero-actions"><a class="button button-primary" href="#start"><span data-i18n="heroStart">Quick start</span><span aria-hidden="true">↗</span></a><a class="button button-ghost" href="https://github.com/everettjf/copyapp/blob/main/docs/README.md" target="_blank" rel="noopener"><span data-i18n="heroDocs">Read the docs</span><span aria-hidden="true">→</span></a></div>
         <a class="community-link" href="https://discord.gg/eGzEaP6TzR" target="_blank" rel="noopener"><span data-i18n="heroDiscord">Join the discussion on Discord</span><span aria-hidden="true">↗</span></a>
         <div class="hero-facts"><div><strong>02</strong><span data-i18n="factPhases">supported platforms</span></div><div><strong>03</strong><span data-i18n="factTested">named iPhones tested</span></div><div><strong>80 / 100</strong><span data-i18n="factProgress">default prototype grade</span></div></div>
       </div>
@@ -39,6 +39,44 @@
         <figcaption class="hero-visual-caption" data-i18n="heroVisualCaption">Jailbroken iOS + macOS. Shared evidence, independent apps.</figcaption>
       </figure>
       <div class="hero-bottom"><span>MAC ORCHESTRATION</span><span>USB / iOS <i></i> CHATCOMPUTER / macOS</span><span>EVIDENCE FIRST / ALWAYS</span></div>
+    </section>
+
+
+    <section id="start" class="section-shell start-section" aria-labelledby="startTitle">
+      <div class="start-copy">
+        <p class="kicker">// QUICK START</p>
+        <h2 id="startTitle" data-i18n="startTitle">Start with your app.</h2>
+        <p data-i18n="startText">Choose your target, replace APP NAME and paste the task into Codex or Claude Code. The agent installs the CLI and checks the environment before working on your app.</p>
+        <ol class="quick-steps">
+          <li><strong data-i18n="startStepOne">Open your local coding agent</strong><span data-i18n="startStepOneText">Use Codex or Claude Code on your Mac with local command execution.</span></li>
+          <li><strong data-i18n="startStepTwo">Choose iOS or macOS</strong><span data-i18n="startStepTwoText">Copy the matching task. It includes the repository, skill and setup checks.</span></li>
+          <li><strong data-i18n="startStepThree">Complete the requested permissions</strong><span data-i18n="startStepThreeText">Follow specific prompts for device trust or guest permissions. The agent continues with your target app.</span></li>
+        </ol>
+        <p class="start-note" data-i18n="startNoExtension">No provider-specific extension. The agent reads the skills in the source checkout.</p>
+        <div class="start-actions"><a id="iosSetupLink" class="text-link" href="https://github.com/everettjf/copyapp/blob/main/docs/setup.md" target="_blank" rel="noopener"><span data-i18n="setupGuide">iOS installation details</span> ↗</a><a id="macSetupLink" class="text-link" href="https://github.com/everettjf/copyapp/blob/main/docs/macos-support.md#install-and-first-use" target="_blank" rel="noopener"><span data-i18n="macSetupGuide">macOS installation details</span> ↗</a></div>
+      </div>
+      <div class="start-console">
+        <div class="platform-picker" role="group" aria-label="Target platform">
+          <button type="button" data-platform="macos" aria-pressed="true" aria-controls="agentPrompt"><span>macOS</span><small data-i18n="startExperimental">EXPERIMENTAL</small></button>
+          <button type="button" data-platform="ios" aria-pressed="false" aria-controls="agentPrompt"><span data-i18n="startIOS">Jailbroken iOS</span><small>USB / iPhone</small></button>
+        </div>
+        <div class="setup-requirements">
+          <strong data-i18n="startPrepare">You prepare</strong>
+          <p id="setupRequirements">Apple Silicon · macOS 27 · 16 GB+ RAM · about 70 GB free. Complete virtual Mac initialization and its requested permissions; install your target App inside that guest.</p>
+          <a id="requirementsSource" href="https://github.com/chatcomputer/chatcomputer#install" target="_blank" rel="noopener">ChatComputer requirements · checked 2026-10-22 ↗</a>
+          <strong data-i18n="startAgentDoes">The agent installs and checks</strong>
+          <p id="setupAgent">Python 3.9+, repository CLI, Swift/macOS SDK, ChatComputer and the guest collector. It verifies the exact guest and target App before analysis.</p>
+        </div>
+        <div class="terminal"><div class="terminal-top"><span data-i18n="startTaskLabel">PASTE INTO CODEX / CLAUDE CODE</span><button id="copyCommand" type="button" aria-label="Copy macOS agent task" data-i18n="copy">COPY TASK</button></div><pre tabindex="0" aria-label="Agent task"><code id="agentPrompt">Use https://github.com/everettjf/copyapp and ChatComputer to analyze and independently rebuild selected behavior of the macOS App “APP NAME”.
+Clone into a new directory if needed, or reuse my existing checkout. Read AGENTS.md, skills/copyapp-mac/SKILL.md and docs/macos-support.md first.
+Check the host against ChatComputer&#x27;s current requirements, Python 3.9+ and the Swift/macOS SDK. If needed, prepare the repository CLI with sh scripts/bootstrap-macos.sh and install ChatComputer from its official distribution.
+Guide me through guest initialization and required system permissions. Use .venv/bin/copyapp mac doctor, deploy the bounded collector and register the exact guest. Confirm the target App is installed inside that virtual Mac; identify its exact build before analysis.
+Use the current agent session for flow discovery, report review and implementation. Install the independent App separately, compare the same flows and review every screenshot. Preserve iOS support; do not start another agent or ChatComputer&#x27;s model loop.
+Use a unique output/ job with project/ and evidence/. Follow docs/fidelity.md: default grade 80/100, at most three implementation/check cycles including the first. Stop at the target or cycle limit and deliver source, runnable artifacts, verified scope and remaining differences.</code></pre></div>
+        <p id="copyStatus" class="copy-status" role="status" aria-live="polite"></p>
+        <p class="setup-check-only" id="setupCheckOnly">Only checking setup? Append: “Stop after verified environment registration and one target-App screenshot/AX observation; do not analyze or rebuild yet.”</p>
+        <p class="start-defaults" data-i18n="startDefaults">Output: project/ + evidence/ inside a unique output/ job. Default reviewed grade 80/100, up to three implementation/check cycles. Selected scope and remaining gaps stay explicit.</p>
+      </div>
     </section>
 
     <section id="workflow" class="section-shell workflow-section">
@@ -93,9 +131,7 @@
       <div class="validation-panel"><div><span class="validation-label" data-i18n="validationLabel">STILL TO VERIFY</span><h3 data-i18n="validationTitle">What these tests do not establish yet</h3></div><ul><li data-i18n="validationOne">The changed iCTRL cleanup on iOS 16 / 26 beyond the named iOS 17 regression</li><li data-i18n="validationTwo">XR's optional developer-file listing and reboot/rejailbreak durability</li><li data-i18n="validationThree">First-use phone setup on a second physical Mac</li><li data-i18n="validationFour">Arbitrary-app coverage, full feature parity and pixel-perfect visuals</li></ul><a id="statusLink" href="https://github.com/everettjf/copyapp/blob/main/docs/current-status.md" target="_blank" rel="noopener"><span data-i18n="validationLink">Current status and acceptance gates</span> ↗</a></div>
     </section>
 
-    <section id="start" class="section-shell start-section"><div class="start-copy"><p class="kicker">// 05 — GET STARTED</p><h2 data-i18n="startTitle">Give your agent one task.</h2><p data-i18n="startText">Paste this into Codex or Claude Code on your Mac. Replace APP NAME and choose jailbroken iOS or macOS; the agent loads the matching repository skill.</p><div class="start-actions"><a class="button button-primary" href="https://github.com/everettjf/copyapp#start-here" target="_blank" rel="noopener"><span data-i18n="setupGuide">iOS setup guide</span> ↗</a><a id="macSetupLink" class="button button-ghost" href="https://github.com/everettjf/copyapp/blob/main/docs/macos-support.md" target="_blank" rel="noopener"><span data-i18n="macSetupGuide">macOS setup guide</span> &#8599;</a></div></div><div class="terminal"><div class="terminal-top"><span class="terminal-dots"><i></i><i></i><i></i></span><span>Codex / Claude Code</span><button id="copyCommand" type="button" aria-label="Copy agent task" data-i18n="copy">COPY</button></div><pre><code id="agentPrompt" data-i18n="agentPrompt">Use https://github.com/everettjf/copyapp to analyze and independently rebuild selected behavior of APP NAME on jailbroken iOS or macOS.
-Read AGENTS.md and load skills/copyapp-start/SKILL.md for iOS, or skills/copyapp-mac/SKILL.md for macOS with ChatComputer. Work in the current agent session.
-Use output/ with separate project/ and evidence/. Default to grade 80/100, at most three cycles. Compare the selected flows, review all screenshots and disclose remaining differences.</code></pre></div></section>
+
   </main>
   <footer><div class="section-shell footer-inner"><div><div class="footer-brand">COPY<span>APP</span><span class="footer-spark">✳</span></div><p data-i18n="footerLine">Evidence you can inspect. Software you can test.</p></div><div class="footer-links"><a href="https://github.com/everettjf/copyapp/releases" target="_blank" rel="noopener" data-i18n="footerReleases">Releases &#8599;</a><a href="https://github.com/everettjf/copyapp" target="_blank" rel="noopener">GitHub ↗</a><a href="https://discord.gg/eGzEaP6TzR" target="_blank" rel="noopener" data-i18n="footerDiscord">Discord ↗</a><a href="https://github.com/everettjf/copyapp/blob/main/LICENSE" target="_blank" rel="noopener">Apache-2.0 ↗</a><a href="https://github.com/everettjf/copyapp/blob/main/docs/README.md" target="_blank" rel="noopener" data-i18n="footerDocs">Documentation ↗</a><a href="https://github.com/everettjf/copyapp/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener" data-i18n="footerContribute">Contributing ↗</a></div></div><div class="section-shell footer-bottom"><span>© 2026 COPY APP</span><span>OPEN SOURCE / BUILT FOR REAL DEVICES</span></div></footer>
 </body>

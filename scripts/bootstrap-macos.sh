@@ -6,9 +6,9 @@ usage() {
     cat <<'EOF'
 Usage: sh scripts/bootstrap-macos.sh [--trace]
 
-Without options, install only what is needed for the first USB survey.
---trace also installs the host Frida Python package for deeper analysis.
-The script does not change the connected iPhone or install Xcode.
+Without options, install the repository CLI for iOS and macOS workflows.
+--trace also installs the host Frida Python package for iOS runtime analysis.
+The script does not install ChatComputer, Xcode or phone/guest services.
 EOF
 }
 
@@ -69,12 +69,14 @@ else
 fi
 "$root/.venv/bin/copyapp" --help >/dev/null
 
-printf '\nCopy APP Mac CLI is ready. Next:\n'
-printf '  .venv/bin/copyapp onboard\n'
-printf '  If several devices are connected, rerun with --udid <UDID>.\n'
+printf '\nCopy APP CLI is ready. Choose your target:\n'
+printf '  iOS: .venv/bin/copyapp onboard\n'
+printf '  With several iPhones, supply --udid <UDID>.\n'
+printf '  macOS: follow docs/macos-support.md for ChatComputer and guest setup.\n'
+printf '  Then run .venv/bin/copyapp mac doctor --out <NEW_CASE>.\n'
 if [ "$trace" -eq 0 ]; then
     printf '\nFor runtime tracing later: sh scripts/bootstrap-macos.sh --trace\n'
 fi
 if ! xcodebuild -version >/dev/null 2>&1; then
-    printf '\nFull Xcode is needed later for developer services and rebuilt apps.\n'
+    printf '\nFull Xcode is needed for iOS developer services/builds and Xcode-project builds.\n'
 fi

@@ -26,6 +26,42 @@ ZIP／DMG 输入使用 `mac import-app`；DMG 在 macOS 27 上以只读、禁止
 使用 `mac discover-check` 保存选择理由、已知能力和未知范围。再用 `mac report --discovery`
 生成正式行为报告，保留已验收的流程来源和已发现的能力 ID。发现阶段只证明输入准备就绪。
 
+## 安装与首次使用
+
+通过 Agent 上手，可直接复制 [README 中的 Mac 任务](../README.zh-CN.md#macos-与-chatcomputer)。下面的命令由 Agent 执行；客体初始化与系统授权仍可能需要你在界面上操作。
+
+### 1. 准备宿主与仓库 CLI
+
+截至 **2026-10-22**，[ChatComputer 官方安装说明](https://github.com/chatcomputer/chatcomputer#install)列出 Apple Silicon、macOS 27、至少 16GB 内存及约 70GB 可用空间。这是上游要求，不是新的 Copy APP 兼容性测试。Copy APP 另需 Python 3.9+、Swift 编译器和 macOS SDK；构建 Xcode 工程需要完整 Xcode。安装其他 ChatComputer 版本时，重新检查上游要求。
+
+```sh
+git clone https://github.com/everettjf/copyapp.git
+cd copyapp
+sh scripts/bootstrap-macos.sh
+.venv/bin/copyapp mac --help
+```
+
+已有检出直接复用，保留本地改动。bootstrap 只安装本地 Python CLI，不会安装 ChatComputer、Xcode 或客体服务。Mac 目标接着运行下文的 `mac doctor`；`onboard` 属于 iPhone 配置入口。
+
+### 2. 安装并打开 ChatComputer
+
+已有 Homebrew 时：
+
+```sh
+brew install --cask chatcomputer/tap/chatcomputer
+open -a ChatComputer
+```
+
+也可以从[官方 Releases](https://github.com/chatcomputer/chatcomputer/releases)下载 `ChatComputer.zip`，解压后把 `ChatComputer.app` 放进“应用程序”。这种安装方式还需在 ChatComputer 的 **Settings → Coding agents** 中配置 `chatcomputer` 命令；Homebrew cask 会一并安装命令。当前官方 cask 为 0.9.11，更新版本仍需单独检查就绪情况。
+
+在界面里完成虚拟 Mac 初始化及要求的录屏／控制授权，保持 ChatComputer 运行，并确认目标 App 已安装且能在**虚拟 Mac 内**打开。0.9.11 初始化完成但仍停留在模型配置页的情况见下文；使用外部 Agent 不需要启动其内置模型循环。
+
+### 3. 先检查传输，再确认准确客体与 App
+
+继续按下文“环境与采集器”和“登记虚拟机与观察 App”操作。把采集器部署到指定客体，在客体里授予辅助功能权限；每次尝试用新案例目录，保留后续阶段需要引用的成功案例。
+
+首次配置可用于行为观察的标志是：传输／截图检查、采集器健康与准确环境登记成功，目标 App 身份明确，并拿到可用的截图／AX 观察。`needs_setup`、权限缺失或观察截断需要继续处理，不能把文件校验通过当作环境就绪。之后再进入流程发现、报告和实现。
+
 ## 交给 Agent
 
 在 Codex 或 Claude Code 中打开源码检出，把下面的任务复制进去：

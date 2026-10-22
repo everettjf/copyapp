@@ -6,6 +6,8 @@ English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_
 
 Copy APP helps Codex or Claude Code **analyze installed apps and build independent, runnable implementations of selected behavior** on **jailbroken iOS and macOS**. Conclusions, source and comparisons stay linked to inspectable evidence. The current release is **v0.2.0**. macOS support remains experimental; [v0.1.2](docs/releases/v0.1.2.md) is the previous iOS-only release.
 
+**First time?** [Choose iOS or macOS and copy the agent task](#start-here). The agent checks dependencies and installs the local tools; you complete the required device/system confirmations.
+
 | Target | How it works | Status |
 | --- | --- | --- |
 | Jailbroken iOS | USB-connected iPhone, OpenSSH, iOS MCP / iCTRL and optional Frida | Existing named iOS 16 / 17 / 26 workflows preserved |
@@ -23,38 +25,53 @@ One Mac coordinates the coding agent, evidence and build. The target can be a ja
 
 <a id="start-here"></a>
 
-## Start here: give the task to Codex or Claude Code
+## Quick start: choose a platform and paste one task
 
-Choose the target platform. The agent uses this repository's skills directly; no provider-specific extension is required.
+1. Open **Codex or Claude Code with local command execution on your Mac**.
+2. Choose your target below and replace **APP NAME** in its task.
+3. Paste the task. The agent checks dependencies, installs the repository CLI and follows the matching skill. You handle the device trust and system permissions it identifies.
+
+Keep a source checkout: it includes the skills, device components and examples as well as the CLI. **No provider-specific extension is required.**
+
+| Target | You prepare | The agent sets up and checks |
+| --- | --- | --- |
+| Jailbroken iOS | A Mac, an unlocked jailbroken iPhone connected by USB, and the target App on that phone | Python 3.9+, repository CLI, exact phone/App identity, then the required SSH/UI/runtime tools and signing route |
+| macOS (experimental) | A host meeting ChatComputer's requirements; initialize its virtual Mac and approve required permissions; make the target App available in that guest | Python 3.9+, repository CLI, Swift/macOS SDK, ChatComputer, guest collector and exact environment/App identity |
 
 ### Jailbroken iOS
 
-Open **Codex or Claude Code with local command execution on your Mac**, then connect and unlock your jailbroken iPhone over USB. Paste this request into the agent conversation and replace the app name. You do not need to know its Bundle ID.
+Connect and unlock the phone. Its Bundle ID can be discovered by the agent. Copy:
 
 ```text
-Use https://github.com/everettjf/copyapp to analyze and rebuild “APP NAME” on my USB-connected jailbroken iPhone.
-Clone the project into a new directory if needed, or work in its existing checkout.
-Read AGENTS.md and skills/copyapp-start/SKILL.md first. Check and configure the environment, identify the exact phone and app, then complete analysis, independent implementation, device installation and same-device comparison.
-Execute the steps you can perform yourself. Tell me the specific action only when you need phone-side confirmation or missing target information. Deliver the report, runnable project, verified behavior and remaining differences.
-Use docs/fidelity.md: target grade 80/100, at most three implementation/check cycles including the first. Stop when the target is met or the cycle budget is exhausted; disclose any unmet target and remaining differences.
+Use https://github.com/everettjf/copyapp to analyze and independently rebuild selected behavior of “APP NAME” on my USB-connected jailbroken iPhone.
+Clone into a new directory if needed, or reuse my existing checkout. Read AGENTS.md and skills/copyapp-start/SKILL.md first.
+Check Python 3.9+ and run sh scripts/bootstrap-macos.sh if the repository CLI is missing. Identify the exact phone and App; complete the initial USB check, then configure only the analysis/rebuild prerequisites this device needs.
+Work in the current agent session through a reviewed report, independent implementation, installation and same-device comparison. Ask me for the specific device-side trust, permission or signing action when needed.
+Use a unique output/ job with project/ and evidence/. Follow docs/fidelity.md: default grade 80/100, at most three implementation/check cycles including the first. Stop at the target or cycle limit and deliver source, runnable artifacts, verified scope and remaining differences.
 ```
 
-The agent reads the repository's [first-use skill](skills/copyapp-start/SKILL.md) and follows the analysis, rebuild and verification workflows. **You do not need to type every CLI command below or install a provider-specific extension first.** The agent checks and configures the Mac; phone trust, initial permissions and signing access may still require your participation.
-
-For analysis only, change the first sentence to “Analyze …; do not rebuild it in this task.” For a connection check, ask it to stop after a verified USB survey. See [first-run agent tasks](docs/first-run-agent.md) for more examples, or use the [manual CLI entry](#manual-installation-and-first-survey) if you prefer.
+First-use actions can include **Trust This Computer**, the documented SSH fingerprint check, phone permissions and signing access. Installing the host CLI does not jailbreak the phone or install its services. See [iOS setup](docs/setup.md).
 
 ### macOS with ChatComputer
 
-Open Codex or Claude Code locally on your Apple Silicon Mac and paste:
+As checked on **2026-10-22**, [ChatComputer's official requirements](https://github.com/chatcomputer/chatcomputer#install) are **Apple Silicon, macOS 27, 16 GB or more RAM and about 70 GB of free disk space**. Python 3.9+ and a working Swift/macOS SDK are needed for Copy APP; Xcode-project builds need full Xcode. The agent checks these before proceeding.
+
+ChatComputer can be installed with `brew install --cask chatcomputer/tap/chatcomputer`, or by moving the official release's `ChatComputer.app` into Applications. The [Mac installation guide](docs/macos-support.md#install-and-first-use) covers both paths, CLI availability and guest permissions. You can let the agent carry out the installation:
 
 ```text
-Use https://github.com/everettjf/copyapp to analyze and independently rebuild selected behavior of the macOS App “APP NAME” with ChatComputer.
-Clone the project if needed. Read AGENTS.md and skills/copyapp-mac/SKILL.md, then identify the exact virtual Mac, App and build. Use the current agent session for discovery, report review and implementation; do not start another agent or ChatComputer's model loop.
-Build and install a separate App, compare the same selected flows, review the screenshots and deliver source, runnable artifacts and remaining differences.
-Default to output/<app>-<unique-run>/project and sibling evidence. Use docs/fidelity.md: target grade 80/100, maximum three implementation/check cycles including the first. Stop at target_met or iteration_limit.
+Use https://github.com/everettjf/copyapp and ChatComputer to analyze and independently rebuild selected behavior of the macOS App “APP NAME”.
+Clone into a new directory if needed, or reuse my existing checkout. Read AGENTS.md, skills/copyapp-mac/SKILL.md and docs/macos-support.md first.
+Check the host against ChatComputer's current requirements, Python 3.9+ and the Swift/macOS SDK. If needed, prepare the repository CLI with sh scripts/bootstrap-macos.sh and install ChatComputer from its official distribution.
+Guide me through guest initialization and required system permissions. Use .venv/bin/copyapp mac doctor, deploy the bounded collector and register the exact guest. Confirm the target App is installed inside that virtual Mac; identify its exact build before analysis.
+Use the current agent session for flow discovery, report review and implementation. Install the independent App separately, compare the same flows and review every screenshot. Preserve iOS support; do not start another agent or ChatComputer's model loop.
+Use a unique output/ job with project/ and evidence/. Follow docs/fidelity.md: default grade 80/100, at most three implementation/check cycles including the first. Stop at the target or cycle limit and deliver source, runnable artifacts, verified scope and remaining differences.
 ```
 
-The [Mac guide](docs/macos-support.md) covers ChatComputer setup, guest permissions and the separate `copyapp mac` commands. macOS does not use an iPhone UDID or IPA. The [Stocks example](examples/macos/Stocks/README.md) includes source and a local build command.
+**The target App must be available inside the virtual Mac.** The first run includes guest initialization and screen-recording/accessibility permissions for ChatComputer and the collector. A working current agent supplies the model; this workflow does not require starting ChatComputer's built-in chat model.
+
+For a setup check only, append **“Stop after verified environment registration and one target-App screenshot/AX observation; do not analyze or rebuild yet.”** For analysis only, append **“Deliver the reviewed behavior report; do not rebuild.”** A passing doctor checks transport and screenshots, not complete setup or App acceptance.
+
+[Detailed Mac setup](docs/macos-support.md) · [iOS first-run tasks](docs/first-run-agent.md) · [Example source](examples/README.md)
 
 ### Shared defaults
 

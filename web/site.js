@@ -3,7 +3,7 @@ const translations = {
     navWorkflow: '工作流程', navArchitecture: '架构', navEvidence: '证据示例', navDevices: '支持平台', navStart: '开始使用',
     eyebrow: 'v0.2.0 · 越狱 iOS + macOS', heroOne: '看见内部。', heroTwo: '构建新可能。',
     heroSub: '分析越狱 iPhone 上的 App，或通过 ChatComputer 分析 macOS App。独立实现选定行为，交付可运行 App，每一项结论都有证据来源。',
-    heroStart: '开始探索', heroDocs: '阅读文档', heroDiscord: '到 Discord 交流', factPhases: '个支持平台', factTested: '台指定 iPhone 已测', factProgress: '默认原型评分',
+    heroStart: '快速上手', heroDocs: '阅读文档', heroDiscord: '到 Discord 交流', factPhases: '个支持平台', factTested: '台指定 iPhone 已测', factProgress: '默认原型评分',
     workflowTitle: '两个阶段，一条证据链。', workflowIntro: '从观察原版到审阅独立实现；每个阶段都留下可复查的案例。',
     phaseOneTag: '理解原版', phaseOneTitle: '理解真实行为', phaseOneText: 'iOS 采集安装包、沙盒和运行时证据；macOS 采集 App 包、AX 和界面证据。审阅有来源的报告与功能规格。',
     phaseOneA: '已安装包与沙盒', phaseOneB: '界面流程与截图', phaseOneC: 'iOS 运行时／macOS 辅助功能', phaseOneD: '审阅报告与功能规格',
@@ -31,8 +31,7 @@ const translations = {
     stocksText: '搜索股票、切换图表周期、管理本地自选列表。图中为独立 Stocks 示例在 macOS 上的实际运行界面，使用明确标注的离线演示数据。',
     stocksScope: '指定客体 9/9 组选定行为对照通过，原型评分 81/100；明显视觉差异仍保留。此图展示源码样例，不代表整 App 等价或实时行情服务。',
     stocksSource: '构建这个示例',
-    macSetupGuide: 'macOS 安装指南', footerReleases: '版本下载 ↗',
-    agentPrompt: '请用 https://github.com/everettjf/copyapp 分析越狱 iOS 或 macOS 上的「App 名称」，并独立实现选定行为。\n先读 AGENTS.md；iOS 加载 skills/copyapp-start/SKILL.md，macOS 与 ChatComputer 加载 skills/copyapp-mac/SKILL.md。在当前 Agent 会话执行。\n默认使用 output/，分开 project/ 与 evidence/；目标 80 分，最多三轮。对照选定流程、逐图审阅，并交付可运行产物与剩余差异。',
+    macSetupGuide: 'macOS 安装步骤', footerReleases: '版本下载 ↗',
     visualTitle: '两个平台，都看得见。', visualIntro: '上方 Mac 示例展示独立 App 的实际运行效果。以下早期 iOS 图解展示观察、审阅与交付的证据链。',
     visualOneTitle: '01 / 系统架构', visualOneCaption: 'Mac 协调分析与构建，指定的 iPhone 提供观察数据。',
     visualTwoTitle: '02 / 证据', visualTwoCaption: '结论关联具体案例；Hopper 片段展示已保存证据，不是原始源码。',
@@ -53,15 +52,84 @@ const translations = {
     validationThree: '第二台实体 Mac 的首次手机配置',
     validationFour: '任意 App 的覆盖、整 App 功能等价和像素级一致',
     validationLink: '当前状态与验收门槛',
-    deviceEvidence: '阅读真机证据与限制', startTitle: '把一个任务交给你的 Agent。',
-    startText: '在 Mac 上复制给 Codex 或 Claude Code，替换 App 名称并选择越狱 iOS 或 macOS，Agent 会加载对应仓库 Skill。',
-    setupGuide: 'iOS 安装指南', contribute: '参与贡献', copy: '复制', terminalReady: '已检查设备身份及截图能力',
+    deviceEvidence: '阅读真机证据与限制', startTitle: '从你的 App 开始。',
+    startText: '选择平台、替换 App 名称，把任务复制给 Codex 或 Claude Code。Agent 先安装 CLI、检查环境，再处理你的目标 App。',
+    startStepOne: '打开本地 Coding Agent', startStepOneText: '在 Mac 上使用能执行本地命令的 Codex 或 Claude Code。',
+    startStepTwo: '选择 iOS 或 macOS', startStepTwoText: '复制对应任务，里面包含仓库、Skill 和安装检查要求。',
+    startStepThree: '完成必要授权', startStepThreeText: '按具体提示完成设备信任或客体授权，Agent 再继续目标 App 的工作。',
+    startNoExtension: '无需专属扩展；Agent 直接读取源码仓库里的 Skill。',
+    startExperimental: '实验性支持', startIOS: '越狱 iOS', startPrepare: '你需要准备', startAgentDoes: 'Agent 安装与检查',
+    startTaskLabel: '复制给 CODEX / CLAUDE CODE',
+    startDefaults: '输出保存在唯一 output/ 任务目录，分开 project/ 与 evidence/。默认审阅评分 80 分，最多三轮实现／检查；明确选定范围和剩余差异。',
+    setupGuide: 'iOS 安装步骤', contribute: '参与贡献', copy: '复制任务',
     footerLine: '可以复查的证据。可以实测的软件。', footerDiscord: 'Discord ↗', footerDocs: '文档 ↗', footerContribute: '贡献指南 ↗'
+  }
+};
+
+const quickstarts = {
+  "en": {
+    "macos": {
+      "requirements": "Apple Silicon · macOS 27 · 16 GB+ RAM · about 70 GB free. Complete virtual Mac initialization and its requested permissions; install your target App inside that guest.",
+      "source": "ChatComputer requirements · checked 2026-10-22 ↗",
+      "sourceUrl": "https://github.com/chatcomputer/chatcomputer#install",
+      "agent": "Python 3.9+, repository CLI, Swift/macOS SDK, ChatComputer and the guest collector. It verifies the exact guest and target App before analysis.",
+      "checkOnly": "Only checking setup? Append: “Stop after verified environment registration and one target-App screenshot/AX observation; do not analyze or rebuild yet.”",
+      "prompt": "Use https://github.com/everettjf/copyapp and ChatComputer to analyze and independently rebuild selected behavior of the macOS App “APP NAME”.\nClone into a new directory if needed, or reuse my existing checkout. Read AGENTS.md, skills/copyapp-mac/SKILL.md and docs/macos-support.md first.\nCheck the host against ChatComputer's current requirements, Python 3.9+ and the Swift/macOS SDK. If needed, prepare the repository CLI with sh scripts/bootstrap-macos.sh and install ChatComputer from its official distribution.\nGuide me through guest initialization and required system permissions. Use .venv/bin/copyapp mac doctor, deploy the bounded collector and register the exact guest. Confirm the target App is installed inside that virtual Mac; identify its exact build before analysis.\nUse the current agent session for flow discovery, report review and implementation. Install the independent App separately, compare the same flows and review every screenshot. Preserve iOS support; do not start another agent or ChatComputer's model loop.\nUse a unique output/ job with project/ and evidence/. Follow docs/fidelity.md: default grade 80/100, at most three implementation/check cycles including the first. Stop at the target or cycle limit and deliver source, runnable artifacts, verified scope and remaining differences."
+    },
+    "ios": {
+      "requirements": "A Mac and an unlocked jailbroken iPhone connected over USB, with your target App installed. Approve device trust; SSH fingerprint checks, permissions and signing access may follow.",
+      "source": "iOS setup requirements ↗",
+      "sourceUrl": "https://github.com/everettjf/copyapp/blob/main/docs/setup.md",
+      "agent": "Python 3.9+, repository CLI and exact phone/App identity. Then it configures the required SSH, UI/runtime tools and build/signing route for this device.",
+      "checkOnly": "Only checking setup? Append: “Stop after a verified USB survey, identify the phone and App, and list remaining prerequisites; do not analyze or rebuild yet.”",
+      "prompt": "Use https://github.com/everettjf/copyapp to analyze and independently rebuild selected behavior of “APP NAME” on my USB-connected jailbroken iPhone.\nClone into a new directory if needed, or reuse my existing checkout. Read AGENTS.md and skills/copyapp-start/SKILL.md first.\nCheck Python 3.9+ and run sh scripts/bootstrap-macos.sh if the repository CLI is missing. Identify the exact phone and App; complete the initial USB check, then configure only the analysis/rebuild prerequisites this device needs.\nWork in the current agent session through a reviewed report, independent implementation, installation and same-device comparison. Ask me for the specific device-side trust, permission or signing action when needed.\nUse a unique output/ job with project/ and evidence/. Follow docs/fidelity.md: default grade 80/100, at most three implementation/check cycles including the first. Stop at the target or cycle limit and deliver source, runnable artifacts, verified scope and remaining differences."
+    }
+  },
+  "zh": {
+    "macos": {
+      "requirements": "Apple Silicon · macOS 27 · 至少 16GB 内存 · 约 70GB 可用空间。完成虚拟 Mac 初始化和必要授权，目标 App 要安装在客体内。",
+      "source": "ChatComputer 官方要求 · 2026-10-22 核对 ↗",
+      "sourceUrl": "https://github.com/chatcomputer/chatcomputer#install",
+      "agent": "Python 3.9+、仓库 CLI、Swift／macOS SDK、ChatComputer 和客体采集器。分析前确认准确虚拟 Mac 与目标 App 身份。",
+      "checkOnly": "只检查安装？在任务末尾加：“完成经校验的环境登记和一次目标 App 截图／AX 观察后停止，先不分析或复刻。”",
+      "prompt": "请使用 https://github.com/everettjf/copyapp 和 ChatComputer，分析并独立复刻 macOS 上「App 名称」的选定行为。\n需要时克隆到新目录，或复用已有检出。先阅读 AGENTS.md、skills/copyapp-mac/SKILL.md 和 docs/macos-support.zh-CN.md。\n检查宿主是否满足 ChatComputer 当前要求，以及 Python 3.9+、Swift／macOS SDK。需要时运行 sh scripts/bootstrap-macos.sh 安装仓库 CLI，并从官方渠道安装 ChatComputer。\n引导我完成虚拟 Mac 初始化及必要系统授权。执行 .venv/bin/copyapp mac doctor，部署有界采集器并登记准确客体；确认目标 App 已安装在虚拟 Mac 中，识别准确构建后再分析。\n在当前 Agent 会话完成流程发现、报告审阅和实现。新 App 分开安装，对照相同流程并逐张审阅截图。保留 iOS 支持，不启动另一个 Agent 或 ChatComputer 内置模型循环。\n在 output/ 下建立唯一任务目录，分开 project/ 和 evidence/。按 docs/fidelity.md 执行：默认 80 分，最多三轮实现／检查，首轮计入；达标或轮数耗尽就停止，交付源码、可运行产物、已验证范围与剩余差异。"
+    },
+    "ios": {
+      "requirements": "Mac、USB 连接并解锁的越狱 iPhone，目标 App 已装在手机上。确认设备信任；后续可能还需核对 SSH 指纹、系统授权和签名条件。",
+      "source": "iOS 安装条件与步骤 ↗",
+      "sourceUrl": "https://github.com/everettjf/copyapp/blob/main/docs/setup.zh-CN.md",
+      "agent": "Python 3.9+、仓库 CLI 和准确手机／App 身份，再按这台设备配置 SSH、界面／运行时工具与构建签名路线。",
+      "checkOnly": "只检查安装？在任务末尾加：“完成经校验的 USB survey，告诉我准确手机、App 和剩余依赖后停止，先不分析或复刻。”",
+      "prompt": "请使用 https://github.com/everettjf/copyapp，分析并独立复刻 USB 连接的越狱 iPhone 上「App 名称」的选定行为。\n需要时克隆到新目录，或复用已有检出。先阅读 AGENTS.md 和 skills/copyapp-start/SKILL.md。\n检查 Python 3.9+；仓库 CLI 未安装时执行 sh scripts/bootstrap-macos.sh。识别准确的手机和 App，先完成 USB 首次检查，再按这台设备配置分析／复刻需要的依赖。\n在当前 Agent 会话完成报告审阅、独立实现、安装与同机对照。需要手机信任、系统授权或签名条件时，告诉我具体操作。\n在 output/ 下建立唯一任务目录，分开 project/ 和 evidence/。按 docs/fidelity.md 执行：默认 80 分，最多三轮实现／检查，首轮计入；达标或轮数耗尽就停止，交付源码、可运行产物、已验证范围与剩余差异。"
+    }
   }
 };
 
 const languageButton = document.querySelector('#language');
 const copyButton = document.querySelector('#copyCommand');
+let activePlatform = 'macos';
+let copyResetTimer;
+
+function renderQuickstart() {
+  const zh = document.documentElement.lang === 'zh-CN';
+  const task = quickstarts[zh ? 'zh' : 'en'][activePlatform];
+  document.querySelector('#setupRequirements').textContent = task.requirements;
+  document.querySelector('#setupAgent').textContent = task.agent;
+  document.querySelector('#setupCheckOnly').textContent = task.checkOnly;
+  document.querySelector('#agentPrompt').textContent = task.prompt;
+  const source = document.querySelector('#requirementsSource');
+  source.textContent = task.source;
+  source.href = task.sourceUrl;
+  document.querySelectorAll('[data-platform]').forEach(button => {
+    button.setAttribute('aria-pressed', String(button.dataset.platform === activePlatform));
+  });
+  document.querySelector('.platform-picker').setAttribute('aria-label', zh ? '目标平台' : 'Target platform');
+  document.querySelector('.terminal pre').setAttribute('aria-label', zh ? 'Agent 任务' : 'Agent task');
+  copyButton.setAttribute('aria-label', zh ? '复制' + (activePlatform === 'ios' ? '越狱 iOS' : 'macOS') + '任务' : 'Copy ' + activePlatform + ' agent task');
+  copyButton.textContent = zh ? '复制任务' : 'COPY TASK';
+  document.querySelector('#copyStatus').textContent = '';
+  clearTimeout(copyResetTimer);
+}
 
 function setLanguage(language) {
   const zh = language === 'zh';
@@ -72,18 +140,13 @@ function setLanguage(language) {
     if (zh && translations.zh[key]) element.textContent = translations.zh[key];
     else if (element.dataset.english) element.textContent = element.dataset.english;
   });
-  const statusUrl = zh
-    ? 'https://github.com/everettjf/copyapp/blob/main/docs/current-status.zh-CN.md'
-    : 'https://github.com/everettjf/copyapp/blob/main/docs/current-status.md';
-  for (const id of ['statusLink', 'deviceStatusLink']) {
-    const link = document.getElementById(id);
-    if (link) link.href = statusUrl;
-  }
-  for (const id of ['macGuideLink', 'macSetupLink']) {
-    document.getElementById(id).href = 'https://github.com/everettjf/copyapp/blob/main/docs/macos-support' + (zh ? '.zh-CN' : '') + '.md';
-  }
-  copyButton.setAttribute('aria-label', zh ? '复制 Agent 任务' : 'Copy agent task');
+  const statusUrl = 'https://github.com/everettjf/copyapp/blob/main/docs/current-status' + (zh ? '.zh-CN' : '') + '.md';
+  for (const id of ['statusLink', 'deviceStatusLink']) document.getElementById(id).href = statusUrl;
+  document.getElementById('macGuideLink').href = 'https://github.com/everettjf/copyapp/blob/main/docs/macos-support' + (zh ? '.zh-CN' : '') + '.md';
+  document.getElementById('macSetupLink').href = 'https://github.com/everettjf/copyapp/blob/main/docs/macos-support' + (zh ? '.zh-CN.md#安装与首次使用' : '.md#install-and-first-use');
+  document.getElementById('iosSetupLink').href = 'https://github.com/everettjf/copyapp/blob/main/docs/setup' + (zh ? '.zh-CN' : '') + '.md';
   languageButton.setAttribute('aria-label', zh ? 'Switch to English' : '切换到中文');
+  renderQuickstart();
   try { localStorage.setItem('copyapp-language', language); } catch (_) { /* private mode */ }
 }
 
@@ -92,13 +155,31 @@ let initialLanguage = 'en';
 try { initialLanguage = localStorage.getItem('copyapp-language') === 'zh' ? 'zh' : 'en'; } catch (_) { /* private mode */ }
 setLanguage(initialLanguage);
 languageButton.addEventListener('click', () => setLanguage(document.documentElement.lang === 'en' ? 'zh' : 'en'));
+document.querySelectorAll('[data-platform]').forEach(button => {
+  button.addEventListener('click', () => {
+    activePlatform = button.dataset.platform;
+    renderQuickstart();
+  });
+});
 copyButton.addEventListener('click', async () => {
+  const prompt = document.querySelector('#agentPrompt');
+  const text = prompt.textContent.trim();
   try {
-    await navigator.clipboard.writeText(document.querySelector('#agentPrompt').textContent.trim());
-    const original = copyButton.textContent;
-    copyButton.textContent = document.documentElement.lang === 'en' ? 'COPIED' : '已复制';
-    setTimeout(() => { copyButton.textContent = original; }, 1800);
+    await navigator.clipboard.writeText(text);
+    if (prompt.textContent.trim() !== text) return;
+    const zh = document.documentElement.lang === 'zh-CN';
+    copyButton.textContent = zh ? '已复制' : 'COPIED';
+    document.querySelector('#copyStatus').textContent = zh ? '已复制。粘贴到本地 Agent，并替换 App 名称。' : 'Copied. Paste into your local agent and replace APP NAME.';
+    copyResetTimer = setTimeout(() => {
+      copyButton.textContent = document.documentElement.lang === 'zh-CN' ? '复制任务' : 'COPY TASK';
+    }, 1800);
   } catch (_) {
-    copyButton.textContent = document.documentElement.lang === 'en' ? 'SELECT TASK' : '请选中任务';
+    if (prompt.textContent.trim() !== text) return;
+    const range = document.createRange();
+    range.selectNodeContents(prompt);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.querySelector('#copyStatus').textContent = document.documentElement.lang === 'zh-CN' ? '任务已选中，请手动复制。' : 'Task selected. Copy it manually.';
   }
 });

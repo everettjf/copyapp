@@ -28,6 +28,42 @@ For requests without preselected flows, follow
 report. `mac discover-check` accepts reviewed replay inputs; `mac report --discovery`
 retains their source identity and discovered known-capability IDs.
 
+## Install and first use
+
+For an agent-led first run, copy the [Mac task in the README](../README.md#macos-with-chatcomputer). The agent performs the commands below; guest initialization and system permissions may still need your interaction.
+
+### 1. Prepare the host and repository CLI
+
+As checked on **2026-10-22**, [ChatComputer's official installation page](https://github.com/chatcomputer/chatcomputer#install) lists Apple Silicon, macOS 27, at least 16 GB RAM and about 70 GB free disk space. These are upstream requirements, not a new Copy APP compatibility test. Copy APP needs Python 3.9+ and the Swift compiler/macOS SDK; Xcode-project builds require full Xcode. Recheck the upstream requirements when installing a different ChatComputer version.
+
+```sh
+git clone https://github.com/everettjf/copyapp.git
+cd copyapp
+sh scripts/bootstrap-macos.sh
+.venv/bin/copyapp mac --help
+```
+
+Reuse an existing checkout without overwriting local changes. The bootstrap installs the local Python CLI; it does not install ChatComputer, Xcode or guest services. For Mac targets, continue with `mac doctor` below; `onboard` is the iPhone setup path.
+
+### 2. Install and open ChatComputer
+
+With an existing Homebrew installation:
+
+```sh
+brew install --cask chatcomputer/tap/chatcomputer
+open -a ChatComputer
+```
+
+Or download `ChatComputer.zip` from the [official Releases page](https://github.com/chatcomputer/chatcomputer/releases), unzip it and move `ChatComputer.app` into Applications. For that path, use ChatComputer's **Settings → Coding agents** to make `chatcomputer` available on PATH. Homebrew installs the command as part of its cask. The current official cask is 0.9.11; newer versions require their own readiness check.
+
+Finish guest initialization in the app, including the requested screen recording/control permissions. Keep it running and confirm the target App is installed and opens **inside the virtual Mac**. Follow the named 0.9.11 model-configuration note below if onboarding is complete but that page remains visible; external-agent control does not need its built-in model loop.
+
+### 3. Check transport, then exact guest and target
+
+Follow **Check the environment**, **Build and prepare the collector**, and **Register and observe** below. Deploy the collector inside the intended guest and approve its Accessibility access there. Each attempt uses a new case directory; keep successful cases for subsequent stages.
+
+First setup is ready for behavior observation only after transport/screenshot checks, collector health and exact environment registration succeed, and the requested App has a verified identity plus a usable screenshot/AX observation. Inspect `needs_setup`, missing permissions and truncated observations rather than treating case verification as readiness. Continue into discovery/report/implementation only after those checks.
+
 ## Start with an agent
 
 Open this source checkout in Codex or Claude Code and paste:
