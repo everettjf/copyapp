@@ -73,7 +73,7 @@ Mac 负责编排和构建。OpenSSH 采集文件，iOS MCP 提供越狱环境下
 | iPhone 14 · iOS 17.3.1 | Relaxin/RootHide；原版 Calculator 采集、Frida 跟踪，以及经 iOS MCP 完成四条原版／独立 App 运算对照 | v0.1.2 修复 v0.1.1 的 iCTRL 会话故障，两轮各四条成对流程通过；重启及其他设备上的新清理逻辑仍待复验。 |
 | iPhone 11 · iOS 26.0.1 | Relaxin/RootHide；Calculator、Clock 原版分析、签名独立 App 和选定运算／秒表成对检查 | iOS MCP 新启动后可能得到黑帧；已观察的故障经有界返回主屏／重启恢复。 |
 
-尚未证明整 App 功能覆盖、无视觉差异、重新越狱后的长期稳定，或第二台实体 Mac 的全新配置。原始 IPA、完整案例截图、沙盒内容和凭据只保存在被 Git 忽略的本地 `cases/`，不作为发布附件；文档中的少量 Calculator 示意画面经过单独筛选。
+尚未证明整 App 功能覆盖、无视觉差异、重新越狱后的长期稳定，或第二台实体 Mac 的全新配置。原始 IPA、完整案例截图、沙盒内容和凭据只保存在被 Git 忽略的本地目录（案例为 `cases/` 或任务 `output/`，凭据沿用原存储），不作为发布附件；文档中的少量 Calculator 示意画面经过单独筛选。
 
 ## 手动安装与首次采集
 
@@ -105,9 +105,16 @@ sh scripts/bootstrap-macos.sh
 .venv/bin/copyapp copy \
   --udid <UDID> --bundle <ORIGINAL_BUNDLE_ID> \
   --auto-discover --agent-provider current \
-  --project rebuild/<NEW_PROJECT> --rebuilt-bundle <NEW_BUNDLE_ID> \
-  --out cases/<WORKFLOW_CASE>
+  --rebuilt-bundle <NEW_BUNDLE_ID>
 ```
+
+新任务默认写入工作区的 `output/<Bundle ID>-<UTC 时间>-<唯一编号>/`：
+`project/` 放独立源码，`evidence/` 放报告、截图及检查结果。
+可用 `--output-dir output/my-job` 自定义任务目录，也保留原有的
+`--project <源码目录> --out <案例目录>`。路径须位于所选工作区内
+（可用 `--workspace <目录>`）；仓库根目录的 `output/` 已被 Git 忽略，现有示例和案例不移动。
+续跑时固定命令打印的 `--output-dir`（或原有 `--out`、`--project`），
+其余设置保持相同，再加 `--resume`；不会自动猜测最近一次任务。
 
 命令会在流程发现、正式分析报告和独立实现三个环节暂停，等待当前 Agent 完成并校验交付；每次用原参数加 `--resume` 续跑。`current` 不会启动嵌套 Agent。独立 CLI 进程可选 `--agent-provider codex` 或 `claude`。若已有流程，可用 `--discovery <CASE>` 或重复的 `--script <FILE>` 替代 `--auto-discover`。命令与门槛见[工作流指南](docs/copy-workflow.zh-CN.md)。
 

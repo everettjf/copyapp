@@ -76,7 +76,7 @@ These are named-device, selected-flow results, not a compatibility promise for e
 | iPhone 14 · iOS 17.3.1 | Relaxin/RootHide; original Calculator acquisition, Frida trace and four original/independent-app arithmetic checks through iOS MCP | v0.1.2 fixes the v0.1.1 iCTRL session-lifetime fault; two runs of four paired flows passed. Reboot durability and the changed cleanup on other devices remain untested. |
 | iPhone 11 · iOS 26.0.1 | Relaxin/RootHide; original Calculator and Clock analysis, signed independent apps and selected paired arithmetic/Stopwatch checks | iOS MCP can return a black frame after fresh launch; bounded Home/relaunch recovery passed observed runs. |
 
-Current limitations include incomplete app coverage, modest visual differences, unverified reboot/rejailbreak durability, and no end-to-end onboarding test on a second physical Mac. Raw IPAs, complete case screenshots, sandbox contents and credentials stay in Git-ignored local `cases/` and are never release assets; the few Calculator images in the docs were selected separately for publication.
+Current limitations include incomplete app coverage, modest visual differences, unverified reboot/rejailbreak durability, and no end-to-end onboarding test on a second physical Mac. Raw IPAs, complete case screenshots, sandbox contents and credentials stay in Git-ignored local `cases/` or job `output/` (credentials keep their existing local stores) and are never release assets; the few Calculator images in the docs were selected separately for publication.
 
 ## Manual installation and first survey
 
@@ -108,11 +108,19 @@ From an active Codex or Claude Code session:
 .venv/bin/copyapp copy \
   --udid <UDID> --bundle <ORIGINAL_BUNDLE_ID> \
   --auto-discover --agent-provider current \
-  --project rebuild/<NEW_PROJECT> --rebuilt-bundle <NEW_BUNDLE_ID> \
-  --out cases/<WORKFLOW_CASE>
+  --rebuilt-bundle <NEW_BUNDLE_ID>
 ```
 
-The command pauses for reviewed discovery scripts, a formal analysis report, and an independent implementation. Resume with the same arguments plus `--resume` after each verified handoff. `current` uses the agent already in this session; it does not launch a nested agent. Use `--agent-provider codex` or `claude` for a separate CLI process. Existing flows can be supplied with `--discovery <CASE>` or repeated `--script <FILE>` instead of `--auto-discover`. The [workflow guide](docs/copy-workflow.md) documents the gates and commands.
+New jobs default to `output/<bundle>-<UTC>-<unique-id>/` in the workspace, with
+`project/` for independent source and `evidence/` for reports, captures and checks.
+Use `--output-dir output/my-job` to choose a job directory. The existing explicit
+`--project <SOURCE> --out <CASE>` form remains supported. Paths must stay inside
+the selected workspace (`--workspace <DIR>`); the root `output/` is Git-ignored.
+Existing examples and cases stay in place. On resume, pin the printed
+`--output-dir` (or legacy `--out` and `--project`) and retain all other settings;
+`--resume` never guesses the latest job.
+
+The command pauses for reviewed discovery scripts, a formal analysis report, and an independent implementation. Resume with the printed output path and the same settings plus `--resume` after each verified handoff. `current` uses the agent already in this session; it does not launch a nested agent. Use `--agent-provider codex` or `claude` for a separate CLI process. Existing flows can be supplied with `--discovery <CASE>` or repeated `--script <FILE>` instead of `--auto-discover`. The [workflow guide](docs/copy-workflow.md) documents the gates and commands.
 
 ## Philosophy and contribution
 

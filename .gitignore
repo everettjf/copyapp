@@ -9,6 +9,7 @@ __pycache__/
 *.pem
 *.key
 cases/
+output/
 .theos/
 packages/
 build/

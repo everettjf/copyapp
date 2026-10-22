@@ -38,6 +38,12 @@ Keep existing iOS support intact. Use the current agent session for review and
 implementation, and report the actual acceptance scope and unfinished gates.
 ```
 
+For new agent-led jobs, default to ignored `output/<app>-<unique-run>/`, with
+sibling `project/` and `evidence/` folders. Honor the user's chosen directory;
+keep existing examples and historical cases in place. Pass explicit child case
+paths to the Mac commands' `--out` flags. The iOS `copy` command has a default
+job layout and `--output-dir`; there is no `mac copy` wrapper yet.
+
 For an independent rebuild, add the desired behavior and ask the agent to continue
 through a reviewed rebuild plan, implementation, paired replay and delivery.
 The development commands have local/simulated protocol tests and named live guest

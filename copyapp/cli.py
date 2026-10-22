@@ -5,6 +5,7 @@ import asyncio
 import hashlib
 import json
 import re
+import shlex
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -58,6 +59,7 @@ from copyapp.draft_analysis import draft_analysis
 from copyapp.prepare_analysis import prepare_analysis
 from copyapp.prepare_app import prepare_app
 from copyapp.copy_workflow import copy_app
+from copyapp.output_paths import copy_paths
 from copyapp.prepare_rebuild import prepare_rebuild
 from copyapp.install import install_trollstore_ipa, install_usb_ipa
 from copyapp.report import compose_report
@@ -607,9 +609,14 @@ def main() -> None:
                               help="verified discover-check case containing three or more replayed flows")
     copy_scripts.add_argument("--auto-discover", action="store_true",
                               help="discover and replay representative flows; current mode pauses for this session")
-    copy_parser.add_argument("--project", required=True, type=Path)
+    copy_parser.add_argument("--project", type=Path,
+                             help="independent source directory (default <output-dir>/project)")
     copy_parser.add_argument("--rebuilt-bundle", required=True)
-    copy_parser.add_argument("--out", required=True, type=Path)
+    copy_outputs = copy_parser.add_mutually_exclusive_group()
+    copy_outputs.add_argument("--output-dir", type=Path,
+                             help="job directory containing project/ and evidence/ (default output/<bundle>-<UTC>-<unique-id>)")
+    copy_outputs.add_argument("--out", type=Path,
+                             help="legacy evidence case directory; requires --project")
     copy_parser.add_argument("--workspace", type=Path)
     copy_parser.add_argument("--backend", choices=("ios-mcp", "ictrl"), default="ios-mcp")
     copy_parser.add_argument("--ui-backend", choices=("usb", "ios-mcp"), default="ios-mcp")
@@ -1148,14 +1155,24 @@ def main() -> None:
             print(path)
             code = 0 if complete else 1
         elif args.command == "copy":
+            workspace, output, project = copy_paths(
+                args.bundle, workspace=args.workspace, output_dir=args.output_dir,
+                output=args.out, project=args.project, resume=args.resume)
+            print(f"Project: {project}", flush=True)
+            print(f"Evidence: {output}", flush=True)
+            resume_paths = (["--out", str(output), "--project", str(project)]
+                            if args.out is not None else
+                            ["--output-dir", str(output.parent), "--project", str(project)])
+            print("Resume: retain the other settings and use " +
+                  shlex.join(resume_paths + ["--resume"]), flush=True)
             survey_collector = lambda udid, bundle, output, launch: command_survey(
                 udid, bundle, output, launch, args.ui_backend)
             scripts = (accepted_playbooks(args.discovery, args.udid, args.bundle,
                                           args.backend) if args.discovery else (args.script or []))
             path, complete = asyncio.run(copy_app(
-                args.udid, args.bundle, scripts, args.project,
-                args.rebuilt_bundle, args.out, survey_collector,
-                workspace=args.workspace, backend=args.backend,
+                args.udid, args.bundle, scripts, project,
+                args.rebuilt_bundle, output, survey_collector,
+                workspace=workspace, backend=args.backend,
                 ui_backend=args.ui_backend, analysis_provider=args.analysis_provider,
                 agent_provider=args.agent_provider, decrypt=not args.no_decrypt,
                 network=not args.no_network, flow_ids=args.flow_ids,

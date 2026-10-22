@@ -48,7 +48,7 @@ separate capability and cannot be invented to satisfy a gate.
 | P2 | Guest collector; app/package/data acquisition; AX/window observations; bounded playbooks | Same-name app rejection, ambiguous element rejection, output and persistence assertions | Selected guest/UI and one preference-file evidence verified; broader data limits remain explicit |
 | P3 | Discovery, reviewed report/specification, coverage plan, agent task, host build, guest install, paired check, visual review, delivery | End-to-end source-linked cases with explicit scope and remaining differences | Owned-fixture selected delivery verified; Stocks bounded 80-grade milestone met, strict delivery deferred |
 | P4 | Control takeover, interrupted action, reconnect, snapshot restore, time and data resets | No blind action retries; new run/session identity; rejected old results | Controlled reply-loss/reconnect verified; human takeover missing and App-state recovery unresolved |
-| P5 | Agent-first bilingual docs, wheel resources, examples and clean installation | Installed-wheel checks; two sample applications and one physical Mac recheck | Docs/wheel/two guest samples ready; physical-host recheck blocked by lock |
+| P5 | Agent-first bilingual docs, wheel resources, examples and clean installation | Installed-wheel checks; two sample applications and one physical Mac recheck | Docs/wheel/two guest samples ready; manual physical-host functional recheck recorded, canonical physical CLI acceptance open |
 | M2 | Optional runtime/native function investigation | Debug fixture first, then named third-party build; report actual entitlement limits | Pending |
 
 First-stage effort estimate is 13–20 developer days, revised after P0. This is not
@@ -65,6 +65,39 @@ chart ranges and persistence are candidates for observation, not accepted flows.
 Retain market-data/network dependencies and remaining differences explicitly;
 captured prices do not establish a live data service or complete App parity.
 Earlier TextEdit static distribution probes remain separate evidence.
+
+## Output defaults and unlocked-host follow-up (2026-10-21)
+
+- New `copyapp copy` jobs default to ignored `output/<bundle>-<UTC>-<unique-id>/`,
+  with sibling `project/` and `evidence/` directories. `--output-dir` chooses the
+  job root; explicit `--project` plus `--out` preserves the legacy contract. Resume
+  pins the printed previous path, never the latest job. Mac agent-led jobs use the
+  same layout explicitly; low-level Mac commands still require `--out`. Existing
+  examples and historical cases were not moved.
+- Five new output-path tests cover isolated jobs, overrides, workspace boundaries,
+  explicit resume and a current-agent discovery handoff that never contacts a
+  device. Full regression: **409 tests passed in 65.349s**. Installed wheel passed,
+  SHA-256 `5b1321629ba65f1e84b312c70c78264fca6000d54f62588df301a3523f936f6c`.
+  Logs: `/tmp/copyapp-output-regression-20261021.log` and
+  `/tmp/copyapp-output-wheel-final-20261021.log`. A real CLI smoke run using a dummy
+  target paused at the printed default discovery task without device operations.
+- After the user unlocked the host, native CUA opened the owned fixture host build
+  and the exact guest-tested independent editor binary on the physical Apple
+  Silicon Mac (macOS 27.0 / 26A428). One manual round per App checked Unicode
+  save/open, quit/relaunch wrapping preference, distinct document statistics and
+  JSON export. Both saved files and summaries match; full screenshots were viewed.
+  The 37 hashed artifacts and review are retained locally under
+  `output/physical-mac-recheck-20261021/`. This is a manual review, not a new
+  `copyapp verify` case or complete physical-host CLI acceptance.
+- The original host fixture binary matches its own local build record
+  (`c0e39153…`), but differs from the guest-acquired fixture (`4e25dd26…`). The
+  independent editor matches the guest-tested saved binary (`673de8ce…`). The
+  original required closing a disposable second document to expose the first;
+  the editor used its Window menu. These adapted routes are not an exact canonical
+  paired physical replay. Host appearance/geometry also differ; no pixel parity
+  or additional guest capability coverage is claimed. Both Apps were normally
+  quit with wrapping On. Human takeover and snapshot App-state preservation
+  remain open. Earlier locked-host evidence stays intact.
 
 ## Required evidence model
 

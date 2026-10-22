@@ -9,9 +9,16 @@ Copy APP 对精确指定的一台手机与一个已安装 App 构建运行可续
 ```sh
 .venv/bin/copyapp copy --udid <UDID> --bundle <ORIGINAL_BUNDLE> \
   --auto-discover --agent-provider current \
-  --project rebuild/<NEW_PROJECT> --rebuilt-bundle <NEW_BUNDLE> \
-  --out cases/<WORKFLOW>
+  --rebuilt-bundle <NEW_BUNDLE>
 ```
+
+新任务默认写入工作区的 `output/<Bundle ID>-<UTC 时间>-<唯一编号>/`：
+`project/` 放独立源码，`evidence/` 放报告、截图及检查结果。
+可用 `--output-dir output/my-job` 自定义任务目录，也保留原有的
+`--project <源码目录> --out <案例目录>`。路径须位于所选工作区内
+（可用 `--workspace <目录>`）；仓库根目录的 `output/` 已被 Git 忽略，现有示例和案例不移动。
+续跑时固定命令打印的 `--output-dir`（或原有 `--out`、`--project`），
+其余设置保持相同，再加 `--resume`；不会自动猜测最近一次任务。
 
 首次暂停会生成 `discovery-agent/TASK.md`。观察真实 App，写 3–12 条不同的有界 UI 脚本。每条应标明起始页面、包含有意义的操作、尽可能断言可见末端状态并保存稳定截图。按任务要求运行 `copyapp discover-check`，校验案例后用**完全相同**的 `copy` 参数加 `--resume` 续跑。已有脚本可重复传 `--script <FILE>`；已校验的发现案例可用 `--discovery <CASE>`。这两种方式替代 `--auto-discover`。
 

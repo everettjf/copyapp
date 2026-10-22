@@ -15,6 +15,7 @@ SOURCE = Path(__file__).resolve().parent.parent
 REQUIRED_DATA = {
     "copyapp/macos/collector/Collector.swift",
     "copyapp/fidelity.py",
+    "copyapp/output_paths.py",
     "copyapp/ictrl_runner_stop.py",
     "copyapp/ghidra_scripts/CopyAppAnalysisOptions.java",
     "copyapp/ghidra_scripts/CopyAppDecompile.java",
@@ -67,6 +68,9 @@ def main() -> None:
                                                        "fidelity-plan", "fidelity-template", "fidelity-check")):
             raise RuntimeError("installed wheel CLI lacks expected commands")
         fidelity_help = run([str(cli), "fidelity-plan", "--help"], cwd=root, env=env).stdout
+        copy_help = run([str(cli), "copy", "--help"], cwd=root, env=env).stdout
+        if "--output-dir" not in copy_help or "[--project" not in copy_help:
+            raise RuntimeError("installed wheel lacks default copy output paths")
         if "--fidelity" not in fidelity_help or "--max-iterations" not in fidelity_help:
             raise RuntimeError("installed wheel lacks bounded fidelity options")
         mac_help = run([str(cli), "mac", "--help"], cwd=root, env=env).stdout
