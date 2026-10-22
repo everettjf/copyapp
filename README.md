@@ -50,6 +50,8 @@ Work in the current agent session through a reviewed report, independent impleme
 Use a unique output/ job with project/ and evidence/. Follow docs/fidelity.md: default grade 80/100, at most three implementation/check cycles including the first. Stop at the target or cycle limit and deliver source, runnable artifacts, verified scope and remaining differences.
 ```
 
+For a setup check only, append **“Stop after a verified USB survey, identify the phone and App, and list remaining prerequisites; do not analyze or rebuild yet.”** For analysis only, append **“Deliver the reviewed report; do not rebuild.”**
+
 First-use actions can include **Trust This Computer**, the documented SSH fingerprint check, phone permissions and signing access. Installing the host CLI does not jailbreak the phone or install its services. See [iOS setup](docs/setup.md).
 
 ### macOS with ChatComputer
