@@ -43,12 +43,12 @@ separate capability and cannot be invented to satisfy a gate.
 
 | Stage | Required work | Acceptance evidence | State |
 | --- | --- | --- | --- |
-| P0 | Pin ChatComputer; ready desktop, input lease, screenshots, coordinates; file exchange; exact identity; snapshot recovery | Live probe cases, including failures; restart must not accept stale results | In progress |
-| P1 | `copyapp mac` CLI; target/environment identity; versioned cases and validators; old iOS compatibility | Positive cases and negative tampering/cross-platform tests; baseline and final iOS suite | In progress |
-| P2 | Guest collector; app/package/data acquisition; AX/window observations; bounded playbooks | Same-name app rejection, ambiguous element rejection, output and persistence assertions | In progress |
-| P3 | Discovery, reviewed report/specification, coverage plan, agent task, host build, guest install, paired check, visual review, delivery | End-to-end source-linked cases with explicit scope and remaining differences | In progress |
-| P4 | Control takeover, interrupted action, reconnect, snapshot restore, time and data resets | No blind action retries; new run/session identity; rejected old results | In progress |
-| P5 | Agent-first bilingual docs, wheel resources, examples and clean installation | Installed-wheel checks; two sample applications and one physical Mac recheck | In progress |
+| P0 | Pin ChatComputer; ready desktop, input lease, screenshots, coordinates; file exchange; exact identity; snapshot recovery | Live probe cases, including failures; restart must not accept stale results | Named guest ready; snapshot App-state preservation failed |
+| P1 | `copyapp mac` CLI; target/environment identity; versioned cases and validators; old iOS compatibility | Positive cases and negative tampering/cross-platform tests; baseline and final iOS suite | Implemented; 404-test regression and isolated wheel passed |
+| P2 | Guest collector; app/package/data acquisition; AX/window observations; bounded playbooks | Same-name app rejection, ambiguous element rejection, output and persistence assertions | Selected guest/UI and one preference-file evidence verified; broader data limits remain explicit |
+| P3 | Discovery, reviewed report/specification, coverage plan, agent task, host build, guest install, paired check, visual review, delivery | End-to-end source-linked cases with explicit scope and remaining differences | Owned-fixture selected delivery verified; Stocks bounded 80-grade milestone met, strict delivery deferred |
+| P4 | Control takeover, interrupted action, reconnect, snapshot restore, time and data resets | No blind action retries; new run/session identity; rejected old results | Controlled reply-loss/reconnect verified; human takeover missing and App-state recovery unresolved |
+| P5 | Agent-first bilingual docs, wheel resources, examples and clean installation | Installed-wheel checks; two sample applications and one physical Mac recheck | Docs/wheel/two guest samples ready; physical-host recheck blocked by lock |
 | M2 | Optional runtime/native function investigation | Debug fixture first, then named third-party build; report actual entitlement limits | Pending |
 
 First-stage effort estimate is 13–20 developer days, revised after P0. This is not
@@ -686,6 +686,21 @@ Earlier TextEdit static distribution probes remain separate evidence.
   `8a981dbf2f1ca60af31d5ec8c469d40fd36fd68122d8ab6d1920366403c79b07`
   (`/tmp/copyapp-fidelity-wheel-final-20261021.log`). The three revised skills pass
   their frontmatter/reference review. No new iPhone or physical-Mac result is claimed.
+
+- A subsequent completion audit at HEAD `dc310dd` leaves the full first-stage goal
+  and release acceptance incomplete. `cases/macos-goal-audit-20261021/` retains
+  the 14-item manual `completion-audit.json`, copied regression/wheel logs and a
+  fresh verified `guest-observation-1`. The opened full screenshot and pinned
+  process identity confirm version-7 Stocks remains running at its reviewed AAPL
+  demo state; no new App input or snapshot was submitted. A read-only CoreGraphics
+  session probe still reports the physical host locked. Real human takeover and
+  physical-Mac selected-flow validation need human participation/unlock. Running
+  App-state snapshot preservation remains an adverse result with unconfirmed
+  resume cause; a local upstream-report draft records evidence and source
+  hypotheses without posting raw data or claiming a fix. Optional M2 native
+  analysis is still unverified. Stocks polishing remains stopped at its bounded
+  milestone; these environment gates do not turn that milestone into whole-App,
+  strict-delivery or release acceptance.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.
