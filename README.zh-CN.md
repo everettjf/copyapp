@@ -1,7 +1,5 @@
 # Copy APP
 
-![Copy APP 彩色架构总览：Agent、本地证据工具、越狱 iPhone 与 macOS 双平台，以及报告、独立 App 和流程对照交付](docs/assets/readme-architecture.zh-CN.svg)
-
 [English](README.md) · 简体中文 · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
 [项目网站](https://xnu.app/copyapp/) · [图文介绍](docs/articles/copyapp-overview.zh-CN.md) · [文档目录](docs/README.zh-CN.md) · [最新版本](docs/releases/v0.2.0.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md) · [Apache-2.0 许可证](LICENSE)
@@ -16,6 +14,12 @@ Copy APP 帮助 Codex 或 Claude Code **分析已安装 App，并独立实现选
 Mac 行为报告不代表深层函数分析或任意 Mac 兼容。详见 [Mac 安装与 AI 任务](docs/macos-support.zh-CN.md)和[验收账本](docs/macos-implementation-plan.md)。
 
 源码示例：[Stocks AppKit 示例](examples/macos/Stocks/)（明确标注的离线数据）、[独立编辑器](examples/macos/IndependentEditor/)、[自有样例](examples/macos/BehaviorFixture/)及 [iOS 示例](examples/rebuild/)。
+
+## 架构一览
+
+![Copy APP 架构：Agent、本地工具链、越狱 iPhone 与 macOS 双平台，以及经过审阅的交付](docs/assets/readme-architecture.svg)
+
+Mac 协调 Coding Agent、证据与构建；目标可以是通过 USB 连接的越狱 iPhone，也可以是 ChatComputer 中的独立虚拟 Mac。两个平台使用各自的命令与准确环境身份。组件边界和证据关系见[详细架构说明](docs/architecture.zh-CN.md)。
 
 <a id="从这里开始"></a>
 
@@ -59,12 +63,6 @@ Agent 默认 **80 分、最多三轮**；快速原型可选 70，精细复刻可
 其余视觉差异明确保留，不再无限打磨。该分数与客观图像相似度、已知能力覆盖率分开。
 [有界复刻流程](docs/fidelity.md)使用 `fidelity-plan --fidelity 80 --max-iterations 3`；
 旧严格交付和独立父工作流仍保留原验收语义。
-
-## 架构一览
-
-![Copy APP 支持 USB 越狱 iPhone 与 ChatComputer 虚拟 Mac；App 画面为工作流示意](docs/assets/macos/dual-platform.svg)
-
-Mac 协调 Coding Agent、证据与构建；目标可以是通过 USB 连接的越狱 iPhone，也可以是 ChatComputer 中的独立虚拟 Mac。两个平台使用各自的命令与准确环境身份。组件边界和证据关系见[详细架构说明](docs/architecture.zh-CN.md)。
 
 ## 两项交付
 

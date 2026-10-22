@@ -1,7 +1,5 @@
 # Copy APP
 
-![Copy APP architecture: Codex or Claude Code, local evidence toolkit, jailbroken iPhone and macOS targets, reviewed reports, independent apps and selected-flow comparisons](docs/assets/readme-architecture.svg)
-
 English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
 [Project website](https://xnu.app/copyapp/) · [Illustrated overview (简体中文)](docs/articles/copyapp-overview.zh-CN.md) · [Documentation](docs/README.md) · [Latest release](docs/releases/v0.2.0.md) · [Contributing](CONTRIBUTING.md) · [Apache-2.0 license](LICENSE)
@@ -16,6 +14,12 @@ Copy APP helps Codex or Claude Code **analyze installed apps and build independe
 Mac behavior reports do not imply deep native function analysis or arbitrary-Mac compatibility. See [Mac setup and AI task](docs/macos-support.md) and the [acceptance ledger](docs/macos-implementation-plan.md).
 
 Source examples: [Stocks AppKit demo](examples/macos/Stocks/) (illustrative offline data), [independent editor](examples/macos/IndependentEditor/), [owned fixture](examples/macos/BehaviorFixture/) and [iOS examples](examples/rebuild/).
+
+## Architecture at a glance
+
+![Copy APP architecture: agent, local toolkit, jailbroken iPhone and macOS targets, and reviewed deliverables](docs/assets/readme-architecture.svg)
+
+One Mac coordinates the coding agent, evidence and build. The target can be a jailbroken iPhone over USB or a dedicated virtual Mac through ChatComputer; each uses its own platform commands and identity. See the [detailed architecture and evidence model](docs/architecture.md).
 
 <a id="start-here"></a>
 
@@ -60,12 +64,6 @@ remaining visual differences stay explicit. This grade is separate from objectiv
 image similarity and known-capability coverage. The [bounded workflow](docs/fidelity.md)
 uses `fidelity-plan --fidelity 80 --max-iterations 3`; historical strict delivery
 and standalone parent workflows retain their existing rules.
-
-## Architecture at a glance
-
-![Copy APP targets jailbroken iOS over USB and macOS through ChatComputer; app views are illustrations](docs/assets/macos/dual-platform.svg)
-
-One Mac coordinates the coding agent, evidence and build. The target can be a jailbroken iPhone over USB or a dedicated virtual Mac through ChatComputer; each uses its own platform commands and identity. See the [detailed architecture and evidence model](docs/architecture.md).
 
 ## What the workflow delivers
 
