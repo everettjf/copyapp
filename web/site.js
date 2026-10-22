@@ -1,6 +1,6 @@
 const translations = {
   zh: {
-    navWorkflow: '工作流程', navArchitecture: '架构', navEvidence: '证据示例', navDevices: '支持平台', navStart: '开始使用',
+    navTools: '逆向工具', navWorkflow: '工作流程', navArchitecture: '架构', navEvidence: '证据示例', navDevices: '支持平台', navStart: '开始使用',
     eyebrow: 'v0.2.0 · 越狱 iOS + macOS', heroOne: '看见内部。', heroTwo: '构建新可能。',
     heroSub: '分析越狱 iPhone 上的 App，或通过 ChatComputer 分析 macOS App。独立实现选定行为，交付可运行 App，每一项结论都有证据来源。',
     heroStart: '快速上手', heroDocs: '阅读文档', heroDiscord: '到 Discord 交流', factPhases: '个支持平台', factTested: '台指定 iPhone 已测', factProgress: '默认原型评分',
@@ -16,6 +16,22 @@ const translations = {
     noteOneTitle: '看清实际发生的事。', noteOneText: '指定设备身份、安装包哈希、有界操作、截图和运行时跟踪都保存到本地证据案例。',
     noteTwoTitle: '每个结论都能找到依据。', noteTwoText: '可选的 iOS 原生分析使用 Ghidra 或 Hopper；macOS 界面证据证明选定行为，不代表深层函数语义。',
     noteThreeTitle: '只衡量选定的范围。', noteThreeText: '原版与独立 App 在同一准确环境中分别运行。交付明确列出通过行为、可见差异与未知范围。',
+    toolsTitle: '选择你的逆向工具。',
+    toolsIntro: '已直连两种反编译器，并组合动态跟踪和有界汇编。反编译按需启用，默认 provider 为 none。',
+    toolDecompiler: '反编译器／按需启用', toolRuntime: '动态运行观察', toolAssembly: 'ARM64 反汇编',
+    ghidraToolText: '指定函数伪代码，有界调用关系、基本块与指令引用。',
+    ghidraToolSetup: '单独安装 Ghidra 与匹配 JDK；支持单函数、队列及选定间接调用调查。',
+    hopperToolText: '通过本机 Python 脚本接口生成指定函数与候选队列的伪代码。',
+    hopperToolSetup: '需要本机 Hopper 许可与已登录的 macOS 图形会话；运行时不依赖 REA。',
+    fridaToolText: '在有界界面流程中跟踪指定 Objective-C 方法和选定原始入口。',
+    fridaToolSetup: '需要匹配的宿主／手机服务；某个时间窗口内命中不单独证明 UI 因果。',
+    llvmToolText: '使用 llvm-objdump 保存有界汇编，并跟随唯一局部直接调用／分支。',
+    llvmToolSetup: '使用本机 Xcode 工具链；汇编与反编译伪代码分别记录。',
+    toolIndexTitle: '内置安装包与 Objective-C 索引', toolIndexText: '无需反编译器即可检查 Mach-O 加载命令、类、selector 和方法地址。',
+    toolRecoveryTitle: '加密安装包恢复', toolRecoveryText: '组合 ipadecrypt helper 与 Copy APP 的设备专属校验，获得分析副本。',
+    toolPlatformScope: '上述原生调查与报告接入主要服务 iOS。macOS 当前以 App 包、AX 和界面证据为主，尚未接成等价的原生函数链。',
+    toolIntegrationScope: 'REA 不是运行依赖；IDA Pro、Binary Ninja、radare2 暂无直接适配器。伪代码是生成证据，不是原作者源码。',
+    toolsGuide: '安装条件、命令与 Agent 任务',
     platformsTitle: '越狱 iOS，也支持 macOS。',
     platformsIntro: '共用证据工作流，平台工具各自独立。v0.2.0 中的 macOS 仍为实验性支持。',
     iosPlatformTitle: '越狱 iOS',
@@ -142,6 +158,7 @@ function setLanguage(language) {
   });
   const statusUrl = 'https://github.com/everettjf/copyapp/blob/main/docs/current-status' + (zh ? '.zh-CN' : '') + '.md';
   for (const id of ['statusLink', 'deviceStatusLink']) document.getElementById(id).href = statusUrl;
+  document.getElementById('toolsGuideLink').href = 'https://github.com/everettjf/copyapp/blob/main/docs/reverse-engineering-tools' + (zh ? '.zh-CN' : '') + '.md';
   document.getElementById('macGuideLink').href = 'https://github.com/everettjf/copyapp/blob/main/docs/macos-support' + (zh ? '.zh-CN' : '') + '.md';
   document.getElementById('macSetupLink').href = 'https://github.com/everettjf/copyapp/blob/main/docs/macos-support' + (zh ? '.zh-CN.md#安装与首次使用' : '.md#install-and-first-use');
   document.getElementById('iosSetupLink').href = 'https://github.com/everettjf/copyapp/blob/main/docs/setup' + (zh ? '.zh-CN' : '') + '.md';

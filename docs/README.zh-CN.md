@@ -15,6 +15,7 @@ Copy APP 的 **v0.2.0** 正式版支持越狱 iOS 与实验性 macOS；**v0.1.2*
 | 确定可实现的目标 | [覆盖目标](coverage-targets.zh-CN.md) |
 | 给 Coding Agent 的首次任务 | [首次运行任务](first-run-agent.zh-CN.md) |
 | 界面脚本 | [手势](ui-gesture-playbooks.zh-CN.md) · [文字输入](ui-text-playbooks.zh-CN.md) |
+| 反编译与逆向工具支持 | [工具矩阵、安装条件与 Agent 任务](reverse-engineering-tools.zh-CN.md) |
 | 原生代码与安装包 | [加密包恢复](full-package-decryption.md) · [Hopper 直连](rea-hopper-integration.zh-CN.md) · [不依赖 REA](rea-independence.zh-CN.md) |
 | 已发布版本 | [v0.2.0 发布说明](releases/v0.2.0.zh-CN.md) · [v0.1.2 归档](releases/v0.1.2.zh-CN.md) · [v0.1.1 归档](releases/v0.1.1.zh-CN.md) |
 | 源码示例 | [iOS／macOS 独立 App](../examples/README.md) · [报告输入格式](../examples/report-inputs/README.md) |

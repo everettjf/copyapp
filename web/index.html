@@ -7,8 +7,8 @@
   <meta name="description" content="Analyze apps and independently rebuild selected behavior on jailbroken iOS and macOS with Codex, Claude Code and ChatComputer.">
   <title>Copy APP — Observe. Understand. Rebuild.</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=0.2.0-onboarding-2">
-  <script src="site.js?v=0.2.0-onboarding-1" defer></script>
+  <link rel="stylesheet" href="style.css?v=0.2.0-tools-1">
+  <script src="site.js?v=0.2.0-tools-1" defer></script>
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -18,6 +18,7 @@
     <nav aria-label="Main navigation">
       <a href="#workflow" data-i18n="navWorkflow">Workflow</a>
       <a href="#architecture" data-i18n="navArchitecture">Architecture</a>
+      <a href="#toolchain" data-i18n="navTools">Tools</a>
       <a href="#evidence" data-i18n="navEvidence">Evidence</a>
       <a href="#platforms" data-i18n="navDevices">Platforms</a>
       <a href="#start" data-i18n="navStart">Get started</a>
@@ -92,6 +93,18 @@ Use a unique output/ job with project/ and evidence/. Follow docs/fidelity.md: d
 
     <section id="architecture" class="section-shell architecture-section"><div class="section-heading"><div><p class="kicker">// 02 — SYSTEM DESIGN</p><h2 data-i18n="architectureTitle">Built as a local instrument.</h2></div><p data-i18n="architectureIntro">Your current coding agent plans and implements. Copy APP records evidence and checks. A named iPhone or ChatComputer virtual Mac supplies observations.</p></div>
       <div class="architecture-grid"><div class="architecture-map"><div class="arch-rail"><span>AGENT</span><span>MAC</span><span>TARGET</span><span>OUTPUT</span></div><div class="arch-flow"><div class="arch-node arch-agent"><span class="node-icon">⌘</span><div><strong>Codex / Claude Code</strong><small data-i18n="archAgent">Planning &amp; interpretation</small></div></div><span class="arch-arrow">↓</span><div class="arch-node arch-mac"><span class="node-icon">▣</span><div><strong>Copy APP CLI</strong><small data-i18n="archMac">Orchestration, analysis, builds</small></div></div><span class="arch-arrow">↓ USB / SSH / ChatComputer</span><div class="arch-node arch-phone"><span class="node-icon">▤</span><div><strong data-i18n="archTarget">Jailbroken iPhone / virtual Mac</strong><small>iOS MCP / iCTRL / ChatComputer / AX</small></div></div><span class="arch-arrow">↓</span><div class="arch-node arch-output"><span class="node-icon">◇</span><div><strong data-i18n="archOutputTitle">Verified artifacts</strong><small data-i18n="archOutput">Report / source / IPA or .app / comparison</small></div></div></div></div><div class="architecture-notes"><div class="note-card"><span>01 / COLLECT</span><h3 data-i18n="noteOneTitle">See what really happened.</h3><p data-i18n="noteOneText">Named device identity, package hashes, bounded actions, screenshots and runtime traces live in local evidence cases.</p></div><div class="note-card"><span>02 / INTERPRET</span><h3 data-i18n="noteTwoTitle">Trace claims back to proof.</h3><p data-i18n="noteTwoText">Optional iOS native inspection uses Ghidra or Hopper. macOS UI evidence establishes selected behavior, not deep native function semantics.</p></div><div class="note-card"><span>03 / VERIFY</span><h3 data-i18n="noteThreeTitle">Measure only the chosen scope.</h3><p data-i18n="noteThreeText">Original and rebuilt flows run separately in the same pinned environment. Deliveries name behavior passes, visible differences and unknowns.</p></div></div></div>
+    </section>
+
+    <section id="toolchain" class="section-shell toolchain-section" aria-labelledby="toolsTitle">
+      <div class="section-heading"><div><p class="kicker">// REVERSE ENGINEERING</p><h2 id="toolsTitle" data-i18n="toolsTitle">Choose your analysis tools.</h2></div><p data-i18n="toolsIntro">Two directly integrated decompilers, plus runtime tracing and bounded assembly. Decompilation is optional; the default provider is none.</p></div>
+      <div class="tool-grid">
+        <article class="tool-card"><span class="phase-tag" data-i18n="toolDecompiler">DECOMPILER / OPTIONAL</span><h3>Ghidra</h3><p data-i18n="ghidraToolText">Selected-function pseudocode, bounded call relationships, blocks and instruction references.</p><code>ghidra-direct</code><small data-i18n="ghidraToolSetup">Install Ghidra and a matching JDK. Supports function, queue and selected indirect-call investigation.</small></article>
+        <article class="tool-card"><span class="phase-tag" data-i18n="toolDecompiler">DECOMPILER / OPTIONAL</span><h3>Hopper</h3><p data-i18n="hopperToolText">Selected-function pseudocode and candidate queues through the local Python scripting interface.</p><code>hopper-direct</code><small data-i18n="hopperToolSetup">Requires a local Hopper license and a logged-in macOS GUI session. No REA runtime required.</small></article>
+        <article class="tool-card"><span class="phase-tag" data-i18n="toolRuntime">RUNTIME OBSERVATIONS</span><h3>Frida</h3><p data-i18n="fridaToolText">Trace named Objective-C methods and selected entries during bounded UI flows.</p><code>trace / flow-capture --method</code><small data-i18n="fridaToolSetup">Requires compatible host/device services. A temporal hit alone does not prove UI causality.</small></article>
+        <article class="tool-card"><span class="phase-tag" data-i18n="toolAssembly">ARM64 DISASSEMBLY</span><h3>LLVM / Xcode</h3><p data-i18n="llvmToolText">Bounded assembly windows and unique local direct-call/branch followers with llvm-objdump.</p><code>native-disasm / native-queue</code><small data-i18n="llvmToolSetup">Uses the local Xcode toolchain. Assembly output is separate from decompiler pseudocode.</small></article>
+      </div>
+      <div class="tool-extras"><p><strong data-i18n="toolIndexTitle">Built-in package &amp; Objective-C indexes</strong><span data-i18n="toolIndexText">Inspect Mach-O load commands, classes, selectors and method addresses without a decompiler.</span></p><p><strong data-i18n="toolRecoveryTitle">Encrypted-package recovery</strong><span data-i18n="toolRecoveryText">Use the ipadecrypt helper and Copy APP's device-specific recovery checks to obtain analysis copies.</span></p></div>
+      <div class="tool-scope"><p data-i18n="toolPlatformScope">These native investigation/report integrations primarily serve iOS. macOS currently uses App-package, AX and UI evidence; an equivalent Mac native-function chain is not implemented.</p><p data-i18n="toolIntegrationScope">REA is not a runtime dependency. IDA Pro, Binary Ninja and radare2 currently have no direct adapters. Pseudocode is generated evidence, not original source.</p><a class="text-link" id="toolsGuideLink" href="https://github.com/everettjf/copyapp/blob/main/docs/reverse-engineering-tools.md" target="_blank" rel="noopener"><span data-i18n="toolsGuide">Tool setup, commands and agent tasks</span> ↗</a></div>
     </section>
 
     <section id="platforms" class="section-shell platforms-section">

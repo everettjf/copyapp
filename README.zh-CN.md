@@ -2,7 +2,7 @@
 
 [English](README.md) · 简体中文 · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
-[项目网站](https://xnu.app/copyapp/) · [图文介绍](docs/articles/copyapp-overview.zh-CN.md) · [文档目录](docs/README.zh-CN.md) · [最新版本](docs/releases/v0.2.0.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md) · [Apache-2.0 许可证](LICENSE)
+[项目网站](https://xnu.app/copyapp/) · [图文介绍](docs/articles/copyapp-overview.zh-CN.md) · [文档目录](docs/README.zh-CN.md) · [逆向工具](docs/reverse-engineering-tools.zh-CN.md) · [最新版本](docs/releases/v0.2.0.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md) · [Apache-2.0 许可证](LICENSE)
 
 Copy APP 帮助 Codex 或 Claude Code **分析已安装 App，并独立实现选定行为**，支持 **越狱 iOS 和 macOS**。结论、源码与对照结果保留可复查的证据来源。当前正式版本为 **v0.2.0**。macOS 支持仍为实验性；[v0.1.2](docs/releases/v0.1.2.zh-CN.md) 为上一版仅支持 iOS 的版本。
 
@@ -81,6 +81,23 @@ Agent 默认 **80 分、最多三轮**；快速原型可选 70，精细复刻可
 其余视觉差异明确保留，不再无限打磨。该分数与客观图像相似度、已知能力覆盖率分开。
 [有界复刻流程](docs/fidelity.md)使用 `fidelity-plan --fidelity 80 --max-iterations 3`；
 旧严格交付和独立父工作流仍保留原验收语义。
+
+## 支持的反编译与逆向工具
+
+**已直接接入 Ghidra 和 Hopper 两种反编译器。** 二者按需启用，默认分析 provider 为 `none`。
+
+| 工具 | 用途 | 入口／依赖 |
+| --- | --- | --- |
+| **Ghidra** | 指定函数伪代码、有界调用关系与指令引用 | `ghidra-function`、`ghidra-queue`、`ghidra-indirect`／`ghidra-direct`；外部 Ghidra + 匹配 JDK |
+| **Hopper** | 指定函数伪代码与候选队列 | `hopper-function`、`hopper-queue`／`hopper-direct`；本机许可与 macOS 图形会话 |
+| **Frida** | 方法命中、选定入口与有界寄存器运行观察 | `trace`、`experiment`、`flow-capture --method`；匹配的宿主／手机服务 |
+| **LLVM／Xcode** | 有界 ARM64 反汇编与直接调用跟随 | `native-disasm`、`native-queue`；`llvm-objdump` |
+| **内置 Mach-O／Objective-C** | 安装包、加载命令、类、selector 和方法地址 | `ipa`、`objc`；Mac 包另用 `mac inspect`／`mac acquire` |
+| **ipadecrypt／恢复流程** | 在已验证 iOS 路线上恢复加密分析副本 | `decrypt-package`、`analyze --decrypt`；按设备准备环境 |
+
+原生调查与报告接入主要服务现有 **iOS 工作流**。macOS 当前以 App 包、AX 和界面证据为主，尚未接成等价的原生函数链。**不依赖 REA 运行**；IDA Pro、Binary Ninja、radare2 暂无直接适配器。
+
+[安装条件、provider 选择与 Agent 任务](docs/reverse-engineering-tools.zh-CN.md) · [Hopper 直连](docs/rea-hopper-integration.zh-CN.md)
 
 ## 两项交付
 

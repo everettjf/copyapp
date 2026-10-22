@@ -15,6 +15,7 @@ Copy APP supports jailbroken iOS and macOS in **v0.2.0**; macOS support remains 
 | Choosing a realistic clone goal | [Coverage targets](coverage-targets.md) |
 | Give a coding agent a first task | [First-run agent task](first-run-agent.md) |
 | UI playbooks | [Gestures](ui-gesture-playbooks.md) · [Text entry](ui-text-playbooks.md) |
+| Decompilers and reverse-engineering tools | [Tool matrix, setup and agent tasks](reverse-engineering-tools.md) |
 | Native and package analysis | [Encrypted-package recovery](full-package-decryption.md) · [Direct Hopper integration](rea-hopper-integration.md) · [REA independence](rea-independence.md) |
 | Published version | [v0.2.0 release notes](releases/v0.2.0.md) / [v0.1.2 archive](releases/v0.1.2.md) · [v0.1.1 archive](releases/v0.1.1.md) · [v0.1.0 archive](releases/v0.1.0.md) |
 | Source examples | [iOS and macOS examples](../examples/README.md) · [Report input formats](../examples/report-inputs/README.md) |
