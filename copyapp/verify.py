@@ -126,6 +126,17 @@ def _verify_silent(directory: Path) -> bool:
 
 
 def verify_case(directory: Path) -> bool:
+    # Dispatch Mac cases before legacy filenames, so a legacy-looking extra file
+    # cannot bypass platform and kind-specific validation.
+    if (directory / "manifest.json").is_file():
+        manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
+        if manifest.get("kind") in {"fidelity_plan", "fidelity_check"}:
+            from copyapp.fidelity import verify_fidelity
+            return verify_fidelity(directory)
+        if (manifest.get("platform") == "macos" or
+                str(manifest.get("kind", "")).startswith("mac_")):
+            from copyapp.macos.case import verify_mac_case
+            return verify_mac_case(directory)
     if (directory / "report-index.json").is_file():
         index = json.loads((directory / "report-index.json").read_text(encoding="utf-8"))
         return compare(directory, index["artifacts"].values())

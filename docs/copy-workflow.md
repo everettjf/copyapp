@@ -9,9 +9,17 @@ Copy APP runs a resumable, evidence-gated job for one exact device and installed
 ```sh
 .venv/bin/copyapp copy --udid <UDID> --bundle <ORIGINAL_BUNDLE> \
   --auto-discover --agent-provider current \
-  --project rebuild/<NEW_PROJECT> --rebuilt-bundle <NEW_BUNDLE> \
-  --out cases/<WORKFLOW>
+  --rebuilt-bundle <NEW_BUNDLE>
 ```
+
+New jobs default to `output/<bundle>-<UTC>-<unique-id>/` in the workspace, with
+`project/` for independent source and `evidence/` for reports, captures and checks.
+Use `--output-dir output/my-job` to choose a job directory. The existing explicit
+`--project <SOURCE> --out <CASE>` form remains supported. Paths must stay inside
+the selected workspace (`--workspace <DIR>`); the root `output/` is Git-ignored.
+Existing examples and cases stay in place. On resume, pin the printed
+`--output-dir` (or legacy `--out` and `--project`) and retain all other settings;
+`--resume` never guesses the latest job.
 
 The first pause writes `discovery-agent/TASK.md`. Observe the real App and author 3–12 distinct bounded UI playbooks. Each should identify its starting page, contain a meaningful action, assert an observable final state where possible, and save a stable screenshot. Run `copyapp discover-check` as directed by the task, verify its case, and resume the **same** `copy` command with `--resume`. Existing selected scripts may be supplied through repeated `--script <FILE>`; a verified discovery case may be passed with `--discovery <CASE>`. These alternatives replace `--auto-discover`.
 

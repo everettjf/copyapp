@@ -2,13 +2,26 @@
 
 English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
-[Project website](https://xnu.app/copyapp/) · [Illustrated overview (简体中文)](docs/articles/copyapp-overview.zh-CN.md) · [Documentation](docs/README.md) · [Published release](docs/releases/v0.1.2.md) · [Contributing](CONTRIBUTING.md) · [Apache-2.0 license](LICENSE)
+[Project website](https://xnu.app/copyapp/) · [Illustrated overview (简体中文)](docs/articles/copyapp-overview.zh-CN.md) · [Documentation](docs/README.md) · [Preview release](docs/releases/v0.2.0-beta.1.md) · [Contributing](CONTRIBUTING.md) · [Apache-2.0 license](LICENSE)
 
-Copy APP analyzes an installed iOS app on a jailbroken iPhone and helps a coding agent build an **independent, runnable iOS app** that reproduces a reviewed set of behaviors. It collects package, sandbox, UI and runtime evidence; produces a source-linked report and feature specification; then checks the new app against the original on the same phone. The current release is **v0.1.2**.
+Copy APP helps Codex or Claude Code **analyze installed apps and build independent, runnable implementations of selected behavior** on **jailbroken iOS and macOS**. Conclusions, source and comparisons stay linked to inspectable evidence. The current preview is **v0.2.0-beta.1**; [v0.1.2](docs/releases/v0.1.2.md) remains the latest stable iOS release.
+
+| Target | How it works | Status |
+| --- | --- | --- |
+| Jailbroken iOS | USB-connected iPhone, OpenSSH, iOS MCP / iCTRL and optional Frida | Existing named iOS 16 / 17 / 26 workflows preserved |
+| macOS | ChatComputer on an Apple Silicon Mac, a dedicated virtual Mac and bounded App/AX collector | Experimental; named selected-flow, recovery and physical-Mac checks documented |
+
+Mac behavior reports do not imply deep native function analysis or arbitrary-Mac compatibility. See [Mac setup and AI task](docs/macos-support.md) and the [acceptance ledger](docs/macos-implementation-plan.md).
+
+Source examples: [Stocks AppKit demo](examples/macos/Stocks/) (illustrative offline data), [independent editor](examples/macos/IndependentEditor/), [owned fixture](examples/macos/BehaviorFixture/) and [iOS examples](examples/rebuild/).
 
 <a id="start-here"></a>
 
 ## Start here: give the task to Codex or Claude Code
+
+Choose the target platform. The agent uses this repository's skills directly; no provider-specific extension is required.
+
+### Jailbroken iOS
 
 Open **Codex or Claude Code with local command execution on your Mac**, then connect and unlock your jailbroken iPhone over USB. Paste this request into the agent conversation and replace the app name. You do not need to know its Bundle ID.
 
@@ -17,11 +30,34 @@ Use https://github.com/everettjf/copyapp to analyze and rebuild “APP NAME” o
 Clone the project into a new directory if needed, or work in its existing checkout.
 Read AGENTS.md and skills/copyapp-start/SKILL.md first. Check and configure the environment, identify the exact phone and app, then complete analysis, independent implementation, device installation and same-device comparison.
 Execute the steps you can perform yourself. Tell me the specific action only when you need phone-side confirmation or missing target information. Deliver the report, runnable project, verified behavior and remaining differences.
+Use docs/fidelity.md: target grade 80/100, at most three implementation/check cycles including the first. Stop when the target is met or the cycle budget is exhausted; disclose any unmet target and remaining differences.
 ```
 
 The agent reads the repository's [first-use skill](skills/copyapp-start/SKILL.md) and follows the analysis, rebuild and verification workflows. **You do not need to type every CLI command below or install a provider-specific extension first.** The agent checks and configures the Mac; phone trust, initial permissions and signing access may still require your participation.
 
 For analysis only, change the first sentence to “Analyze …; do not rebuild it in this task.” For a connection check, ask it to stop after a verified USB survey. See [first-run agent tasks](docs/first-run-agent.md) for more examples, or use the [manual CLI entry](#manual-installation-and-first-survey) if you prefer.
+
+### macOS with ChatComputer
+
+Open Codex or Claude Code locally on your Apple Silicon Mac and paste:
+
+```text
+Use https://github.com/everettjf/copyapp to analyze and independently rebuild selected behavior of the macOS App “APP NAME” with ChatComputer.
+Clone the project if needed. Read AGENTS.md and skills/copyapp-mac/SKILL.md, then identify the exact virtual Mac, App and build. Use the current agent session for discovery, report review and implementation; do not start another agent or ChatComputer's model loop.
+Build and install a separate App, compare the same selected flows, review the screenshots and deliver source, runnable artifacts and remaining differences.
+Default to output/<app>-<unique-run>/project and sibling evidence. Use docs/fidelity.md: target grade 80/100, maximum three implementation/check cycles including the first. Stop at target_met or iteration_limit.
+```
+
+The [Mac guide](docs/macos-support.md) covers ChatComputer setup, guest permissions and the separate `copyapp mac` commands. macOS does not use an iPhone UDID or IPA. The [Stocks example](examples/macos/Stocks/README.md) includes source and a local build command.
+
+### Shared defaults
+
+Agent-led default: **80/100 reviewed fidelity grade, three cycles**. Ask for 70
+for a quick prototype or 90 for finer detail. Core selected behavior must pass;
+remaining visual differences stay explicit. This grade is separate from objective
+image similarity and known-capability coverage. The [bounded workflow](docs/fidelity.md)
+uses `fidelity-plan --fidelity 80 --max-iterations 3`; historical strict delivery
+and standalone parent workflows retain their existing rules.
 
 ## Architecture at a glance
 
@@ -38,7 +74,7 @@ A small app may justify a broad first milestone. A complex app needs a named sli
 
 The Mac runs orchestration and builds. OpenSSH acquires files, iOS MCP provides jailbroken UI observation and control, iCTRL is an optional XCTest-based UI backend, and Frida provides bounded runtime evidence. Ghidra and Hopper are optional native-analysis tools. **REA is not required.** The [architecture guide](docs/architecture.md) explains the trust and evidence boundaries.
 
-The [example projects](examples/README.md) are under `examples/rebuild/`; `rebuild/<NEW_PROJECT>` in the commands below is a workspace for your own new output.
+The [example projects](examples/README.md) live under `examples/rebuild/` (iOS) and `examples/macos/` (Mac). New jobs default to `output/`; the legacy `rebuild/<NEW_PROJECT>` workspace remains supported.
 
 ### Evidence, comparison and deliverables
 
@@ -50,7 +86,7 @@ The [example projects](examples/README.md) are under `examples/rebuild/`; `rebui
 
 These are workflow illustrations and selected public observations. The Calculator comparison covers one named flow and still has visible differences; the Hopper excerpt depicts saved evidence, not recovered source code. See the [device evidence and limits](docs/current-status.md).
 
-## Tested support on current `main`
+## Tested iOS support
 
 These are named-device, selected-flow results, not a compatibility promise for every iOS device or app. [Current evidence and limitations](docs/current-status.md) records the v0.1.2 scope and remaining gaps.
 
@@ -60,7 +96,7 @@ These are named-device, selected-flow results, not a compatibility promise for e
 | iPhone 14 · iOS 17.3.1 | Relaxin/RootHide; original Calculator acquisition, Frida trace and four original/independent-app arithmetic checks through iOS MCP | v0.1.2 fixes the v0.1.1 iCTRL session-lifetime fault; two runs of four paired flows passed. Reboot durability and the changed cleanup on other devices remain untested. |
 | iPhone 11 · iOS 26.0.1 | Relaxin/RootHide; original Calculator and Clock analysis, signed independent apps and selected paired arithmetic/Stopwatch checks | iOS MCP can return a black frame after fresh launch; bounded Home/relaunch recovery passed observed runs. |
 
-Current limitations include incomplete app coverage, modest visual differences, unverified reboot/rejailbreak durability, and no end-to-end onboarding test on a second physical Mac. Raw IPAs, complete case screenshots, sandbox contents and credentials stay in Git-ignored local `cases/` and are never release assets; the few Calculator images in the docs were selected separately for publication.
+Current limitations include incomplete app coverage, modest visual differences, unverified reboot/rejailbreak durability, and no end-to-end onboarding test on a second physical Mac. Raw IPAs, complete case screenshots, sandbox contents and credentials stay in Git-ignored local `cases/` or job `output/` (credentials keep their existing local stores) and are never release assets; the few Calculator images in the docs were selected separately for publication.
 
 ## Manual installation and first survey
 
@@ -92,11 +128,19 @@ From an active Codex or Claude Code session:
 .venv/bin/copyapp copy \
   --udid <UDID> --bundle <ORIGINAL_BUNDLE_ID> \
   --auto-discover --agent-provider current \
-  --project rebuild/<NEW_PROJECT> --rebuilt-bundle <NEW_BUNDLE_ID> \
-  --out cases/<WORKFLOW_CASE>
+  --rebuilt-bundle <NEW_BUNDLE_ID>
 ```
 
-The command pauses for reviewed discovery scripts, a formal analysis report, and an independent implementation. Resume with the same arguments plus `--resume` after each verified handoff. `current` uses the agent already in this session; it does not launch a nested agent. Use `--agent-provider codex` or `claude` for a separate CLI process. Existing flows can be supplied with `--discovery <CASE>` or repeated `--script <FILE>` instead of `--auto-discover`. The [workflow guide](docs/copy-workflow.md) documents the gates and commands.
+New jobs default to `output/<bundle>-<UTC>-<unique-id>/` in the workspace, with
+`project/` for independent source and `evidence/` for reports, captures and checks.
+Use `--output-dir output/my-job` to choose a job directory. The existing explicit
+`--project <SOURCE> --out <CASE>` form remains supported. Paths must stay inside
+the selected workspace (`--workspace <DIR>`); the root `output/` is Git-ignored.
+Existing examples and cases stay in place. On resume, pin the printed
+`--output-dir` (or legacy `--out` and `--project`) and retain all other settings;
+`--resume` never guesses the latest job.
+
+The command pauses for reviewed discovery scripts, a formal analysis report, and an independent implementation. Resume with the printed output path and the same settings plus `--resume` after each verified handoff. `current` uses the agent already in this session; it does not launch a nested agent. Use `--agent-provider codex` or `claude` for a separate CLI process. Existing flows can be supplied with `--discovery <CASE>` or repeated `--script <FILE>` instead of `--auto-discover`. The [workflow guide](docs/copy-workflow.md) documents the gates and commands.
 
 ## Philosophy and contribution
 
@@ -108,4 +152,4 @@ Copy APP's project-owned code and documentation are licensed under the [Apache L
 
 ## Acknowledgements
 
-Copy APP uses or draws on [witchan/ios-mcp](https://github.com/witchan/ios-mcp), [OpenMinis/iCTRL](https://github.com/OpenMinis/iCTRL), [Frida](https://frida.re/), [pymobiledevice3](https://github.com/doronz88/pymobiledevice3), [londek/ipadecrypt](https://github.com/londek/ipadecrypt), [Ghidra](https://github.com/NationalSecurityAgency/ghidra), and optional [Hopper](https://www.hopperapp.com/). Its optional direct Hopper interface was informed by MIT-licensed REA code; the license is retained in [docs/third-party/REA-LICENSE.txt](docs/third-party/REA-LICENSE.txt). See the vendored iCTRL [source record](vendor/ictrl/UPSTREAM.md), license and notice for the precise attribution and local changes.
+Copy APP uses or draws on [ChatComputer](https://github.com/chatcomputer/chatcomputer), [witchan/ios-mcp](https://github.com/witchan/ios-mcp), [OpenMinis/iCTRL](https://github.com/OpenMinis/iCTRL), [Frida](https://frida.re/), [pymobiledevice3](https://github.com/doronz88/pymobiledevice3), [londek/ipadecrypt](https://github.com/londek/ipadecrypt), [Ghidra](https://github.com/NationalSecurityAgency/ghidra), and optional [Hopper](https://www.hopperapp.com/). Its optional direct Hopper interface was informed by MIT-licensed REA code; the license is retained in [docs/third-party/REA-LICENSE.txt](docs/third-party/REA-LICENSE.txt). See the vendored iCTRL [source record](vendor/ictrl/UPSTREAM.md), license and notice for the precise attribution and local changes.

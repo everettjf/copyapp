@@ -4,6 +4,10 @@
 
 ## Product contract
 
+Add macOS alongside the existing iOS support according to the
+[implementation and acceptance plan](docs/macos-implementation-plan.md).
+This is development-branch work, not a claim that published v0.1.2 supports Mac apps.
+
 Copy APP has two jobs on a jailbroken iPhone: **Analyze** an installed app into a reviewed, source-linked report and feature specification; then **Rebuild** a selected set of behavior as an independent, runnable iOS app and compare it with the original on the same device. A coding agent performs interpretation and implementation. The CLI collects and verifies evidence, controls the device, and records gaps. The [workflow](docs/copy-workflow.md), [architecture](docs/architecture.md) and [coverage method](docs/coverage-targets.md) are the operational specifications.
 
 A report should cover app identity, permissions, package and embedded libraries, UI/navigation, resources, sandbox/data model, network and system integrations, native class/function evidence, selected runtime behavior, implementation hypotheses and unknowns. Material claims cite the device, app build and source case. Decompiled pseudocode is not original source. Server-only behavior cannot be inferred from client code.

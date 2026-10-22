@@ -5,6 +5,7 @@ import asyncio
 import hashlib
 import json
 import re
+import shlex
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -58,6 +59,7 @@ from copyapp.draft_analysis import draft_analysis
 from copyapp.prepare_analysis import prepare_analysis
 from copyapp.prepare_app import prepare_app
 from copyapp.copy_workflow import copy_app
+from copyapp.output_paths import copy_paths
 from copyapp.prepare_rebuild import prepare_rebuild
 from copyapp.install import install_trollstore_ipa, install_usb_ipa
 from copyapp.report import compose_report
@@ -407,8 +409,11 @@ async def _command_survey(udid: str, bundle: str, output: Path, launch: bool,
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Copy APP USB survey (v0.1)")
+    parser = argparse.ArgumentParser(description="Copy APP: iOS workflows and experimental macOS App support")
     sub = parser.add_subparsers(dest="command", required=True)
+    mac = sub.add_parser("mac", help="macOS App support through ChatComputer (experimental)")
+    from copyapp.macos.cli import configure as configure_mac
+    configure_mac(mac)
     sub.add_parser("devices", help="list connected USB devices")
     onboard = sub.add_parser("onboard", help="identify one phone and print exact setup repairs")
     onboard.add_argument("--udid", help="required when more than one USB device is connected")
@@ -604,9 +609,14 @@ def main() -> None:
                               help="verified discover-check case containing three or more replayed flows")
     copy_scripts.add_argument("--auto-discover", action="store_true",
                               help="discover and replay representative flows; current mode pauses for this session")
-    copy_parser.add_argument("--project", required=True, type=Path)
+    copy_parser.add_argument("--project", type=Path,
+                             help="independent source directory (default <output-dir>/project)")
     copy_parser.add_argument("--rebuilt-bundle", required=True)
-    copy_parser.add_argument("--out", required=True, type=Path)
+    copy_outputs = copy_parser.add_mutually_exclusive_group()
+    copy_outputs.add_argument("--output-dir", type=Path,
+                             help="job directory containing project/ and evidence/ (default output/<bundle>-<UTC>-<unique-id>)")
+    copy_outputs.add_argument("--out", type=Path,
+                             help="legacy evidence case directory; requires --project")
     copy_parser.add_argument("--workspace", type=Path)
     copy_parser.add_argument("--backend", choices=("ios-mcp", "ictrl"), default="ios-mcp")
     copy_parser.add_argument("--ui-backend", choices=("usb", "ios-mcp"), default="ios-mcp")
@@ -684,6 +694,21 @@ def main() -> None:
     agent_delivery.add_argument("--run", type=Path)
     agent_delivery.add_argument("--visual-review", type=Path)
     agent_delivery.add_argument("--out", required=True, type=Path)
+    fidelity_plan = sub.add_parser("fidelity-plan", help="freeze a bounded reconstruction grade target for an iOS task or Mac plan")
+    fidelity_plan.add_argument("--task", required=True, type=Path)
+    fidelity_plan.add_argument("--fidelity", type=int, default=80, help="reviewed selected-scope grade, 0–100 (default 80); not image similarity percent")
+    fidelity_plan.add_argument("--max-iterations", type=int, default=3, help="implementation/check cycles including the first (default 3)")
+    fidelity_plan.add_argument("--out", required=True, type=Path)
+    fidelity_template = sub.add_parser("fidelity-template", help="write a grade review template bound to verified images")
+    fidelity_template.add_argument("--plan", required=True, type=Path)
+    fidelity_template.add_argument("--evidence", required=True, type=Path, help="Mac visual-review or iOS agent-delivery with full visual review")
+    fidelity_template.add_argument("--out", required=True, type=Path, help="new review JSON file")
+    fidelity_check = sub.add_parser("fidelity-check", help="record target_met, continue or iteration_limit without relaxing strict delivery")
+    fidelity_check.add_argument("--plan", required=True, type=Path)
+    fidelity_check.add_argument("--evidence", required=True, type=Path)
+    fidelity_check.add_argument("--review", required=True, type=Path)
+    fidelity_check.add_argument("--previous", type=Path, help="previous cycle of this frozen plan; required after the first")
+    fidelity_check.add_argument("--out", required=True, type=Path)
     coverage_plan = sub.add_parser("coverage-plan",
                                    help="freeze a weighted, revisable known-capability target")
     coverage_plan.add_argument("--report", required=True, type=Path)
@@ -1017,7 +1042,10 @@ def main() -> None:
     args = parser.parse_args()
     try:
         apply_ssh_profile(args, sys.argv[1:])
-        if args.command == "devices":
+        if args.command == "mac":
+            from copyapp.macos.cli import run as run_mac
+            code = run_mac(args)
+        elif args.command == "devices":
             code = asyncio.run(command_devices())
         elif args.command == "onboard":
             report, ready = run_onboarding(args.udid, args.out, args.ssh_identity,
@@ -1127,14 +1155,24 @@ def main() -> None:
             print(path)
             code = 0 if complete else 1
         elif args.command == "copy":
+            workspace, output, project = copy_paths(
+                args.bundle, workspace=args.workspace, output_dir=args.output_dir,
+                output=args.out, project=args.project, resume=args.resume)
+            print(f"Project: {project}", flush=True)
+            print(f"Evidence: {output}", flush=True)
+            resume_paths = (["--out", str(output), "--project", str(project)]
+                            if args.out is not None else
+                            ["--output-dir", str(output.parent), "--project", str(project)])
+            print("Resume: retain the other settings and use " +
+                  shlex.join(resume_paths + ["--resume"]), flush=True)
             survey_collector = lambda udid, bundle, output, launch: command_survey(
                 udid, bundle, output, launch, args.ui_backend)
             scripts = (accepted_playbooks(args.discovery, args.udid, args.bundle,
                                           args.backend) if args.discovery else (args.script or []))
             path, complete = asyncio.run(copy_app(
-                args.udid, args.bundle, scripts, args.project,
-                args.rebuilt_bundle, args.out, survey_collector,
-                workspace=args.workspace, backend=args.backend,
+                args.udid, args.bundle, scripts, project,
+                args.rebuilt_bundle, output, survey_collector,
+                workspace=workspace, backend=args.backend,
                 ui_backend=args.ui_backend, analysis_provider=args.analysis_provider,
                 agent_provider=args.agent_provider, decrypt=not args.no_decrypt,
                 network=not args.no_network, flow_ids=args.flow_ids,
@@ -1185,6 +1223,27 @@ def main() -> None:
             print(create_agent_delivery(args.task, args.install, args.check,
                                         args.out, args.run, args.visual_review))
             code = 0
+        elif args.command == "fidelity-plan":
+            from copyapp.fidelity import create_plan
+            print(create_plan(args.task, args.out, args.fidelity, args.max_iterations))
+            code = 0
+        elif args.command == "fidelity-template":
+            from copyapp.fidelity import require, read, visual_context, review_template
+            require(args.plan, {"fidelity_plan"})
+            context = visual_context(args.evidence, read(args.plan, "fidelity-plan.json")["contract"], live_source=True)
+            args.out.parent.mkdir(parents=True, exist_ok=True)
+            with args.out.open("x", encoding="utf-8") as stream:
+                json.dump(review_template(context), stream, ensure_ascii=False, indent=2)
+                stream.write("\n")
+            print(args.out)
+            code = 0
+        elif args.command == "fidelity-check":
+            from copyapp.fidelity import create_check, read
+            path = create_check(args.plan, args.evidence, args.review, args.out, args.previous)
+            print(path)
+            decision = read(path, "fidelity-check.json")["result"]["decision"]
+            print(decision)
+            code = {"target_met": 0, "continue": 2, "iteration_limit": 3}[decision]
         elif args.command == "coverage-plan":
             print(create_coverage_plan(args.report, args.plan, args.inventory,
                                        args.out, args.previous))

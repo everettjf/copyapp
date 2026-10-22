@@ -13,6 +13,9 @@ from pathlib import Path
 
 SOURCE = Path(__file__).resolve().parent.parent
 REQUIRED_DATA = {
+    "copyapp/macos/collector/Collector.swift",
+    "copyapp/fidelity.py",
+    "copyapp/output_paths.py",
     "copyapp/ictrl_runner_stop.py",
     "copyapp/ghidra_scripts/CopyAppAnalysisOptions.java",
     "copyapp/ghidra_scripts/CopyAppDecompile.java",
@@ -61,8 +64,22 @@ def main() -> None:
         env.pop("COPYAPP_SOURCE_ROOT", None)
         run([str(python), "-m", "pip", "install", str(wheel)], cwd=root, env=env)
         help_text = run([str(cli), "--help"], cwd=root, env=env).stdout
-        if not all(command in help_text for command in ("onboard", "analyze", "copy")):
+        if not all(command in help_text for command in ("onboard", "analyze", "copy", "mac",
+                                                       "fidelity-plan", "fidelity-template", "fidelity-check")):
             raise RuntimeError("installed wheel CLI lacks expected commands")
+        fidelity_help = run([str(cli), "fidelity-plan", "--help"], cwd=root, env=env).stdout
+        copy_help = run([str(cli), "copy", "--help"], cwd=root, env=env).stdout
+        if "--output-dir" not in copy_help or "[--project" not in copy_help:
+            raise RuntimeError("installed wheel lacks default copy output paths")
+        if "--fidelity" not in fidelity_help or "--max-iterations" not in fidelity_help:
+            raise RuntimeError("installed wheel lacks bounded fidelity options")
+        mac_help = run([str(cli), "mac", "--help"], cwd=root, env=env).stdout
+        if not all(command in mac_help for command in ("doctor", "inspect", "build-collector", "acquire",
+                                                       "playbook", "report", "rebuild-plan", "build-app", "install",
+                                                       "check-plan", "rebuild-check", "visual-review", "delivery",
+                                                       "share-probe", "share-probe-check", "import-app", "discover-check", "data-file", "data-schema",
+                                                       "snapshot-inspect", "snapshot-take", "snapshot-restore", "probe-collector")):
+            raise RuntimeError("installed wheel lacks Mac entry points")
         probe = ("import copyapp, pathlib, sys; "
                  "root=pathlib.Path(copyapp.__file__).resolve().parent; "
                  "assert root.is_relative_to(pathlib.Path(sys.argv[1]).resolve()); "

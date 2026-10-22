@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "copyapp"
-version = "0.1.2"
-description = "Evidence-backed iOS App analysis and selected-flow rebuilding"
+version = "0.2.0b1"
+description = "Evidence-backed analysis and selected-behavior rebuilding for jailbroken iOS and macOS apps"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -28,3 +28,4 @@ include = ["copyapp*"]
 
 [tool.setuptools.package-data]
 copyapp = ["ghidra_scripts/*.java", "ghidra_scripts/REA-LICENSE.txt"]
+"copyapp.macos" = ["collector/*.swift"]
