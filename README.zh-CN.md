@@ -60,20 +60,26 @@ Agent 默认 **80 分、最多三轮**；快速原型可选 70，精细复刻可
 
 ## 架构一览
 
-![Mac 与指定越狱 iPhone 通过 USB 协作，完成分析与对照](docs/assets/social/01-system-map.png)
+![Copy APP 支持 USB 越狱 iPhone 与 ChatComputer 虚拟 Mac；App 画面为工作流示意](docs/assets/macos/dual-platform.svg)
 
-Mac 协调 Coding Agent、证据与构建；指定的 iPhone 提供 App 文件和观察结果。组件边界和证据关系见[详细架构说明](docs/architecture.zh-CN.md)。
+Mac 协调 Coding Agent、证据与构建；目标可以是通过 USB 连接的越狱 iPhone，也可以是 ChatComputer 中的独立虚拟 Mac。两个平台使用各自的命令与准确环境身份。组件边界和证据关系见[详细架构说明](docs/architecture.zh-CN.md)。
 
 ## 两项交付
 
 1. **分析：**固定手机和 App 版本；检查安装包、Mach-O、依赖库、类、资源和有界沙盒元数据；采集选定界面、操作与运行轨迹；审阅带证据 ID、实现推断和未知项的报告。
-2. **复刻：**依据已知能力清单选定阶段目标；实现独立 Xcode 工程；构建、签名、安装；在原版与复刻版重放同一组流程，逐张审阅截图并报告实际覆盖与差异。
+2. **复刻：**依据已知能力清单选定阶段目标；实现独立 iOS 或 macOS App，构建并安装 IPA 或 `.app`；在指定手机或虚拟 Mac 对照相同流程，逐图审阅并报告实际覆盖与差异。
 
 简单 App 可以设较完整的阶段目标。复杂 App 应先选定有用的功能范围；只有明确已知能力的分母，百分比才有意义。选定流程通过不代表整 App 等价。详见[覆盖目标方法](docs/coverage-targets.zh-CN.md)。
 
 Mac 负责编排和构建。OpenSSH 采集文件，iOS MCP 提供越狱环境下的界面观察与控制，iCTRL 是可选的 XCTest 界面后端，Frida 用于有界运行时取证。Ghidra 和 Hopper 是可选的本机代码分析工具，**不依赖 REA 运行**。详见[架构说明](docs/architecture.zh-CN.md)。
 
 [示例工程](examples/README.md)分别位于 `examples/rebuild/`（iOS）和 `examples/macos/`（Mac）。新任务默认写入 `output/`，原有 `rebuild/<NEW_PROJECT>` 工作目录仍受支持。
+
+### 看一个运行中的 macOS 示例
+
+![独立 AppKit Stocks 示例在 macOS 上实际运行：本地自选列表、AAPL 详情与离线图表](docs/assets/macos/stocks-demo.jpg)
+
+[Stocks 源码示例](examples/macos/Stocks/)实现股票搜索、图表周期切换和本地自选列表。上图是独立构建后在宿主 Mac 上的实际窗口截图，数值为离线演示数据；不是 Apple 原版 Stocks，也不提供实时行情。源码目录附构建步骤，历史客体对照结果与剩余视觉／行为差异另见[验收账本](docs/macos-implementation-plan.md)。
 
 ### 证据、对照与交付
 

@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="680" viewBox="0 0 880 680" fill="none" role="img" aria-labelledby="title desc">
+<title id="title">Copy APP: jailbroken iOS and macOS</title>
+<desc id="desc">An iPhone and a Mac app window share an evidence workflow. The desktop chart is an illustration, not a captured app or a live market feed.</desc>
+<defs>
+  <radialGradient id="halo"><stop stop-color="#00ff66" stop-opacity=".14"/><stop offset="1" stop-color="#00ff66" stop-opacity="0"/></radialGradient>
+  <linearGradient id="screen" x1="210" y1="100" x2="720" y2="480" gradientUnits="userSpaceOnUse"><stop stop-color="#15221b"/><stop offset="1" stop-color="#080d0a"/></linearGradient>
+  <linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#00ff66" stop-opacity=".25"/><stop offset="1" stop-color="#00ff66" stop-opacity="0"/></linearGradient>
+  <linearGradient id="phone" x1="60" y1="220" x2="290" y2="610" gradientUnits="userSpaceOnUse"><stop stop-color="#303832"/><stop offset="1" stop-color="#121713"/></linearGradient>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="24" stdDeviation="22" flood-color="#000" flood-opacity=".65"/></filter>
+  <pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse"><path d="M34 0H0V34" stroke="#96c5a7" stroke-opacity=".045"/></pattern>
+</defs>
+<ellipse cx="465" cy="340" rx="415" ry="320" fill="url(#halo)"/>
+<circle cx="463" cy="341" r="278" stroke="#00ff66" stroke-opacity=".11"/>
+<circle cx="463" cy="341" r="235" stroke="#a4d4b5" stroke-opacity=".13" stroke-dasharray="4 9"/>
+<rect x="50" y="50" width="790" height="565" fill="url(#grid)"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, monospace">
+  <text x="265" y="77" fill="#9bb3a3" font-size="12" letter-spacing="2">TWO PLATFORMS. ONE EVIDENCE TRAIL.</text>
+  <path d="M276 528H725V472" stroke="#00ff66" stroke-opacity=".4" stroke-dasharray="5 6"/>
+  <circle cx="725" cy="472" r="4" fill="#00ff66"/>
+</g>
+<!-- Mac application illustration -->
+<g filter="url(#shadow)">
+  <rect x="211" y="119" width="610" height="368" rx="16" fill="#0e1410" stroke="#67766c" stroke-width="1.5"/>
+  <path d="M227 119H805Q821 119 821 135V159H211V135Q211 119 227 119Z" fill="#202922"/>
+  <path d="M211 159H821" stroke="#3b4c41"/>
+  <circle cx="233" cy="140" r="5" fill="#75877c"/><circle cx="250" cy="140" r="5" fill="#586b5f"/><circle cx="267" cy="140" r="5" fill="#3d5947"/>
+  <text x="313" y="144" fill="#d4e5da" font-family="system-ui, sans-serif" font-size="13">Independent Mac App</text>
+  <rect x="212" y="160" width="608" height="311" fill="url(#screen)"/>
+  <path d="M364 159V471" stroke="#344b3c"/>
+  <g font-family="system-ui, sans-serif">
+    <rect x="231" y="181" width="114" height="25" rx="6" fill="#1d2a22" stroke="#34493b"/>
+    <text x="244" y="198" fill="#93a89b" font-size="10">Search symbols</text>
+    <text x="233" y="236" fill="#e9f3ed" font-size="12" font-weight="600">Watchlist</text>
+    <rect x="226" y="253" width="125" height="46" rx="6" fill="#1d3626"/>
+    <text x="240" y="272" fill="#fff" font-size="12" font-weight="600">AAPL</text>
+    <text x="240" y="287" fill="#91b29e" font-size="9">Offline example</text>
+    <text x="241" y="324" fill="#c1d4c7" font-size="11">MSFT</text>
+    <text x="241" y="357" fill="#c1d4c7" font-size="11">NVDA</text>
+    <text x="390" y="199" fill="#fff" font-size="21" font-weight="650">AAPL</text>
+    <text x="468" y="199" fill="#8eab98" font-size="12">Local demo</text>
+    <text x="390" y="220" fill="#7b9685" font-size="10">Illustrative market data</text>
+    <rect x="390" y="240" width="35" height="22" rx="11" fill="#244c33"/>
+    <text x="400" y="255" fill="#00ff66" font-size="10">1D</text>
+    <text x="444" y="255" fill="#81998a" font-size="10">1W</text><text x="486" y="255" fill="#81998a" font-size="10">1M</text><text x="529" y="255" fill="#81998a" font-size="10">1Y</text>
+  </g>
+  <path d="M390 290H793M390 330H793M390 370H793M390 410H793" stroke="#284030" stroke-opacity=".7"/>
+  <path d="M391 383L412 370L432 383L449 355L466 361L485 329L501 339L519 327L539 344L559 313L577 324L597 285L617 300L636 286L654 303L673 276L694 284L715 265L737 278L757 260L789 270V420H391Z" fill="url(#area)"/>
+  <path d="M391 383L412 370L432 383L449 355L466 361L485 329L501 339L519 327L539 344L559 313L577 324L597 285L617 300L636 286L654 303L673 276L694 284L715 265L737 278L757 260L789 270" stroke="#00ff66" stroke-width="2.5" stroke-linejoin="round"/>
+  <g font-family="ui-monospace, monospace" font-size="9" letter-spacing="1">
+    <text x="390" y="447" fill="#82a58e">APP VIEW / ILLUSTRATION</text><text x="631" y="447" fill="#a6c6b1">OFFLINE DATA</text>
+  </g>
+</g>
+<!-- Jailbroken iPhone illustration -->
+<g transform="rotate(-7 179 406)" filter="url(#shadow)">
+  <rect x="74" y="208" width="202" height="386" rx="33" fill="url(#phone)" stroke="#78857c" stroke-width="1.5"/>
+  <rect x="82" y="216" width="186" height="370" rx="26" fill="#0a100c" stroke="#344b3c"/>
+  <rect x="142" y="224" width="68" height="15" rx="8" fill="#020503"/>
+  <text x="100" y="254" fill="#b8c8bd" font-family="ui-monospace, monospace" font-size="9">09:41</text>
+  <rect x="105" y="288" width="140" height="176" fill="#10251a" stroke="#00ff66" stroke-opacity=".7"/>
+  <path d="M105 307V288H125M225 464H245V444" stroke="#00ff66" stroke-width="3"/>
+  <circle cx="175" cy="366" r="29" stroke="#00ff66" stroke-width="3"/><circle cx="175" cy="366" r="20" stroke="#00ff66" stroke-width="2"/>
+  <text x="130" y="425" fill="#00ff66" font-family="ui-monospace, monospace" font-size="9" letter-spacing="2">APP / TARGET</text>
+  <path d="M105 315H245" stroke="#00ff66" stroke-width="2"/>
+  <g font-family="ui-monospace, monospace" font-size="7" fill="#8aa594"><text x="103" y="546">UI TREE</text><text x="155" y="546">TRACE</text><text x="204" y="546">BINARY</text></g>
+</g>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, monospace">
+  <rect x="352" y="511" width="400" height="60" rx="4" fill="#0b1710" stroke="#395743"/>
+  <circle cx="377" cy="540" r="5" fill="#00ff66"/>
+  <text x="395" y="536" fill="#fff" font-size="15" font-weight="600">macOS / ChatComputer</text>
+  <text x="395" y="554" fill="#8caa97" font-size="10" letter-spacing=".5">OBSERVE · BUILD · COMPARE</text>
+  <text x="77" y="635" fill="#b9d0c1" font-size="12" letter-spacing="1">JAILBROKEN iOS / USB</text>
+  <text x="462" y="615" fill="#7f9e8b" font-size="11" letter-spacing="1">SOURCE + RUNNABLE APP + EVIDENCE</text>
+</g>
+</svg>

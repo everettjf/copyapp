@@ -61,20 +61,26 @@ and standalone parent workflows retain their existing rules.
 
 ## Architecture at a glance
 
-![Mac orchestration and a selected jailbroken iPhone connected by USB for analysis and comparison](docs/assets/social/01-system-map.png)
+![Copy APP targets jailbroken iOS over USB and macOS through ChatComputer; app views are illustrations](docs/assets/macos/dual-platform.svg)
 
-The Mac coordinates the coding agent, evidence and build; the selected iPhone supplies app files and observations. See the [detailed architecture and evidence model](docs/architecture.md).
+One Mac coordinates the coding agent, evidence and build. The target can be a jailbroken iPhone over USB or a dedicated virtual Mac through ChatComputer; each uses its own platform commands and identity. See the [detailed architecture and evidence model](docs/architecture.md).
 
 ## What the workflow delivers
 
-1. **Analyze:** identify the exact phone and app build; inspect the installed package, Mach-O images, dependencies, classes, resources and bounded sandbox metadata; capture selected screens, actions and runtime traces; review a report with evidence IDs, implementation hypotheses and explicit unknowns.
-2. **Rebuild:** choose a milestone from a known-capability inventory; implement an independent Xcode project; build, sign and install it; replay the same selected flows in both apps; review each screenshot pair and report measured coverage and gaps.
+1. **Analyze:** identify the exact target environment and app build; inspect its package and supported data evidence, then observe selected flows. iOS adds optional native/runtime investigation; macOS uses bounded App/AX observations. Review a cited report with implementation hypotheses and explicit unknowns.
+2. **Rebuild:** choose a milestone from a known-capability inventory; implement an independent iOS or macOS app; build and install its IPA or `.app`; compare the same selected flows in the pinned phone or virtual Mac and review every screenshot pair. Report measured coverage and gaps.
 
 A small app may justify a broad first milestone. A complex app needs a named slice of behavior; a percentage is meaningful only with an explicit known-capability denominator. A passing selected-flow check does not establish whole-app equivalence. See [coverage targets](docs/coverage-targets.md).
 
 The Mac runs orchestration and builds. OpenSSH acquires files, iOS MCP provides jailbroken UI observation and control, iCTRL is an optional XCTest-based UI backend, and Frida provides bounded runtime evidence. Ghidra and Hopper are optional native-analysis tools. **REA is not required.** The [architecture guide](docs/architecture.md) explains the trust and evidence boundaries.
 
 The [example projects](examples/README.md) live under `examples/rebuild/` (iOS) and `examples/macos/` (Mac). New jobs default to `output/`; the legacy `rebuild/<NEW_PROJECT>` workspace remains supported.
+
+### A running macOS example
+
+![Actual independent AppKit Stocks example on macOS, showing a local watchlist, AAPL detail and an offline chart](docs/assets/macos/stocks-demo.jpg)
+
+The [Stocks source example](examples/macos/Stocks/) implements symbol search, chart-period selection and local watchlists. This is an actual window capture of the independently built app on the host Mac, with illustrative offline values; it is not Apple's Stocks or a live market feed. Build instructions are included with the source. Recorded guest comparisons and remaining visual/behavior gaps are separate in the [acceptance ledger](docs/macos-implementation-plan.md).
 
 ### Evidence, comparison and deliverables
 
