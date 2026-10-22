@@ -1,7 +1,7 @@
 const translations = {
   zh: {
     navWorkflow: '工作流程', navArchitecture: '架构', navEvidence: '证据示例', navDevices: '支持平台', navStart: '开始使用',
-    eyebrow: 'v0.2.0-beta.1 · 越狱 iOS + macOS', heroOne: '看见内部。', heroTwo: '构建新可能。',
+    eyebrow: 'v0.2.0 · 越狱 iOS + macOS', heroOne: '看见内部。', heroTwo: '构建新可能。',
     heroSub: '分析越狱 iPhone 上的 App，或通过 ChatComputer 分析 macOS App。独立实现选定行为，交付可运行 App，每一项结论都有证据来源。',
     heroStart: '开始探索', heroDocs: '阅读文档', heroDiscord: '到 Discord 交流', factPhases: '个支持平台', factTested: '台指定 iPhone 已测', factProgress: '默认原型评分',
     workflowTitle: '两个阶段，一条证据链。', workflowIntro: '从观察原版到审阅独立实现；每个阶段都留下可复查的案例。',
@@ -17,7 +17,7 @@ const translations = {
     noteTwoTitle: '每个结论都能找到依据。', noteTwoText: '可选的 iOS 原生分析使用 Ghidra 或 Hopper；macOS 界面证据证明选定行为，不代表深层函数语义。',
     noteThreeTitle: '只衡量选定的范围。', noteThreeText: '原版与独立 App 在同一准确环境中分别运行。交付明确列出通过行为、可见差异与未知范围。',
     platformsTitle: '越狱 iOS，也支持 macOS。',
-    platformsIntro: '共用证据工作流，平台工具各自独立。v0.2.0-beta.1 中的 macOS 为实验性预览支持。',
+    platformsIntro: '共用证据工作流，平台工具各自独立。v0.2.0 中的 macOS 仍为实验性支持。',
     iosPlatformTitle: '越狱 iOS',
     iosPlatformText: '保留已有 iOS 16／17／26 工作流：已安装 App、沙盒取证、有界界面重放和独立签名复刻。',
     iosPlatformLink: '指定手机证据与限制',

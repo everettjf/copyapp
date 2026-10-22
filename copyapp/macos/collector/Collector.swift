@@ -7,7 +7,7 @@ import IOKit
 import Darwin
 
 let protocolVersion = 2
-let toolVersion = "0.2.0-beta.1"
+let toolVersion = "0.2.0"
 let supportedMethods = ["health", "app_identity", "observe", "launch_app", "export_app", "package_identity", "install_app", "data_file", "quiesce"]
 let fm = FileManager.default
 

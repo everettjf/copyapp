@@ -2,7 +2,7 @@
 
 [English](current-status.md) · [简体中文](current-status.zh-CN.md) · [Documentation](README.md)
 
-**Preview:** [v0.2.0-beta.1](releases/v0.2.0-beta.1.md) supports jailbroken iOS and experimental macOS through ChatComputer. **Latest stable iOS:** [v0.1.2](releases/v0.1.2.md). The phone table below retains its named-device evidence and dates; this preview does not add new iPhone executions.
+**Current release:** [v0.2.0](releases/v0.2.0.md) supports jailbroken iOS and experimental macOS through ChatComputer. **Previous iOS-only release:** [v0.1.2](releases/v0.1.2.md). The phone table below retains its named-device evidence and dates; this release does not add new iPhone executions.
 
 ## macOS preview
 

@@ -2,7 +2,7 @@
 
 [English](README.md) · 简体中文 · [项目首页](../README.zh-CN.md)
 
-Copy APP 的 **v0.2.0-beta.1** 预览版支持越狱 iOS 与实验性 macOS；**v0.1.2** 仍为最新 iOS 稳定版。新用户从 README 的[双平台 AI 任务](../README.zh-CN.md#从这里开始)或[手动 iOS 安装指南](setup.zh-CN.md)开始，再按任务查阅下表。历史检查点保留在 Git 历史，原始设备证据仅留本地忽略目录。
+Copy APP 的 **v0.2.0** 正式版支持越狱 iOS 与实验性 macOS；**v0.1.2** 为上一版仅支持 iOS 的版本。新用户从 README 的[双平台 AI 任务](../README.zh-CN.md#从这里开始)或[手动 iOS 安装指南](setup.zh-CN.md)开始，再按任务查阅下表。历史检查点保留在 Git 历史，原始设备证据仅留本地忽略目录。
 
 | 主题 | 文档 |
 | --- | --- |
@@ -16,7 +16,7 @@ Copy APP 的 **v0.2.0-beta.1** 预览版支持越狱 iOS 与实验性 macOS；**
 | 给 Coding Agent 的首次任务 | [首次运行任务](first-run-agent.zh-CN.md) |
 | 界面脚本 | [手势](ui-gesture-playbooks.zh-CN.md) · [文字输入](ui-text-playbooks.zh-CN.md) |
 | 原生代码与安装包 | [加密包恢复](full-package-decryption.md) · [Hopper 直连](rea-hopper-integration.zh-CN.md) · [不依赖 REA](rea-independence.zh-CN.md) |
-| 已发布版本 | [v0.2.0-beta.1 预览说明](releases/v0.2.0-beta.1.zh-CN.md) · [v0.1.2 稳定版](releases/v0.1.2.zh-CN.md) · [v0.1.1 归档](releases/v0.1.1.zh-CN.md) |
+| 已发布版本 | [v0.2.0 发布说明](releases/v0.2.0.zh-CN.md) · [v0.1.2 归档](releases/v0.1.2.zh-CN.md) · [v0.1.1 归档](releases/v0.1.1.zh-CN.md) |
 | 源码示例 | [iOS／macOS 独立 App](../examples/README.md) · [报告输入格式](../examples/report-inputs/README.md) |
 
 [`examples/report-inputs/`](../examples/report-inputs/README.md) 中的六份 JSON 是试点合成脚本及分析 Skill 使用的**历史目标专属示例**，不是当前设备报告。分析新目标 App 时，必须重新审阅每条结论。

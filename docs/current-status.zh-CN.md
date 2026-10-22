@@ -2,7 +2,7 @@
 
 [English](current-status.md) · 简体中文 · [文档目录](README.zh-CN.md)
 
-**预览版：**[v0.2.0-beta.1](releases/v0.2.0-beta.1.zh-CN.md) 支持越狱 iOS 和通过 ChatComputer 的实验性 macOS。**最新 iOS 稳定版：**[v0.1.2](releases/v0.1.2.zh-CN.md)。下方手机记录保留原设备与时间范围，本预览版不增加新的 iPhone 真机执行声明。
+**当前正式版：**[v0.2.0](releases/v0.2.0.zh-CN.md) 支持越狱 iOS 和通过 ChatComputer 的实验性 macOS。**上一版仅支持 iOS 的版本：**[v0.1.2](releases/v0.1.2.zh-CN.md)。下方手机记录保留原设备与时间范围，本版不增加新的 iPhone 真机执行声明。
 
 ## macOS 预览
 

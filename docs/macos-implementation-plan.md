@@ -1,7 +1,7 @@
 # macOS support implementation and acceptance plan
 
 This ledger records implementation and named acceptance for the experimental
-macOS preview in v0.2.0-beta.1. Keep the
+macOS support in v0.2.0; its experimental scope is unchanged. Keep the
 published iOS v0.1.2 commands, USB transports, historical cases and verification
 semantics working. Add macOS alongside iOS; do not reinterpret a Mac as an iPhone.
 
@@ -59,6 +59,8 @@ later scope. This is neither whole-App parity nor general macOS compatibility.
 The later user instruction authorizes merging this branch and publishing
 `v0.2.0-beta.1`. Earlier no-merge/no-release entries below describe the preceding
 development phase; they no longer block this authorized release.
+The subsequent user instruction publishes the final version as `v0.2.0` without
+the beta suffix; this changes release metadata, not the measured acceptance scope.
 The latest local completion evidence check revalidates 42 conditions, including
 retained failed-case rejection, current collector source identity, unchanged
 tested runtime code, source-linked deliveries and manual evidence hashes.

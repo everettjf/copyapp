@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "copyapp"
-version = "0.2.0b1"
+version = "0.2.0"
 description = "Evidence-backed analysis and selected-behavior rebuilding for jailbroken iOS and macOS apps"
 readme = "README.md"
 license = "Apache-2.0"

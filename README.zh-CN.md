@@ -2,9 +2,9 @@
 
 [English](README.md) · 简体中文 · [繁體中文](docs/readme/README_zh-TW.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Türkçe](docs/readme/README_tr.md) · [Русский](docs/readme/README_ru.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [Deutsch](docs/readme/README_de.md) · [Español](docs/readme/README_es.md) · [Français](docs/readme/README_fr.md) · [Українська](docs/readme/README_uk.md) · [Polski](docs/readme/README_pl.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [العربية](docs/readme/README_ar.md) · [فارسی](docs/readme/README_fa.md) · [Bahasa Indonesia](docs/readme/README_id.md) · [Italiano](docs/readme/README_it.md) · [Ελληνικά](docs/readme/README_el.md)
 
-[项目网站](https://xnu.app/copyapp/) · [图文介绍](docs/articles/copyapp-overview.zh-CN.md) · [文档目录](docs/README.zh-CN.md) · [预览版本](docs/releases/v0.2.0-beta.1.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md) · [Apache-2.0 许可证](LICENSE)
+[项目网站](https://xnu.app/copyapp/) · [图文介绍](docs/articles/copyapp-overview.zh-CN.md) · [文档目录](docs/README.zh-CN.md) · [最新版本](docs/releases/v0.2.0.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md) · [Apache-2.0 许可证](LICENSE)
 
-Copy APP 帮助 Codex 或 Claude Code **分析已安装 App，并独立实现选定行为**，支持 **越狱 iOS 和 macOS**。结论、源码与对照结果保留可复查的证据来源。当前预览版为 **v0.2.0-beta.1**；[v0.1.2](docs/releases/v0.1.2.zh-CN.md) 仍为最新 iOS 稳定版。
+Copy APP 帮助 Codex 或 Claude Code **分析已安装 App，并独立实现选定行为**，支持 **越狱 iOS 和 macOS**。结论、源码与对照结果保留可复查的证据来源。当前正式版本为 **v0.2.0**。macOS 支持仍为实验性；[v0.1.2](docs/releases/v0.1.2.zh-CN.md) 为上一版仅支持 iOS 的版本。
 
 | 目标 | 使用方式 | 状态 |
 | --- | --- | --- |

@@ -2,7 +2,7 @@
 
 [English](macos-support.md) · [实施与验收清单](macos-implementation-plan.md)
 
-**v0.2.0-beta.1** 预览版同时支持越狱 iOS 和实验性 macOS；v0.1.2 仍为最新 iOS 稳定版。iOS 命令、设备链路和 v1 历史 case 保留原有含义。
+**v0.2.0** 正式版同时支持越狱 iOS 和实验性 macOS；v0.1.2 为上一版仅支持 iOS 的版本。iOS 命令、设备链路和 v1 历史 case 保留原有含义。
 当前分支已有采集、有界重放、报告、独立构建和选定交付；自有样例已完成指定行为交付，
 不代表整 App 等价、深层函数分析或任意 Mac 兼容。
 不要用虚拟 UDID 或 IPA 来表示 Mac。

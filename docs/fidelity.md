@@ -1,6 +1,6 @@
 # Bounded reconstruction quality
 
-The v0.2.0-beta.1 preview adds a reviewed **grade target**, default **80/100**, and
+The v0.2.0 release adds a reviewed **grade target**, default **80/100**, and
 **three implementation/check cycles including the first**. Use 70 for a quick
 prototype or 90 for closer detail. This does not measure objective image similarity
 or the proportion of an App's known capabilities. Keep coverage and selected-flow
