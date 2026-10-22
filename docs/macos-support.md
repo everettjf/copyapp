@@ -250,9 +250,9 @@ command proves implementation or delivery, and neither performs deep code analys
 
 Stocks acquisition, three original flows, reviewed discovery/report, independent
 build/install and three rounds of paired behavior now have named guest evidence.
-All nine selected behavior comparisons passed, but the complete 195-pair screenshot
-review records major differences, including offline data/news substitutions,
-menus, hover feedback and dialog stacking. It has no accepted delivery.
+The historical build-4 comparison passed all nine selected behavior comparisons,
+but its complete 195-pair review recorded major differences, including offline
+data/news substitutions, menus, hover feedback and dialog stacking.
 A later Stocks build retains Manage Watchlists beneath Delete confirmation and
 distinguishes Cancel/Delete styling. A verified 28-step guest regression covers
 cancel, subsequent deletion and normal exit; six full screens were inspected.
@@ -260,13 +260,21 @@ This targeted fix does not replace the earlier complete paired review or resolve
 the remaining content/menu differences.
 Build 6 also restores the cold empty-list page and its Add Symbol search entry;
 a separate verified 31-step guest regression covers that state and the modal
-flow, with the failed diagnostic attempt preserved. It has no new paired delivery.
+flow, with the failed diagnostic attempt preserved.
 A subsequent paired attempt stopped in the original search flow when a visible AAPL
 row was temporarily absent from the AX tree. After inspecting the saved failure,
 a revised search flow passed separately on both Apps using asserted ticker-text
 points and settling waits. It requires the reviewed 1080×670 window at (100,56)
 on the 1280×800 screenshot display. The refreshed report retains the same 11 known
-capabilities and three targets; this replay repair does not establish visual parity.
+capabilities and three targets. Version 7 then completed a new three-round paired
+`check-5`: 9/9 selected behavior comparisons passed. All 207 full screenshot pairs
+were reviewed (414 image occurrences, 320 exact unique full PNG hashes), and
+`visual-review-5` verifies review coverage with zero dimension mismatches and
+207 major differences. The corrected dialog stack and cold empty-list state are
+visible, while offline content, menus, hover feedback, styling and example metrics
+still differ. The declared starting task states match in all nine comparisons;
+that does not make their content visually equivalent. Stocks has no accepted
+delivery or verified capability coverage.
 
 The owned fixture now has a verified selected-behavior delivery. The editor's
 fresh three-round `check-3` passed nine selected behavior comparisons, and all
@@ -286,6 +294,13 @@ The later snapshot App-state probe failed: a take created its metadata but retur
 an agent error, and the editor subsequently had a new process and lost unsaved
 test text. The environment was recovered; running-App preservation remains a
 failed gate. Save needed work and use discardable fixture state for snapshot tests.
+
+A later live guest data check captured the owned fixture's explicitly selected
+Bundle-ID preference plist. The single-file case, value-free key/type structure
+and a separately sourced formal report all verify. `/fixture.wrap` is a boolean;
+native panel metadata types are also recorded without values. This is a later
+observation than the UI flows, not an atomic database snapshot, proof of every
+key's writer or complete App-data acceptance. Raw archived bytes remain local.
 
 ## Build and install an independent App
 

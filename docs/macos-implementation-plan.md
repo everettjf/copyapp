@@ -619,6 +619,37 @@ Earlier TextEdit static distribution probes remain separate evidence.
   because old clock masks referenced removed captures. `conditions-2.json`
   regenerates the same clock-only masks from the frozen script; full images still
   require review. No new Stocks delivery is claimed by these preparation stages.
+- Version 7 subsequently completed `check-plan-6` and three-round `check-5`:
+  **9/9 selected behavior comparisons passed**, including the revised search flow.
+  Every one of its 207 full screenshot pairs was reviewed (414 occurrences,
+  **320 exact unique full PNG hashes**). All referenced image bytes were rehashed
+  against the comparison and review index before producing `visual-review-5`;
+  both cases verify. Nine declared task starting states are equivalent and all
+  1280×800 image dimensions match, but **207 major differences remain**. The
+  retained Manage sheet beneath Delete and the cold No Symbols/Add Symbol state
+  are now visible. Offline prices/curves, replaced news, incomplete menus/toolbar,
+  missing hover feedback, styles and AAPL-like example MSFT statistics differ.
+  Round-three original search briefly captures a blank chart before its heading
+  assertion; this does not invalidate that heading assertion or prove chart
+  readiness. See `visual-judgments-check5.json`,
+  `full-screen-review-build7-check5-index.json` and `check5-reviewed-findings.json`
+  in the same ignored case root. Historical failed/partial runs and build-4's
+  adverse 195-pair review remain preserved. This supplies a refreshed paired
+  review, not an accepted Stocks delivery or verified capability coverage.
+- A live selected-data check now uses the owned original fixture acquisition:
+  `preferences-data-1` captures exactly
+  `/Users/agent/Library/Preferences/dev.copyapp.fixture.Behavior.plist` through
+  a fresh pinned collector session. Its 1,246 bytes hash to
+  `f7d8c3299c3b80684cab64e2d8f2ca13c87ee9998ba311fc0162934e11742225`.
+  `preferences-structure-1` verifies a non-truncated dictionary with boolean
+  `/fixture.wrap` and native panel metadata key/types, omitting scalar values.
+  `report-with-preferences-1` imports the structure with an explicit reviewed
+  citation and separately verifies. These cases are under
+  `cases/macos-owned-fixture-20261021/`. The known inventory remains nine units;
+  the original selected-behavior delivery retains its original report. This later
+  data observation is not simultaneous with the UI evidence, does not identify
+  every key's writer and establishes neither complete App data nor SQLite/WAL
+  consistency. Raw bytes remain in ignored local child cases.
 
 Record host/guest OS builds, VM registration and snapshot identity, tool versions,
 app Bundle ID/version/path, architecture, signing facts and full package inventory.
