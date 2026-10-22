@@ -44,11 +44,11 @@ separate capability and cannot be invented to satisfy a gate.
 | Stage | Required work | Acceptance evidence | State |
 | --- | --- | --- | --- |
 | P0 | Pin ChatComputer; ready desktop, input lease, screenshots, coordinates; file exchange; exact identity; snapshot recovery | Live probe cases, including failures; restart must not accept stale results | Named guest ready; snapshot App-state preservation failed |
-| P1 | `copyapp mac` CLI; target/environment identity; versioned cases and validators; old iOS compatibility | Positive cases and negative tampering/cross-platform tests; baseline and final iOS suite | Implemented; 404-test regression and isolated wheel passed |
+| P1 | `copyapp mac` CLI; target/environment identity; versioned cases and validators; old iOS compatibility | Positive cases and negative tampering/cross-platform tests; baseline and final iOS suite | Implemented; 409-test regression and isolated wheel passed |
 | P2 | Guest collector; app/package/data acquisition; AX/window observations; bounded playbooks | Same-name app rejection, ambiguous element rejection, output and persistence assertions | Selected guest/UI and one preference-file evidence verified; broader data limits remain explicit |
 | P3 | Discovery, reviewed report/specification, coverage plan, agent task, host build, guest install, paired check, visual review, delivery | End-to-end source-linked cases with explicit scope and remaining differences | Owned-fixture selected delivery verified; Stocks bounded 80-grade milestone met, strict delivery deferred |
 | P4 | Control takeover, interrupted action, reconnect, snapshot restore, time and data resets | No blind action retries; new run/session identity; rejected old results | Controlled reply-loss/reconnect verified; human takeover missing and App-state recovery unresolved |
-| P5 | Agent-first bilingual docs, wheel resources, examples and clean installation | Installed-wheel checks; two sample applications and one physical Mac recheck | Docs/wheel/two guest samples ready; manual physical-host functional recheck recorded, canonical physical CLI acceptance open |
+| P5 | Agent-first bilingual docs, wheel resources, examples and clean installation | Installed-wheel checks; two sample applications and one physical Mac recheck | Docs/wheel/two guest samples ready; named same-binary physical selected-flow recheck passed |
 | M2 | Optional runtime/native function investigation | Debug fixture first, then named third-party build; report actual entitlement limits | Pending |
 
 First-stage effort estimate is 13–20 developer days, revised after P0. This is not
@@ -98,6 +98,46 @@ Earlier TextEdit static distribution probes remain separate evidence.
   or additional guest capability coverage is claimed. Both Apps were normally
   quit with wrapping On. Human takeover and snapshot App-state preservation
   remain open. Earlier locked-host evidence stays intact.
+
+## Same-binary physical follow-up and remaining recovery gate (2026-10-21)
+
+- The acquired guest original (`4e25dd26…`) was then launched on the physical
+  macOS 27.0 / 26A428 arm64 host, after verifying its acquisition case. Its exact
+  path, running PID and executable hash were recorded. One manual round of all
+  three selected behaviors passed: Unicode file save/open; wrapping Off after
+  quit/relaunch; two independent document/inspector counts and first-document
+  JSON export, using Window menu selection with the second document retained.
+- The original and the already physically checked guest-tested independent editor
+  (`673de8ce…`) saved identical 18-byte UTF-8 text and JSON summaries. Full AX trees
+  and screenshots support the exact-original follow-up; both Apps exited with
+  wrapping On. This closes the named physical **selected-behavior recheck** in
+  release item 7. A physical CLI transport was not required by that item and was
+  not added. It does not establish whole-App equivalence, arbitrary-Mac support
+  or pixel parity, and does not alter guest delivery/coverage.
+- Evidence: `output/physical-mac-recheck-20261021/same-binary-review.json` and
+  `same-binary-report.md`, with 26 hash references. The earlier different-host-build
+  review is preserved. Initial captures 02/03 show an Open panel whose first Open
+  action was ineffective; after current-state inspection, confirmed captures
+  04/05 establish document readback and Wrapping Off. The intermediate observations
+  are diagnostics, not successful behavior evidence.
+- A new read-only human-takeover preparation rechecked the pinned VM/environment,
+  collector health, status and full screenshot. The desktop is ready and control
+  is free. No input or snapshot was submitted. Actual human participation remains
+  pending; a programmatic click is not being reported as a human test. Local
+  preparation: `output/macos-human-takeover-20261021/`.
+- Public upstream release metadata was rechecked: the newest listed release is
+  v0.9.11, and its tag points to the already reviewed revision
+  `c774a4ceadc7dc17a589a1de8f5a40fe36c2a649`. Its VM factory uses the saved machine
+  and hardware identifiers and saved network MAC; no random identity cause was
+  found in that source. The current main still contains the silent cold-boot
+  fallback after saved-state restore/resume failure. This supports a diagnostic
+  hypothesis, not the cause of the installed build's observed failure. No new
+  snapshot, restore or runtime patch was submitted.
+- Sources: [release](https://github.com/chatcomputer/chatcomputer/releases/tag/v0.9.11),
+  [VM factory](https://github.com/chatcomputer/chatcomputer/blob/v0.9.11/Packages/ChatComputerKit/Sources/VMKit/VMConfigurationFactory.swift),
+  [VM controller](https://github.com/chatcomputer/chatcomputer/blob/main/Packages/ChatComputerKit/Sources/VMKit/VirtualMachineController.swift).
+  The failed unsaved-App-state preservation gate and real human takeover remain
+  open; the full first-stage goal is not complete.
 
 ## Required evidence model
 
