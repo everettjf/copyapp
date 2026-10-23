@@ -1,0 +1,65 @@
+# Standard iPhone mode (development branch)
+
+[中文](ios-standard-mode.zh-CN.md) · [Design and acceptance gates](ios-device-support-plan.zh-CN.md)
+
+This checkout adds explicit `--mode standard|auto|enhanced` routes. Unflagged historical iOS commands retain their existing contracts. This is development work, outside the published v0.2.0 support boundary. macOS continues to use `copyapp mac` and ChatComputer identities.
+
+The named standard-mode sample is an iPhone 11 (`iPhone12,1`) on iOS 26.0.1, after an authorized reboot left its jailbreak inactive. SSH, Frida and iOS MCP were unavailable. It has previous jailbreak files and is not a pristine never-jailbroken device. A development-signed iCTRL runner was installed over USB; a selected Calculator addition flow was observed, independently implemented, signed, installed and compared on that same phone. Both screenshot pairs were reviewed; minor differences remain. The bounded fidelity milestone reached 87.4/100 in its first cycle. This is a selected-scope reviewer grade, separate from capability coverage and whole-App parity. A second ordinary-device/system combination remains unverified.
+
+Use the repository virtual environment. Confirm the exact UDID and Bundle ID, Developer Mode, pairing/trust, Xcode and a valid development signing profile. A green heartbeat permits an attempt; it does not establish working XCTest actions or profile coverage.
+
+```sh
+.venv/bin/copyapp devices
+.venv/bin/copyapp onboard --udid <UDID> --stage analyze --mode standard --out cases/standard-onboard
+.venv/bin/copyapp setup ictrl --help
+```
+
+For the runner's normal signed installation, use the setup command's explicit `--transport usb`. This route never falls back to TrollStore or SSH. Prepare a signed runner IPA for the named device using the existing iCTRL setup instructions. Standard playbooks own a fresh XCTest session on the tested iOS 26 route and stop their runner on exit; screenshots come from the exact USB device. A black launch frame receives a bounded Home/activation recovery before flow actions. An uncertain action reply is retained as a failure, without automatic tap replay.
+
+For supplied flows:
+
+```sh
+.venv/bin/copyapp analyze --mode standard --udid <UDID> --bundle <BUNDLE> \
+  --script <FLOW.json> --out cases/standard-analysis
+.venv/bin/copyapp verify cases/standard-analysis
+.venv/bin/copyapp report --case cases/standard-analysis --findings <REVIEWED.json> \
+  --feature-spec <SPEC.json> --out cases/standard-report
+.venv/bin/copyapp analysis-delivery --task cases/standard-analysis \
+  --report cases/standard-report --out cases/standard-analysis-delivery
+```
+
+`prepare-app --mode standard` uses the same UI-first collector. Collection produces `TASK.md`, not a completed report. Review every screenshot and raw observation, distinguish observed/inferred/unknown claims, retain each `source_script_sha256`, and provide post-action assertions. The new `ios_behavior_report` and `ios_behavior_delivery` formats do not certify native functions or sandbox structure. Enhanced function analysis uses the existing explicit investigation and deep-report workflow.
+
+The current coding agent can keep one resumable parent:
+
+```sh
+.venv/bin/copyapp copy --mode standard --agent-provider current \
+  --udid <UDID> --bundle <BUNDLE> --rebuilt-bundle <OWN_BUNDLE> \
+  --auto-discover --output-dir output/<UNIQUE_JOB>
+```
+
+It writes handoff tasks and returns an incomplete status until their evidence exists. For discovery, author and inspect 3–12 distinct bounded flows, then run `discover-check --mode standard --backend ictrl` at the task's specified path. Supplied `--script` or an accepted `--discovery` case can replace `--auto-discover`. Resume with the same flags and exact job directory plus `--resume`. No nested agent CLI is launched. Do not retry an uncertain failed flow until its UI state is reviewed; `--resume --retry-failed` explicitly archives and retries failed analysis flows. Failed discovery replay requires its own review and a new case.
+
+Complete the report and analysis-delivery at the pinned paths, then follow `rebuild-preparation/task/TASK.md`. Freeze known capabilities and the fidelity milestone before implementation. Build an independent source tree with its own Bundle ID; standard mode requires development signing and `install --transport usb`. Run paired checks, inspect every screenshot pair, and create visual-review and agent-delivery without `--run`. The parent retains strict completion gates: a bounded fidelity milestone alone does not complete it. Omitted capabilities remain explicit.
+
+Host-side package inputs are optional and independent of phone privilege:
+
+```sh
+sh scripts/bootstrap-ios-host-tools.sh --all
+# Authenticate interactively in the user's terminal; never put a password or token in a task.
+toolchains/bin/ipatool auth login
+.venv/bin/copyapp store-download --bundle <BUNDLE> --out cases/store-package
+.venv/bin/copyapp package-import --ipa <FILE.ipa> --bundle <BUNDLE> --out cases/imported-package
+.venv/bin/copyapp decrypt-offline --package cases/imported-package \
+  --credential-ref <LOCAL_ALIAS> --out cases/offline-package
+```
+
+Check `--help` for exact arguments. `ipatool` is pinned to v2.7.0; FairPlay sources are pinned to commit `1bad106ee1698c6d9c483f67d898183ffa4c6eb3` and checked by four source hashes. Download records bind the executable hash/version, requested identity and actual package metadata. License acquisition requires explicit `--acquire-license`. Raw account output is not retained. Store authentication and a genuine successful download remain acceptance prerequisites, not established by host-tool installation.
+
+Store a matching 16-byte credential only in the ignored `cases/credentials/fairplay/<LOCAL_ALIAS>.bin`. Its contents, hash and local path are excluded from evidence. Initial credential acquisition is a separate preparation task; this adapter does not obtain it from an ordinary phone. Offline recovery audits all binaries and resources and currently accepts audited thin ARM64 encrypted inputs. FAT inputs are rejected. Structural success is labelled `structural_only`, not verified plaintext; an already unencrypted package is unchanged passthrough and never claimed as decryption. Genuine successful decryption and an independent matching-code cross-check remain open acceptance gates.
+
+`offline-cross-check --offline <OFFLINE_CASE> --device <VERIFIED_DEVICE_DECRYPT_CASE> --out <NEW_CASE>` compares every recovered program, including extensions, against a verified historical `decrypted_package`. It requires matching version/build, encrypted-byte hash, UUID, encryption span and recovered-byte hash. This separate case retains both collection identities; it does not change the original offline `structural_only` label or make different-time observations simultaneous. It requires a real positive offline sample for device acceptance.
+
+Pass repeated `--package-case` to UI-first analyze/prepare-app/copy to attach verified package evidence. Another Bundle ID is rejected; different versions remain `bundle_only`, while matching version/build is `metadata_match`. Neither establishes the installed runtime binary identity. Cite `package.1` etc. with finding `basis: "package"`; UI findings cite their flow IDs. Runtime and code claims require their own matching evidence.
+
+Keep raw packages, license files, screenshots and traces ignored and local. Run `copyapp verify` on every case. New v2 iOS kinds dispatch explicitly; they never fall back to a legacy report filename. The implementation plan's remaining live-device, real-credential and regression gates still apply.

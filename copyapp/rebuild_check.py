@@ -371,12 +371,18 @@ def _write_report(output: Path, record: dict) -> None:
 
 
 def rebuild_check(udid: str, spec_path: Path, pairs: List[Tuple[str, Path, Path]],
-                  output: Path, backend: str = "ios-mcp", resume: bool = False) -> Tuple[Path, bool]:
+                  output: Path, backend: str = "ios-mcp", resume: bool = False,
+                  mode: str = None) -> Tuple[Path, bool]:
     if backend not in ("ios-mcp", "ictrl"):
         raise ValueError("unsupported UI backend")
     if output.exists() and any(output.iterdir()) and not resume:
         raise FileExistsError(f"output directory is not empty: {output}")
     spec, inputs = _preflight(spec_path, pairs)
+    mode = mode or spec.get("execution_mode")
+    if mode not in (None, "standard", "enhanced"):
+        raise ValueError("invalid rebuild execution mode")
+    if mode == "standard" and (backend != "ictrl" or any(item["final_view"] is not None for item in inputs)):
+        raise ValueError("standard comparison requires ictrl and playbook assertions without Frida UIKit gates")
     spec_hash = sha256_file(spec_path)
     prefix = hashlib.sha256(udid.encode()).hexdigest()[:16]
     previous = None
@@ -391,6 +397,7 @@ def rebuild_check(udid: str, spec_path: Path, pairs: List[Tuple[str, Path, Path]
         if (previous.get("kind") != "rebuild_check" or previous.get("status") == "complete" or
                 previous.get("device_id_sha256_prefix") != prefix or
                 previous.get("ui_backend") != backend or
+                previous.get("execution_mode") != mode or
                 previous.get("feature_spec_sha256") != spec_hash or
                 previous.get("pairs") != inputs):
             raise ValueError("resume device, spec, backend or playbooks differ")
@@ -415,6 +422,8 @@ def rebuild_check(udid: str, spec_path: Path, pairs: List[Tuple[str, Path, Path]
         record.setdefault("history", []).append({"at": _now(),
                                                    "previous_status": previous["status"]})
     record["status"] = "failed"
+    if mode is not None:
+        record["execution_mode"] = mode
     record["flows"] = []
     record.pop("error", None)
     try:
@@ -434,7 +443,12 @@ def rebuild_check(udid: str, spec_path: Path, pairs: List[Tuple[str, Path, Path]
                     if not _prepare_run(path, bundle, item["scenario_id"], prefix, backend,
                                         resume, wants_view):
                         if backend == "ictrl" and not connection:
-                            connection["port"] = session.enter_context(ictrl_tunnel(udid))
+                            if mode == "standard":
+                                connection["port"] = session.enter_context(ictrl_tunnel(
+                                    udid, require_xctest=True, log_path=output / "xcuitest.log"))
+                                connection["mode"] = "standard"
+                            else:
+                                connection["port"] = session.enter_context(ictrl_tunnel(udid))
                         if wants_view:
                             _, done = capture_flow(udid, backend, Path(item[script_key]), path, **connection)
                         else:

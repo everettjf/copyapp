@@ -130,6 +130,10 @@ def verify_case(directory: Path) -> bool:
     # cannot bypass platform and kind-specific validation.
     if (directory / "manifest.json").is_file():
         manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
+        if (manifest.get("platform") == "ios" or
+                str(manifest.get("kind", "")).startswith("ios_")):
+            from copyapp.ios_cases import verify_ios_case
+            return verify_ios_case(directory)
         if manifest.get("kind") in {"fidelity_plan", "fidelity_check"}:
             from copyapp.fidelity import verify_fidelity
             return verify_fidelity(directory)
@@ -156,7 +160,8 @@ def verify_case(directory: Path) -> bool:
         ok = verify_survey(directory)
         if ((directory / "playbook.json").is_file() and
                 manifest.get("status") == "complete" and
-                manifest.get("ui_backend") == "ios-mcp"):
+                (manifest.get("ui_backend") == "ios-mcp" or
+                 manifest.get("execution_mode") == "standard")):
             # A saved accessibility-ready flag cannot turn a compositor-black
             # image into valid visual evidence. Reinspect pixels on verification.
             try:

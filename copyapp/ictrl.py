@@ -15,7 +15,7 @@ from copyapp.source_root import source_root
 
 ICTRL_UI_METHODS = frozenset({
     "logs", "device_info", "page_source", "screen_text", "find_element",
-    "tap", "swipe", "long_press", "double_tap", "type", "launch_app",
+    "tap", "swipe", "long_press", "double_tap", "type", "launch_app", "activate_app",
     "terminate_app", "home", "screenshot",
 })
 DEFAULT_CLIENT = source_root() / "toolchains" / "ictrl-macos"

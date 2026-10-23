@@ -11,6 +11,7 @@ Copy APP 的 **v0.2.0** 正式版支持越狱 iOS 与macOS；**v0.1.2** 为上�
 | 系统怎样协作 | [架构与证据模型](architecture.zh-CN.md) |
 | 带图的项目介绍 | [Copy APP：分析与复刻实验室](articles/copyapp-overview.zh-CN.md) |
 | 已测手机与限制 | [当前状态](current-status.zh-CN.md) |
+| 普通手机基础路径与越狱增强 | [开发版用法与边界](ios-standard-mode.zh-CN.md) · [验收账本](ios-device-support-acceptance.md) · [实施与验收方案](ios-device-support-plan.zh-CN.md) |
 | 分析到复刻 | [工作流](copy-workflow.zh-CN.md) |
 | 确定可实现的目标 | [覆盖目标](coverage-targets.zh-CN.md) |
 | 给 Coding Agent 的首次任务 | [首次运行任务](first-run-agent.zh-CN.md) |

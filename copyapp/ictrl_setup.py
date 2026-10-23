@@ -315,7 +315,10 @@ def setup_ictrl(udid: str, output: Path, ssh_port: int = 22222,
                 ssh_identity: Path = Path("cases/ssh/id_ed25519"),
                 ssh_known_hosts: Path = Path("cases/ssh-known-hosts"),
                 runner_ipa: Optional[Path] = None, reinstall: bool = False,
-                auto_approve_first_pair: bool = False) -> Tuple[Path, bool]:
+                auto_approve_first_pair: bool = False,
+                transport: str = "auto") -> Tuple[Path, bool]:
+    if transport not in ("auto", "usb"):
+        raise ValueError("runner transport must be auto or usb")
     if not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", udid):
         raise ValueError("invalid device UDID")
     if output.exists() and any(output.iterdir()):
@@ -360,6 +363,10 @@ def setup_ictrl(udid: str, output: Path, ssh_port: int = 22222,
                 asyncio.run(_install_usb_ipa(udid, ipa))
                 state["stages"].append("runner_usb_installed")
             except Exception as usb_exc:
+                if transport == "usb":
+                    raise RuntimeError("USB runner installation failed; configure a valid development "
+                                       "signature and provisioning profile for this device. "
+                                       "USB-only mode does not use TrollStore or SSH.") from usb_exc
                 if not ssh_identity.is_file() or not ssh_known_hosts.is_file():
                     raise RuntimeError("USB installation failed (" +
                                        f"{type(usb_exc).__name__}: {str(usb_exc)[:180]}); " +

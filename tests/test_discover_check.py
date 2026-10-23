@@ -36,7 +36,7 @@ class DiscoveryCheckTest(unittest.TestCase):
         self.calls = []
         self.fail_first = False
 
-    def replay(self, udid, backend, script, output):
+    def replay(self, udid, backend, script, output, **kwargs):
         self.calls.append(script.name)
         plan = json.loads(script.read_text())
         output.mkdir(parents=True)
@@ -57,6 +57,7 @@ class DiscoveryCheckTest(unittest.TestCase):
              'sha256': sha256_file(output / 'step-03-screenshot.jpg'),
              'stability': {'stable': True}, 'ready_found': True}]
         write(output / 'manifest.json', {
+            **({'execution_mode': kwargs['mode']} if kwargs.get('mode') else {}),
             'status': 'complete' if complete else 'failed',
             'bundle_id': 'com.example.app', 'ui_backend': backend,
             'device_id_sha256_prefix': hashlib.sha256(udid.encode()).hexdigest()[:16],
@@ -110,6 +111,21 @@ class DiscoveryCheckTest(unittest.TestCase):
         plan['steps'][1]['label'] = 'Changed'
         write(self.scripts[0], plan)
         self.assertFalse(verify_case(self.output))
+
+    def test_standard_mode_is_bound_to_replay_and_cannot_change_on_resume(self):
+        with patch('copyapp.discover_check.run_playbook', side_effect=self.replay) as replay:
+            _, complete = check_discovered_flows(
+                '00008020-1111111111111111', 'com.example.app', self.scripts,
+                self.output, backend='ictrl', mode='standard')
+            self.assertTrue(complete)
+            self.assertTrue(verify_case(self.output))
+            self.assertEqual(replay.call_args.kwargs, {'mode': 'standard'})
+            with self.assertRaisesRegex(ValueError, 'execution mode'):
+                check_discovered_flows('00008020-1111111111111111', 'com.example.app',
+                                       self.scripts, self.output, backend='ictrl', resume=True)
+        with self.assertRaisesRegex(ValueError, 'iCTRL'):
+            check_discovered_flows('00008020-1111111111111111', 'com.example.app',
+                                   self.scripts, self.root / 'bad', mode='standard')
 
 
 if __name__ == '__main__':

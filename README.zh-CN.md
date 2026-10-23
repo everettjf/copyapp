@@ -8,6 +8,8 @@ Copy APP 帮助 Codex 或 Claude Code **分析已安装 App，并独立实现选
 
 **第一次使用？** [选 iOS 或 macOS，复制任务给 Agent](#从这里开始)。依赖检查和本地工具安装交给 Agent，设备信任与系统授权按提示完成。
 
+开发分支新增[普通 iPhone UI 优先模式与可选主机包工具](docs/ios-standard-mode.zh-CN.md)。已测 iOS 26 样本使用重启后越狱未激活的手机；更多普通设备和真实凭据验收仍待完成。
+
 | 目标 | 使用方式 | 状态 |
 | --- | --- | --- |
 | 越狱 iOS | USB 真机、OpenSSH、iOS MCP／iCTRL，按需使用 Frida | 保留已测 iOS 16／17／26 工作流 |

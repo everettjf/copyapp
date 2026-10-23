@@ -307,7 +307,7 @@ def create_agent_task(report: Path, plan: Path, output: Path,
              f"- 建议工程路径：`{project}`；参考设备：`{spec.get('reference_device', '?')}`。",
              f"- 已有原版脚本：{ready_count}/{len(records)} 个选定流程；报告共有 {len(known)} 个流程；"
              f"未解决的证据缺口：{len(records)-ready_count}。",
-             f"- 入口：{link(report / 'report.md', '深入报告')} · "
+             f"- 入口：{link(report / 'report.md', 'UI 行为报告' if index.get('kind') == 'ios_behavior_report' else '深入报告')} · "
              f"{link(report / 'feature-spec.json', '功能规格')} · "
              f"{link(plan / 'runbook.md', '对照脚本计划')}。", "",
              "## 阶段覆盖目标", "",

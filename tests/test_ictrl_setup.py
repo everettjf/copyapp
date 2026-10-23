@@ -43,6 +43,31 @@ def make_ipa(path: Path, minimum: str) -> None:
 
 
 class ICtrlSetupTest(unittest.TestCase):
+    def test_usb_only_runner_failure_never_falls_back_to_trollstore(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            client = root / "ictrl"
+            client.write_bytes(b"cli")
+            ipa = root / "runner.ipa"
+            make_ipa(ipa, "16.0")
+            identity, hosts = root / "id", root / "known_hosts"
+            identity.touch()
+            hosts.touch()
+            with patch("copyapp.ictrl_setup._device", return_value={
+                    "ProductVersion": "26.0.1", "UniqueDeviceID": UDID}), \
+                 patch("copyapp.ictrl_setup._build_client", return_value=client), \
+                 patch("copyapp.ictrl_setup.configured_ictrl_runner_bundle", return_value=None), \
+                 patch("copyapp.ictrl_setup._installed_app", return_value={}), \
+                 patch("copyapp.ictrl_setup._install_usb_ipa", side_effect=RuntimeError("bad signature")), \
+                 patch("copyapp.ictrl_setup.install_trollstore_ipa") as trollstore, \
+                 patch("copyapp.ictrl_setup._usb_forward") as forward:
+                path, ready = setup_ictrl(UDID, root / "case", ssh_identity=identity,
+                                          ssh_known_hosts=hosts, runner_ipa=ipa, transport="usb")
+            self.assertFalse(ready)
+            self.assertIn("USB-only", json.loads(path.read_text())["error"]["message"])
+            trollstore.assert_not_called()
+            forward.assert_not_called()
+
     def test_xcuitest_one_shot_pairing_is_explicit(self):
         process = MagicMock()
         process.poll.return_value = None

@@ -95,11 +95,38 @@ def _check_fresh_launch_frame(ui: ExperimentUI, bundle: str, output: Path,
     raise RuntimeError("fresh launch remained near-uniform black after reactivation")
 
 
+def _check_standard_launch_frame(ui: ExperimentUI, bundle: str, output: Path, record: dict) -> None:
+    """Reject black launch frames and bound Home/activate recovery before actions."""
+    frames = record["standard_launch_frames"] = []
+    for phase in ("initial", "after_reactivation"):
+        path = output / f"standard-launch-{phase}.jpg"
+        ui.screenshot(path)
+        health = frame_health(path.read_bytes())
+        _record_file(output, path, record["evidence"])
+        frames.append({"path": path.name, "sha256": sha256_file(path),
+                       "source": ui.last_screenshot_source, **health})
+        if not health["near_uniform_black"]:
+            if ui.frontmost() != bundle:
+                raise RuntimeError("target left foreground during standard launch check")
+            return
+        if phase == "initial":
+            ui.client.call_ui("home")
+            ui.launch(bundle)
+            record["fresh_launch_render_recovery"] = "home_then_xctest_activate"
+            if ui.frontmost() != bundle:
+                raise RuntimeError("target could not reactivate; unlock the device before retrying")
+    raise RuntimeError("standard launch remained black; inspect screen/lock state before retrying")
+
+
 def run_playbook(udid: str, backend: str, script: Path, output: Path,
                  port: Optional[int] = None, ictrl_client: Path = DEFAULT_CLIENT,
-                 trace_observer=None) -> Tuple[Path, bool]:
+                 trace_observer=None, mode: Optional[str] = None) -> Tuple[Path, bool]:
     if backend not in ("ios-mcp", "ictrl"):
         raise ValueError("unsupported UI backend")
+    if mode not in (None, "standard", "enhanced"):
+        raise ValueError("invalid execution mode")
+    if mode == "standard" and (backend != "ictrl" or trace_observer is not None):
+        raise ValueError("standard playbooks require ictrl and cannot attach runtime observers")
     plan = json.loads(script.read_text(encoding="utf-8"))
     bundle = plan.get("bundle_id")
     scenario_id = plan.get("scenario_id")
@@ -128,16 +155,22 @@ def run_playbook(udid: str, backend: str, script: Path, output: Path,
         "device_id_sha256_prefix": hashlib.sha256(udid.encode()).hexdigest()[:16],
         "started_at": _now(), "status": "failed", "steps": [], "evidence": [],
     }
+    if mode is not None:
+        record["execution_mode"] = mode
     _record_file(output, script_copy, record["evidence"])
     manifest = output / "manifest.json"
     numbers: Dict[str, int] = {}
     try:
-        tunnel = (ios_mcp_tunnel(udid) if backend == "ios-mcp" else
-                  ictrl_tunnel(udid, ictrl_client)) if port is None else None
+        if mode == "standard":
+            tunnel = (ictrl_tunnel(udid, ictrl_client, require_xctest=True,
+                                  log_path=output / "xcuitest.log") if port is None else None)
+        else:
+            tunnel = (ios_mcp_tunnel(udid) if backend == "ios-mcp" else
+                      ictrl_tunnel(udid, ictrl_client)) if port is None else None
         with ExitStack() as stack:
             own_port = stack.enter_context(tunnel) if tunnel is not None else port
             identity_port = None
-            if backend == "ictrl":
+            if backend == "ictrl" and mode != "standard":
                 try:
                     identity_port = stack.enter_context(ios_mcp_tunnel(udid))
                 except (OSError, RuntimeError, TimeoutError) as exc:
@@ -152,6 +185,9 @@ def run_playbook(udid: str, backend: str, script: Path, output: Path,
         record["error"] = {"type": type(exc).__name__, "message": str(exc)[:400],
                            "step_index": len(record["steps"])}
     finally:
+        log_path = output / "xcuitest.log"
+        if log_path.is_file():
+            _record_file(output, log_path, record["evidence"])
         if trace_observer is not None:
             try:
                 trace_observer.finish()
@@ -171,6 +207,8 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
                identity_port: Optional[int] = None) -> None:
     ui = ExperimentUI(backend, port, ictrl_client, identity_port=identity_port,
                       bundle_id=bundle)
+    ui.standard_mode = record.get("execution_mode") == "standard"
+    ui.device_udid = udid
     record["frontmost_backend"] = (
         "ios-mcp" if identity_port is not None or backend == "ios-mcp" else "ictrl")
     width, height = ui.bounds()
@@ -215,6 +253,8 @@ def _run_steps(udid: str, bundle: str, backend: str, steps: list, plan: dict,
         time.sleep(2.0)
         if backend == "ios-mcp" and record.get("fresh_launch_backend") == "instruments":
             _check_fresh_launch_frame(ui, bundle, output, record)
+        if ui.standard_mode:
+            _check_standard_launch_frame(ui, bundle, output, record)
     if trace_observer is not None:
         if ui.frontmost() != bundle:
             raise RuntimeError("target is not frontmost before trace attachment")
