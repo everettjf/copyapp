@@ -60,6 +60,8 @@ toolchains/bin/ipatool auth login
 
 具体参数以 `--help` 为准。`ipatool` 固定 v2.7.0，FairPlay 固定 commit `1bad106ee1698c6d9c483f67d898183ffa4c6eb3` 并检查四个源文件哈希。下载记录工具哈希／版本、请求身份与实际包元数据；许可获取必须显式 `--acquire-license`，不保留原始账号日志。真实登录后已成功下载免费的 FocusTodo 1.0.4（4），并在上述越狱未激活的 iPhone 11 上通过两条普通模式 UI 流程；主程序、框架和 Widget 仍有加密。工具安装本身不证明登录或下载，登录成功也不等于已有匹配的离线凭据。
 
+新下载使用 `download_provenance_version: 2`，仅从 IPA 的 `iTunesMetadata.plist` 字段 `s` 提取六位商店编号，明确标为 `downloaded_package_metadata`。校验器从保存的 IPA 重读该值；缺失或格式异常时保留未知，不把姓名、Apple ID 或账号会话输出复制到记录中。这不等于独立确认账号地区，旧记录仍按原字符串格式校验。真实再次下载 FocusTodo 的固定外部版本 `893656071` 已匹配，记录包内商店编号 `143465`；四个加密程序的哈希、UUID 和加密范围均与前次一致，整个 IPA 哈希不同。两者都不能证明手机加载的代码字节身份。
+
 从源码目录外运行 wheel 时，把 `COPYAPP_SOURCE_ROOT` 设为包含这些忽略工具与凭据存储的检出目录。默认 ipatool、FairPlay 源码和 credential 查找基于该目录，不依赖 shell 当前目录；显式工具／存储路径仍优先。
 
 匹配的 16 字节 credential 只放在忽略的 `cases/credentials/fairplay/<LOCAL_ALIAS>.bin`，内容、哈希和本地路径不进入证据。首次取得凭据是独立准备任务，适配器不会从普通手机取得它。离线恢复检查全部程序和资源，当前审计范围为 thin ARM64 加密输入，拒绝 FAT。结构成功标为 `structural_only`；原本未加密的输入保留原样，不能算解密成功。有效凭据的真实成功恢复和独立代码交叉核对仍是未完成的验收项。

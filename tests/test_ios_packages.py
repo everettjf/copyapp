@@ -279,6 +279,86 @@ class IosPackageTest(unittest.TestCase):
             self.assertNotIn(b"private@example.test", path.read_bytes())
             self.assertNotIn(SECRET, path.read_bytes())
 
+    def _download_with_metadata(self, metadata, name):
+        source = self.root / (name + ".ipa")
+        shutil.copyfile(self.source, source)
+        with ZipFile(source, "a") as archive:
+            archive.writestr("iTunesMetadata.plist", plistlib.dumps(metadata))
+
+        def run(command, **_kwargs):
+            if "--version" in command:
+                return subprocess.CompletedProcess(command, 0, b"ipatool version 2.7.0", b"")
+            shutil.copyfile(source, Path(command[command.index("--output") + 1]))
+            return subprocess.CompletedProcess(command, 0, b"private account output", b"")
+
+        out = self.root / name
+        with patch("copyapp.ios_packages.subprocess.run", side_effect=run):
+            _, complete = download_package(BUNDLE, out, self.tool)
+        self.assertTrue(complete)
+        self.assertTrue(verify_case(out))
+        return out
+
+    def test_download_records_only_storefront_id_with_explicit_package_basis(self):
+        out = self._download_with_metadata({"s": 143465, "apple-id": "private@example.test",
+                                            "userName": "private person", "token": "private token"}, "storefront")
+        record = read_json(out / "package.json")
+        self.assertEqual(record["download_provenance_version"], 2)
+        self.assertEqual(record["storefront"], {"id": "143465", "basis": "downloaded_package_metadata",
+                                               "source": "input.ipa:iTunesMetadata.plist:s",
+                                               "account_region_verified": False})
+        for path in out.iterdir():
+            if path.suffix in (".json", ".md"):
+                for secret in ("private@example.test", "private person", "private token"):
+                    self.assertNotIn(secret, path.read_text())
+        original = read_json(out / "package.json")
+        for field, forged in (("id", "143441"), ("account_region_verified", True),
+                              ("basis", "account_region_independently_verified")):
+            record = {**original, "storefront": {**original["storefront"], field: forged}}
+            write_json(out / "package.json", record)
+            seal_case(out, "ios_package", status="complete", bundle_id=BUNDLE, source_type="appstore_download")
+            self.assertFalse(verify_case(out))
+        original.pop("download_provenance_version")
+        write_json(out / "package.json", original)
+        seal_case(out, "ios_package", status="complete", bundle_id=BUNDLE, source_type="appstore_download")
+        self.assertFalse(verify_case(out))
+
+    def test_missing_or_nonpublic_storefront_remains_explicitly_unknown(self):
+        for number, value in enumerate([None, True, "private@example.test", "143465-token", 123456789]):
+            with self.subTest(value=value):
+                out = self._download_with_metadata({} if value is None else {"s": value}, f"unknown-{number}")
+                self.assertEqual(read_json(out / "package.json")["storefront"],
+                                 {"id": None, "basis": "unavailable", "account_region_verified": False})
+        out = self._download_with_metadata({"s": "143465"}, "string-storefront")
+        self.assertEqual(read_json(out / "package.json")["storefront"]["id"], "143465")
+
+    def test_historical_download_provenance_is_not_reinterpreted(self):
+        out = self._download_with_metadata({"s": 143465}, "legacy-download")
+        record = read_json(out / "package.json")
+        record.pop("download_provenance_version")
+        record["storefront"] = "account_selected_not_independently_verified"
+        write_json(out / "package.json", record)
+        seal_case(out, "ios_package", status="complete", bundle_id=BUNDLE, source_type="appstore_download")
+        self.assertTrue(verify_case(out))
+
+    def test_malformed_store_metadata_is_a_retained_failed_download(self):
+        source = self.root / "malformed.ipa"
+        shutil.copyfile(self.source, source)
+        with ZipFile(source, "a") as archive:
+            archive.writestr("iTunesMetadata.plist", plistlib.dumps(["not a metadata dictionary"]))
+
+        def run(command, **_kwargs):
+            if "--version" in command:
+                return subprocess.CompletedProcess(command, 0, b"ipatool version 2.7.0", b"")
+            shutil.copyfile(source, Path(command[command.index("--output") + 1]))
+            return subprocess.CompletedProcess(command, 0, b"", b"")
+
+        out = self.root / "malformed-download"
+        with patch("copyapp.ios_packages.subprocess.run", side_effect=run):
+            _, complete = download_package(BUNDLE, out, self.tool)
+        self.assertFalse(complete)
+        self.assertEqual(read_json(out / "package.json")["error"], "invalid_download_or_package")
+        self.assertTrue(verify_case(out))
+
     def test_unreviewed_tool_version_is_rejected_before_account_download(self):
         with patch("copyapp.ios_packages.subprocess.run", return_value=subprocess.CompletedProcess(
                 [], 0, b"ipatool version 9.9.9", b"")) as runner:

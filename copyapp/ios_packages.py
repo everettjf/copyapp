@@ -26,6 +26,22 @@ def _now():
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+def _storefront_provenance(ipa: Path) -> dict:
+    """Whitelist the public storefront ID; never serialize account metadata."""
+    result = {"id": None, "basis": "unavailable", "account_region_verified": False}
+    with ZipFile(ipa) as archive:
+        if "iTunesMetadata.plist" not in archive.namelist():
+            return result
+        metadata = plistlib.loads(archive.read("iTunesMetadata.plist"))
+        if not isinstance(metadata, dict):
+            raise ValueError("invalid iTunes package metadata")
+        value = metadata.get("s")
+        if type(value) in (int, str) and re.fullmatch(r"[0-9]{6}", str(value)):
+            result.update(id=str(value), basis="downloaded_package_metadata",
+                          source="input.ipa:iTunesMetadata.plist:s")
+    return result
+
+
 def package_index(ipa: Path) -> dict:
     result = analyze_ipa(ipa)
     # A package case remains verifiable after being copied into a report.
@@ -59,6 +75,8 @@ def package_index(ipa: Path) -> dict:
         result["declared_platforms"] = platforms
         if "iTunesMetadata.plist" in names:
             metadata = plistlib.loads(archive.read("iTunesMetadata.plist"))
+            if not isinstance(metadata, dict):
+                raise ValueError("invalid iTunes package metadata")
             value = metadata.get("softwareVersionExternalIdentifier")
             if type(value) in (str, int) and re.fullmatch(r"[0-9]+", str(value)):
                 result["external_version_id"] = str(value)
@@ -80,6 +98,8 @@ def _finish_package(output: Path, record: dict) -> Path:
                 raise ValueError("downloaded external version differs from the requested version")
             record["external_version_check"] = ("not_requested" if requested_version is None else
                                                  "matched" if actual_version == requested_version else "unverified")
+            if record.get("download_provenance_version", 1) == 2:
+                record["storefront"] = _storefront_provenance(output / "input.ipa")
         record["bundle_id"] = index["bundle_id"]
         record["ipa_sha256"] = index["ipa_sha256"]
         write_json(output / "package-index.json", index)
@@ -92,6 +112,10 @@ def _finish_package(output: Path, record: dict) -> Path:
         lines += [f"Bundle ID: `{record['bundle_id']}`. SHA-256: `{record['ipa_sha256']}`.", "",
                   "[Static index](package-index.json). Encrypted functions remain unavailable until "
                   "separately recovered and checked. Account-specific license files stay in this ignored case.", ""]
+        if record.get("download_provenance_version") == 2:
+            storefront = record["storefront"]
+            lines += [f"Storefront ID: `{storefront['id'] or 'unknown'}`; basis: `{storefront['basis']}`. "
+                      "This records downloaded-package metadata, not an independent verification of the account region.", ""]
     else:
         lines += ["Download did not complete. Raw account/session output is deliberately not retained. "
                   "Check authentication and App ownership interactively with ipatool, then use a new case.", ""]
@@ -151,7 +175,8 @@ def download_package(bundle: str, output: Path, tool: Optional[Path] = None,
         command.append("--purchase")
     record = {"status": "failed", "source_type": "appstore_download", "created_at": _now(),
               "requested_bundle_id": bundle, "requested_external_version_id": external_version,
-              "requested_platform": "iphone", "storefront": "account_selected_not_independently_verified",
+              "requested_platform": "iphone", "download_provenance_version": 2,
+              "storefront": {"id": None, "basis": "unavailable", "account_region_verified": False},
               "license_acquisition_requested": acquire_license,
               "tool": {"name": "ipatool", "version": match.group().decode(), "sha256": tool_hash},
               "exit_code": None, "error": "download_failed"}
@@ -180,6 +205,9 @@ def download_package(bundle: str, output: Path, tool: Optional[Path] = None,
 
 def validate_package(root: Path, manifest: dict) -> bool:
     record = read_json(root / "package.json")
+    version = record.get("download_provenance_version", 1)
+    if type(version) is not int or version not in (1, 2):
+        return False
     if (record.get("status") != manifest.get("status") or
             record.get("source_type") != manifest.get("source_type") or
             record.get("source_type") not in ("user_import", "appstore_download")):
@@ -198,7 +226,11 @@ def validate_package(root: Path, manifest: dict) -> bool:
             record.get("requested_bundle_id") not in (None, index["bundle_id"])):
         return False
     if record["source_type"] == "user_import":
-        return record.get("original_sha256") == index["ipa_sha256"]
+        return version == 1 and record.get("original_sha256") == index["ipa_sha256"]
+    expected_storefront = (_storefront_provenance(root / "input.ipa") if version == 2 else
+                           "account_selected_not_independently_verified")
+    if record.get("storefront") != expected_storefront:
+        return False
     requested = record.get("requested_external_version_id")
     actual = index.get("external_version_id")
     if requested is not None and actual is not None and requested != actual:
