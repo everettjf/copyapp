@@ -8,7 +8,7 @@ Copy APP helps Codex or Claude Code **analyze installed apps and build independe
 
 **First time?** [Choose iOS or macOS and copy the agent task](#start-here). The agent checks dependencies and installs the local tools; you complete the required device/system confirmations.
 
-Development branch: [standard iPhone UI-first mode and optional host package tools](docs/ios-standard-mode.md). Its named iOS 26 sample used a rebooted phone with the jailbreak inactive; broader ordinary-device and real-credential acceptance remains open.
+Development branch: [standard iPhone UI-first mode and optional host package tools](docs/ios-standard-mode.md). Its named iOS 26 sample used a rebooted phone with the jailbreak inactive. Current agreed development/testing is complete; real-credential offline recovery and cross-checks are deferred in [TODO](TODO.md). Named-device limits remain explicit.
 
 | Target | How it works | Status |
 | --- | --- | --- |

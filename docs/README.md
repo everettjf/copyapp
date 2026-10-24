@@ -12,6 +12,7 @@ Copy APP supports jailbroken iOS and macOS in **v0.2.0**. **v0.1.2** is the prev
 | Illustrated project story | [Copy APP overview (简体中文)](articles/copyapp-overview.zh-CN.md) |
 | Tested phones and open limits | [Current status](current-status.md) |
 | Standard and enhanced iPhone development | [Usage and limits](ios-standard-mode.md) · [Acceptance ledger](ios-device-support-acceptance.md) · [Implementation plan (简体中文)](ios-device-support-plan.zh-CN.md) |
+| Deferred follow-up work | [TODO](../TODO.md) |
 | End-to-end analyze and rebuild | [Workflow](copy-workflow.md) |
 | Choosing a realistic clone goal | [Coverage targets](coverage-targets.md) |
 | Give a coding agent a first task | [First-run agent task](first-run-agent.md) |

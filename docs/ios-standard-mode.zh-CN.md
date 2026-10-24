@@ -66,7 +66,7 @@ toolchains/bin/ipatool auth login
 
 从源码目录外运行 wheel 时，把 `COPYAPP_SOURCE_ROOT` 设为包含这些忽略工具与凭据存储的检出目录。默认 ipatool、FairPlay 源码和 credential 查找基于该目录，不依赖 shell 当前目录；显式工具／存储路径仍优先。
 
-匹配的 16 字节 credential 只放在忽略的 `cases/credentials/fairplay/<LOCAL_ALIAS>.bin`，内容、哈希和本地路径不进入证据。首次取得凭据是独立准备任务，适配器不会从普通手机取得它。离线恢复检查全部程序和资源，当前审计范围为 thin ARM64 加密输入，拒绝 FAT。结构成功标为 `structural_only`；原本未加密的输入保留原样，不能算解密成功。有效凭据的真实成功恢复和独立代码交叉核对仍是未完成的验收项。
+匹配的 16 字节 credential 只放在忽略的 `cases/credentials/fairplay/<LOCAL_ALIAS>.bin`，内容、哈希和本地路径不进入证据。首次取得凭据是独立准备任务，适配器不会从普通手机取得它。离线恢复检查全部程序和资源，当前审计范围为 thin ARM64 加密输入，拒绝 FAT。结构成功标为 `structural_only`；原本未加密的输入保留原样，不能算解密成功。用户已将有效凭据的真实成功恢复和独立代码交叉核对移至 [TODO](../TODO.md)，这些项仍未验证，不阻塞本轮约定交付。
 
 包索引还会记录不支持的 32 位／反字节序 Mach-O，以及主 App 目录外的程序；这些输入可以保留静态包证据，但会阻断整包离线恢复。全部 FAT 都会拒绝，包括所选 ARM64 切片已无加密的情况，因为其他切片尚未审计。
 
