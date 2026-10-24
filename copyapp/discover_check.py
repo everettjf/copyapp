@@ -157,6 +157,8 @@ def validate_discovery_check(output: Path, record: dict) -> bool:
                     checked.get("bundle_id") != record["bundle_id"] or
                     checked.get("device_id_sha256_prefix") != record["device_id_sha256_prefix"] or
                     checked.get("ui_backend") != record["backend"] or
+                    (record.get("execution_mode") is not None and
+                     checked.get("execution_mode") != record["execution_mode"]) or
                     checked.get("scenario_id") != item["scenario_id"] or
                     len(checked.get("steps", [])) != info["step_count"] or
                     [step.get("action") for step in checked["steps"]] !=
@@ -196,7 +198,10 @@ def accepted_playbooks(case: Path, udid: str, bundle: str, backend: str) -> list
 
 def check_discovered_flows(udid: str, bundle: str, scripts: list[Path],
                            output: Path, backend: str = "ios-mcp",
-                           resume: bool = False) -> tuple[Path, bool]:
+                           resume: bool = False,
+                           mode: Optional[str] = None) -> tuple[Path, bool]:
+    if mode not in (None, "standard", "enhanced") or (mode == "standard" and backend != "ictrl"):
+        raise ValueError("standard discovery requires the iCTRL backend")
     if not udid or not bundle or backend not in ("ios-mcp", "ictrl") or \
             not 3 <= len(scripts) <= 12:
         raise ValueError("provide a device, App and 3–12 representative flows")
@@ -220,11 +225,15 @@ def check_discovered_flows(udid: str, bundle: str, scripts: list[Path],
                              "check_root": f"checks/flow-{index:02d}",
                              "check_path": f"checks/flow-{index:02d}/manifest.json"}
                             for index, (path, info) in enumerate(zip(sources, inspected), 1)]}
+    if mode is not None:
+        identity["execution_mode"] = mode
     manifest = output / "manifest.json"
     if resume:
         if not manifest.is_file():
             raise ValueError("resume requires an existing discovery check")
         record = _read(manifest)
+        if record.get("execution_mode") != mode:
+            raise ValueError("resume execution mode differs")
         for key in ("schema_version", "kind", "bundle_id", "device_id_sha256_prefix",
                     "backend"):
             if record.get(key) != identity[key]:
@@ -254,7 +263,8 @@ def check_discovered_flows(udid: str, bundle: str, scripts: list[Path],
             return _save(output, record), False
         script_copy.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(item["source_path"], script_copy)
-        check_manifest, complete = run_playbook(udid, backend, script_copy, check_root)
+        options = {"mode": mode} if mode is not None else {}
+        check_manifest, complete = run_playbook(udid, backend, script_copy, check_root, **options)
         item["check_status"] = "complete" if complete else "failed"
         item["check_sha256"] = sha256_file(check_manifest)
         if not complete or not _verified(check_root):

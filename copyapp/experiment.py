@@ -1,5 +1,6 @@
 """One reproducible on-device UI action with a bounded Frida method trace."""
 
+import asyncio
 import hashlib
 import json
 import math
@@ -89,10 +90,17 @@ class ExperimentUI:
         return str((info.get("system") or {}).get("foreground_app") or "")
 
     def launch(self, bundle: str) -> None:
-        self.client.call_ui("launch_app", {"bundle_id": bundle})
+        method = ("activate_app" if self.backend == "ictrl" and
+                  getattr(self, "standard_mode", False) else "launch_app")
+        self.client.call_ui(method, {"bundle_id": bundle})
 
     def screenshot(self, path: Path) -> str:
-        if self.backend == "ios-mcp":
+        if self.backend == "ictrl" and getattr(self, "standard_mode", False):
+            from copyapp.device_developer import exact_device_screenshot
+            data, route = asyncio.run(exact_device_screenshot(self.device_udid))
+            path.write_bytes(data)
+            self.last_screenshot_source = "usb_" + route
+        elif self.backend == "ios-mcp":
             result = self.client.call_ui("screenshot", {"debug": True})
             data = IOSMCPClient.image_bytes(result)
             self.last_screenshot_source = next(

@@ -303,18 +303,26 @@ def run_doctor(udid: str, output: Path, ssh_port: int = 22222,
                ssh_identity: Path = Path("cases/ssh/id_ed25519"),
                ssh_known_hosts: Path = Path("cases/ssh-known-hosts"),
                ictrl_client: Path = DEFAULT_CLIENT,
-               survey_only: bool = False) -> Tuple[Path, bool]:
+               survey_only: bool = False,
+               standard_only: bool = False) -> Tuple[Path, bool]:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite device baseline: {output}")
     output.mkdir(parents=True)
     probes: Dict[str, Any] = {}
     evidence = []
     try:
-        device_info = asyncio.run(_usb_probes(udid, output, probes, evidence, survey_only))
+        device_info = asyncio.run(_usb_probes(udid, output, probes, evidence,
+                                               survey_only or standard_only))
     except Exception as exc:
         probes["usb_lockdown"] = _error(exc)
         device_info = {"UniqueDeviceID": udid}
-    if survey_only:
+    if standard_only:
+        for key in ("ssh_mobile", "frida_usb", "ios_mcp"):
+            probes[key] = {"status": "not_probed", "reason": "standard mode does not use jailbreak services"}
+        probes["ictrl"] = (_ictrl_probe(udid, ictrl_client)
+                           if probes.get("usb_lockdown", {}).get("status") == "available"
+                           else {"status": "not_probed", "reason": "exact USB device unavailable"})
+    elif survey_only:
         for key in ("ssh_mobile", "frida_usb", "ios_mcp", "ictrl"):
             probes[key] = {"status": "not_probed", "reason": "not needed for first USB survey"}
     elif probes["usb_lockdown"]["status"] == "available":
@@ -352,6 +360,15 @@ def run_doctor(udid: str, output: Path, ssh_port: int = 22222,
     host = _host_probes()
     next_steps = _next_steps(udid, probes, host, ssh_identity, ssh_known_hosts,
                              ssh_port)
+    if standard_only:
+        next_steps = [step for step in next_steps if step["for"] in
+                      {"usb_lockdown", "usb_screenshot", "xcode", "xcodegen_rebuild",
+                       "ictrl_optional", "agent_cli_optional"}]
+        if host.get("development_signing", {}).get("status") != "available":
+            next_steps.append({"for": "development_signing", "action":
+                               "Configure Apple Development signing and a provisioning profile "
+                               "covering the runner/clone Bundle ID and this device; standard "
+                               "mode uses USB installation and does not fall back to TrollStore."})
     if survey_only:
         next_steps = [step for step in next_steps
                       if step["for"] in ("usb_lockdown", "usb_screenshot")]
@@ -360,7 +377,7 @@ def run_doctor(udid: str, output: Path, ssh_port: int = 22222,
                               ensure_ascii=False, indent=2, default=str) + "\n").encode()
     evidence.append(_record(output, "device.json", device_data, "json"))
     lines = ["# Copy APP device setup", "",
-             f"- Probe scope: `{'first USB survey' if survey_only else 'full device baseline'}`",
+             f"- Probe scope: `{'standard device baseline' if standard_only else 'first USB survey' if survey_only else 'full device baseline'}`",
              f"- Device: `{device_info.get('ProductType', 'unknown')}` / iOS {device_info.get('ProductVersion', 'unknown')}",
              f"- UDID: `{udid}`", "",
              "| Capability | Status | Detail |", "| --- | --- | --- |"]
@@ -383,7 +400,7 @@ def run_doctor(udid: str, output: Path, ssh_port: int = 22222,
     evidence.append(_record(output, "report.md", "\n".join(lines).encode(), "text"))
     manifest = {"schema_version": 1,
                 "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                "kind": "device_doctor", "probe_scope": "survey" if survey_only else "full",
+                "kind": "device_doctor", "probe_scope": "standard" if standard_only else "survey" if survey_only else "full",
                 "device_id_sha256_prefix": hashlib.sha256(udid.encode()).hexdigest()[:16],
                 "device": device_info, "probes": probes, "host": host,
                 "next_steps": next_steps, "evidence": evidence}

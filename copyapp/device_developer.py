@@ -17,6 +17,20 @@ from pymobiledevice3.services.dvt.instruments.process_control import ProcessCont
 from pymobiledevice3.services.dvt.instruments.device_info import DeviceInfo
 
 
+async def exact_device_screenshot(udid: str) -> tuple[bytes, str]:
+    """Capture through developer services after rechecking the USB identity."""
+    from pymobiledevice3.lockdown import create_using_usbmux
+
+    device = await create_using_usbmux(serial=udid, connection_type="USB", autopair=False)
+    try:
+        values = await device.get_value()
+        if values.get("UniqueDeviceID") != udid:
+            raise RuntimeError("screenshot USB identity differs from requested device")
+        return await take_screenshot(device, udid, str(values.get("ProductVersion", "")))
+    finally:
+        await device.close()
+
+
 async def list_directory(device, udid: str, ios_version: str, path: str) -> tuple[list[str], str]:
     """List a device directory through the developer transport for this iOS release."""
     major = int(ios_version.split(".", 1)[0]) if re.match(r"^\d+", ios_version) else 0

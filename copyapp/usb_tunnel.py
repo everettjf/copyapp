@@ -169,12 +169,21 @@ async def _launch_ictrl_runner(udid: str) -> None:
 
 
 @contextmanager
-def ictrl_tunnel(udid: str, client: Path = DEFAULT_CLIENT) -> Iterator[int]:
+def ictrl_tunnel(udid: str, client: Path = DEFAULT_CLIENT,
+                  require_xctest: bool = False,
+                  log_path: Optional[Path] = None) -> Iterator[int]:
     """Launch the paired runner and forward its encrypted UI protocol."""
     if not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", udid):
         raise ValueError("invalid device UDID")
     if not client.is_file():
         raise FileNotFoundError(f"iCTRL client not found: {client}")
+    if require_xctest:
+        # A surviving heartbeat does not prove a live testmanagerd session.
+        stopped = subprocess.run(
+            [sys.executable, "-m", "copyapp.ictrl_runner_stop", udid, ictrl_runner_bundle(udid)],
+            capture_output=True, timeout=50, check=False)
+        if stopped.returncode:
+            raise RuntimeError("could not stop the prior iCTRL runner before owning XCTest")
     with socket.socket() as reserved:
         reserved.bind(("127.0.0.1", 0))
         port = reserved.getsockname()[1]
@@ -203,11 +212,11 @@ def ictrl_tunnel(udid: str, client: Path = DEFAULT_CLIENT) -> Iterator[int]:
                 ready = True
                 break
             time.sleep(0.2)
-        version = asyncio.run(_ios_version(udid)) if not ready else ""
+        version = asyncio.run(_ios_version(udid)) if not ready or require_xctest else ""
         major = int(version.split(".", 1)[0]) if version[:1].isdigit() else 0
         session = (ictrl_xcuitest_session(udid, ictrl_runner_bundle(udid),
-                                        ios_version=version)
-                   if not ready and major >= 17 else nullcontext(None))
+                                        log_path=log_path, ios_version=version)
+                   if (not ready or require_xctest) and major >= 17 else nullcontext(None))
         with session as test_process:
             if not ready and test_process is None:
                 try:
@@ -217,10 +226,14 @@ def ictrl_tunnel(udid: str, client: Path = DEFAULT_CLIENT) -> Iterator[int]:
                     raise TimeoutError("launching the iCTRL runner timed out") from exc
             deadline = time.monotonic() + (60 if test_process is not None else 15)
             while time.monotonic() < deadline:
-                if runner_ready():
-                    break
                 if test_process is not None and test_process.poll() is not None:
                     raise RuntimeError("iCTRL XCTest session exited before its UI service became reachable")
+                started = True
+                if require_xctest and log_path is not None and test_process is not None:
+                    log_text = log_path.read_text(errors="replace")
+                    started = "didBeginExecutingTestPlan" in log_text and "testCaseDidStart" in log_text
+                if started and runner_ready():
+                    break
                 time.sleep(0.3)
             else:
                 raise TimeoutError("paired iCTRL runner did not become reachable on the named USB device")

@@ -8,6 +8,8 @@ Copy APP helps Codex or Claude Code **analyze installed apps and build independe
 
 **First time?** [Choose iOS or macOS and copy the agent task](#start-here). The agent checks dependencies and installs the local tools; you complete the required device/system confirmations.
 
+Development branch: [standard iPhone UI-first mode and optional host package tools](docs/ios-standard-mode.md), including explicit [FairPlay credential preparation](docs/ios-fairplay-credentials.md) for a supported jailbroken phone. Its named iOS 26 sample used a rebooted phone with the jailbreak inactive. Real Remoboard offline recovery and device-code comparison have passed; current acceptance is tracked in [TODO](TODO.md). Named-device limits remain explicit.
+
 | Target | How it works | Status |
 | --- | --- | --- |
 | Jailbroken iOS | USB-connected iPhone, OpenSSH, iOS MCP / iCTRL and optional Frida | Existing named iOS 16 / 17 / 26 workflows preserved |

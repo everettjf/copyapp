@@ -1,9 +1,11 @@
 ---
 name: copyapp-copy
-description: Take an installed App on a jailbroken iPhone through Copy APP's representative-flow discovery, evidence-backed analysis, independent iOS rebuild, and real-device comparison. Use for a request to analyze and copy an App; use the narrower analyze or rebuild skill when only one phase is requested.
+description: Take an installed App on an ordinary or jailbroken iPhone through Copy APP's capability-selected flow discovery, evidence-backed analysis, independent iOS rebuild, and real-device comparison. Use for a request to analyze and copy an App; use the narrower analyze or rebuild skill when only one phase is requested.
 ---
 
 # Copy an installed iOS App
+
+For an ordinary phone or an explicit no-jailbreak request, follow [standard mode](../../docs/ios-standard-mode.md) ([中文](../../docs/ios-standard-mode.zh-CN.md)) and its separate UI behavior contract. Use `doctor/onboard --mode standard`, a development-signed USB runner and `discover-check --mode standard --backend ictrl`; retain the 3–12 distinct-flow rules below. Collect with `analyze` or `prepare-app --mode standard`, review its TASK.md into a source-linked behavior report and analysis-delivery, then perform the independent signing/install/paired-review stages. For an explicitly requested strict parent, `copy --mode standard --agent-provider current` supports scripts, accepted standard discovery or the current-session auto-discovery handoff. No nested agent is launched. Keep the bounded fidelity stop rule below and distinguish it from strict-parent completion. The unflagged package/runtime workflow below is for enhanced evidence; do not make it a prerequisite for ordinary UI copying. A request for native functions still needs matching enhanced/code evidence and cannot be satisfied silently by UI observations.
 
 Agent-led development defaults to the [bounded fidelity workflow](../../docs/fidelity.md):
 80/100 reviewed grade and three implementation/check cycles including the first,

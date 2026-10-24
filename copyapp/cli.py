@@ -408,6 +408,38 @@ async def _command_survey(udid: str, bundle: str, output: Path, launch: bool,
         await device.close()
 
 
+def command_mode_analysis(args) -> tuple[Path, bool]:
+    """Use the new UI-first contract while leaving unflagged v1 commands intact."""
+    from copyapp.ios_analysis import collect_ios_analysis, enhancement_settings
+
+    if getattr(args, "no_launch", False):
+        raise ValueError("UI-first analysis requires fresh-launch playbooks; --no-launch is incompatible")
+    if getattr(args, "provider", "none") != "none" or getattr(args, "network", False):
+        raise ValueError("UI-first collection does not silently run function/network investigations; "
+                         "use explicit enhanced investigation commands for these evidence types")
+    if args.mode == "standard" and args.decrypt:
+        raise ValueError("--decrypt requests device recovery and requires enhanced mode; "
+                         "offline package recovery is a separate host input")
+    mode = "enhanced" if args.decrypt and args.mode == "auto" else args.mode
+    survey_collector = lambda udid, bundle, output, launch: command_survey(
+        udid, bundle, output, launch, args.ui_backend)
+
+    def enhanced(output):
+        return asyncio.run(analyze_case(
+            args.udid, args.bundle, output, True, args.ssh_port, args.ssh_user,
+            args.ssh_identity, args.ssh_known_hosts, survey_collector, args.decrypt,
+            args.decrypt_helper, output.exists()))
+
+    return collect_ios_analysis(
+        args.udid, args.bundle, args.script, args.out, mode, args.resume, args.retry_failed,
+        ssh_port=args.ssh_port, ssh_identity=args.ssh_identity,
+        ssh_known_hosts=args.ssh_known_hosts, enhanced_collector=enhanced,
+        package_cases=args.package_case,
+        enhancement_request=enhancement_settings(
+            args.decrypt, args.ui_backend, args.ssh_port, args.ssh_user,
+            args.ssh_identity, args.ssh_known_hosts, args.decrypt_helper) if mode != "standard" else None)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Copy APP: iOS workflows and macOS App support")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -415,11 +447,53 @@ def main() -> None:
     from copyapp.macos.cli import configure as configure_mac
     configure_mac(mac)
     sub.add_parser("devices", help="list connected USB devices")
+    imported_package = sub.add_parser("package-import", help="retain and index an external iOS IPA without requiring a phone")
+    imported_package.add_argument("--ipa", required=True, type=Path)
+    imported_package.add_argument("--bundle")
+    imported_package.add_argument("--out", required=True, type=Path)
+    store_package = sub.add_parser("store-download", help="download an account-owned iOS package through authenticated ipatool")
+    store_package.add_argument("--bundle", required=True)
+    store_package.add_argument("--ipatool", type=Path)
+    store_package.add_argument("--external-version-id")
+    store_package.add_argument("--acquire-license", action="store_true",
+                               help="explicitly request a free App license if needed; ipatool cannot purchase paid Apps")
+    store_package.add_argument("--timeout", type=int, default=600)
+    store_package.add_argument("--out", required=True, type=Path)
+    offline_package = sub.add_parser("decrypt-offline", help="recover a host-side package with a pinned decoder and optional local credential")
+    offline_package.add_argument("--package", required=True, type=Path)
+    offline_package.add_argument("--tool-dir", type=Path,
+                                 help="default: pinned sources under the COPYAPP_SOURCE_ROOT checkout")
+    offline_package.add_argument("--credential-ref", help="opaque alias for a 16-byte .bin in the local credential store; never put the key itself here")
+    offline_package.add_argument("--credential-store", type=Path,
+                                 help="default: ignored cases/credentials/fairplay under the source checkout")
+    offline_package.add_argument("--timeout", type=int, default=600)
+    offline_package.add_argument("--out", required=True, type=Path)
+    offline_cross = sub.add_parser("offline-cross-check",
+                                   help="compare offline recovered code with a separately verified device recovery")
+    offline_cross.add_argument("--offline", required=True, type=Path)
+    offline_cross.add_argument("--device", required=True, type=Path)
+    offline_cross.add_argument("--out", required=True, type=Path)
+    credential = sub.add_parser("credential-retrieve",
+                                help="prepare a local FairPlay credential from one jailbroken phone")
+    credential.add_argument("--udid", required=True)
+    credential.add_argument("--bundle", required=True, help="installed App Store App selecting the account")
+    credential.add_argument("--credential-ref", required=True, help="new opaque alias; existing credentials are never overwritten")
+    credential.add_argument("--credential-store", type=Path, help="private store outside the evidence case")
+    credential.add_argument("--package-case", type=Path, help="optional verified package for the same App/account")
+    credential.add_argument("--sinf-member", help="package SINF member when license selectors differ")
+    credential.add_argument("--tool-dir", type=Path, help="default: pinned FairPlay sources in COPYAPP_SOURCE_ROOT")
+    credential.add_argument("--ssh-port", type=int, default=22222)
+    credential.add_argument("--ssh-identity", type=Path, default=Path("cases/ssh/id_ed25519"))
+    credential.add_argument("--ssh-known-hosts", type=Path, default=Path("cases/ssh-known-hosts"))
+    credential.add_argument("--ssh-user", choices=("mobile", "root"), default="mobile")
+    credential.add_argument("--out", required=True, type=Path)
     onboard = sub.add_parser("onboard", help="identify one phone and print exact setup repairs")
     onboard.add_argument("--udid", help="required when more than one USB device is connected")
     onboard.add_argument("--out", type=Path, help="new setup case; defaults to a dated cases/ directory")
     onboard.add_argument("--stage", choices=("survey", "analyze", "rebuild"),
                          default="survey", help="show repairs for the chosen setup milestone")
+    onboard.add_argument("--mode", choices=("auto", "standard", "enhanced"),
+                         help="operation-specific setup; omit to retain the historical jailbreak workflow")
     onboard.add_argument("--ssh-port", type=int, default=22222)
     onboard.add_argument("--ssh-identity", type=Path, default=Path("cases/ssh/id_ed25519"))
     onboard.add_argument("--ssh-known-hosts", type=Path, default=Path("cases/ssh-known-hosts"))
@@ -442,6 +516,8 @@ def main() -> None:
                        help="use the SHA-256 pinned official Frida package already downloaded")
     setup.add_argument("--reinstall", action="store_true",
                        help="reinstall the runner even when its Bundle ID is already installed")
+    setup.add_argument("--transport", choices=("auto", "usb"), default="auto",
+                       help="usb forbids SSH/TrollStore installation fallback for the runner")
     setup.add_argument("--auto-approve-first-pair", action="store_true",
                        help="on iOS 17+, let the development runner approve one local USB pairing")
     setup.add_argument("--ssh-port", type=int, default=22222)
@@ -454,6 +530,8 @@ def main() -> None:
     doctor.add_argument("--ssh-identity", type=Path, default=Path("cases/ssh/id_ed25519"))
     doctor.add_argument("--ssh-known-hosts", type=Path, default=Path("cases/ssh-known-hosts"))
     doctor.add_argument("--ictrl-client", type=Path, default=DEFAULT_CLIENT)
+    doctor.add_argument("--mode", choices=("auto", "standard", "enhanced"),
+                        help="write an operation-specific v2 capability case; standard skips jailbreak probes")
     verify = sub.add_parser("verify", help="verify saved evidence hashes")
     verify.add_argument("case", type=Path)
     ocr_saved = sub.add_parser("ocr-file", help="run hash-pinned macOS Vision OCR on a saved screenshot")
@@ -572,6 +650,12 @@ def main() -> None:
         "prepare-app", help="collect an installed App and prepare a verified analysis review task")
     prepare_app_parser.add_argument("--udid", required=True)
     prepare_app_parser.add_argument("--bundle", required=True)
+    prepare_app_parser.add_argument("--mode", choices=("auto", "standard", "enhanced"),
+                                    help="UI-first collection without mandatory package or jailbreak evidence")
+    prepare_app_parser.add_argument("--package-case", type=Path, action="append", default=[],
+                                    help="optional verified external package/offline case, separately attributed from UI")
+    prepare_app_parser.add_argument("--retry-failed", action="store_true",
+                                    help="with --resume, retry retained failed flows after reviewing device state")
     prepare_app_parser.add_argument("--script", required=True, action="append", type=Path)
     prepare_app_parser.add_argument("--out", required=True, type=Path)
     prepare_app_parser.add_argument("--no-launch", action="store_true")
@@ -603,6 +687,11 @@ def main() -> None:
                                  help="run the source-verified Analyze → Rebuild workflow with an external CLI or the current coding agent")
     copy_parser.add_argument("--udid", required=True)
     copy_parser.add_argument("--bundle", required=True)
+    copy_parser.add_argument("--mode", choices=("auto", "standard", "enhanced"),
+                             help="UI-first workflow for --agent-provider current; omit for the historical strict workflow")
+    copy_parser.add_argument("--package-case", type=Path, action="append", default=[])
+    copy_parser.add_argument("--retry-failed", action="store_true",
+                             help="with --resume, retry failed collection only after reviewing phone state")
     copy_scripts = copy_parser.add_mutually_exclusive_group(required=True)
     copy_scripts.add_argument("--script", action="append", type=Path)
     copy_scripts.add_argument("--discovery", type=Path,
@@ -618,7 +707,8 @@ def main() -> None:
     copy_outputs.add_argument("--out", type=Path,
                              help="legacy evidence case directory; requires --project")
     copy_parser.add_argument("--workspace", type=Path)
-    copy_parser.add_argument("--backend", choices=("ios-mcp", "ictrl"), default="ios-mcp")
+    copy_parser.add_argument("--backend", choices=("ios-mcp", "ictrl"),
+                             help="historical default ios-mcp; UI-first mode derives a route unless explicitly constrained")
     copy_parser.add_argument("--ui-backend", choices=("usb", "ios-mcp"), default="ios-mcp")
     copy_parser.add_argument("--analysis-provider",
                              choices=("none", "ghidra-direct", "hopper-direct"),
@@ -741,6 +831,7 @@ def main() -> None:
     discovery_check.add_argument("--script", required=True, action="append", type=Path)
     discovery_check.add_argument("--backend", choices=("ios-mcp", "ictrl"), default="ios-mcp")
     discovery_check.add_argument("--resume", action="store_true")
+    discovery_check.add_argument("--mode", choices=("standard", "enhanced"))
     discovery_check.add_argument("--out", required=True, type=Path)
     visual_audit = sub.add_parser("visual-audit",
                                   help="measure every saved rebuild screenshot pair in a declared region")
@@ -933,6 +1024,8 @@ def main() -> None:
     playbook.add_argument("--out", required=True, type=Path)
     playbook.add_argument("--port", type=int)
     playbook.add_argument("--ictrl-client", type=Path, default=DEFAULT_CLIENT)
+    playbook.add_argument("--mode", choices=("standard", "enhanced"),
+                          help="standard owns XCTest and skips jailbreak identity helpers")
     network_flow = sub.add_parser("network-flow", help="observe URLSession starts during a bounded UI playbook")
     network_flow.add_argument("--udid", required=True)
     network_flow.add_argument("--backend", choices=("ios-mcp", "ictrl"), required=True)
@@ -1007,6 +1100,14 @@ def main() -> None:
     analyze = sub.add_parser("analyze", help="run USB survey, app bundle acquisition and sandbox index as one case")
     analyze.add_argument("--udid", required=True)
     analyze.add_argument("--bundle", required=True)
+    analyze.add_argument("--mode", choices=("auto", "standard", "enhanced"),
+                         help="UI-first analysis; omit for the historical SSH collection contract")
+    analyze.add_argument("--package-case", type=Path, action="append", default=[],
+                         help="optional verified external package/offline case; requires --mode")
+    analyze.add_argument("--script", type=Path, action="append", default=[],
+                         help="representative playbook for UI-first analysis; repeat up to 12 times")
+    analyze.add_argument("--retry-failed", action="store_true",
+                         help="with --resume, retry retained failed flows after reviewing device state")
     analyze.add_argument("--out", required=True, type=Path)
     analyze.add_argument("--launch", action="store_true")
     analyze.add_argument("--resume", action="store_true", help="continue this case; preserve prior partial stage files under attempts/")
@@ -1041,18 +1142,51 @@ def main() -> None:
     ax.add_argument("--caption", default="", help="exact current accessibility caption for press")
     args = parser.parse_args()
     try:
-        apply_ssh_profile(args, sys.argv[1:])
+        if args.command == "credential-retrieve":
+            from copyapp.ios_credentials import apply_credential_ssh_profile
+            apply_credential_ssh_profile(args, sys.argv[1:])
+        else:
+            apply_ssh_profile(args, sys.argv[1:])
         if args.command == "mac":
             from copyapp.macos.cli import run as run_mac
             code = run_mac(args)
         elif args.command == "devices":
             code = asyncio.run(command_devices())
+        elif args.command == "package-import":
+            from copyapp.ios_packages import import_package
+            print(import_package(args.ipa, args.out, args.bundle))
+            code = 0
+        elif args.command == "store-download":
+            from copyapp.ios_packages import download_package
+            path, complete = download_package(args.bundle, args.out, args.ipatool,
+                                               args.external_version_id, args.acquire_license, args.timeout)
+            print(path)
+            code = 0 if complete else 1
+        elif args.command == "decrypt-offline":
+            from copyapp.ios_offline import decrypt_offline
+            path, complete = decrypt_offline(args.package, args.out, args.tool_dir,
+                                              args.credential_ref, args.credential_store, args.timeout)
+            print(path)
+            code = 0 if complete else 1
+        elif args.command == "credential-retrieve":
+            from copyapp.ios_credentials import retrieve_credential
+            path, complete = retrieve_credential(
+                args.udid, args.bundle, args.credential_ref, args.out, args.tool_dir,
+                args.credential_store, args.package_case, args.sinf_member,
+                args.ssh_port, args.ssh_identity, args.ssh_known_hosts, args.ssh_user)
+            print(path)
+            code = 0 if complete else 1
+        elif args.command == "offline-cross-check":
+            from copyapp.ios_cross_check import cross_check_offline
+            print(cross_check_offline(args.offline, args.device, args.out))
+            code = 0
         elif args.command == "onboard":
             report, ready = run_onboarding(args.udid, args.out, args.ssh_identity,
                                            args.ssh_known_hosts, args.ssh_port,
-                                           not args.no_keygen, args.stage)
-            remember_verified_doctor_case(report.parent, args.ssh_port,
-                                          args.ssh_identity, args.ssh_known_hosts)
+                                           not args.no_keygen, args.stage, args.mode)
+            if args.mode is None:
+                remember_verified_doctor_case(report.parent, args.ssh_port,
+                                              args.ssh_identity, args.ssh_known_hosts)
             code = 0 if ready else 1
         elif args.command == "tunnel":
             code = run_tunnels(args.udid, args.ssh_port, args.mcp_port,
@@ -1067,15 +1201,22 @@ def main() -> None:
                 path, ready = setup_ictrl(args.udid, args.out, args.ssh_port,
                                           args.ssh_identity, args.ssh_known_hosts,
                                           args.runner_ipa, args.reinstall,
-                                          args.auto_approve_first_pair)
+                                          args.auto_approve_first_pair, args.transport)
                 print(path)
                 code = 0 if ready else 1
         elif args.command == "doctor":
-            path, connected = run_doctor(args.udid, args.out, args.ssh_port,
-                                         args.ssh_identity, args.ssh_known_hosts,
-                                         args.ictrl_client)
-            remember_verified_doctor_case(path.parent, args.ssh_port,
-                                          args.ssh_identity, args.ssh_known_hosts)
+            if args.mode is not None:
+                from copyapp.ios_capabilities import collect_capabilities
+                path = collect_capabilities(args.udid, args.out, args.mode, args.ssh_port,
+                                             args.ssh_identity, args.ssh_known_hosts, args.ictrl_client)
+                connected = json.loads((args.out / "capabilities.json").read_text())["probes"].get(
+                    "usb_lockdown", {}).get("status") == "available"
+            else:
+                path, connected = run_doctor(args.udid, args.out, args.ssh_port,
+                                             args.ssh_identity, args.ssh_known_hosts,
+                                             args.ictrl_client)
+                remember_verified_doctor_case(path.parent, args.ssh_port,
+                                              args.ssh_identity, args.ssh_known_hosts)
             print(path)
             code = 0 if connected else 1
         elif args.command == "verify":
@@ -1137,6 +1278,12 @@ def main() -> None:
             print(path)
             code = 0 if complete else 1
         elif args.command == "prepare-app":
+            if args.mode is not None:
+                path, complete = command_mode_analysis(args)
+                print(path)
+                raise SystemExit(0 if complete else 1)
+            if args.package_case or args.retry_failed:
+                raise ValueError("--package-case and --retry-failed require --mode")
             survey_collector = lambda udid, bundle, output, launch: command_survey(
                 udid, bundle, output, launch, args.ui_backend)
             path, complete = asyncio.run(prepare_app(
@@ -1155,6 +1302,12 @@ def main() -> None:
             print(path)
             code = 0 if complete else 1
         elif args.command == "copy":
+            if args.mode is not None:
+                if args.agent_provider != "current" or args.analysis_provider != "none":
+                    raise ValueError("UI-first copy requires --agent-provider current and --analysis-provider none; "
+                                     "function investigations remain explicit enhanced workflows")
+            elif args.package_case or args.retry_failed:
+                raise ValueError("--package-case and --retry-failed require --mode")
             workspace, output, project = copy_paths(
                 args.bundle, workspace=args.workspace, output_dir=args.output_dir,
                 output=args.out, project=args.project, resume=args.resume)
@@ -1167,6 +1320,29 @@ def main() -> None:
                   shlex.join(resume_paths + ["--resume"]), flush=True)
             survey_collector = lambda udid, bundle, output, launch: command_survey(
                 udid, bundle, output, launch, args.ui_backend)
+            if args.mode is not None:
+                from copyapp.ios_workflow import copy_ios
+                from copyapp.ios_analysis import enhancement_settings
+
+                def enhanced(output):
+                    return asyncio.run(analyze_case(
+                        args.udid, args.bundle, output, True, args.ssh_port, args.ssh_user,
+                        args.ssh_identity, args.ssh_known_hosts, survey_collector, not args.no_decrypt,
+                        args.decrypt_helper, output.exists()))
+
+                path, complete = copy_ios(
+                    args.udid, args.bundle, args.script or [], project, args.rebuilt_bundle, output,
+                    args.mode, discovery=args.discovery, auto_discover=args.auto_discover,
+                    packages=args.package_case, flow_ids=args.flow_ids, resume=args.resume,
+                    backend=args.backend,
+                    retry_failed=args.retry_failed, enhanced_collector=enhanced, ssh_port=args.ssh_port,
+                    enhancement_request=enhancement_settings(
+                        not args.no_decrypt, args.ui_backend, args.ssh_port, args.ssh_user,
+                        args.ssh_identity, args.ssh_known_hosts, args.decrypt_helper) if args.mode != "standard" else None,
+                    ssh_identity=args.ssh_identity, ssh_known_hosts=args.ssh_known_hosts)
+                print(path)
+                raise SystemExit(0 if complete else 1)
+            args.backend = args.backend or "ios-mcp"
             scripts = (accepted_playbooks(args.discovery, args.udid, args.bundle,
                                           args.backend) if args.discovery else (args.script or []))
             path, complete = asyncio.run(copy_app(
@@ -1262,7 +1438,7 @@ def main() -> None:
         elif args.command == "discover-check":
             path, complete = check_discovered_flows(
                 args.udid, args.bundle, args.script, args.out,
-                args.backend, args.resume)
+                args.backend, args.resume, mode=args.mode)
             print(path)
             code = 0 if complete else 1
         elif args.command == "visual-audit":
@@ -1385,7 +1561,7 @@ def main() -> None:
             code = 0 if complete else 1
         elif args.command == "playbook":
             path, complete = run_playbook(args.udid, args.backend, args.script,
-                                          args.out, args.port, args.ictrl_client)
+                                          args.out, args.port, args.ictrl_client, mode=args.mode)
             print(path)
             code = 0 if complete else 1
         elif args.command == "network-flow":
@@ -1559,6 +1735,12 @@ def main() -> None:
             print(json.dumps(value, ensure_ascii=False, indent=2))
             code = 0
         elif args.command == "analyze":
+            if args.mode is not None:
+                path, complete = command_mode_analysis(args)
+                print(path)
+                raise SystemExit(0 if complete else 1)
+            if args.package_case or args.retry_failed or args.script:
+                raise ValueError("--script, --package-case and --retry-failed require --mode")
             survey_collector = lambda udid, bundle, output, launch: command_survey(
                 udid, bundle, output, launch, args.ui_backend)
             completed = asyncio.run(analyze_case(

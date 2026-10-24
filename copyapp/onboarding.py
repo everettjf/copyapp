@@ -50,7 +50,7 @@ def run_onboarding(udid: Optional[str] = None, output: Optional[Path] = None,
                    ssh_identity: Path = Path("cases/ssh/id_ed25519"),
                    ssh_known_hosts: Path = Path("cases/ssh-known-hosts"),
                    ssh_port: int = 22222, prepare_ssh: bool = True,
-                   stage: str = "survey") -> tuple[Path, bool]:
+                   stage: str = "survey", mode: Optional[str] = None) -> tuple[Path, bool]:
     """Identify one device, prepare the local key and save a guided doctor case."""
     if stage not in ("survey", "analyze", "rebuild"):
         raise ValueError("stage must be survey, analyze or rebuild")
@@ -61,6 +61,19 @@ def run_onboarding(udid: Optional[str] = None, output: Optional[Path] = None,
         output = Path("cases") / f"onboard-{stamp}-{uuid4().hex[:8]}"
     if output.exists():
         raise FileExistsError(f"refusing to overwrite setup case: {output}")
+    if mode is not None:
+        from copyapp.ios_capabilities import collect_capabilities
+        collect_capabilities(selected, output, mode, ssh_port, ssh_identity, ssh_known_hosts)
+        record = json.loads((output / "capabilities.json").read_text(encoding="utf-8"))
+        operation = record["operations"][stage]
+        print(f"Device: {selected}")
+        print(f"Mode: {record['selected_mode']}; UI backend: {record['ui_backend']}")
+        print(f"Setup report: {output / 'report.md'}")
+        print(f"{stage}: " + ("ready for an attempt" if operation["ready_for_attempt"] else "needs setup"))
+        for item in operation["missing"]:
+            print(f"- Missing: {item}")
+        print("This does not certify UI behavior, signing profiles, or a completed rebuild.")
+        return output / "report.md", operation["ready_for_attempt"]
     created_key = _prepare_ssh_key(ssh_identity) if prepare_ssh and stage != "survey" else False
     report, connected = run_doctor(selected, output, ssh_port, ssh_identity,
                                    ssh_known_hosts, survey_only=(stage == "survey"))

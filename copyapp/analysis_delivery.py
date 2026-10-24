@@ -130,6 +130,11 @@ def validate_analysis_delivery(task_case: Path, report_case: Path,
 def create_analysis_delivery(task_case: Path, report_case: Path, output: Path,
                              run_case: Optional[Path] = None) -> Path:
     """Record source-linked report coverage without claiming semantic correctness."""
+    if _read(task_case / "manifest.json").get("kind") == "ios_analysis":
+        if run_case is not None:
+            raise ValueError("UI behavior delivery records the current review; external deep-agent runs are a separate contract")
+        from copyapp.ios_delivery import create_behavior_delivery
+        return create_behavior_delivery(task_case, report_case, output)
     if output.exists() and any(output.iterdir()):
         raise FileExistsError(f"analysis delivery output is not empty: {output}")
     result = validate_analysis_delivery(task_case, report_case, run_case)

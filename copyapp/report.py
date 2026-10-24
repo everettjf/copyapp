@@ -1268,6 +1268,11 @@ def _validate_plist_schema(path: Path, bundle: str, analysis_hash: str) -> dict:
 def compose_report(case: Path, findings_path: Path, evidence_args: List[str],
                    output: Path, feature_spec: Optional[Path] = None) -> Path:
     """Validate identities, retain selected evidence, and render an agent-authored report."""
+    if (case / "manifest.json").is_file() and _read_json(case / "manifest.json").get("kind") == "ios_analysis":
+        from copyapp.ios_report import compose_behavior_report
+        if feature_spec is None or evidence_args:
+            raise ValueError("UI-first reports require --feature-spec and use their bound flow evidence")
+        return compose_behavior_report(case, findings_path, feature_spec, output)
     if output.exists() and any(output.iterdir()):
         raise FileExistsError(f"report output is not empty: {output}")
     case = case.resolve(strict=True)
