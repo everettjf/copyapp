@@ -74,6 +74,9 @@ def verify_ios_case(root: Path) -> bool:
         if manifest.get("kind") == "ios_offline_package":
             from copyapp.ios_offline import validate_offline
             return validate_offline(root, manifest)
+        if manifest.get("kind") == "ios_fairplay_credential":
+            from copyapp.ios_credentials import validate_credential_case
+            return validate_credential_case(root, manifest)
         if manifest.get("kind") == "ios_package_cross_check":
             from copyapp.ios_cross_check import validate_cross_check
             return validate_cross_check(root, manifest)

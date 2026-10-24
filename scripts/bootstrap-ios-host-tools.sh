@@ -28,4 +28,5 @@ if [ "$install_offline" -eq 1 ]; then
   command -v cc >/dev/null || { echo "Apple command-line compiler is required" >&2; exit 1; }
   echo "Pinned sources ready. Install the optional Python dependency with: .venv/bin/python -m pip install '.[offline]'"
   echo "decrypt-offline checks source hashes before compiling or reading a credential. No credential was obtained."
+  echo "For first credential preparation, install Xcode + ldid and use copyapp credential-retrieve with an explicit jailbroken device and App."
 fi

@@ -17,6 +17,8 @@ REQUIRED_DATA = {
     "copyapp/fidelity.py",
     "copyapp/output_paths.py",
     "copyapp/ictrl_runner_stop.py",
+    "copyapp/ios_credentials.py",
+    "copyapp/fairplay_sources.py",
     "copyapp/ghidra_scripts/CopyAppAnalysisOptions.java",
     "copyapp/ghidra_scripts/CopyAppDecompile.java",
     "copyapp/ghidra_scripts/REA-LICENSE.txt",
@@ -65,9 +67,14 @@ def main() -> None:
         run([str(python), "-m", "pip", "install", str(wheel)], cwd=root, env=env)
         help_text = run([str(cli), "--help"], cwd=root, env=env).stdout
         if not all(command in help_text for command in ("onboard", "analyze", "copy", "mac",
-                                                       "fidelity-plan", "fidelity-template", "fidelity-check")):
+                                                       "fidelity-plan", "fidelity-template", "fidelity-check",
+                                                       "credential-retrieve", "decrypt-offline")):
             raise RuntimeError("installed wheel CLI lacks expected commands")
         fidelity_help = run([str(cli), "fidelity-plan", "--help"], cwd=root, env=env).stdout
+        credential_help = run([str(cli), "credential-retrieve", "--help"], cwd=root, env=env).stdout
+        if not all(flag in credential_help for flag in
+                   ("--udid", "--bundle", "--credential-ref", "--package-case", "--ssh-known-hosts")):
+            raise RuntimeError("installed wheel lacks credential preparation options")
         copy_help = run([str(cli), "copy", "--help"], cwd=root, env=env).stdout
         if "--output-dir" not in copy_help or "[--project" not in copy_help:
             raise RuntimeError("installed wheel lacks default copy output paths")

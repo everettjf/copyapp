@@ -473,6 +473,20 @@ def main() -> None:
     offline_cross.add_argument("--offline", required=True, type=Path)
     offline_cross.add_argument("--device", required=True, type=Path)
     offline_cross.add_argument("--out", required=True, type=Path)
+    credential = sub.add_parser("credential-retrieve",
+                                help="prepare a local FairPlay credential from one jailbroken phone")
+    credential.add_argument("--udid", required=True)
+    credential.add_argument("--bundle", required=True, help="installed App Store App selecting the account")
+    credential.add_argument("--credential-ref", required=True, help="new opaque alias; existing credentials are never overwritten")
+    credential.add_argument("--credential-store", type=Path, help="private store outside the evidence case")
+    credential.add_argument("--package-case", type=Path, help="optional verified package for the same App/account")
+    credential.add_argument("--sinf-member", help="package SINF member when license selectors differ")
+    credential.add_argument("--tool-dir", type=Path, help="default: pinned FairPlay sources in COPYAPP_SOURCE_ROOT")
+    credential.add_argument("--ssh-port", type=int, default=22222)
+    credential.add_argument("--ssh-identity", type=Path, default=Path("cases/ssh/id_ed25519"))
+    credential.add_argument("--ssh-known-hosts", type=Path, default=Path("cases/ssh-known-hosts"))
+    credential.add_argument("--ssh-user", choices=("mobile", "root"), default="mobile")
+    credential.add_argument("--out", required=True, type=Path)
     onboard = sub.add_parser("onboard", help="identify one phone and print exact setup repairs")
     onboard.add_argument("--udid", help="required when more than one USB device is connected")
     onboard.add_argument("--out", type=Path, help="new setup case; defaults to a dated cases/ directory")
@@ -1128,7 +1142,11 @@ def main() -> None:
     ax.add_argument("--caption", default="", help="exact current accessibility caption for press")
     args = parser.parse_args()
     try:
-        apply_ssh_profile(args, sys.argv[1:])
+        if args.command == "credential-retrieve":
+            from copyapp.ios_credentials import apply_credential_ssh_profile
+            apply_credential_ssh_profile(args, sys.argv[1:])
+        else:
+            apply_ssh_profile(args, sys.argv[1:])
         if args.command == "mac":
             from copyapp.macos.cli import run as run_mac
             code = run_mac(args)
@@ -1148,6 +1166,14 @@ def main() -> None:
             from copyapp.ios_offline import decrypt_offline
             path, complete = decrypt_offline(args.package, args.out, args.tool_dir,
                                               args.credential_ref, args.credential_store, args.timeout)
+            print(path)
+            code = 0 if complete else 1
+        elif args.command == "credential-retrieve":
+            from copyapp.ios_credentials import retrieve_credential
+            path, complete = retrieve_credential(
+                args.udid, args.bundle, args.credential_ref, args.out, args.tool_dir,
+                args.credential_store, args.package_case, args.sinf_member,
+                args.ssh_port, args.ssh_identity, args.ssh_known_hosts, args.ssh_user)
             print(path)
             code = 0 if complete else 1
         elif args.command == "offline-cross-check":

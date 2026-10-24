@@ -8,7 +8,7 @@ Copy APP 帮助 Codex 或 Claude Code **分析已安装 App，并独立实现选
 
 **第一次使用？** [选 iOS 或 macOS，复制任务给 Agent](#从这里开始)。依赖检查和本地工具安装交给 Agent，设备信任与系统授权按提示完成。
 
-开发分支新增[普通 iPhone UI 优先模式与可选主机包工具](docs/ios-standard-mode.zh-CN.md)。已测 iOS 26 样本使用重启后越狱未激活的手机。本轮约定的开发测试已完成；真实凭据的离线恢复及交叉核对已移至 [TODO](TODO.md)，命名设备的支持边界仍明确保留。
+开发分支新增[普通 iPhone UI 优先模式与可选主机包工具](docs/ios-standard-mode.zh-CN.md)，以及受支持越狱手机的独立 [FairPlay 凭据提取入口](docs/ios-fairplay-credentials.md)。已测 iOS 26 样本使用重启后越狱未激活的手机；真实 Remoboard 离线恢复和设备代码比较已通过，当前验收进度见 [TODO](TODO.md)。命名设备的支持边界仍明确保留。
 
 | 目标 | 使用方式 | 状态 |
 | --- | --- | --- |

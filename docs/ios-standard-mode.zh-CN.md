@@ -66,7 +66,9 @@ toolchains/bin/ipatool auth login
 
 从源码目录外运行 wheel 时，把 `COPYAPP_SOURCE_ROOT` 设为包含这些忽略工具与凭据存储的检出目录。默认 ipatool、FairPlay 源码和 credential 查找基于该目录，不依赖 shell 当前目录；显式工具／存储路径仍优先。
 
-匹配的 16 字节 credential 只放在忽略的 `cases/credentials/fairplay/<LOCAL_ALIAS>.bin`，内容、哈希和本地路径不进入证据。首次取得凭据是独立准备任务，适配器不会从普通手机取得它。离线恢复检查全部程序和资源，当前审计范围为 thin ARM64 加密输入，拒绝 FAT。结构成功标为 `structural_only`；原本未加密的输入保留原样，不能算解密成功。用户已将有效凭据的真实成功恢复和独立代码交叉核对移至 [TODO](../TODO.md)，这些项仍未验证，不阻塞本轮约定交付。
+首次获取使用独立的 [`credential-retrieve` 准备步骤](ios-fairplay-credentials.md)，需要受支持的越狱手机。命令核对准确 USB／SSH／原生设备身份、选定 App 的授权和可选 IPA 的账号，构建固定源码助手，验证 SINF 解码并清理远端后才保存。本次 iPhone 14／iOS 17.3.1 RootHide 的 mobile SSH 路线已通过，不能据此宣称可从普通手机取得凭据。普通 UI 采集不会自动触发它。凭据只保存在忽略的私有存储，内容、哈希和实际路径不进入证据，已有别名不会覆盖。
+
+离线恢复检查全部程序和资源，当前审计范围为 thin ARM64 加密输入，拒绝 FAT。结构成功标为 `structural_only`；原本未加密的输入保留原样，不能算解密成功。真实 Remoboard 主程序／键盘扩展的离线恢复及独立代码比较已经通过；安装后的 wheel 也在两台手机物理拔线后通过重跑，执行前后设备列表均为空。详见[验收账本](ios-device-support-acceptance.md)与已完成的 [TODO](../TODO.md)。
 
 包索引还会记录不支持的 32 位／反字节序 Mach-O，以及主 App 目录外的程序；这些输入可以保留静态包证据，但会阻断整包离线恢复。全部 FAT 都会拒绝，包括所选 ARM64 切片已无加密的情况，因为其他切片尚未审计。
 
