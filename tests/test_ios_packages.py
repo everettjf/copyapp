@@ -92,13 +92,14 @@ class IosPackageTest(unittest.TestCase):
             self.assertEqual(read_json(out / "offline.json")["error"], "credential_unavailable")
             prepare.assert_not_called()
 
-    def _offline_fixture(self, mutation=None):
+    def _offline_fixture(self, mutation=None, checkout_defaults=False):
         # Adapter fixture: this tests byte audits, not FairPlay cryptography.
         sources = {"decrypt.py": b"fixture", "core.py": b"fixture core", "transform.c": b"fixture c",
                    "transform_const_data.bin": b"fixture constants"}
         hashes = {name: hashlib.sha256(data).hexdigest() for name, data in sources.items()}
 
         def prepare(_source, out):
+            self.last_prepared_source = _source
             out.mkdir()
             for name, data in sources.items():
                 (out / name).write_bytes(data)
@@ -125,8 +126,19 @@ class IosPackageTest(unittest.TestCase):
         stack.enter_context(patch("copyapp.ios_offline.subprocess.run", side_effect=run))
         self.addCleanup(stack.close)
         out = self.root / "offline"
-        _, complete = decrypt_offline(self.package, out, Path("fixture"), "main", self.credentials)
+        _, complete = decrypt_offline(self.package, out, None if checkout_defaults else Path("fixture"),
+                                       "main", None if checkout_defaults else self.credentials)
         return out, complete
+
+    def test_offline_defaults_use_explicit_checkout_without_copying_credential_contents(self):
+        store = self.root / "cases/credentials/fairplay"
+        store.mkdir(parents=True)
+        shutil.copyfile(self.credentials / "main.bin", store / "main.bin")
+        with patch("copyapp.ios_offline.source_root", return_value=self.root):
+            output, complete = self._offline_fixture(checkout_defaults=True)
+        self.assertTrue(complete)
+        self.assertEqual(self.last_prepared_source, self.root / "toolchains/fairplay-decrypt-src")
+        self.assertNotIn(str(store), (output / "offline.json").read_text())
 
     def test_all_binaries_and_resources_audited_without_claiming_plaintext_correctness(self):
         out, complete = self._offline_fixture()
@@ -162,6 +174,43 @@ class IosPackageTest(unittest.TestCase):
             tool.assert_not_called()
         self.assertFalse(complete)
         self.assertEqual(read_json(self.root / "x86-offline/offline.json")["error"], "unsupported_binary_inventory")
+
+    def test_unsupported_embedded_macho_is_indexed_and_blocks_false_package_success(self):
+        source = self.root / "embedded32.ipa"
+        ipa(source, encrypted=False)
+        hidden = "Payload/Example.app/PlugIns/Other.appex/Other"
+        with ZipFile(source, "a") as archive:
+            archive.writestr(hidden, b"\xce\xfa\xed\xfe" + bytes(60))
+        package = self.root / "embedded32-package"
+        import_package(source, package)
+        self.assertEqual(read_json(package / "package-index.json")["unsupported_binaries"][0]["path"], hidden)
+        self.assertTrue(verify_case(package))
+        with patch("copyapp.ios_offline._prepare_tool") as decoder:
+            _, complete = decrypt_offline(package, self.root / "embedded32-offline")
+            decoder.assert_not_called()
+        self.assertFalse(complete)
+        self.assertTrue(verify_case(self.root / "embedded32-offline"))
+
+    def test_unencrypted_selected_fat_slice_does_not_prove_other_slices_are_clear(self):
+        source = self.root / "fat-clear-selected.ipa"
+        ipa(source, encrypted=False, fat=True)
+        package = self.root / "fat-clear-package"
+        import_package(source, package)
+        _, complete = decrypt_offline(package, self.root / "fat-clear-offline")
+        self.assertFalse(complete)
+        self.assertEqual(read_json(self.root / "fat-clear-offline/offline.json")["error"], "unsupported_binary_inventory")
+
+    def test_macho_outside_primary_app_is_not_silently_omitted(self):
+        source = self.root / "extra-program.ipa"
+        ipa(source, encrypted=False)
+        with ZipFile(source, "a") as archive:
+            archive.writestr("Payload/UnindexedProgram", binary(True))
+        package = self.root / "extra-package"
+        import_package(source, package)
+        row = read_json(package / "package-index.json")["unsupported_binaries"][0]
+        self.assertEqual(row["path"], "Payload/UnindexedProgram")
+        self.assertEqual(row["status"], "unsupported_macho_location")
+        self.assertFalse(decrypt_offline(package, self.root / "extra-offline")[1])
 
     def test_resource_or_out_of_range_changes_fail_independent_audit(self):
         def mutation(name, value):
@@ -236,6 +285,23 @@ class IosPackageTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "reviewed 2.7.0"):
                 download_package(BUNDLE, self.root / "unsupported-tool", self.tool)
             self.assertEqual(runner.call_count, 1)
+
+    def test_default_ipatool_comes_from_configured_source_checkout(self):
+        tool = self.root / "toolchains/bin/ipatool"
+        tool.parent.mkdir(parents=True)
+        shutil.copyfile(self.tool, tool)
+
+        def run(command, **_kwargs):
+            self.assertEqual(command[0], str(tool.resolve()))
+            if "--version" in command:
+                return subprocess.CompletedProcess(command, 0, b"2.7.0", b"")
+            shutil.copyfile(self.source, Path(command[command.index("--output") + 1]))
+            return subprocess.CompletedProcess(command, 0, b"", b"")
+
+        with patch("copyapp.ios_packages.source_root", return_value=self.root), \
+                patch("copyapp.ios_packages.subprocess.run", side_effect=run):
+            _, complete = download_package(BUNDLE, self.root / "default-download")
+        self.assertTrue(complete)
 
     def test_wrong_app_download_and_account_failure_never_become_success(self):
         def run(command, **_kwargs):

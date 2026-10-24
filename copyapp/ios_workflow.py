@@ -7,7 +7,8 @@ from typing import Optional
 
 from copyapp.copy_workflow import _rebuild_ready
 from copyapp.discover_check import accepted_playbooks
-from copyapp.ios_analysis import _package_inputs, _script_inputs, _verified, collect_ios_analysis
+from copyapp.ios_analysis import (_package_inputs, _script_inputs, _validate_enhancement_settings,
+                                  _verified, collect_ios_analysis)
 from copyapp.ios_capabilities import collect_capabilities
 from copyapp.ios_cases import read_json, seal_case, write_json
 from copyapp.ios_delivery import behavior_delivery_links
@@ -16,7 +17,7 @@ from copyapp.verify import checked_path, compare, sha256_file
 
 
 def _inputs(udid, bundle, rebuilt_bundle, project, mode, scripts, discovery, auto_discover,
-            packages, flow_ids, backend):
+            packages, flow_ids, backend, enhancement_request):
     if (mode not in ("auto", "standard", "enhanced") or bundle == rebuilt_bundle or
             not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", udid) or
             any(not re.fullmatch(r"[A-Za-z0-9_.-]+", value) for value in (bundle, rebuilt_bundle)) or
@@ -29,7 +30,7 @@ def _inputs(udid, bundle, rebuilt_bundle, project, mode, scripts, discovery, aut
                                 any(not re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", item) for item in flow_ids)):
         raise ValueError("provide 1–12 distinct selected flow IDs")
     package_records = _package_inputs(packages, bundle)
-    return {"udid": udid, "bundle_id": bundle, "rebuilt_bundle_id": rebuilt_bundle,
+    result = {"udid": udid, "bundle_id": bundle, "rebuilt_bundle_id": rebuilt_bundle,
             "project": str(project.resolve()), "requested_mode": mode, "scripts": source,
             "requested_backend": backend,
             "discovery": str(discovery.resolve(strict=True)) if discovery else None,
@@ -37,6 +38,12 @@ def _inputs(udid, bundle, rebuilt_bundle, project, mode, scripts, discovery, aut
             "auto_discover": auto_discover, "selected_flow_ids": flow_ids,
             "packages": [{**item, "source": str(path.resolve(strict=True))}
                          for item, path in zip(package_records, packages)]}
+    if enhancement_request is not None:
+        _validate_enhancement_settings(enhancement_request)
+        if mode == "standard":
+            raise ValueError("standard workflow cannot request device enhancement")
+        result["enhancement_request"] = enhancement_request
+    return result
 
 
 def _plan(root, inputs):
@@ -76,6 +83,8 @@ def _collection(root, inputs, scripts, plan):
     if inputs["packages"]:
         expected["packages"] = [{key: value for key, value in row.items() if key != "source"}
                                 for row in inputs["packages"]]
+    if "enhancement_request" in inputs:
+        expected["enhancement_request"] = inputs["enhancement_request"]
     if identity != expected:
         raise ValueError("workflow analysis inputs changed")
     state = read_json(source / "analysis.json")
@@ -138,11 +147,12 @@ def copy_ios(udid: str, bundle: str, scripts: list[Path], project: Path,
              packages: Optional[list[Path]] = None, flow_ids: Optional[list[str]] = None,
              backend: Optional[str] = None,
              resume: bool = False, retry_failed: bool = False, enhanced_collector=None,
+             enhancement_request: Optional[dict] = None,
              ssh_port=22222, ssh_identity=Path("cases/ssh/id_ed25519"),
              ssh_known_hosts=Path("cases/ssh-known-hosts")) -> tuple[Path, bool]:
     output = output.resolve()
     inputs = _inputs(udid, bundle, rebuilt_bundle, project, mode, scripts, discovery,
-                     auto_discover, packages or [], flow_ids, backend)
+                     auto_discover, packages or [], flow_ids, backend, enhancement_request)
     if output == project.resolve() or output in project.resolve().parents or project.resolve() in output.parents:
         raise ValueError("project and evidence must be separate directory trees")
     if output.exists() and any(output.iterdir()):
@@ -196,7 +206,8 @@ def copy_ios(udid: str, bundle: str, scripts: list[Path], project: Path,
             if not analysis.exists() or read_json(analysis / "analysis.json")["status"] != "complete":
                 collect_ios_analysis(udid, bundle, selected, analysis, mode, analysis.exists(), retry_failed,
                                      ssh_port=ssh_port, ssh_identity=ssh_identity, ssh_known_hosts=ssh_known_hosts,
-                                     enhanced_collector=enhanced_collector, package_cases=packages)
+                                     enhanced_collector=enhanced_collector, package_cases=packages,
+                                     enhancement_request=enhancement_request)
             collection = _collection(output, inputs, selected, plan)
             if collection["status"] != "complete":
                 status = "collection_failed"
@@ -219,6 +230,10 @@ def copy_ios(udid: str, bundle: str, scripts: list[Path], project: Path,
 
 def validate_ios_workflow(root: Path, manifest: dict) -> bool:
     inputs, state = read_json(root / "inputs.json"), read_json(root / "workflow.json")
+    if "enhancement_request" in inputs:
+        _validate_enhancement_settings(inputs["enhancement_request"])
+        if inputs["requested_mode"] == "standard":
+            return False
     if (manifest.get("status") != state["status"] or manifest.get("bundle_id") != inputs["bundle_id"] or
             manifest.get("device_id_sha256_prefix") != hashlib.sha256(inputs["udid"].encode()).hexdigest()[:16] or
             state.get("scope") != "selected_flows" or state.get("agent_provider") != "current"):

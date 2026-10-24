@@ -5,6 +5,8 @@ description: Collect and review a first-pass evidence report for an installed ap
 
 # Copy APP survey
 
+For an ordinary or inactive-jailbreak phone, use `doctor --mode standard` for the baseline and read [standard mode](../../docs/ios-standard-mode.md). Do not attempt SSH, Frida, iOS MCP or TrollStore repairs for that route. `survey --ui-backend usb` supplies an attributed screenshot when available; use a standard iCTRL playbook for controlled AX/action evidence. A screenshot/heartbeat alone does not prove a live XCTest session. The enhanced package-acquisition steps below apply only when their exact-device services have independently passed.
+
 Use this repository's `.venv/bin/copyapp` tool. If dependencies are absent, follow `README.md` in the repository. Select the exact USB UDID and bundle ID; never let a command silently choose another connected device.
 
 1. Confirm the exact device with `copyapp devices`, then record a baseline using `copyapp doctor --udid <UDID> --out cases/<DEVICE_BASELINE>` and verify it. Inspect each probe status before choosing SSH, Frida, iOS MCP or iCTRL; a rootless marker alone does not prove those services work. Confirm the target with `copyapp apps --udid <UDID>`. System apps may not appear in the user-app list; use the bundle ID from device lookup when needed.

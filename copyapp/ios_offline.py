@@ -15,6 +15,7 @@ from copyapp.decrypt_verify import inspect_decrypted_ipa
 from copyapp.ipa import ARM64_CPU, MACHO64_LE
 from copyapp.ios_cases import read_json, seal_case, write_json
 from copyapp.ios_packages import package_index, verified_package
+from copyapp.source_root import source_root
 from copyapp.verify import sha256_file, verify_case
 
 
@@ -58,13 +59,15 @@ def _prepare_tool(source: Path, output: Path) -> dict:
 
 
 def _inventory(source: Path, index: dict) -> list[dict]:
-    if not index.get("binaries") or any(item.get("status") for item in index["binaries"]):
+    if (not index.get("binaries") or index.get("unsupported_binaries") or
+            any(item.get("status") for item in index["binaries"])):
         raise ValueError("unsupported_binary_inventory")
     encrypted = [item for item in index["binaries"] if item.get("encrypted_on_disk")]
     with ZipFile(source) as archive:
-        for item in encrypted:
+        for item in index["binaries"]:
             # The byte-range audit currently supports thin ARM64 only. Never
-            # accept a partly checked FAT package just because upstream can decode a slice.
+            # accept a partly checked FAT package just because its selected
+            # ARM64 slice is clear; another slice may still be encrypted.
             with archive.open(item["path"]) as stream:
                 if stream.read(4) != MACHO64_LE or item.get("cpu_type") != ARM64_CPU:
                     raise ValueError("unsupported_binary_inventory")
@@ -92,7 +95,7 @@ def audit_offline_package(source: Path, recovered: Path, index: dict) -> tuple[l
 
 def decrypt_offline(package: Path, output: Path, tool_dir: Optional[Path] = None,
                       credential_ref: Optional[str] = None,
-                      credential_store: Path = Path("cases/credentials/fairplay"),
+                      credential_store: Optional[Path] = None,
                       timeout: int = 600) -> tuple[Path, bool]:
     if output.exists():
         raise FileExistsError(output)
@@ -116,11 +119,12 @@ def decrypt_offline(package: Path, output: Path, tool_dir: Optional[Path] = None
             record["error"] = "credential_unavailable"
             if credential_ref is None:
                 raise ValueError("credential_unavailable")
-            credential = _credential(credential_store, credential_ref)
+            store = credential_store if credential_store is not None else source_root() / "cases/credentials/fairplay"
+            credential = _credential(store, credential_ref)
             record["credential_ref"] = credential_ref
             record["error"] = "tool_unavailable_or_modified"
             if tool_dir is None:
-                raise ValueError("tool_unavailable_or_modified")
+                tool_dir = source_root() / "toolchains/fairplay-decrypt-src"
             try:
                 record["tool"] = _prepare_tool(tool_dir, output / "tool")
             except (RuntimeError, subprocess.TimeoutExpired):

@@ -5,6 +5,8 @@ description: Build and compare a runnable iOS app from a Copy APP feature specif
 
 # Rebuild from an analyzed app
 
+For a verified `ios_behavior_report`, follow [standard mode](../../docs/ios-standard-mode.md) ([中文](../../docs/ios-standard-mode.zh-CN.md)) with `rebuild-plan`/`prepare-rebuild --backend ictrl`, a task pinned to the exact device, development signing and `install --transport usb`. `rebuild-task-check` infers standard execution from the feature specification. Use post-action AX/playbook assertions and full screenshot review; a Frida/UIKit `final_view` is not part of this UI-only contract. Keep coverage and bounded fidelity milestones, independent source/Bundle ID, and the install/check/visual-review/agent-delivery source bindings below. Historical enhanced installs and strict standalone parents retain their original rules; do not substitute ldid/TrollStore for ordinary development signing or mark a strict parent complete from a fidelity grade alone.
+
 For agent-led development, follow [bounded fidelity](../../docs/fidelity.md): after
 the verified `agent-task`, create `fidelity-plan --task <TASK_CASE> --out <CASE>`.
 Default to grade 80/100 and three implementation/check cycles including the first;

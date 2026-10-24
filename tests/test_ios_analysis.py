@@ -13,7 +13,7 @@ from zipfile import ZipFile
 from PIL import Image
 
 from copyapp.agent_task import create_agent_task
-from copyapp.ios_analysis import collect_ios_analysis
+from copyapp.ios_analysis import collect_ios_analysis, enhancement_settings
 from copyapp.ios_capabilities import capability_plan
 from copyapp.ios_cases import read_json, seal_case, write_json
 from copyapp.ios_report import compose_behavior_report
@@ -28,7 +28,8 @@ from copyapp.verify import sha256_file, verify_case
 UDID = "00008030-000E45AE0C42402E"
 BUNDLE = "com.example.counter"
 PREFIX = hashlib.sha256(UDID.encode()).hexdigest()[:16]
-IDENTITY = {"device": {"UniqueDeviceID": UDID, "ProductVersion": "26.0.1"},
+IDENTITY = {"device": {"UniqueDeviceID": UDID, "ProductType": "iPhone12,1",
+                       "ProductVersion": "26.0.1", "BuildVersion": "23A355"},
             "app": {"bundle_id": BUNDLE, "name": "Counter", "version": "1", "build": "1"}}
 
 
@@ -93,6 +94,36 @@ class IosAnalysisTest(unittest.TestCase):
 
     def collect(self, **kwargs):
         return collect_ios_analysis(UDID, BUNDLE, [self.script], self.root / "analysis", **kwargs)
+
+    def legacy_collection(self, output, bundle=BUNDLE, version="1", build="1", system="26.0.1"):
+        app = {"CFBundleIdentifier": bundle, "CFBundleShortVersionString": version,
+               "CFBundleVersion": build, "CFBundleExecutable": "Counter"}
+        write_json(output / "survey/app.json", app)
+        write_json(output / "survey/manifest.json", {"schema_version": 1, "bundle_id": bundle,
+                   "device_id_sha256_prefix": PREFIX,
+                   "ui_backend": "usb",
+                   "device": {**IDENTITY["device"], "ProductVersion": system},
+                   "evidence": [{"path": "app.json", "sha256": sha256_file(output / "survey/app.json")}]})
+        acquired = output / "acquired"
+        primary = acquired / "bundle/Counter.app"
+        primary.mkdir(parents=True)
+        (primary / "Info.plist").write_bytes(plistlib.dumps(app))
+        (primary / "Counter").write_bytes(binary(False))
+        with ZipFile(acquired / "bundle-snapshot.ipa", "w") as archive:
+            for file in primary.iterdir():
+                archive.write(file, "Payload/Counter.app/" + file.name)
+        common = {"bundle_id": bundle, "device_id_sha256_prefix": PREFIX,
+                  "installed_version": version, "installed_build": build}
+        write_json(acquired / "acquisition.json", {**common, "remote_bundle_path": "/apps/Counter.app",
+                   "snapshot_sha256": sha256_file(acquired / "bundle-snapshot.ipa"),
+                   "files": [{"relative": file.name, "sha256": sha256_file(file)} for file in primary.iterdir()]})
+        write_json(output / "sandbox-index.json", {**common, "entries": []})
+        keys = {"survey": "survey/manifest.json", "bundle": "acquired/acquisition.json",
+                "sandbox": "sandbox-index.json"}
+        write_json(output / "analysis-index.json", {
+            "steps": {key: {"ok": True, "key_sha256": sha256_file(output / path)} for key, path in keys.items()},
+            "artifacts": {key: {"path": path, "sha256": sha256_file(output / path)} for key, path in keys.items()}})
+        return True
 
     def review(self, analysis, output):
         write_json(self.root / "findings.json", {"schema_version": 1, "target_bundle_id": BUNDLE,
@@ -227,20 +258,103 @@ class IosAnalysisTest(unittest.TestCase):
         collector.assert_not_called()
         enhanced = self.root / "enhanced-analysis"
 
-        def legacy_collection(output, bundle=BUNDLE):
-            write_json(output / "survey/manifest.json", {"schema_version": 1,
-                       "bundle_id": bundle, "device_id_sha256_prefix": PREFIX, "evidence": []})
-            write_json(output / "analysis-index.json", {"steps": {name: {"ok": True}
-                       for name in ("survey", "bundle", "sandbox")}, "artifacts": {}})
-            return True
-
         self.assertTrue(collect_ios_analysis(UDID, BUNDLE, [self.script], enhanced, mode="enhanced",
-                                             enhanced_collector=legacy_collection)[1])
+                                             enhanced_collector=self.legacy_collection)[1])
         self.assertTrue(verify_case(enhanced))
         wrong = self.root / "wrong-enhancement"
         self.assertFalse(collect_ios_analysis(UDID, BUNDLE, [self.script], wrong, mode="enhanced",
-                        enhanced_collector=lambda out: legacy_collection(out, "com.example.wrong"))[1])
+                        enhanced_collector=lambda out: self.legacy_collection(out, "com.example.wrong"))[1])
         self.assertTrue(verify_case(wrong))
+
+    def test_enhanced_same_bundle_with_other_app_build_or_system_is_rejected(self):
+        for label, changed in (("version", {"version": "0.9"}), ("build", {"build": "2"}),
+                               ("system", {"system": "26.0"})):
+            with self.subTest(field=label), patch("copyapp.ios_analysis.run_playbook") as replay:
+                output = self.root / label
+                self.assertFalse(collect_ios_analysis(UDID, BUNDLE, [self.script], output, mode="enhanced",
+                    enhanced_collector=lambda root: self.legacy_collection(root, **changed))[1])
+                replay.assert_not_called()
+                self.assertTrue(verify_case(output))
+
+    def test_retry_success_exit_cannot_hide_a_still_wrong_enhancement_build(self):
+        output = self.root / "wrong-build"
+        calls = []
+
+        def wrong(root):
+            calls.append(root)
+            return self.legacy_collection(root, build="2")
+
+        self.assertFalse(collect_ios_analysis(UDID, BUNDLE, [self.script], output, mode="enhanced",
+                                             enhanced_collector=wrong)[1])
+        # A retry collector which merely exits true must not promote the stale build.
+        with patch("copyapp.ios_analysis.run_playbook") as replay:
+            self.assertFalse(collect_ios_analysis(UDID, BUNDLE, [self.script], output, mode="enhanced",
+                resume=True, retry_failed=True, enhanced_collector=lambda root: True)[1])
+            replay.assert_not_called()
+        self.assertEqual(len(calls), 1)
+        self.assertTrue(verify_case(output))
+
+    def test_resume_cannot_change_enhanced_decryption_or_ssh_route(self):
+        settings = enhancement_settings(False, "usb", 22222, "mobile", self.root / "key",
+                                         self.root / "known-hosts", self.root / "helper")
+        self.assertTrue(self.collect(mode="enhanced", enhanced_collector=self.legacy_collection,
+                                     enhancement_request=settings)[1])
+        for field, value in (("ssh_port", 22223), ("ssh_user", "root"), ("survey_ui_backend", "ios-mcp")):
+            with self.subTest(field=field), patch("copyapp.ios_analysis.target_identity") as device:
+                with self.assertRaisesRegex(ValueError, "resume"):
+                    self.collect(mode="enhanced", resume=True, enhancement_request={**settings, field: value})
+                device.assert_not_called()
+        helper = self.root / "helper"
+        helper.write_bytes(b"different helper")
+        changed = enhancement_settings(True, "usb", 22222, "mobile", self.root / "key",
+                                       self.root / "known-hosts", helper)
+        with self.assertRaisesRegex(ValueError, "resume"):
+            self.collect(mode="enhanced", resume=True, enhancement_request=changed)
+
+    def test_requested_device_decryption_cannot_be_satisfied_by_ui_and_package_only(self):
+        request = enhancement_settings(True, "usb", 22222, "mobile", self.root / "key",
+                                        self.root / "known-hosts", self.root / "missing-helper")
+        with patch("copyapp.ios_analysis.run_playbook") as replay:
+            self.assertFalse(self.collect(mode="enhanced", enhanced_collector=self.legacy_collection,
+                                          enhancement_request=request)[1])
+            replay.assert_not_called()
+        self.assertTrue(verify_case(self.root / "analysis"))
+
+    def test_declared_stage_success_without_matching_stage_key_is_rejected(self):
+        def stale_key(root):
+            self.legacy_collection(root)
+            index = read_json(root / "analysis-index.json")
+            index["steps"]["sandbox"]["key_sha256"] = "0" * 64
+            write_json(root / "analysis-index.json", index)
+            return True
+
+        self.assertFalse(self.collect(mode="enhanced", enhanced_collector=stale_key)[1])
+        self.assertTrue(verify_case(self.root / "analysis"))
+
+    def test_snapshot_version_is_checked_even_when_stage_metadata_claims_current_build(self):
+        def old_snapshot(root):
+            self.legacy_collection(root)
+            package = root / "acquired"
+            path = package / "bundle/Counter.app/Info.plist"
+            app = plistlib.loads(path.read_bytes())
+            app["CFBundleVersion"] = "old"
+            path.write_bytes(plistlib.dumps(app))
+            with ZipFile(package / "bundle-snapshot.ipa", "w") as archive:
+                for file in path.parent.iterdir():
+                    archive.write(file, "Payload/Counter.app/" + file.name)
+            record = read_json(package / "acquisition.json")
+            record["snapshot_sha256"] = sha256_file(package / "bundle-snapshot.ipa")
+            record["files"] = [{"relative": file.name, "sha256": sha256_file(file)} for file in path.parent.iterdir()]
+            write_json(package / "acquisition.json", record)
+            index = read_json(root / "analysis-index.json")
+            digest = sha256_file(package / "acquisition.json")
+            index["steps"]["bundle"]["key_sha256"] = digest
+            index["artifacts"]["bundle"]["sha256"] = digest
+            write_json(root / "analysis-index.json", index)
+            return True
+
+        self.assertFalse(self.collect(mode="enhanced", enhanced_collector=old_snapshot)[1])
+        self.assertTrue(verify_case(self.root / "analysis"))
 
     def test_ui_only_analysis_report_and_implementation_task_need_no_package(self):
         _, complete = self.collect()
@@ -314,6 +428,59 @@ class IosAnalysisTest(unittest.TestCase):
         attempts = self.root / "analysis/attempts"
         self.assertEqual(len(list(attempts.iterdir())), 1)
         self.assertTrue(verify_case(self.root / "analysis"))
+
+    def test_failed_resume_reprobes_required_capabilities_before_any_replay(self):
+        def failed(*args, **kwargs):
+            path, _ = player(*args, **kwargs)
+            record = read_json(path)
+            record.update(status="failed", error={"message": "reply lost; completion unknown"})
+            write_json(path, record)
+            return path, False
+
+        with patch("copyapp.ios_analysis.run_playbook", side_effect=failed):
+            self.assertFalse(self.collect()[1])
+
+        def unavailable(udid, output, mode, *args):
+            capabilities(udid, output, mode, *args)
+            baseline = read_json(output / "baseline/device.json")
+            baseline["probes"]["ictrl"] = {"status": "unavailable"}
+            write_json(output / "baseline/device.json", baseline)
+            write_json(output / "capabilities.json", {**baseline, **capability_plan(baseline, mode)})
+            seal_case(output, "ios_capabilities", status="complete", requested_mode=mode,
+                      selected_mode="standard", device_id_sha256_prefix=PREFIX)
+
+        with patch("copyapp.ios_analysis.collect_capabilities", side_effect=unavailable), \
+                patch("copyapp.ios_analysis.run_playbook") as replay, \
+                patch("copyapp.ios_analysis.target_identity") as device:
+            self.assertFalse(self.collect(resume=True, retry_failed=True)[1])
+            replay.assert_not_called()
+            device.assert_not_called()
+        analysis = self.root / "analysis"
+        self.assertTrue((analysis / "flows/flow-01").is_dir())
+        self.assertFalse((analysis / "attempts").exists())
+        self.assertTrue(self.collect(resume=True, retry_failed=True)[1])
+        self.assertTrue(verify_case(analysis))
+        state = read_json(analysis / "analysis.json")
+        self.assertEqual([item["accepted_for_resume"] for item in state["capability_checks"]], [False, True])
+        state["capability_checks"][0]["accepted_for_resume"] = True
+        write_json(analysis / "analysis.json", state)
+        seal_case(analysis, "ios_analysis", status="complete", bundle_id=BUNDLE,
+                  device_id_sha256_prefix=PREFIX)
+        self.assertFalse(verify_case(analysis))
+
+    def test_parent_resume_pins_enhancement_settings_even_when_auto_selected_ui_only(self):
+        request = enhancement_settings(False, "usb", 22222, "mobile", self.root / "key",
+                                        self.root / "known-hosts", self.root / "helper")
+        workflow = self.root / "workflow"
+        with patch("copyapp.ios_workflow.collect_capabilities", side_effect=capabilities):
+            self.assertFalse(copy_ios(UDID, BUNDLE, [self.script], self.root / "project", "dev.copyapp.counter",
+                workflow, mode="auto", enhancement_request=request)[1])
+        self.assertTrue(verify_case(workflow))
+        with patch("copyapp.ios_analysis.run_playbook") as replay:
+            with self.assertRaisesRegex(ValueError, "exact inputs"):
+                copy_ios(UDID, BUNDLE, [self.script], self.root / "project", "dev.copyapp.counter", workflow,
+                         mode="auto", resume=True, enhancement_request={**request, "ssh_port": 22223})
+            replay.assert_not_called()
 
 
 if __name__ == "__main__":

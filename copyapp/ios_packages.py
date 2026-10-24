@@ -11,11 +11,16 @@ from pathlib import Path
 from typing import Optional
 from zipfile import BadZipFile, ZipFile
 
-from copyapp.ipa import analyze_ipa
+from copyapp.ipa import MACHO_MAGICS, analyze_ipa
 from copyapp.ios_cases import read_json, seal_case, write_json
+from copyapp.source_root import source_root
 from copyapp.verify import sha256_file, verify_case
 
 IPATOOL_VERSION = "2.7.0"
+UNSUPPORTED_MACHO_MAGICS = {
+    b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xce", b"\xfe\xed\xfa\xcf",
+    b"\xbe\xba\xfe\xca", b"\xbf\xba\xfe\xca",
+}
 
 def _now():
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -32,6 +37,21 @@ def package_index(ipa: Path) -> dict:
         infos = [name for name in names if re.fullmatch(r"Payload/[^/]+\.app/Info.plist", name)]
         if len(infos) != 1:
             raise ValueError("package must contain exactly one primary iOS App")
+        indexed = {item["path"] for item in result["binaries"]}
+        unsupported = []
+        for member in archive.infolist():
+            if member.is_dir() or member.file_size < 4:
+                continue
+            with archive.open(member) as stream:
+                magic = stream.read(4)
+            if magic in UNSUPPORTED_MACHO_MAGICS:
+                unsupported.append({"path": member.filename, "magic_hex": magic.hex(),
+                                    "status": "unsupported_macho_format"})
+            elif magic in MACHO_MAGICS and member.filename not in indexed:
+                unsupported.append({"path": member.filename, "magic_hex": magic.hex(),
+                                    "status": "unsupported_macho_location"})
+        if unsupported:
+            result["unsupported_binaries"] = sorted(unsupported, key=lambda item: item["path"])
         info = plistlib.loads(archive.read(infos[0]))
         platforms = info.get("CFBundleSupportedPlatforms")
         if platforms is not None and (not isinstance(platforms, list) or "iPhoneOS" not in platforms):
@@ -106,9 +126,11 @@ def download_package(bundle: str, output: Path, tool: Optional[Path] = None,
         raise ValueError("download timeout must be 1–3600 seconds")
     if output.exists():
         raise FileExistsError(output)
-    local_tool = Path("toolchains/bin/ipatool")
-    executable = tool or (local_tool if local_tool.is_file() else
-                          Path(shutil.which("ipatool")) if shutil.which("ipatool") else None)
+    executable = tool
+    if executable is None:
+        local_tool = source_root() / "toolchains/bin/ipatool"
+        executable = (local_tool if local_tool.is_file() else
+                      Path(shutil.which("ipatool")) if shutil.which("ipatool") else None)
     if executable is None or not executable.is_file():
         raise FileNotFoundError("ipatool is not installed; install and authenticate it interactively first")
     executable = executable.resolve(strict=True)

@@ -410,7 +410,7 @@ async def _command_survey(udid: str, bundle: str, output: Path, launch: bool,
 
 def command_mode_analysis(args) -> tuple[Path, bool]:
     """Use the new UI-first contract while leaving unflagged v1 commands intact."""
-    from copyapp.ios_analysis import collect_ios_analysis
+    from copyapp.ios_analysis import collect_ios_analysis, enhancement_settings
 
     if getattr(args, "no_launch", False):
         raise ValueError("UI-first analysis requires fresh-launch playbooks; --no-launch is incompatible")
@@ -434,7 +434,10 @@ def command_mode_analysis(args) -> tuple[Path, bool]:
         args.udid, args.bundle, args.script, args.out, mode, args.resume, args.retry_failed,
         ssh_port=args.ssh_port, ssh_identity=args.ssh_identity,
         ssh_known_hosts=args.ssh_known_hosts, enhanced_collector=enhanced,
-        package_cases=args.package_case)
+        package_cases=args.package_case,
+        enhancement_request=enhancement_settings(
+            args.decrypt, args.ui_backend, args.ssh_port, args.ssh_user,
+            args.ssh_identity, args.ssh_known_hosts, args.decrypt_helper) if mode != "standard" else None)
 
 
 def main() -> None:
@@ -458,9 +461,11 @@ def main() -> None:
     store_package.add_argument("--out", required=True, type=Path)
     offline_package = sub.add_parser("decrypt-offline", help="recover a host-side package with a pinned decoder and optional local credential")
     offline_package.add_argument("--package", required=True, type=Path)
-    offline_package.add_argument("--tool-dir", type=Path, default=Path("toolchains/fairplay-decrypt-src"))
+    offline_package.add_argument("--tool-dir", type=Path,
+                                 help="default: pinned sources under the COPYAPP_SOURCE_ROOT checkout")
     offline_package.add_argument("--credential-ref", help="opaque alias for a 16-byte .bin in the local credential store; never put the key itself here")
-    offline_package.add_argument("--credential-store", type=Path, default=Path("cases/credentials/fairplay"))
+    offline_package.add_argument("--credential-store", type=Path,
+                                 help="default: ignored cases/credentials/fairplay under the source checkout")
     offline_package.add_argument("--timeout", type=int, default=600)
     offline_package.add_argument("--out", required=True, type=Path)
     offline_cross = sub.add_parser("offline-cross-check",
@@ -1291,6 +1296,7 @@ def main() -> None:
                 udid, bundle, output, launch, args.ui_backend)
             if args.mode is not None:
                 from copyapp.ios_workflow import copy_ios
+                from copyapp.ios_analysis import enhancement_settings
 
                 def enhanced(output):
                     return asyncio.run(analyze_case(
@@ -1304,6 +1310,9 @@ def main() -> None:
                     packages=args.package_case, flow_ids=args.flow_ids, resume=args.resume,
                     backend=args.backend,
                     retry_failed=args.retry_failed, enhanced_collector=enhanced, ssh_port=args.ssh_port,
+                    enhancement_request=enhancement_settings(
+                        not args.no_decrypt, args.ui_backend, args.ssh_port, args.ssh_user,
+                        args.ssh_identity, args.ssh_known_hosts, args.decrypt_helper) if args.mode != "standard" else None,
                     ssh_identity=args.ssh_identity, ssh_known_hosts=args.ssh_known_hosts)
                 print(path)
                 raise SystemExit(0 if complete else 1)

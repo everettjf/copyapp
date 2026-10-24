@@ -3,12 +3,14 @@
 import asyncio
 import hashlib
 import io
+import plistlib
 import re
 import shutil
 from contextlib import redirect_stdout
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+from zipfile import ZipFile
 
 from pymobiledevice3.lockdown import create_using_usbmux
 from pymobiledevice3.services.installation_proxy import InstallationProxyService
@@ -22,6 +24,38 @@ from copyapp.verify import checked_path, sha256_file, verify_case
 
 def _now():
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def enhancement_settings(decrypt: bool, ui_backend: str, ssh_port: int, ssh_user: str,
+                         ssh_identity: Path, ssh_known_hosts: Path, helper: Path) -> dict:
+    """Pin public collection settings without reading credential contents."""
+    return {"device_decryption": decrypt, "survey_ui_backend": ui_backend,
+            "ssh_port": ssh_port, "ssh_user": ssh_user,
+            "ssh_identity_ref": str(ssh_identity.resolve()),
+            "ssh_known_hosts_ref": str(ssh_known_hosts.resolve()),
+            "helper": {"path": str(helper.resolve()),
+                       "sha256": sha256_file(helper) if helper.is_file() else None} if decrypt else None}
+
+
+def _validate_enhancement_settings(value: dict) -> None:
+    required = {"device_decryption", "survey_ui_backend", "ssh_port", "ssh_user",
+                "ssh_identity_ref", "ssh_known_hosts_ref", "helper"}
+    if (not isinstance(value, dict) or set(value) != required or
+            type(value["device_decryption"]) is not bool or
+            value["survey_ui_backend"] not in ("usb", "ios-mcp") or
+            type(value["ssh_port"]) is not int or not 1 <= value["ssh_port"] <= 65535 or
+            value["ssh_user"] not in ("root", "mobile") or
+            any(not isinstance(value[key], str) or not Path(value[key]).is_absolute()
+                for key in ("ssh_identity_ref", "ssh_known_hosts_ref"))):
+        raise ValueError("invalid enhanced collection settings")
+    helper = value["helper"]
+    if (helper is not None and
+            (not isinstance(helper, dict) or set(helper) != {"path", "sha256"} or
+             not isinstance(helper["path"], str) or not Path(helper["path"]).is_absolute() or
+             (helper["sha256"] is not None and
+              (not isinstance(helper["sha256"], str) or not re.fullmatch(r"[0-9a-f]{64}", helper["sha256"])))) or
+            value["device_decryption"] != (helper is not None)):
+        raise ValueError("invalid enhanced helper identity")
 
 
 async def target_identity(udid: str, bundle: str) -> dict:
@@ -50,15 +84,57 @@ def _verified(root):
             raise ValueError(f"case verification failed: {root}")
 
 
-def _enhancement_complete(root: Path, bundle: str, prefix: str) -> bool:
+def _enhancement_complete(root: Path, bundle: str, prefix: str, identity: dict,
+                           request: Optional[dict] = None) -> bool:
+    from copyapp.analyze import _stage_valid
+
     _verified(root)
     index = read_json(root / "analysis-index.json")
+    steps = index.get("steps", {})
+    if (not all(name in steps for name in ("survey", "bundle", "sandbox")) or
+            any(record.get("ok") is not True for record in steps.values())):
+        return False
     survey = read_json(root / "survey/manifest.json")
-    return (survey.get("bundle_id") == bundle and
-            survey.get("device_id_sha256_prefix") == prefix and
-            all(index.get("steps", {}).get(name, {}).get("ok") is True
-                for name in ("survey", "bundle", "sandbox")) and
-            all(value.get("ok") is True for value in index["steps"].values()))
+    if request is not None:
+        _validate_enhancement_settings(request)
+        if (request["device_decryption"] != ("decryption" in steps) or
+                survey.get("ui_backend") != request["survey_ui_backend"]):
+            return False
+    app = read_json(root / "survey/app.json")
+    acquired = read_json(root / "acquired/acquisition.json")
+    sandbox = read_json(root / "sandbox-index.json")
+    with ZipFile(root / "acquired/bundle-snapshot.ipa") as archive:
+        names = [name for name in archive.namelist()
+                 if re.fullmatch(r"Payload/[^/]+\.app/Info.plist", name)]
+        if len(names) != 1 or archive.getinfo(names[0]).file_size > 4 * 1024 * 1024:
+            return False
+        packaged = plistlib.loads(archive.read(names[0]))
+    expected_app, device = identity["app"], identity["device"]
+    if (survey.get("bundle_id") != bundle or survey.get("device_id_sha256_prefix") != prefix or
+            app.get("CFBundleIdentifier") != bundle or packaged.get("CFBundleIdentifier") != bundle or
+            any(not isinstance(device.get(key), str) or not device[key] or
+                survey.get("device", {}).get(key) != device[key]
+                for key in ("ProductType", "ProductVersion", "BuildVersion"))):
+        return False
+    stage_records = [acquired, sandbox]
+    if "decryption" in steps:
+        _verified(root / "decrypted")
+        decryption = read_json(root / "decrypted/decryption.json")
+        stage_records.append(decryption)
+        if (request is not None and request["helper"]["sha256"] is not None and
+                decryption.get("recovery_strategy") != "source_snapshot_unencrypted" and
+                decryption.get("helper_sha256") != request["helper"]["sha256"]):
+            return False
+    for live, survey_key, stage_key in (("version", "CFBundleShortVersionString", "installed_version"),
+                                        ("build", "CFBundleVersion", "installed_build")):
+        value = expected_app.get(live)
+        if (not isinstance(value, str) or not value or app.get(survey_key) != value or
+                packaged.get(survey_key) != value or
+                any(record.get(stage_key) != value for record in stage_records)):
+            return False
+    return all(name in ("survey", "bundle", "sandbox", "decryption") and
+               _stage_valid(root, name, record, device["UniqueDeviceID"], bundle)
+               for name, record in steps.items())
 
 
 def _script_inputs(scripts: list[Path], bundle: str) -> list[dict]:
@@ -117,7 +193,8 @@ def collect_ios_analysis(udid: str, bundle: str, scripts: list[Path], output: Pa
                           ssh_identity: Path = Path("cases/ssh/id_ed25519"),
                           ssh_known_hosts: Path = Path("cases/ssh-known-hosts"),
                           enhanced_collector=None,
-                          package_cases: Optional[list[Path]] = None) -> tuple[Path, bool]:
+                          package_cases: Optional[list[Path]] = None,
+                          enhancement_request: Optional[dict] = None) -> tuple[Path, bool]:
     if (not re.fullmatch(r"[A-Fa-f0-9-]{16,80}", udid) or
             not re.fullmatch(r"[A-Za-z0-9_.-]+", bundle)):
         raise ValueError("invalid device or Bundle ID")
@@ -125,6 +202,11 @@ def collect_ios_analysis(udid: str, bundle: str, scripts: list[Path], output: Pa
         raise ValueError("invalid analysis mode")
     inputs = {"udid": udid, "bundle_id": bundle, "requested_mode": mode,
               "flows": _script_inputs(scripts, bundle)}
+    if enhancement_request is not None:
+        _validate_enhancement_settings(enhancement_request)
+        if mode == "standard":
+            raise ValueError("standard collection cannot request device enhancement")
+        inputs["enhancement_request"] = enhancement_request
     if package_cases:
         inputs["packages"] = _package_inputs(package_cases, bundle)
         if any(root.resolve() == output.resolve() or root.resolve() in output.resolve().parents
@@ -158,6 +240,24 @@ def collect_ios_analysis(udid: str, bundle: str, scripts: list[Path], output: Pa
         _verified(capabilities)
         plan = read_json(capabilities / "capabilities.json")
         state["selected_mode"], state["ui_backend"] = plan["selected_mode"], plan["ui_backend"]
+        if resume:
+            checks = output / "capability-checks"
+            checks.mkdir(exist_ok=True)
+            probe = checks / f"check-{len(list(checks.iterdir())) + 1:03d}"
+            collect_capabilities(udid, probe, mode, ssh_port, ssh_identity, ssh_known_hosts, ictrl_client)
+            _verified(probe)
+            current = read_json(probe / "capabilities.json")
+            accepted = (current["device"]["UniqueDeviceID"] == udid and
+                        current["requested_mode"] == mode and
+                        current["selected_mode"] == plan["selected_mode"] and
+                        current["ui_backend"] == plan["ui_backend"] and
+                        not current["operations"]["analyze"]["missing"])
+            state.setdefault("capability_checks", []).append({
+                "case": str(probe.relative_to(output)), "manifest_sha256": sha256_file(probe / "manifest.json"),
+                "accepted_for_resume": accepted})
+            if not accepted:
+                raise RuntimeError("required capabilities unavailable or the selected route changed on resume; "
+                                   "inspect the fresh probe before retrying or starting a new case")
         missing = plan["operations"]["analyze"]["missing"]
         if missing:
             raise RuntimeError("required analysis capabilities unavailable: " + ", ".join(missing))
@@ -177,9 +277,13 @@ def collect_ios_analysis(udid: str, bundle: str, scripts: list[Path], output: Pa
             if not enhanced.exists():
                 if not enhanced_collector(enhanced):
                     raise RuntimeError("enhanced device collection failed; inspect retained child")
-            if not _enhancement_complete(enhanced, bundle, hashlib.sha256(udid.encode()).hexdigest()[:16]):
+            if not _enhancement_complete(enhanced, bundle, hashlib.sha256(udid.encode()).hexdigest()[:16],
+                                         before, enhancement_request):
                 if not resume or not retry_failed or not enhanced_collector(enhanced):
                     raise RuntimeError("enhanced collection is incomplete; inspect it before --resume --retry-failed")
+                if not _enhancement_complete(enhanced, bundle, hashlib.sha256(udid.encode()).hexdigest()[:16],
+                                             before, enhancement_request):
+                    raise RuntimeError("retried enhancement still differs from the current device/App build")
             state["enhancement"] = {"status": "complete", "case": "enhanced",
                                      "analysis_index_sha256": sha256_file(enhanced / "analysis-index.json")}
         records = []
@@ -241,6 +345,10 @@ def collect_ios_analysis(udid: str, bundle: str, scripts: list[Path], output: Pa
 def validate_ios_analysis(root: Path, manifest: dict) -> bool:
     inputs, state = read_json(root / "inputs.json"), read_json(root / "analysis.json")
     udid, bundle = inputs["udid"], inputs["bundle_id"]
+    if "enhancement_request" in inputs:
+        _validate_enhancement_settings(inputs["enhancement_request"])
+        if inputs["requested_mode"] == "standard":
+            return False
     prefix = hashlib.sha256(udid.encode()).hexdigest()[:16]
     if (manifest.get("bundle_id") != bundle or manifest.get("status") != state.get("status") or
             state.get("status") not in ("complete", "failed") or
@@ -262,6 +370,23 @@ def validate_ios_analysis(root: Path, manifest: dict) -> bool:
             state.get("ui_backend") != plan["ui_backend"]):
         return False
     if len(state["flows"]) != len(inputs["flows"]):
+        return False
+    checks = state.get("capability_checks", [])
+    if not isinstance(checks, list) or len({item["case"] for item in checks}) != len(checks):
+        return False
+    for item in checks:
+        probe = checked_path(root, item["case"])
+        _verified(probe)
+        current = read_json(probe / "capabilities.json")
+        accepted = (current["device"]["UniqueDeviceID"] == udid and
+                    current["requested_mode"] == inputs["requested_mode"] and
+                    current["selected_mode"] == plan["selected_mode"] and
+                    current["ui_backend"] == plan["ui_backend"] and
+                    not current["operations"]["analyze"]["missing"])
+        if (item["manifest_sha256"] != sha256_file(probe / "manifest.json") or
+                item.get("accepted_for_resume") is not accepted):
+            return False
+    if checks and checks[-1]["accepted_for_resume"] is not True:
         return False
     if inputs.get("packages"):
         roots = [checked_path(root, item["case"]) for item in inputs["packages"]]
@@ -296,7 +421,8 @@ def validate_ios_analysis(root: Path, manifest: dict) -> bool:
                 if any(value not in visible for value in expected):
                     return False
     if plan["selected_mode"] == "enhanced":
-        return _enhancement_complete(root / "enhanced", bundle, prefix) and state["enhancement"] == {
+        return _enhancement_complete(root / "enhanced", bundle, prefix, before,
+                                     inputs.get("enhancement_request")) and state["enhancement"] == {
             "status": "complete", "case": "enhanced",
             "analysis_index_sha256": sha256_file(root / "enhanced/analysis-index.json")}
     return state["enhancement"]["status"] == "skipped_optional"

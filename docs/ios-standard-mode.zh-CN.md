@@ -40,6 +40,8 @@
 
 命令在交接点返回未完成状态，当前会话继续任务。发现阶段观察原 App，编写 3–12 条不同的有界流程，在指定路径执行 `discover-check --mode standard --backend ictrl`。已有 `--script` 或已接受的 `--discovery` 可以替代 `--auto-discover`。恢复必须保留全部参数和准确任务目录，再加 `--resume`；不会启动嵌套 Coding Agent。未确认动作是否完成时先审阅设备状态；`--resume --retry-failed` 明确归档并重试失败的分析流程。发现重放失败仍需审阅并创建新案例。
 
+失败采集恢复前会重新探测所需能力，保留在 `capability-checks/`；服务失效或路线改变时停止重放，不覆盖初次探测，也不静默切换后端。完整案例的校验与复用不再操作手机。增强 CLI 请求另外固定设备端解密意图、survey 后端、SSH 路由引用与 helper 身份，更改这些输入需要新案例。增强 survey、采集 IPA 元数据、沙盒及可选恢复包都必须与本次 App 版本／构建和设备／系统身份匹配；即使旧构建的成功标记和哈希有效，也会拒绝混入。
+
 按指定路径完成报告和 analysis-delivery，再继续 `rebuild-preparation/task/TASK.md`。实现前固定能力清单与保真度目标；独立源码使用自己的 Bundle ID，普通模式开发签名并通过 `install --transport usb` 安装。完成原版／重建版成对断言、全部截图审阅、visual-review 和不带 `--run` 的 agent-delivery。父工作流仍按严格门槛完成，单独达到有界保真度目标不能替代它；延后能力必须保留。
 
 安装包与手机权限分开处理，可选使用：
@@ -56,7 +58,11 @@ toolchains/bin/ipatool auth login
 
 具体参数以 `--help` 为准。`ipatool` 固定 v2.7.0，FairPlay 固定 commit `1bad106ee1698c6d9c483f67d898183ffa4c6eb3` 并检查四个源文件哈希。下载记录工具哈希／版本、请求身份与实际包元数据；许可获取必须显式 `--acquire-license`，不保留原始账号日志。真实账号登录和成功下载仍须实际验收，不能由工具安装成功推导。
 
+从源码目录外运行 wheel 时，把 `COPYAPP_SOURCE_ROOT` 设为包含这些忽略工具与凭据存储的检出目录。默认 ipatool、FairPlay 源码和 credential 查找基于该目录，不依赖 shell 当前目录；显式工具／存储路径仍优先。
+
 匹配的 16 字节 credential 只放在忽略的 `cases/credentials/fairplay/<LOCAL_ALIAS>.bin`，内容、哈希和本地路径不进入证据。首次取得凭据是独立准备任务，适配器不会从普通手机取得它。离线恢复检查全部程序和资源，当前审计范围为 thin ARM64 加密输入，拒绝 FAT。结构成功标为 `structural_only`；原本未加密的输入保留原样，不能算解密成功。有效凭据的真实成功恢复和独立代码交叉核对仍是未完成的验收项。
+
+包索引还会记录不支持的 32 位／反字节序 Mach-O，以及主 App 目录外的程序；这些输入可以保留静态包证据，但会阻断整包离线恢复。全部 FAT 都会拒绝，包括所选 ARM64 切片已无加密的情况，因为其他切片尚未审计。
 
 `offline-cross-check --offline <离线案例> --device <已验证设备解密案例> --out <新案例>` 可与历史 `decrypted_package` 交叉检查全部恢复程序和扩展，要求版本／构建、原加密字节哈希、UUID、加密范围和恢复后哈希都相同。比较保留双方采集身份，不修改原案例的 `structural_only` 状态，也不把不同时间观察写成同时发生；真机验收仍需真实成功的离线样本。
 
