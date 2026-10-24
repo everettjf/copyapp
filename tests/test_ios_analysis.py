@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 from zipfile import ZipFile
 
 from PIL import Image
@@ -46,6 +46,13 @@ def capabilities(_udid, root, mode, *_args):
             data["probes"][name] = {"status": "available"}
     write_json(root / "baseline/device.json", data)
     write_json(root / "baseline/manifest.json", {"schema_version": 1, "kind": "device_doctor", "evidence": []})
+    root_probe = ({"status": "available", "device_id": _udid, "effective_uid": 0,
+                   "identity_verified": True, "suspended_child_stopped": True}
+                  if mode == "enhanced" else
+                  {"status": "not_probed", "device_id": _udid,
+                   "reason": "standard mode or required USB/SSH/Frida channel unavailable"})
+    write_json(root / "root-spawn.json", root_probe)
+    data["probes"]["frida_root_spawn"] = root_probe
     write_json(root / "capabilities.json", {**data, **capability_plan(data, mode)})
     seal_case(root, "ios_capabilities", status="complete", requested_mode=mode,
               selected_mode=capability_plan(data, mode)["selected_mode"], device_id_sha256_prefix=PREFIX)
@@ -320,6 +327,48 @@ class IosAnalysisTest(unittest.TestCase):
             replay.assert_not_called()
         self.assertTrue(verify_case(self.root / "analysis"))
 
+    def test_requested_decryption_checks_root_before_identity_collection_or_actions(self):
+        def mobile_caps(udid, output, mode, *args):
+            capabilities(udid, output, mode, *args)
+            baseline = read_json(output / "baseline/device.json")
+            probe = {"status": "unavailable", "device_id": udid, "effective_uid": 501,
+                     "identity_verified": True, "suspended_child_stopped": True}
+            write_json(output / "root-spawn.json", probe)
+            baseline["probes"]["frida_root_spawn"] = probe
+            write_json(output / "capabilities.json", {**baseline, **capability_plan(baseline, mode)})
+            seal_case(output, "ios_capabilities", status="complete", requested_mode=mode,
+                      selected_mode="enhanced", device_id_sha256_prefix=PREFIX)
+
+        request = enhancement_settings(True, "usb", 22222, "mobile", self.root / "key",
+                                        self.root / "known-hosts", self.root / "helper")
+        with patch("copyapp.ios_analysis.collect_capabilities", side_effect=mobile_caps), \
+                patch("copyapp.ios_analysis.target_identity") as identity, \
+                patch("copyapp.ios_analysis.run_playbook") as replay:
+            collector = Mock()
+            self.assertFalse(self.collect(mode="enhanced", enhanced_collector=collector,
+                                          enhancement_request=request)[1])
+            self.assertIn("frida_root_spawn", read_json(self.root / "analysis/analysis.json")["error"]["message"])
+            self.assertFalse(self.collect(mode="enhanced", enhanced_collector=collector,
+                                          enhancement_request=request, resume=True, retry_failed=True)[1])
+            identity.assert_not_called()
+            collector.assert_not_called()
+            replay.assert_not_called()
+        self.assertFalse(read_json(self.root / "analysis/analysis.json")["capability_checks"][-1]["accepted_for_resume"])
+        self.assertTrue(verify_case(self.root / "analysis"))
+        # When root is subsequently available, use the fresh accepted probe,
+        # retaining the original unavailable snapshot. Reach collection rather
+        # than blocking forever on the old missing root result.
+        collector = Mock(return_value=False)
+        with patch("copyapp.ios_analysis.target_identity", new=AsyncMock(return_value=IDENTITY)) as identity:
+            self.assertFalse(self.collect(mode="enhanced", enhanced_collector=collector,
+                                          enhancement_request=request, resume=True, retry_failed=True)[1])
+            identity.assert_awaited_once()
+        collector.assert_called_once()
+        state = read_json(self.root / "analysis/analysis.json")
+        self.assertTrue(state["capability_checks"][-1]["accepted_for_resume"])
+        self.assertIn("enhanced device collection failed", state["error"]["message"])
+        self.assertTrue(verify_case(self.root / "analysis"))
+
     def test_declared_stage_success_without_matching_stage_key_is_rejected(self):
         def stale_key(root):
             self.legacy_collection(root)
@@ -445,6 +494,7 @@ class IosAnalysisTest(unittest.TestCase):
             baseline = read_json(output / "baseline/device.json")
             baseline["probes"]["ictrl"] = {"status": "unavailable"}
             write_json(output / "baseline/device.json", baseline)
+            baseline["probes"]["frida_root_spawn"] = read_json(output / "root-spawn.json")
             write_json(output / "capabilities.json", {**baseline, **capability_plan(baseline, mode)})
             seal_case(output, "ios_capabilities", status="complete", requested_mode=mode,
                       selected_mode="standard", device_id_sha256_prefix=PREFIX)
@@ -467,6 +517,27 @@ class IosAnalysisTest(unittest.TestCase):
         seal_case(analysis, "ios_analysis", status="complete", bundle_id=BUNDLE,
                   device_id_sha256_prefix=PREFIX)
         self.assertFalse(verify_case(analysis))
+
+    def test_resume_can_recover_an_initially_missing_channel_without_rewriting_baseline(self):
+        def unavailable(udid, output, mode, *args):
+            capabilities(udid, output, mode, *args)
+            baseline = read_json(output / "baseline/device.json")
+            baseline["probes"]["ictrl"] = {"status": "unavailable"}
+            write_json(output / "baseline/device.json", baseline)
+            baseline["probes"]["frida_root_spawn"] = read_json(output / "root-spawn.json")
+            write_json(output / "capabilities.json", {**baseline, **capability_plan(baseline, mode)})
+            seal_case(output, "ios_capabilities", status="complete", requested_mode=mode,
+                      selected_mode="standard", device_id_sha256_prefix=PREFIX)
+
+        with patch("copyapp.ios_analysis.collect_capabilities", side_effect=unavailable), \
+                patch("copyapp.ios_analysis.run_playbook") as replay:
+            self.assertFalse(self.collect()[1])
+            replay.assert_not_called()
+        self.assertTrue(self.collect(resume=True, retry_failed=True)[1])
+        root = self.root / "analysis"
+        self.assertEqual(read_json(root / "capabilities/baseline/device.json")["probes"]["ictrl"]["status"],
+                         "unavailable")
+        self.assertTrue(verify_case(root))
 
     def test_parent_resume_pins_enhancement_settings_even_when_auto_selected_ui_only(self):
         request = enhancement_settings(False, "usb", 22222, "mobile", self.root / "key",

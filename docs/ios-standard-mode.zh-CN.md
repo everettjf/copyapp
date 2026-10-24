@@ -4,7 +4,7 @@
 
 本检出新增显式 `--mode standard|auto|enhanced`。未加模式的历史 iOS 命令保留原有契约。这仍是开发功能，不属于已发布 v0.2.0 的支持承诺。macOS 继续使用独立 `copyapp mac` 命令和 ChatComputer 身份。
 
-已测普通模式样本是 iPhone 11（`iPhone12,1`）／iOS 26.0.1：经用户授权重启后，SSH、Frida 和 iOS MCP 不可用。手机有历史越狱文件，属于“越狱未激活”，不能视作从未越狱的干净手机。已通过 USB 安装开发签名 iCTRL runner，完成系统计算器加法的观察、独立实现、签名安装和同机对照；两对截图均已审阅，保留轻微差异。首轮达到 87.4/100 的有界保真度目标；这是选定范围的审阅评分，与能力覆盖率和整 App 等价分别报告。第二台普通手机或另一系统组合仍待验证。
+已测普通模式样本是 iPhone 11（`iPhone12,1`）／iOS 26.0.1：经用户授权重启后，SSH、Frida 和 iOS MCP 不可用。手机有历史越狱文件，属于“越狱未激活”，不能视作从未越狱的干净手机。已通过 USB 安装开发签名 iCTRL runner，完成系统计算器加法的观察、独立实现、签名安装和同机对照；两对截图均已审阅，保留轻微差异。首轮达到 87.4/100 的有界保真度目标；这是选定范围的审阅评分，与能力覆盖率和整 App 等价分别报告。iPhone 14／iOS 17.3.1 也通过了显式普通模式的自有测试 App 流程，但其已有 RootHide 服务保持运行；这增加了一个命名系统回归，不能替代从未越狱设备的兼容性验收。
 
 使用仓库 `.venv/bin/copyapp`，固定 UDID 与 Bundle ID。先确认配对、信任、开发者模式、Xcode 和覆盖该设备的有效开发签名。心跳成功只表示可以尝试，不能证明 XCTest 动作或签名安装可用。
 
@@ -40,9 +40,11 @@
 
 命令在交接点返回未完成状态，当前会话继续任务。发现阶段观察原 App，编写 3–12 条不同的有界流程，在指定路径执行 `discover-check --mode standard --backend ictrl`。已有 `--script` 或已接受的 `--discovery` 可以替代 `--auto-discover`。恢复必须保留全部参数和准确任务目录，再加 `--resume`；不会启动嵌套 Coding Agent。未确认动作是否完成时先审阅设备状态；`--resume --retry-failed` 明确归档并重试失败的分析流程。发现重放失败仍需审阅并创建新案例。
 
-失败采集恢复前会重新探测所需能力，保留在 `capability-checks/`；服务失效或路线改变时停止重放，不覆盖初次探测，也不静默切换后端。完整案例的校验与复用不再操作手机。增强 CLI 请求另外固定设备端解密意图、survey 后端、SSH 路由引用与 helper 身份，更改这些输入需要新案例。增强 survey、采集 IPA 元数据、沙盒及可选恢复包都必须与本次 App 版本／构建和设备／系统身份匹配；即使旧构建的成功标记和哈希有效，也会拒绝混入。
+失败采集恢复前会重新探测所需能力，保留在 `capability-checks/`；服务失效或路线改变时停止重放，不覆盖初次探测，也不静默切换后端。同一路线修复后，以新接受的探测判断就绪，初次缺失的能力不会使恢复永久阻塞。完整案例的校验与复用不再操作手机。增强 CLI 请求另外固定设备端解密意图、survey 后端、SSH 路由引用与 helper 身份，更改这些输入需要新案例。增强 survey、采集 IPA 元数据、沙盒及可选恢复包都必须与本次 App 版本／构建和设备／系统身份匹配；即使旧构建的成功标记和哈希有效，也会拒绝混入。
 
 按指定路径完成报告和 analysis-delivery，再继续 `rebuild-preparation/task/TASK.md`。实现前固定能力清单与保真度目标；独立源码使用自己的 Bundle ID，普通模式开发签名并通过 `install --transport usb` 安装。完成原版／重建版成对断言、全部截图审阅、visual-review 和不带 `--run` 的 agent-delivery。父工作流仍按严格门槛完成，单独达到有界保真度目标不能替代它；延后能力必须保留。
+
+能力模型 2 将 App 跟踪与 root 权限分开：上述 iPhone 14／iOS 17.3.1 可以采集 App 包、索引沙盒并跟踪方法，但实际 Frida 子进程是 UID 501。独立探测会核对准确 USB 身份，读取暂停子进程的 UID 后结束它，不运行该可执行程序。设备解密需要 UID 0 探测成功；显式 `--decrypt` 在缺失时会先停止，不进行采集或 UI 重放。普通模式跳过此探测。历史模型 1 案例保留原校验与就绪字段，不能据此推导 root 权限。详见[真实回归账本](ios-device-support-acceptance.md#authenticated-download-and-three-route-follow-up)。
 
 安装包与手机权限分开处理，可选使用：
 
@@ -56,7 +58,7 @@ toolchains/bin/ipatool auth login
   --credential-ref <LOCAL_ALIAS> --out cases/offline-package
 ```
 
-具体参数以 `--help` 为准。`ipatool` 固定 v2.7.0，FairPlay 固定 commit `1bad106ee1698c6d9c483f67d898183ffa4c6eb3` 并检查四个源文件哈希。下载记录工具哈希／版本、请求身份与实际包元数据；许可获取必须显式 `--acquire-license`，不保留原始账号日志。真实账号登录和成功下载仍须实际验收，不能由工具安装成功推导。
+具体参数以 `--help` 为准。`ipatool` 固定 v2.7.0，FairPlay 固定 commit `1bad106ee1698c6d9c483f67d898183ffa4c6eb3` 并检查四个源文件哈希。下载记录工具哈希／版本、请求身份与实际包元数据；许可获取必须显式 `--acquire-license`，不保留原始账号日志。真实登录后已成功下载免费的 FocusTodo 1.0.4（4），并在上述越狱未激活的 iPhone 11 上通过两条普通模式 UI 流程；主程序、框架和 Widget 仍有加密。工具安装本身不证明登录或下载，登录成功也不等于已有匹配的离线凭据。
 
 从源码目录外运行 wheel 时，把 `COPYAPP_SOURCE_ROOT` 设为包含这些忽略工具与凭据存储的检出目录。默认 ipatool、FairPlay 源码和 credential 查找基于该目录，不依赖 shell 当前目录；显式工具／存储路径仍优先。
 

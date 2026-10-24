@@ -26,6 +26,15 @@ def _now():
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+def _analysis_missing(plan: dict, request: Optional[dict]) -> list:
+    missing = list(plan["operations"]["analyze"]["missing"])
+    if (request and request.get("device_decryption") and
+            plan.get("capability_model_version", 1) >= 2):
+        missing += [item for item in plan["operations"]["decrypt-device"]["missing"]
+                    if item not in missing]
+    return missing
+
+
 def enhancement_settings(decrypt: bool, ui_backend: str, ssh_port: int, ssh_user: str,
                          ssh_identity: Path, ssh_known_hosts: Path, helper: Path) -> dict:
     """Pin public collection settings without reading credential contents."""
@@ -239,6 +248,7 @@ def collect_ios_analysis(udid: str, bundle: str, scripts: list[Path], output: Pa
                                  ssh_known_hosts, ictrl_client)
         _verified(capabilities)
         plan = read_json(capabilities / "capabilities.json")
+        readiness = plan
         state["selected_mode"], state["ui_backend"] = plan["selected_mode"], plan["ui_backend"]
         if resume:
             checks = output / "capability-checks"
@@ -251,14 +261,15 @@ def collect_ios_analysis(udid: str, bundle: str, scripts: list[Path], output: Pa
                         current["requested_mode"] == mode and
                         current["selected_mode"] == plan["selected_mode"] and
                         current["ui_backend"] == plan["ui_backend"] and
-                        not current["operations"]["analyze"]["missing"])
+                        not _analysis_missing(current, enhancement_request))
             state.setdefault("capability_checks", []).append({
                 "case": str(probe.relative_to(output)), "manifest_sha256": sha256_file(probe / "manifest.json"),
                 "accepted_for_resume": accepted})
             if not accepted:
                 raise RuntimeError("required capabilities unavailable or the selected route changed on resume; "
                                    "inspect the fresh probe before retrying or starting a new case")
-        missing = plan["operations"]["analyze"]["missing"]
+            readiness = current
+        missing = _analysis_missing(readiness, enhancement_request)
         if missing:
             raise RuntimeError("required analysis capabilities unavailable: " + ", ".join(missing))
         before = asyncio.run(target_identity(udid, bundle))
@@ -365,7 +376,6 @@ def validate_ios_analysis(root: Path, manifest: dict) -> bool:
     if (before != read_json(root / "identity-after.json") or
             before["device"]["UniqueDeviceID"] != udid or before["app"]["bundle_id"] != bundle or
             plan["device"]["UniqueDeviceID"] != udid or plan["requested_mode"] != inputs["requested_mode"] or
-            plan["operations"]["analyze"]["missing"] or
             state.get("selected_mode") != plan["selected_mode"] or
             state.get("ui_backend") != plan["ui_backend"]):
         return False
@@ -374,6 +384,7 @@ def validate_ios_analysis(root: Path, manifest: dict) -> bool:
     checks = state.get("capability_checks", [])
     if not isinstance(checks, list) or len({item["case"] for item in checks}) != len(checks):
         return False
+    readiness = plan
     for item in checks:
         probe = checked_path(root, item["case"])
         _verified(probe)
@@ -382,11 +393,14 @@ def validate_ios_analysis(root: Path, manifest: dict) -> bool:
                     current["requested_mode"] == inputs["requested_mode"] and
                     current["selected_mode"] == plan["selected_mode"] and
                     current["ui_backend"] == plan["ui_backend"] and
-                    not current["operations"]["analyze"]["missing"])
+                    not _analysis_missing(current, inputs.get("enhancement_request")))
         if (item["manifest_sha256"] != sha256_file(probe / "manifest.json") or
                 item.get("accepted_for_resume") is not accepted):
             return False
+        readiness = current
     if checks and checks[-1]["accepted_for_resume"] is not True:
+        return False
+    if _analysis_missing(readiness, inputs.get("enhancement_request")):
         return False
     if inputs.get("packages"):
         roots = [checked_path(root, item["case"]) for item in inputs["packages"]]
