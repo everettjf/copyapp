@@ -44,7 +44,7 @@
 
 按指定路径完成报告和 analysis-delivery，再继续 `rebuild-preparation/task/TASK.md`。实现前固定能力清单与保真度目标；独立源码使用自己的 Bundle ID，普通模式开发签名并通过 `install --transport usb` 安装。完成原版／重建版成对断言、全部截图审阅、visual-review 和不带 `--run` 的 agent-delivery。父工作流仍按严格门槛完成，单独达到有界保真度目标不能替代它；延后能力必须保留。
 
-能力模型 2 将 App 跟踪与 root 权限分开：上述 iPhone 14／iOS 17.3.1 可以采集 App 包、索引沙盒并跟踪方法，但实际 Frida 子进程是 UID 501。独立探测会核对准确 USB 身份，读取暂停子进程的 UID 后结束它，不运行该可执行程序。设备解密需要 UID 0 探测成功；显式 `--decrypt` 在缺失时会先停止，不进行采集或 UI 重放。普通模式跳过此探测。历史模型 1 案例保留原校验与就绪字段，不能据此推导 root 权限。详见[真实回归账本](ios-device-support-acceptance.md#authenticated-download-and-three-route-follow-up)。
+能力模型 3 通过认证且核对准确 USB 身份的 SSH 探测 helper 实际路线。RootHide 沿用 mobile SSH helper，不要求 root Frida 子进程，也不要求离线 FairPlay 凭据；普通 rootless 路线仍需完整 Frida 与成功的 UID 0 暂停子进程探测，App 跟踪能力本身不证明 root。上述 iPhone 14／iOS 17.3.1 的 Frida 子进程为 UID 501，但 RootHide helper 已恢复 Remoboard 主程序和键盘扩展的加密代码，完整 `analyze --mode enhanced --decrypt` 采集入口也已通过。产出的分析 IPA 签名已改变，不声明可安装。普通模式跳过这两项越狱探测。历史模型 1、2 保留原校验；模型 2 把 root 条件套用到全部路线，曾过早拒绝此 RootHide 路线，不能据此判断无法解密。详见[路线修正与实测证据](ios-device-support-acceptance.md#roothide-device-recovery-correction)。
 
 安装包与手机权限分开处理，可选使用：
 

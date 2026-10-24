@@ -15,10 +15,10 @@ from copyapp.verify import verify_case
 MODES = ("auto", "standard", "enhanced")
 
 
-def capability_plan(baseline: dict, requested_mode: str, version: int = 2) -> dict:
+def capability_plan(baseline: dict, requested_mode: str, version: int = 3) -> dict:
     if requested_mode not in MODES:
         raise ValueError("mode must be auto, standard or enhanced")
-    if type(version) is not int or version not in (1, 2):
+    if type(version) is not int or version not in (1, 2, 3):
         raise ValueError("unsupported capability model version")
     probes, host = baseline["probes"], baseline["host"]
 
@@ -40,8 +40,14 @@ def capability_plan(baseline: dict, requested_mode: str, version: int = 2) -> di
     }
     if actual_mode == "enhanced":
         requirements["analyze"].append("ssh_mobile")
-    if version >= 2:
+    if version == 2:
         requirements["decrypt-device"].append("frida_root_spawn")
+    elif version >= 3:
+        # Match decrypt_package's actual dispatch. RootHide's pinned helper
+        # executes over authenticated mobile SSH, independently of Frida UID.
+        requirements["decrypt-device"] = ["usb_lockdown", "ssh_mobile", "package_recovery_route"]
+        if probes.get("package_recovery_route", {}).get("route") == "rootless_frida_root":
+            requirements["decrypt-device"] += ["frida_usb", "frida_root_spawn"]
     operations = {}
     for name, needs in requirements.items():
         missing = [item for item in needs if not available(item)]
@@ -65,6 +71,38 @@ def capability_plan(baseline: dict, requested_mode: str, version: int = 2) -> di
     if version >= 2:
         plan["capability_model_version"] = version
     return plan
+
+
+def _package_recovery_probe(udid: str, port: int, identity: Path, known_hosts: Path) -> dict:
+    from copyapp.decrypt_package import _is_roothide_ssh
+    from copyapp.ssh_acquire import _ssh_argv
+    from copyapp.usb_tunnel import exact_ssh_tunnel
+
+    result = {"status": "unavailable", "device_id": udid}
+    try:
+        with exact_ssh_tunnel(udid, port, identity, known_hosts) as active:
+            roothide = _is_roothide_ssh(_ssh_argv(active, identity, known_hosts, "mobile"))
+            result.update(status="available", identity_verified=True,
+                          route="roothide_mobile_ssh" if roothide else "rootless_frida_root")
+    except Exception as exc:
+        result["error_type"] = type(exc).__name__
+    return result
+
+
+def _package_recovery_valid(probe: dict, udid: str, mode: str, probes: dict) -> bool:
+    if not isinstance(probe, dict) or probe.get("device_id") != udid:
+        return False
+    prerequisites = mode != "standard" and all(
+        probes.get(name, {}).get("status") == "available" for name in ("usb_lockdown", "ssh_mobile"))
+    if not prerequisites:
+        return probe == {"status": "not_probed", "device_id": udid,
+                         "reason": "standard mode or required USB/SSH channel unavailable"}
+    if probe.get("status") == "available":
+        return (set(probe) == {"status", "device_id", "identity_verified", "route"} and
+                probe["identity_verified"] is True and
+                probe["route"] in ("roothide_mobile_ssh", "rootless_frida_root"))
+    return (set(probe) == {"status", "device_id", "error_type"} and
+            probe["status"] == "unavailable" and bool(probe["error_type"]))
 
 
 def _root_spawn_probe(udid: str, port: int, identity: Path, known_hosts: Path) -> dict:
@@ -146,6 +184,13 @@ def collect_capabilities(udid: str, output: Path, mode: str = "auto",
              "reason": "standard mode or required USB/SSH/Frida channel unavailable"})
     write_json(output / "root-spawn.json", root)
     probes["frida_root_spawn"] = root
+    recovery = (_package_recovery_probe(udid, ssh_port, ssh_identity, ssh_known_hosts)
+                if mode != "standard" and all(probes.get(name, {}).get("status") == "available"
+                   for name in ("usb_lockdown", "ssh_mobile")) else
+                {"status": "not_probed", "device_id": udid,
+                 "reason": "standard mode or required USB/SSH channel unavailable"})
+    write_json(output / "package-recovery-route.json", recovery)
+    probes["package_recovery_route"] = recovery
     plan = capability_plan(baseline, mode)
     record = {"device": baseline["device"], "probes": baseline["probes"],
               "host": baseline["host"], **plan}
@@ -174,14 +219,21 @@ def validate_capabilities(root: Path, manifest: dict) -> bool:
         return False
     mode = manifest["requested_mode"]
     version = record.get("capability_model_version", 1)
-    if type(version) is not int or version not in (1, 2):
+    if type(version) is not int or version not in (1, 2, 3):
         return False
-    if version == 2:
+    if version >= 2:
         root_probe = read_json(root / "root-spawn.json")
         if not _root_spawn_valid(root_probe, udid, mode, baseline["probes"]):
             return False
         baseline["probes"]["frida_root_spawn"] = root_probe
     elif (root / "root-spawn.json").exists():
+        return False
+    if version >= 3:
+        recovery = read_json(root / "package-recovery-route.json")
+        if not _package_recovery_valid(recovery, udid, mode, baseline["probes"]):
+            return False
+        baseline["probes"]["package_recovery_route"] = recovery
+    elif (root / "package-recovery-route.json").exists():
         return False
     plan = capability_plan(baseline, mode, version=version)
     expected = {"device": baseline["device"], "probes": baseline["probes"],

@@ -53,6 +53,12 @@ def capabilities(_udid, root, mode, *_args):
                    "reason": "standard mode or required USB/SSH/Frida channel unavailable"})
     write_json(root / "root-spawn.json", root_probe)
     data["probes"]["frida_root_spawn"] = root_probe
+    recovery = ({"status": "available", "device_id": _udid, "identity_verified": True,
+                 "route": "rootless_frida_root"} if mode == "enhanced" else
+                {"status": "not_probed", "device_id": _udid,
+                 "reason": "standard mode or required USB/SSH channel unavailable"})
+    write_json(root / "package-recovery-route.json", recovery)
+    data["probes"]["package_recovery_route"] = recovery
     write_json(root / "capabilities.json", {**data, **capability_plan(data, mode)})
     seal_case(root, "ios_capabilities", status="complete", requested_mode=mode,
               selected_mode=capability_plan(data, mode)["selected_mode"], device_id_sha256_prefix=PREFIX)
@@ -334,6 +340,7 @@ class IosAnalysisTest(unittest.TestCase):
             probe = {"status": "unavailable", "device_id": udid, "effective_uid": 501,
                      "identity_verified": True, "suspended_child_stopped": True}
             write_json(output / "root-spawn.json", probe)
+            baseline["probes"]["package_recovery_route"] = read_json(output / "package-recovery-route.json")
             baseline["probes"]["frida_root_spawn"] = probe
             write_json(output / "capabilities.json", {**baseline, **capability_plan(baseline, mode)})
             seal_case(output, "ios_capabilities", status="complete", requested_mode=mode,
@@ -366,6 +373,43 @@ class IosAnalysisTest(unittest.TestCase):
         collector.assert_called_once()
         state = read_json(self.root / "analysis/analysis.json")
         self.assertTrue(state["capability_checks"][-1]["accepted_for_resume"])
+        self.assertIn("enhanced device collection failed", state["error"]["message"])
+        self.assertTrue(verify_case(self.root / "analysis"))
+
+    def test_resume_repairs_old_blanket_root_gate_with_verified_roothide_route(self):
+        def mobile_caps(udid, output, mode, *args, old=False):
+            capabilities(udid, output, mode, *args)
+            data = read_json(output / "baseline/device.json")
+            probe = {"status": "unavailable", "device_id": udid, "effective_uid": 501,
+                     "identity_verified": True, "suspended_child_stopped": True}
+            write_json(output / "root-spawn.json", probe)
+            data["probes"]["frida_root_spawn"] = probe
+            if old:
+                (output / "package-recovery-route.json").unlink()
+            else:
+                route = {"status": "available", "device_id": udid, "identity_verified": True,
+                         "route": "roothide_mobile_ssh"}
+                write_json(output / "package-recovery-route.json", route)
+                data["probes"]["package_recovery_route"] = route
+            write_json(output / "capabilities.json", {**data, **capability_plan(data, mode, version=2 if old else 3)})
+            seal_case(output, "ios_capabilities", status="complete", requested_mode=mode,
+                      selected_mode="enhanced", device_id_sha256_prefix=PREFIX)
+
+        request = enhancement_settings(True, "usb", 22222, "mobile", self.root / "key",
+                                        self.root / "known-hosts", self.root / "helper")
+        collector = Mock(return_value=False)
+        with patch("copyapp.ios_analysis.collect_capabilities",
+                   side_effect=lambda *args: mobile_caps(*args, old=True)):
+            self.assertFalse(self.collect(mode="enhanced", enhanced_collector=collector,
+                                          enhancement_request=request)[1])
+        collector.assert_not_called()
+        with patch("copyapp.ios_analysis.collect_capabilities", side_effect=mobile_caps):
+            self.assertFalse(self.collect(mode="enhanced", enhanced_collector=collector,
+                                          enhancement_request=request, resume=True, retry_failed=True)[1])
+        collector.assert_called_once()
+        state = read_json(self.root / "analysis/analysis.json")
+        self.assertTrue(state["capability_checks"][-1]["accepted_for_resume"])
+        self.assertEqual(read_json(self.root / "analysis/capabilities/capabilities.json")["capability_model_version"], 2)
         self.assertIn("enhanced device collection failed", state["error"]["message"])
         self.assertTrue(verify_case(self.root / "analysis"))
 
@@ -494,6 +538,7 @@ class IosAnalysisTest(unittest.TestCase):
             baseline = read_json(output / "baseline/device.json")
             baseline["probes"]["ictrl"] = {"status": "unavailable"}
             write_json(output / "baseline/device.json", baseline)
+            baseline["probes"]["package_recovery_route"] = read_json(output / "package-recovery-route.json")
             baseline["probes"]["frida_root_spawn"] = read_json(output / "root-spawn.json")
             write_json(output / "capabilities.json", {**baseline, **capability_plan(baseline, mode)})
             seal_case(output, "ios_capabilities", status="complete", requested_mode=mode,
@@ -524,6 +569,7 @@ class IosAnalysisTest(unittest.TestCase):
             baseline = read_json(output / "baseline/device.json")
             baseline["probes"]["ictrl"] = {"status": "unavailable"}
             write_json(output / "baseline/device.json", baseline)
+            baseline["probes"]["package_recovery_route"] = read_json(output / "package-recovery-route.json")
             baseline["probes"]["frida_root_spawn"] = read_json(output / "root-spawn.json")
             write_json(output / "capabilities.json", {**baseline, **capability_plan(baseline, mode)})
             seal_case(output, "ios_capabilities", status="complete", requested_mode=mode,

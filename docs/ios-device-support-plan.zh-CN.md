@@ -2,7 +2,7 @@
 
 [文档目录](README.zh-CN.md) · [当前能力](current-status.zh-CN.md) · [现有架构](architecture.zh-CN.md)
 
-状态：开发分支正在实现，2026-10-23；[当前使用与边界](ios-standard-mode.zh-CN.md) · [验收账本](ios-device-support-acceptance.md)。P0 动作清单与 P1 单一计算器流程已在 iPhone 11／iOS 26.0.1 越狱未激活状态下完成，不能等同于从未越狱设备验收。真实账号下载 FocusTodo、两条普通 UI 流程、iOS 17.3.1 的新增强采集／方法跟踪、第二命名系统的显式普通模式以及 Mac 既有编辑器回归已经通过。iOS 17 当前 Frida 子进程为 UID 501，已修正其设备解密能力误判。有效凭据恢复及独立代码交叉核对、从未越狱设备验收仍开放，整个方案尚未完成。
+状态：开发分支正在实现，2026-10-23；[当前使用与边界](ios-standard-mode.zh-CN.md) · [验收账本](ios-device-support-acceptance.md)。P0 动作清单与 P1 单一计算器流程已在 iPhone 11／iOS 26.0.1 越狱未激活状态下完成，不能等同于从未越狱设备验收。真实账号下载 FocusTodo、两条普通 UI 流程、iOS 17.3.1 的新增强采集／方法跟踪、第二命名系统的显式普通模式以及 Mac 既有编辑器回归已经通过。iOS 17 的 Frida 子进程为 UID 501，但 RootHide 的 mobile SSH helper 已实测恢复 Remoboard 主程序和键盘扩展，完整 enhanced --decrypt 入口通过；新检查按 helper 路线判断，普通 rootless 路线仍要求 root Frida。有效凭据恢复及独立代码交叉核对、从未越狱设备验收仍开放，整个方案尚未完成。
 
 Copy APP 将普通 iPhone 作为基础入口：观察原 App、整理可验证的功能规格、独立实现、签名安装，再在同一手机上比较选定流程。越狱 iPhone 在此基础上提供安装包和沙盒采集、设备端解密、运行时视图与函数跟踪。安装包和离线解密凭据作为独立输入，不与手机是否越狱绑定。
 

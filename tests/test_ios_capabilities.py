@@ -59,7 +59,7 @@ class IosCapabilitiesTest(unittest.TestCase):
         for name in ("ssh_mobile", "frida_usb", "ios_mcp"):
             data["probes"][name] = {"status": "available"}
         data["probes"]["frida_root_spawn"] = {"status": "unavailable", "effective_uid": 501}
-        result = capability_plan(data, "auto")
+        result = capability_plan(data, "auto", version=2)
         self.assertEqual(result["selected_mode"], "enhanced")
         for name in ("analyze", "trace", "sandbox"):
             self.assertTrue(result["operations"][name]["ready_for_attempt"])
@@ -68,6 +68,43 @@ class IosCapabilitiesTest(unittest.TestCase):
         old = capability_plan(data, "auto", version=1)
         self.assertNotIn("capability_model_version", old)
         self.assertTrue(old["operations"]["decrypt-device"]["ready_for_attempt"])
+
+    def test_recovery_readiness_uses_the_actual_helper_route(self):
+        data = baseline()
+        data["probes"]["ssh_mobile"] = {"status": "available"}
+        data["probes"]["frida_root_spawn"] = {"status": "unavailable", "effective_uid": 501}
+        # A namespace marker alone must never grant helper readiness.
+        data["probes"]["rootless_marker"] = {"roothide_namespace": True}
+        self.assertEqual(capability_plan(data, "enhanced")["operations"]["decrypt-device"]["missing"],
+                         ["package_recovery_route"])
+        data["probes"]["package_recovery_route"] = {
+            "status": "available", "device_id": UDID, "identity_verified": True,
+            "route": "roothide_mobile_ssh"}
+        self.assertTrue(capability_plan(data, "enhanced")["operations"]["decrypt-device"]["ready_for_attempt"])
+        self.assertFalse(capability_plan(data, "standard")["operations"]["decrypt-device"]["ready_for_attempt"])
+        data["probes"]["package_recovery_route"]["route"] = "rootless_frida_root"
+        self.assertEqual(capability_plan(data, "enhanced")["operations"]["decrypt-device"]["missing"],
+                         ["frida_usb", "frida_root_spawn"])
+        data["probes"]["frida_usb"] = {"status": "available"}
+        data["probes"]["frida_root_spawn"] = {"status": "available", "effective_uid": 0}
+        self.assertTrue(capability_plan(data, "enhanced")["operations"]["decrypt-device"]["ready_for_attempt"])
+
+    def test_recovery_probe_authenticates_exact_usb_and_matches_helper_dispatch(self):
+        from contextlib import nullcontext
+        from copyapp.ios_capabilities import _package_recovery_probe
+        with patch("copyapp.usb_tunnel.exact_ssh_tunnel", return_value=nullcontext(1234)) as tunnel, \
+                patch("copyapp.ssh_acquire._ssh_argv", return_value=["pinned-ssh"]) as ssh, \
+                patch("copyapp.decrypt_package._is_roothide_ssh", return_value=True) as detect:
+            result = _package_recovery_probe(UDID, 1234, Path("key"), Path("hosts"))
+        tunnel.assert_called_once_with(UDID, 1234, Path("key"), Path("hosts"))
+        ssh.assert_called_once_with(1234, Path("key"), Path("hosts"), "mobile")
+        detect.assert_called_once_with(["pinned-ssh"])
+        self.assertEqual(result["route"], "roothide_mobile_ssh")
+        with patch("copyapp.usb_tunnel.exact_ssh_tunnel", side_effect=RuntimeError("wrong phone")), \
+                patch("copyapp.decrypt_package._is_roothide_ssh") as detect:
+            self.assertEqual(_package_recovery_probe(UDID, 1234, Path("key"), Path("hosts"))["status"],
+                             "unavailable")
+            detect.assert_not_called()
 
     def test_root_probe_kills_suspended_child_without_running_it_and_records_mobile_uid(self):
         from contextlib import nullcontext
@@ -144,10 +181,12 @@ class IosCapabilitiesTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory, \
                 patch("copyapp.ios_capabilities.run_doctor", side_effect=doctor), \
                 patch("copyapp.ios_capabilities._root_spawn_probe") as root_probe, \
+                patch("copyapp.ios_capabilities._package_recovery_probe") as recovery_probe, \
                 redirect_stdout(io.StringIO()):
             root = Path(directory) / "case"
             collect_capabilities(UDID, root, "standard")
             root_probe.assert_not_called()
+            recovery_probe.assert_not_called()
             self.assertTrue(verify_case(root))
             saved = read_json(root / "capabilities.json")
             saved["operations"]["trace"]["ready_for_attempt"] = True
@@ -155,6 +194,41 @@ class IosCapabilitiesTest(unittest.TestCase):
             write_json(root / "report-index.json", {"artifacts": {}})
             seal_case(root, "ios_capabilities", status="complete", requested_mode="standard",
                       selected_mode="standard", device_id_sha256_prefix="7982b33dd7a5e62e")
+            self.assertFalse(verify_case(root))
+
+    def test_recovery_route_is_verified_and_cannot_be_downgraded(self):
+        data = baseline()
+        for name in ("ssh_mobile", "frida_usb"):
+            data["probes"][name] = {"status": "available"}
+        def doctor(_udid, out, *_args, **_kwargs):
+            write_json(out / "device.json", data)
+            write_json(out / "manifest.json", {"kind": "device_doctor", "evidence": []})
+        probe = {"status": "unavailable", "device_id": UDID, "effective_uid": 501,
+                 "identity_verified": True, "suspended_child_stopped": True}
+        recovery = {"status": "available", "device_id": UDID, "identity_verified": True,
+                    "route": "roothide_mobile_ssh"}
+        with tempfile.TemporaryDirectory() as directory, \
+                patch("copyapp.ios_capabilities.run_doctor", side_effect=doctor), \
+                patch("copyapp.ios_capabilities._root_spawn_probe", return_value=probe), \
+                patch("copyapp.ios_capabilities._package_recovery_probe", return_value=recovery), \
+                redirect_stdout(io.StringIO()):
+            root = Path(directory) / "case"
+            collect_capabilities(UDID, root, "enhanced")
+            self.assertTrue(verify_case(root))
+            record = read_json(root / "capabilities.json")
+            self.assertTrue(record["operations"]["decrypt-device"]["ready_for_attempt"])
+            for replacement in ({"device_id": "other-phone"}, {"identity_verified": False},
+                                {"route": "unknown"}, {"status": "not_probed"}):
+                with self.subTest(replacement=replacement):
+                    write_json(root / "package-recovery-route.json", {**recovery, **replacement})
+                    seal_case(root, "ios_capabilities", status="complete", requested_mode="enhanced",
+                              selected_mode="enhanced", device_id_sha256_prefix="7982b33dd7a5e62e")
+                    self.assertFalse(verify_case(root))
+            write_json(root / "package-recovery-route.json", recovery)
+            old = {**data, "probes": {**data["probes"], "frida_root_spawn": probe}}
+            write_json(root / "capabilities.json", {**old, **capability_plan(old, "enhanced", version=2)})
+            seal_case(root, "ios_capabilities", status="complete", requested_mode="enhanced",
+                      selected_mode="enhanced", device_id_sha256_prefix="7982b33dd7a5e62e")
             self.assertFalse(verify_case(root))
 
     def test_root_readiness_rejects_wrong_device_or_missing_stop_and_retains_v1_cases(self):
