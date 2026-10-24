@@ -19,6 +19,13 @@ def write_json(path: Path, value: dict) -> None:
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def require_separate_trees(source: Path, output: Path) -> None:
+    """Reject self-copy and aliases before creating any evidence directories."""
+    source, output = source.resolve(), output.resolve()
+    if source == output or source in output.parents or output in source.parents:
+        raise ValueError("source and output must be separate directory trees; overlap is not allowed")
+
+
 def seal_case(root: Path, kind: str, **fields) -> Path:
     records = []
     for path in sorted(root.rglob("*")):

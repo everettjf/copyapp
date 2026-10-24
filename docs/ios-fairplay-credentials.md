@@ -28,6 +28,8 @@ The phone must already be paired and jailbroken, with a verified SSH key and pin
 
 `--package-case` is optional and must be a verified package for the same Bundle ID. If the IPA contains multiple license selectors, use `--sinf-member <EXACT_ZIP_MEMBER>` to select one. The installed App and package may have different versions; successful license validation establishes the credential's applicability, not matching installed code. Use separate package/device code checks for that claim.
 
+The output must be a new directory in a separate tree from the package case. Nested outputs, including symlink aliases into the package case, are rejected before creating files or contacting the phone. `decrypt-offline` and behavior-report composition enforce the same source/output separation.
+
 Per-device SSH profiles are reused. Explicit `--ssh-port`, `--ssh-identity` and `--ssh-known-hosts` override them. The default SSH user is `mobile`; the named RootHide iPhone 14 / iOS 17.3.1 passed through that route. `--ssh-user root` is available for an existing verified root-key route, without automatic authentication fallback. This does not establish support for every jailbreak, phone or iOS version.
 
 The command checks 33 public upstream source hashes at revision `1bad106ee1698c6d9c483f67d898183ffa4c6eb3`, copies only those inputs and rebuilds/signs the native helpers. It verifies USB, authenticated SSH and native FairPlay device identities, observes a bounded FairPlay daemon restart using a temporary App copy, validates SINF decoding, and removes remote temporary files before saving. The original App is not replaced. Build products already present in the upstream checkout are not trusted or reused.

@@ -16,7 +16,7 @@ import sys
 from typing import Optional
 
 from copyapp.fairplay_sources import CREDENTIAL_SOURCES, FAIRPLAY_REVISION
-from copyapp.ios_cases import read_json, seal_case, write_json
+from copyapp.ios_cases import read_json, require_separate_trees, seal_case, write_json
 from copyapp.ios_packages import verified_package
 from copyapp.source_root import source_root
 from copyapp.ssh_acquire import _ssh_argv
@@ -274,6 +274,8 @@ def retrieve_credential(udid: str, bundle: str, alias: str, output: Path,
             ssh_user not in ("mobile", "root") or not 1 <= ssh_port <= 65535 or
             (sinf_member is not None and package is None)):
         raise ValueError("invalid credential retrieval arguments")
+    if package is not None:
+        require_separate_trees(package, output)
     if output.exists():
         raise ValueError("credential retrieval output must be new")
     output.mkdir(parents=True)

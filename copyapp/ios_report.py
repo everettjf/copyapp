@@ -6,7 +6,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from copyapp.compare_playbooks import _load_run
-from copyapp.ios_cases import read_json, seal_case, write_json
+from copyapp.ios_cases import read_json, require_separate_trees, seal_case, write_json
 from copyapp.verify import checked_path, sha256_file, verify_case
 
 
@@ -92,6 +92,7 @@ def _review_contract(source: Path, findings: dict, spec: dict, entries: dict) ->
 
 def compose_behavior_report(case: Path, findings_path: Path, spec_path: Path,
                              output: Path) -> Path:
+    require_separate_trees(case, output)
     if output.exists():
         raise FileExistsError(output)
     _verified(case)

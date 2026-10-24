@@ -28,7 +28,9 @@ def _now():
 
 def _analysis_missing(plan: dict, request: Optional[dict]) -> list:
     missing = list(plan["operations"]["analyze"]["missing"])
-    if (request and request.get("device_decryption") and
+    # Auto copy retains its requested defaults for resume identity, but the
+    # selected standard route performs UI collection without device recovery.
+    if (plan["selected_mode"] == "enhanced" and request and request.get("device_decryption") and
             plan.get("capability_model_version", 1) >= 2):
         missing += [item for item in plan["operations"]["decrypt-device"]["missing"]
                     if item not in missing]
@@ -353,6 +355,69 @@ def collect_ios_analysis(udid: str, bundle: str, scripts: list[Path], output: Pa
     return output / "manifest.json", state["status"] == "complete"
 
 
+def _verify_numeric_assertions(child: Path, script: dict, flow: dict, backend: str) -> None:
+    """Recompute numeric facts from linked AX/OCR, never the cached summary text."""
+    from copyapp.ocr_file import verify_ocr_source
+    from copyapp.playbook import _text
+
+    numbers = {}
+    listed = {entry["path"] for entry in flow["evidence"]}
+    for requested, observed in zip(script["steps"], flow["steps"]):
+        capture, comparison = requested.get("capture_number"), requested.get("compare_number")
+        if requested.get("action") != "observe" or not (capture or comparison):
+            continue
+        source = observed.get("observation_source")
+        if source == "accessibility":
+            relative = observed["evidence_path"]
+            if relative not in listed:
+                raise ValueError("numeric AX evidence is not listed")
+            visible = _text(read_json(checked_path(child, relative)), backend)
+        elif source == "screenshot_ocr":
+            image_name, ocr_name = observed["observation_image_path"], observed["observation_ocr_path"]
+            image, ocr = checked_path(child, image_name), checked_path(child, ocr_name)
+            record = read_json(ocr)
+            if (not {image_name, ocr_name} <= listed or
+                    sha256_file(image) != observed["observation_image_sha256"] or
+                    sha256_file(ocr) != observed["observation_ocr_sha256"] or
+                    not verify_ocr_source(record, image)):
+                raise ValueError("numeric OCR evidence identity differs")
+            visible = "\n".join(str(entry.get("text") or "") for entry in
+                                record["result"]["texts"] if isinstance(entry, dict))
+        else:
+            raise ValueError("numeric observation requires AX or source-linked OCR")
+
+        def extract(value):
+            if not isinstance(value, dict) or not isinstance(value.get("pattern"), str):
+                raise ValueError("invalid numeric assertion")
+            try:
+                match = re.search(value["pattern"], visible)
+                text = match.group(1) if match else None
+                if text is None or not text.isdigit():
+                    raise ValueError("numeric assertion did not match evidence")
+                return int(text)
+            except (re.error, IndexError) as error:
+                raise ValueError("invalid numeric assertion pattern") from error
+
+        if capture:
+            actual = extract(capture)
+            name = capture.get("name")
+            saved = observed.get("captured_number")
+            if (not isinstance(name, str) or not isinstance(saved, dict) or
+                    type(saved.get("value")) is not int or saved != {"name": name, "value": actual}):
+                raise ValueError("captured number differs from raw evidence")
+            numbers[name] = actual
+        if comparison:
+            actual = extract(comparison)
+            name, delta = comparison.get("to"), comparison.get("delta")
+            if not isinstance(name, str) or name not in numbers or type(delta) is not int:
+                raise ValueError("numeric comparison has no valid capture or delta")
+            expected = {"before": numbers[name], "after": actual, "delta": delta}
+            saved = observed.get("number_comparison")
+            if (actual != numbers[name] + delta or not isinstance(saved, dict) or
+                    any(type(saved.get(key)) is not int for key in expected) or saved != expected):
+                raise ValueError("numeric change differs from raw evidence or requested delta")
+
+
 def validate_ios_analysis(root: Path, manifest: dict) -> bool:
     inputs, state = read_json(root / "inputs.json"), read_json(root / "analysis.json")
     udid, bundle = inputs["udid"], inputs["bundle_id"]
@@ -434,6 +499,7 @@ def validate_ios_analysis(root: Path, manifest: dict) -> bool:
                 expected = [expected] if isinstance(expected, str) else expected
                 if any(value not in visible for value in expected):
                     return False
+        _verify_numeric_assertions(child, script, flow, plan["ui_backend"])
     if plan["selected_mode"] == "enhanced":
         return _enhancement_complete(root / "enhanced", bundle, prefix, before,
                                      inputs.get("enhancement_request")) and state["enhancement"] == {

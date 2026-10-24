@@ -4,6 +4,8 @@
 
 本检出新增显式 `--mode standard|auto|enhanced`。未加模式的历史 iOS 命令保留原有契约。这仍是开发功能，不属于已发布 v0.2.0 的支持承诺。macOS 继续使用独立 `copyapp mac` 命令和 ChatComputer 身份。
 
+`copy --mode auto --agent-provider current` 的默认设备解密设置只在选中增强路线时适用；回退到普通模式无需另传 `--no-decrypt`。显式的 `analyze` 或 `prepare-app --mode auto --decrypt` 仍选择增强模式并要求设备恢复。
+
 已测普通模式样本是 iPhone 11（`iPhone12,1`）／iOS 26.0.1：经用户授权重启后，SSH、Frida 和 iOS MCP 不可用。手机有历史越狱文件，属于“越狱未激活”，不能视作从未越狱的干净手机。已通过 USB 安装开发签名 iCTRL runner，完成系统计算器加法的观察、独立实现、签名安装和同机对照；两对截图均已审阅，保留轻微差异。首轮达到 87.4/100 的有界保真度目标；这是选定范围的审阅评分，与能力覆盖率和整 App 等价分别报告。iPhone 14／iOS 17.3.1 也通过了显式普通模式的自有测试 App 流程，但其已有 RootHide 服务保持运行；这增加了一个命名系统回归，不能替代从未越狱设备的兼容性验收。
 
 用户已明确免除本目标中“从未越狱手机另行实测”的必验项；以上设备历史仍如实保留，不再作为本目标的完成阻塞。
@@ -77,3 +79,5 @@ toolchains/bin/ipatool auth login
 给 UI 优先 analyze／prepare-app／copy 重复传 `--package-case` 可导入已验证包。Bundle ID 不符直接拒绝；版本不同仅记 `bundle_only`，版本／构建相同记 `metadata_match`，都不能证明手机实际运行二进制身份。静态结论用 `basis: "package"` 引用 `package.1` 等；UI 结论引用流程 ID，运行或函数结论需要自身对应证据。
 
 包、许可文件、截图与跟踪留在忽略的本地目录，对每个案例执行 `copyapp verify`。v2 iOS 类型显式分派，不会通过历史报告文件名绕过检查。实施方案中未完成的真机、真实凭据和兼容性验收条件仍然有效。
+
+UI 优先分析的校验会从绑定来源的 AX／OCR 记录重新计算 `capture_number`、`compare_number`，并核对记录值和要求的增量；缓存文本或声称比较成功不够。历史 v1 校验规则保持不变。包恢复、从包准备凭据、行为报告均要求输入与输出目录树分离；嵌套路径和指回输入的别名会在创建输出前被拒绝。

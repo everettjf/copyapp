@@ -13,7 +13,7 @@ from zipfile import BadZipFile, ZipFile
 from copyapp.decrypt_package import _canonicalize_analysis_ipa, _verify_changed_binaries
 from copyapp.decrypt_verify import inspect_decrypted_ipa
 from copyapp.ipa import ARM64_CPU, MACHO64_LE
-from copyapp.ios_cases import read_json, seal_case, write_json
+from copyapp.ios_cases import read_json, require_separate_trees, seal_case, write_json
 from copyapp.ios_packages import package_index, verified_package
 from copyapp.source_root import source_root
 from copyapp.verify import sha256_file, verify_case
@@ -97,6 +97,7 @@ def decrypt_offline(package: Path, output: Path, tool_dir: Optional[Path] = None
                       credential_ref: Optional[str] = None,
                       credential_store: Optional[Path] = None,
                       timeout: int = 600) -> tuple[Path, bool]:
+    require_separate_trees(package, output)
     if output.exists():
         raise FileExistsError(output)
     if type(timeout) is not int or not 1 <= timeout <= 3600:
