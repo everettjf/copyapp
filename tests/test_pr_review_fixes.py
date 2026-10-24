@@ -12,6 +12,8 @@ from PIL import Image
 from copyapp.cli import main
 from copyapp.ios_cases import read_json, seal_case, write_json
 from copyapp.ios_credentials import retrieve_credential
+from copyapp.ios_cross_check import cross_check_offline
+from copyapp.ios_delivery import create_behavior_delivery
 from copyapp.ios_offline import decrypt_offline
 from copyapp.verify import sha256_file, verify_case
 from tests import test_ios_analysis as analysis_fixtures
@@ -101,6 +103,34 @@ class ReviewFixTests(unittest.TestCase):
         copy.assert_not_called()
         self.assertFalse(output.exists())
         self.assertTrue(verify_case(analysis))
+
+    def test_behavior_delivery_cannot_invalidate_either_source_case(self):
+        self.fixture.collect()
+        analysis, report = self.root / "analysis", self.root / "report"
+        self.fixture.review(analysis, report)
+        for source in (analysis, report):
+            with self.subTest(source=source.name):
+                output = source / "delivery"
+                with self.assertRaisesRegex(ValueError, "separate|overlap"):
+                    create_behavior_delivery(analysis, report, output)
+                self.assertFalse(output.exists())
+                self.assertTrue(verify_case(analysis))
+                self.assertTrue(verify_case(report))
+
+    def test_offline_cross_check_rejects_output_in_either_source_before_validation(self):
+        offline, device = self.root / "offline", self.root / "device"
+        offline.mkdir()
+        device.mkdir()
+        alias = self.root / "device-alias"
+        alias.symlink_to(device, target_is_directory=True)
+        for source in (offline, alias):
+            with self.subTest(source=source.name):
+                output = source / "comparison"
+                with patch("copyapp.ios_cross_check.recovery_links") as validate:
+                    with self.assertRaisesRegex(ValueError, "separate|overlap"):
+                        cross_check_offline(offline, device, output)
+                    validate.assert_not_called()
+                self.assertFalse(output.exists())
 
     def numeric_case(self, source="accessibility", before=1, after=2):
         script = read_json(self.fixture.script)

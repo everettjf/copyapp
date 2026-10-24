@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from copyapp.ios_analysis import _verified
-from copyapp.ios_cases import read_json, seal_case, write_json
+from copyapp.ios_cases import read_json, require_separate_trees, seal_case, write_json
 from copyapp.verify import sha256_file
 
 
@@ -59,6 +59,8 @@ def recovery_links(offline: Path, device: Path) -> dict:
 
 
 def cross_check_offline(offline: Path, device: Path, output: Path) -> Path:
+    for source in (offline, device):
+        require_separate_trees(source, output)
     if output.exists():
         raise FileExistsError(output)
     result = recovery_links(offline, device)

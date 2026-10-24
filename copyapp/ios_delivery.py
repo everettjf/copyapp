@@ -5,7 +5,7 @@ import shutil
 from contextlib import redirect_stdout
 from pathlib import Path
 
-from copyapp.ios_cases import read_json, seal_case, write_json
+from copyapp.ios_cases import read_json, require_separate_trees, seal_case, write_json
 from copyapp.verify import sha256_file, verify_case
 
 
@@ -36,6 +36,8 @@ def behavior_delivery_links(task: Path, report: Path) -> dict:
 
 
 def create_behavior_delivery(task: Path, report: Path, output: Path) -> Path:
+    for source in (task, report):
+        require_separate_trees(source, output)
     if output.exists():
         raise FileExistsError(output)
     result = behavior_delivery_links(task, report)
