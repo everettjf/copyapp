@@ -2,7 +2,7 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [Project README](../README.md)
 
-Copy APP supports jailbroken iOS and macOS in **v0.2.0**. **v0.1.2** is the previous iOS-only release. Begin with the [agent-led first task](first-run-agent.md) or [manual setup guide](setup.md), then use the guides below for the task at hand. Historical development checkpoints and superseded experiment documents have been removed from the working tree; Git history retains their original commits. Raw device evidence remains local under ignored `cases/`.
+The latest `main` supports three routes: non-jailbroken iOS (standard UI), jailbroken iOS (enhanced evidence), and Mac apps through ChatComputer. The tagged **v0.2.0** release predates the standard route. **v0.1.2** is the previous iOS-only release. Begin with the [agent-led first task](first-run-agent.md) or [manual setup guide](setup.md), then use the guides below for the task at hand. Historical development checkpoints and superseded experiment documents have been removed from the working tree; Git history retains their original commits. Raw device evidence remains local under ignored `cases/`.
 
 | Topic | Read this |
 | --- | --- |
@@ -11,8 +11,8 @@ Copy APP supports jailbroken iOS and macOS in **v0.2.0**. **v0.1.2** is the prev
 | How the parts fit | [Architecture and evidence model](architecture.md) |
 | Illustrated project story | [Copy APP overview (简体中文)](articles/copyapp-overview.zh-CN.md) |
 | Tested phones and open limits | [Current status](current-status.md) |
-| Standard and enhanced iPhone development | [Usage and limits](ios-standard-mode.md) · [Acceptance ledger](ios-device-support-acceptance.md) · [Implementation plan (简体中文)](ios-device-support-plan.zh-CN.md) |
-| Deferred follow-up work | [TODO](../TODO.md) |
+| Standard and enhanced iPhone workflows | [Usage and limits](ios-standard-mode.md) · [Acceptance ledger](ios-device-support-acceptance.md) · [Implementation plan (简体中文)](ios-device-support-plan.zh-CN.md) |
+| Follow-up checklist | [TODO](../TODO.md) |
 | End-to-end analyze and rebuild | [Workflow](copy-workflow.md) |
 | Choosing a realistic clone goal | [Coverage targets](coverage-targets.md) |
 | Give a coding agent a first task | [First-run agent task](first-run-agent.md) |

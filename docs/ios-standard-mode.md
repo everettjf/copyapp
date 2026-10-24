@@ -1,8 +1,8 @@
-# Standard iPhone mode (development branch)
+# Standard iPhone mode
 
 [中文](ios-standard-mode.zh-CN.md) · [Design and acceptance gates](ios-device-support-plan.zh-CN.md)
 
-This checkout adds explicit `--mode standard|auto|enhanced` routes. Unflagged historical iOS commands retain their existing contracts. This is development work, outside the published v0.2.0 support boundary. macOS continues to use `copyapp mac` and ChatComputer identities.
+The latest `main` checkout supports explicit `--mode standard|auto|enhanced` routes. Unflagged historical iOS commands retain their existing contracts. This route is merged into `main` and is newer than the tagged v0.2.0 release; use the current source checkout. macOS continues to use `copyapp mac` and ChatComputer identities.
 
 For `copy --mode auto --agent-provider current`, the default device-decryption setting applies only when the selected route is enhanced. Standard fallback does not require `--no-decrypt`. An explicit `analyze` or `prepare-app --mode auto --decrypt` request still selects enhanced mode and requires device recovery.
 

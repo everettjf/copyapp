@@ -1,20 +1,30 @@
 const translations = {
   zh: {
+    heroSource: "三种入口已合入 main；最新标签 v0.2.0 早于普通 iPhone 模式，请使用最新源码。",
+    standardPlatformTitle: "非越狱 iOS",
+    standardPlatformText: "通过签名的 XCTest 观察界面、辅助功能与 USB 截图，交付 UI 行为报告，再构建独立签名 App 并对照相同流程。无需原版 IPA、FairPlay 凭据、SSH 或 Frida。",
+    standardPlatformScope: "已测越狱未激活的 iOS 26 样本及 iOS 17 普通模式回归；从未越狱设备未单独实测。",
+    standardPlatformLink: "普通模式配置与任务",
+    standardSetupGuide: "非越狱 iOS 配置",
+    startStandard: "iOS · 普通",
+    startStandardBackend: "无需越狱",
+    startEnhancedBackend: "需要越狱",
+
     navTools: '逆向工具', navWorkflow: '工作流程', navArchitecture: '架构', navEvidence: '证据示例', navDevices: '支持平台', navStart: '开始使用',
-    eyebrow: 'v0.2.0 · 越狱 iOS + macOS', heroOne: '看见内部。', heroTwo: '构建新可能。',
-    heroSub: '分析越狱 iPhone 上的 App，或通过 ChatComputer 分析 macOS App。独立实现选定行为，交付可运行 App，每一项结论都有证据来源。',
-    heroStart: '快速上手', heroDocs: '阅读文档', heroDiscord: '到 Discord 交流', factPhases: '个支持平台', factTested: '台指定 iPhone 已测', factProgress: '默认原型评分',
+    eyebrow: "iOS + macOS · 三种使用方案", heroOne: '看见内部。', heroTwo: '构建新可能。',
+    heroSub: "非越狱 iOS、越狱 iOS 和 Mac App，三种方式分析已安装 App、独立实现选定行为。保留观察证据，交付可运行的 App 与对照结果。",
+    heroStart: '快速上手', heroDocs: '阅读文档', heroDiscord: '到 Discord 交流', factPhases: "种使用方案", factTested: "个目标平台", factProgress: '默认原型评分',
     workflowTitle: '两个阶段，一条证据链。', workflowIntro: '从观察原版到审阅独立实现；每个阶段都留下可复查的案例。',
-    phaseOneTag: '理解原版', phaseOneTitle: '理解真实行为', phaseOneText: 'iOS 采集安装包、沙盒和运行时证据；macOS 采集 App 包、AX 和界面证据。审阅有来源的报告与功能规格。',
-    phaseOneA: '已安装包与沙盒', phaseOneB: '界面流程与截图', phaseOneC: 'iOS 运行时／macOS 辅助功能', phaseOneD: '审阅报告与功能规格',
+    phaseOneTag: '理解原版', phaseOneTitle: '理解真实行为', phaseOneText: "普通 iOS 观察界面与辅助功能；越狱 iOS 增加安装包、沙盒和运行时证据；macOS 采集 App 包、AX 与界面。审阅对应范围的报告与功能规格。",
+    phaseOneA: "按路线采集 App 证据", phaseOneB: '界面流程与截图', phaseOneC: "普通 UI／增强运行时／Mac AX", phaseOneD: '审阅报告与功能规格',
     phaseTwoTag: '构建独立 APP', phaseTwoTitle: '按目标复刻', phaseTwoText: '构建独立的 iOS 或 macOS App。对照相同流程并逐图审阅，达到评分目标或耗尽轮数就停止。',
     phaseTwoA: '能力清单与目标', phaseTwoB: '独立源码、IPA 或 .app', phaseTwoC: '成对行为与视觉检查', phaseTwoD: '经验证交付与已知缺口',
     principle: '一张通过的截图只是一个数据点。可信的复刻来自连续的观察、判断和可重复检查。',
     architectureTitle: '把真实设备变成分析工具。', architectureIntro: '当前 Coding Agent 负责规划与实现，Copy APP 记录证据和检查；指定 iPhone 或 ChatComputer 虚拟 Mac 提供观察结果。',
     archAgent: '规划与解释', archMac: '调度、分析、构建', archOutputTitle: '可校验的产物', archOutput: '报告 · 源码 · IPA／.app · 对照',
-    archTarget: '越狱 iPhone／虚拟 Mac',
+    archTarget: "普通 iPhone／越狱 iPhone／虚拟 Mac",
     noteOneTitle: '看清实际发生的事。', noteOneText: '指定设备身份、安装包哈希、有界操作、截图和运行时跟踪都保存到本地证据案例。',
-    noteTwoTitle: '每个结论都能找到依据。', noteTwoText: '可选的 iOS 原生分析使用 Ghidra 或 Hopper；macOS 界面证据证明选定行为，不代表深层函数语义。',
+    noteTwoTitle: '每个结论都能找到依据。', noteTwoText: "普通 iOS 交付 UI 行为报告。越狱 iOS 可选 Ghidra／Hopper 原生分析；Mac 使用 App 包、AX 与界面证据。",
     noteThreeTitle: '只衡量选定的范围。', noteThreeText: '原版与独立 App 在同一准确环境中分别运行。交付明确列出通过行为、可见差异与未知范围。',
     toolsTitle: '选择你的逆向工具。',
     toolsIntro: '已直连两种反编译器，并组合动态跟踪和有界汇编。反编译按需启用，默认 provider 为 none。',
@@ -28,20 +38,20 @@ const translations = {
     llvmToolText: '使用 llvm-objdump 保存有界汇编，并跟随唯一局部直接调用／分支。',
     llvmToolSetup: '使用本机 Xcode 工具链；汇编与反编译伪代码分别记录。',
     toolIndexTitle: '内置安装包与 Objective-C 索引', toolIndexText: '无需反编译器即可检查 Mach-O 加载命令、类、selector 和方法地址。',
-    toolRecoveryTitle: '加密安装包恢复', toolRecoveryText: '组合 ipadecrypt helper 与 Copy APP 的设备专属校验，获得分析副本。',
-    toolPlatformScope: '上述原生调查与报告接入主要服务 iOS。macOS 当前以 App 包、AX 和界面证据为主，尚未接成等价的原生函数链。',
+    toolRecoveryTitle: '加密安装包恢复', toolRecoveryText: "越狱设备可走受支持的恢复路线；Mac 离线恢复使用与 IPA 授权账号一致的本地 FairPlay 凭据。首次提取需受支持的越狱手机。",
+    toolPlatformScope: "原生函数调查需要对应的代码和运行时证据，主要用于越狱 iOS。普通 iOS 侧重 UI；Mac 使用 App 包、AX 与界面证据。",
     toolIntegrationScope: 'REA 不是运行依赖；IDA Pro、Binary Ninja、radare2 暂无直接适配器。伪代码是生成证据，不是原作者源码。',
     toolsGuide: '安装条件、命令与 Agent 任务',
-    platformsTitle: '越狱 iOS，也支持 macOS。',
-    platformsIntro: '共用证据工作流，平台工具各自独立。',
+    platformsTitle: "iOS 两种方案，再加 Mac App。",
+    platformsIntro: "按设备条件与需要的证据深度选择，三种方案都可继续独立实现和流程对照。",
     iosPlatformTitle: '越狱 iOS',
-    iosPlatformText: '保留已有 iOS 16／17／26 工作流：已安装 App、沙盒取证、有界界面重放和独立签名复刻。',
+    iosPlatformText: "安装包与沙盒采集、界面重放、可选 Frida 跟踪和受支持的设备解密。增强证据与准确手机、系统及 App 构建绑定。",
     iosPlatformLink: '指定手机证据与限制',
     macPlatformTitle: 'macOS',
     macPlatformText: '通过 ChatComputer 使用电脑，采集准确 App／AX 证据，独立构建 .app，在专用虚拟 Mac 内对照流程并审阅快照恢复。',
     macPlatformScope: '自有编辑器 9/9 组选定对照通过，并有指定实体 Mac 复验；不代表任意 Mac 兼容或整 App 等价。',
     macPlatformLink: 'Mac 安装与 Agent 任务',
-    heroVisualCaption: '越狱 iOS + macOS，共用证据工作流，交付独立 App。',
+    heroVisualCaption: "非越狱 iOS · 越狱 iOS · Mac App",
     stocksImageLabel: '实际运行界面 / 独立离线示例',
     stocksTitle: '从源码，到运行中的 Mac App。',
     stocksText: '搜索股票、切换图表周期、管理本地自选列表。图中为独立 Stocks 示例在 macOS 上的实际运行界面，使用明确标注的离线演示数据。',
@@ -69,12 +79,12 @@ const translations = {
     validationFour: '任意 App 的覆盖、整 App 功能等价和像素级一致',
     validationLink: '当前状态与验收门槛',
     deviceEvidence: '阅读真机证据与限制', startTitle: '从你的 App 开始。',
-    startText: '选择平台、替换 App 名称，把任务复制给 Codex 或 Claude Code。Agent 先安装 CLI、检查环境，再处理你的目标 App。',
+    startText: "选择一种方案、替换 App 名称，把任务复制给 Codex 或 Claude Code。Agent 先安装 CLI、检查环境，再处理目标 App。",
     startStepOne: '打开本地 Coding Agent', startStepOneText: '在 Mac 上使用能执行本地命令的 Codex 或 Claude Code。',
-    startStepTwo: '选择 iOS 或 macOS', startStepTwoText: '复制对应任务，里面包含仓库、Skill 和安装检查要求。',
+    startStepTwo: "选择一种使用方案", startStepTwoText: "普通 iOS、越狱增强 iOS 或 Mac，分别提供任务和安装检查。",
     startStepThree: '完成必要授权', startStepThreeText: '按具体提示完成设备信任或客体授权，Agent 再继续目标 App 的工作。',
     startNoExtension: '无需专属扩展；Agent 直接读取源码仓库里的 Skill。',
-    startMacBackend: 'ChatComputer', startIOS: '越狱 iOS', startPrepare: '你需要准备', startAgentDoes: 'Agent 安装与检查',
+    startMacBackend: 'ChatComputer', startIOS: "iOS · 增强", startPrepare: '你需要准备', startAgentDoes: 'Agent 安装与检查',
     startTaskLabel: '复制给 CODEX / CLAUDE CODE',
     startDefaults: '输出保存在唯一 output/ 任务目录，分开 project/ 与 evidence/。默认审阅评分 80 分，最多三轮实现／检查；明确选定范围和剩余差异。',
     setupGuide: 'iOS 安装步骤', contribute: '参与贡献', copy: '复制任务',
@@ -98,7 +108,15 @@ const quickstarts = {
       "sourceUrl": "https://github.com/everettjf/copyapp/blob/main/docs/setup.md",
       "agent": "Python 3.9+, repository CLI and exact phone/App identity. Then it configures the required SSH, UI/runtime tools and build/signing route for this device.",
       "checkOnly": "Only checking setup? Append: “Stop after a verified USB survey, identify the phone and App, and list remaining prerequisites; do not analyze or rebuild yet.”",
-      "prompt": "Use https://github.com/everettjf/copyapp to analyze and independently rebuild selected behavior of “APP NAME” on my USB-connected jailbroken iPhone.\nClone into a new directory if needed, or reuse my existing checkout. Read AGENTS.md and skills/copyapp-start/SKILL.md first.\nCheck Python 3.9+ and run sh scripts/bootstrap-macos.sh if the repository CLI is missing. Identify the exact phone and App; complete the initial USB check, then configure only the analysis/rebuild prerequisites this device needs.\nWork in the current agent session through a reviewed report, independent implementation, installation and same-device comparison. Ask me for the specific device-side trust, permission or signing action when needed.\nUse a unique output/ job with project/ and evidence/. Follow docs/fidelity.md: default grade 80/100, at most three implementation/check cycles including the first. Stop at the target or cycle limit and deliver source, runnable artifacts, verified scope and remaining differences."
+      "prompt": "Use https://github.com/everettjf/copyapp to analyze and independently rebuild selected behavior of “APP NAME” on my USB-connected jailbroken iPhone.\nClone into a new directory if needed, or reuse my existing checkout. Read AGENTS.md and skills/copyapp-start/SKILL.md first.\nCheck Python 3.9+ and run sh scripts/bootstrap-macos.sh if the repository CLI is missing. Identify the exact phone and App; complete the initial USB check, then configure only the analysis/rebuild prerequisites this device needs. Use --mode enhanced for UI-first collection with enhancement, and the explicit investigation/report commands for deeper function reasoning.\nWork in the current agent session through a reviewed report, independent implementation, installation and same-device comparison. Ask me for the specific device-side trust, permission or signing action when needed.\nUse a unique output/ job with project/ and evidence/. Follow docs/fidelity.md: default grade 80/100, at most three implementation/check cycles including the first. Stop at the target or cycle limit and deliver source, runnable artifacts, verified scope and remaining differences."
+    },
+    "standard": {
+      "requirements": "A Mac with Xcode, an unlocked USB iPhone with the target App installed, Developer Mode, device trust and development signing.",
+      "source": "Standard iPhone setup and evidence ↗",
+      "sourceUrl": "https://github.com/everettjf/copyapp/blob/main/docs/ios-standard-mode.md",
+      "agent": "Python 3.9+, CLI, exact USB phone/App identity, a development-signed iCTRL XCTest runner and USB installation. Collection needs no original IPA, FairPlay credential, SSH or Frida.",
+      "checkOnly": "Only checking setup? Append: “Stop after a verified standard-mode capability check; list signing or runner setup still needed.”",
+      "prompt": "Use https://github.com/everettjf/copyapp to observe and independently rebuild selected behavior of “APP NAME” on my USB-connected non-jailbroken iPhone.\nUse the latest main checkout. Read AGENTS.md, skills/copyapp-start/SKILL.md and docs/ios-standard-mode.md first. Prepare the CLI with sh scripts/bootstrap-macos.sh if needed.\nIdentify the exact USB phone and App. Use --mode standard; check Xcode, Developer Mode, device trust and development signing. Prepare the signed iCTRL XCTest runner and install over USB.\nDiscover representative UI flows, review screenshots and accessibility evidence, and deliver a reviewed UI behavior report. Standard collection needs no IPA or FairPlay credential. Implement an independent App with its own Bundle ID, sign and install it over USB, then compare the same flows and review every screenshot pair in the current agent session.\nUse a unique output/ job with project/ and evidence/. Follow docs/fidelity.md: default grade 80/100, at most three implementation/check cycles including the first. Deliver source, runnable artifacts, verified scope and remaining differences. Keep native function and private sandbox claims outside the UI-only report."
     }
   },
   "zh": {
@@ -116,14 +134,22 @@ const quickstarts = {
       "sourceUrl": "https://github.com/everettjf/copyapp/blob/main/docs/setup.zh-CN.md",
       "agent": "Python 3.9+、仓库 CLI 和准确手机／App 身份，再按这台设备配置 SSH、界面／运行时工具与构建签名路线。",
       "checkOnly": "只检查安装？在任务末尾加：“完成经校验的 USB survey，告诉我准确手机、App 和剩余依赖后停止，先不分析或复刻。”",
-      "prompt": "请使用 https://github.com/everettjf/copyapp，分析并独立复刻 USB 连接的越狱 iPhone 上「App 名称」的选定行为。\n需要时克隆到新目录，或复用已有检出。先阅读 AGENTS.md 和 skills/copyapp-start/SKILL.md。\n检查 Python 3.9+；仓库 CLI 未安装时执行 sh scripts/bootstrap-macos.sh。识别准确的手机和 App，先完成 USB 首次检查，再按这台设备配置分析／复刻需要的依赖。\n在当前 Agent 会话完成报告审阅、独立实现、安装与同机对照。需要手机信任、系统授权或签名条件时，告诉我具体操作。\n在 output/ 下建立唯一任务目录，分开 project/ 和 evidence/。按 docs/fidelity.md 执行：默认 80 分，最多三轮实现／检查，首轮计入；达标或轮数耗尽就停止，交付源码、可运行产物、已验证范围与剩余差异。"
+      "prompt": "请使用 https://github.com/everettjf/copyapp，分析并独立复刻 USB 连接的越狱 iPhone 上「App 名称」的选定行为。\n需要时克隆到新目录，或复用已有检出。先阅读 AGENTS.md 和 skills/copyapp-start/SKILL.md。\n检查 Python 3.9+；仓库 CLI 未安装时执行 sh scripts/bootstrap-macos.sh。识别准确的手机和 App，先完成 USB 首次检查，再按这台设备配置分析／复刻需要的依赖。增强 UI 采集使用 --mode enhanced，深入函数推理继续使用显式调查与报告命令。\n在当前 Agent 会话完成报告审阅、独立实现、安装与同机对照。需要手机信任、系统授权或签名条件时，告诉我具体操作。\n在 output/ 下建立唯一任务目录，分开 project/ 和 evidence/。按 docs/fidelity.md 执行：默认 80 分，最多三轮实现／检查，首轮计入；达标或轮数耗尽就停止，交付源码、可运行产物、已验证范围与剩余差异。"
+    },
+    "standard": {
+      "requirements": "装有 Xcode 的 Mac、USB 连接并解锁的 iPhone、已安装的目标 App、开发者模式、设备信任和开发签名。",
+      "source": "普通 iPhone 配置与实测范围 ↗",
+      "sourceUrl": "https://github.com/everettjf/copyapp/blob/main/docs/ios-standard-mode.zh-CN.md",
+      "agent": "Python 3.9+、CLI、准确 USB 手机／App 身份、开发签名的 iCTRL XCTest runner 和 USB 安装。采集无需原版 IPA、FairPlay 凭据、SSH 或 Frida。",
+      "checkOnly": "只检查安装？加：“完成经校验的普通模式能力检查，列出还缺的签名或 runner 配置后停止。”",
+      "prompt": "请使用 https://github.com/everettjf/copyapp，观察并独立复刻 USB 连接的非越狱 iPhone 上「App 名称」的选定行为。\n使用最新 main 检出。先阅读 AGENTS.md、skills/copyapp-start/SKILL.md 和 docs/ios-standard-mode.zh-CN.md；需要时执行 sh scripts/bootstrap-macos.sh 安装 CLI。\n识别准确的 USB 手机和 App，使用 --mode standard，检查 Xcode、开发者模式、设备信任和开发签名，准备签名的 iCTRL XCTest runner 并通过 USB 安装。\n发现代表性界面流程，审阅截图和辅助功能证据，交付审阅后的 UI 行为报告；普通采集无需 IPA 或 FairPlay 凭据。以独立 Bundle ID 实现 App，开发签名后通过 USB 安装，在当前 Agent 会话对照同机流程并逐张审阅截图。\n在 output/ 下建立唯一任务目录，分开 project/ 和 evidence/。按 docs/fidelity.md 执行：默认 80 分，最多三轮实现／检查，首轮计入；交付源码、可运行产物、已验证范围与剩余差异。UI 报告不作原生函数或私有沙盒结论。"
     }
   }
 };
 
 const languageButton = document.querySelector('#language');
 const copyButton = document.querySelector('#copyCommand');
-let activePlatform = 'macos';
+let activePlatform = 'standard';
 let copyResetTimer;
 
 function renderQuickstart() {
@@ -141,7 +167,8 @@ function renderQuickstart() {
   });
   document.querySelector('.platform-picker').setAttribute('aria-label', zh ? '目标平台' : 'Target platform');
   document.querySelector('.terminal pre').setAttribute('aria-label', zh ? 'Agent 任务' : 'Agent task');
-  copyButton.setAttribute('aria-label', zh ? '复制' + (activePlatform === 'ios' ? '越狱 iOS' : 'macOS') + '任务' : 'Copy ' + activePlatform + ' agent task');
+  const label = {standard: zh ? '非越狱 iOS' : 'non-jailbroken iOS', ios: zh ? '越狱 iOS' : 'jailbroken iOS', macos: 'macOS'}[activePlatform];
+  copyButton.setAttribute('aria-label', zh ? '复制' + label + '任务' : 'Copy ' + label + ' agent task');
   copyButton.textContent = zh ? '复制任务' : 'COPY TASK';
   document.querySelector('#copyStatus').textContent = '';
   clearTimeout(copyResetTimer);
@@ -162,6 +189,7 @@ function setLanguage(language) {
   document.getElementById('macGuideLink').href = 'https://github.com/everettjf/copyapp/blob/main/docs/macos-support' + (zh ? '.zh-CN' : '') + '.md';
   document.getElementById('macSetupLink').href = 'https://github.com/everettjf/copyapp/blob/main/docs/macos-support' + (zh ? '.zh-CN.md#安装与首次使用' : '.md#install-and-first-use');
   document.getElementById('iosSetupLink').href = 'https://github.com/everettjf/copyapp/blob/main/docs/setup' + (zh ? '.zh-CN' : '') + '.md';
+  for (const id of ['standardGuideLink', 'standardSetupLink']) document.getElementById(id).href = 'https://github.com/everettjf/copyapp/blob/main/docs/ios-standard-mode' + (zh ? '.zh-CN' : '') + '.md';
   languageButton.setAttribute('aria-label', zh ? 'Switch to English' : '切换到中文');
   renderQuickstart();
   try { localStorage.setItem('copyapp-language', language); } catch (_) { /* private mode */ }

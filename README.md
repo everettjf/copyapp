@@ -4,16 +4,21 @@ English · [简体中文](README.zh-CN.md) · [繁體中文](docs/readme/README_
 
 [Project website](https://xnu.app/copyapp/) · [Illustrated overview (简体中文)](docs/articles/copyapp-overview.zh-CN.md) · [Documentation](docs/README.md) · [Reverse-engineering tools](docs/reverse-engineering-tools.md) · [Latest release](docs/releases/v0.2.0.md) · [Contributing](CONTRIBUTING.md) · [Apache-2.0 license](LICENSE)
 
-Copy APP helps Codex or Claude Code **analyze installed apps and build independent, runnable implementations of selected behavior** on **jailbroken iOS and macOS**. Conclusions, source and comparisons stay linked to inspectable evidence. The current release is **v0.2.0**. [v0.1.2](docs/releases/v0.1.2.md) is the previous iOS-only release.
+Copy APP helps Codex or Claude Code **analyze installed apps and build independent, runnable implementations of selected behavior** on **non-jailbroken iOS, jailbroken iOS and macOS**. Conclusions, source and comparisons stay linked to inspectable evidence. The three routes are available in the latest `main` checkout. The latest tagged release is **v0.2.0**, which predates the standard iPhone route. [v0.1.2](docs/releases/v0.1.2.md) is the previous iOS-only release.
 
-**First time?** [Choose iOS or macOS and copy the agent task](#start-here). The agent checks dependencies and installs the local tools; you complete the required device/system confirmations.
+**First time?** [Choose one of three routes and copy the agent task](#start-here). The agent checks dependencies and installs the local tools; you complete the required device/system confirmations.
 
-Development branch: [standard iPhone UI-first mode and optional host package tools](docs/ios-standard-mode.md), including explicit [FairPlay credential preparation](docs/ios-fairplay-credentials.md) for a supported jailbroken phone. Its named iOS 26 sample used a rebooted phone with the jailbreak inactive. Real Remoboard offline recovery and device-code comparison have passed; current acceptance is tracked in [TODO](TODO.md). Named-device limits remain explicit.
+**Choose the access your task needs:** standard mode works from visible UI; enhanced mode adds evidence available on a supported jailbroken phone; Mac apps use a separate ChatComputer workflow.
 
-| Target | How it works | Status |
+| Route | What it provides | Requirements / guide |
 | --- | --- | --- |
-| Jailbroken iOS | USB-connected iPhone, OpenSSH, iOS MCP / iCTRL and optional Frida | Existing named iOS 16 / 17 / 26 workflows preserved |
-| macOS | ChatComputer on an Apple Silicon Mac, a dedicated virtual Mac and bounded App/AX collector | Named selected-flow, recovery and physical-Mac checks documented |
+| **Non-jailbroken iOS · standard** | UI flows, accessibility observations, USB screenshots, reviewed behavior reports and independently signed rebuilds | Mac, USB iPhone, Xcode / Developer Mode and development signing; [standard mode](docs/ios-standard-mode.md) |
+| **Jailbroken iOS · enhanced** | UI workflows plus package/sandbox acquisition, optional Frida tracing and supported device decryption | Exact-device SSH and compatible device services; [iOS setup](docs/setup.md) |
+| **Mac apps** | App-package / AX evidence, UI replay, independent `.app` builds and selected-flow comparisons | Apple Silicon Mac and a dedicated ChatComputer virtual Mac; [Mac setup](docs/macos-support.md) |
+
+Standard mode needs no original IPA, FairPlay credential, SSH or Frida. Its named iOS 26 test used an inactive jailbreak; iOS 17 also passed an explicit standard-mode regression. A never-jailbroken-device test was waived, so that separate compatibility result is not claimed. See the [iOS acceptance ledger](docs/ios-device-support-acceptance.md).
+
+Optional [IPA download and offline recovery](docs/ios-standard-mode.md#standard-iphone-mode) are separate from phone UI collection. First [credential preparation](docs/ios-fairplay-credentials.md) uses a supported jailbroken phone and a license matching the IPA account; once retained locally, the matching credential permits offline recovery without a connected phone. Real Remoboard main/extension recovery and matching-device code comparison passed.
 
 Mac behavior reports do not imply deep native function analysis or arbitrary-Mac compatibility. See [Mac setup and AI task](docs/macos-support.md) and the [acceptance ledger](docs/macos-implementation-plan.md).
 
@@ -21,13 +26,13 @@ Source examples: [Stocks AppKit demo](examples/macos/Stocks/) (illustrative offl
 
 ## Architecture at a glance
 
-![Copy APP architecture: agent, local toolkit, jailbroken iPhone and macOS targets, and reviewed deliverables](docs/assets/readme-architecture.svg)
+![Copy APP architecture: agent, local toolkit, standard iPhone, jailbroken iPhone and macOS routes, and reviewed deliverables](docs/assets/readme-architecture.svg)
 
-One Mac coordinates the coding agent, evidence and build. The target can be a jailbroken iPhone over USB or a dedicated virtual Mac through ChatComputer; each uses its own platform commands and identity. See the [detailed architecture and evidence model](docs/architecture.md).
+One Mac coordinates the coding agent, evidence and build. Choose standard UI collection on a USB iPhone, enhanced collection on a supported jailbroken iPhone, or a dedicated virtual Mac through ChatComputer. Each route keeps its own prerequisites and verified identity. See the [detailed architecture and evidence model](docs/architecture.md).
 
 <a id="start-here"></a>
 
-## Quick start: choose a platform and paste one task
+## Quick start: choose a route and paste one task
 
 1. Open **Codex or Claude Code with local command execution on your Mac**.
 2. Choose your target below and replace **APP NAME** in its task.
@@ -37,8 +42,23 @@ Keep a source checkout: it includes the skills, device components and examples a
 
 | Target | You prepare | The agent sets up and checks |
 | --- | --- | --- |
+| Non-jailbroken iOS | A Mac with Xcode, an unlocked USB iPhone with the target App installed, Developer Mode and development signing | Python 3.9+, CLI, exact phone/App identity, development-signed iCTRL / XCTest and USB installation |
 | Jailbroken iOS | A Mac, an unlocked jailbroken iPhone connected by USB, and the target App on that phone | Python 3.9+, repository CLI, exact phone/App identity, then the required SSH/UI/runtime tools and signing route |
 | macOS | A host meeting ChatComputer's requirements; initialize its virtual Mac and approve required permissions; make the target App available in that guest | Python 3.9+, repository CLI, Swift/macOS SDK, ChatComputer, guest collector and exact environment/App identity |
+
+### Non-jailbroken iOS
+
+Use standard mode for visible behavior and an independent signed implementation. Copy:
+
+```text
+Use https://github.com/everettjf/copyapp to observe and independently rebuild selected behavior of “APP NAME” on my USB-connected non-jailbroken iPhone.
+Use the latest main checkout. Read AGENTS.md, skills/copyapp-start/SKILL.md and docs/ios-standard-mode.md first. Prepare the CLI with sh scripts/bootstrap-macos.sh if needed.
+Identify the exact USB phone and App. Use --mode standard; check Xcode, Developer Mode, device trust and development signing. Prepare the signed iCTRL XCTest runner and install over USB.
+Discover representative UI flows, review screenshots and accessibility evidence, and deliver a reviewed UI behavior report. Standard collection needs no IPA or FairPlay credential. Implement an independent App with its own Bundle ID, sign and install it over USB, then compare the same flows and review every screenshot pair in the current agent session.
+Use a unique output/ job with project/ and evidence/. Follow docs/fidelity.md: default grade 80/100, at most three implementation/check cycles including the first. Deliver source, runnable artifacts, verified scope and remaining differences. Keep native function and private sandbox claims outside the UI-only report.
+```
+
+For setup only, append **“Stop after a verified standard-mode capability check; list signing or runner setup still needed.”** For analysis only, append **“Deliver the reviewed UI behavior report; do not rebuild.”** See [standard-mode setup and commands](docs/ios-standard-mode.md).
 
 ### Jailbroken iOS
 
@@ -47,7 +67,7 @@ Connect and unlock the phone. Its Bundle ID can be discovered by the agent. Copy
 ```text
 Use https://github.com/everettjf/copyapp to analyze and independently rebuild selected behavior of “APP NAME” on my USB-connected jailbroken iPhone.
 Clone into a new directory if needed, or reuse my existing checkout. Read AGENTS.md and skills/copyapp-start/SKILL.md first.
-Check Python 3.9+ and run sh scripts/bootstrap-macos.sh if the repository CLI is missing. Identify the exact phone and App; complete the initial USB check, then configure only the analysis/rebuild prerequisites this device needs.
+Check Python 3.9+ and run sh scripts/bootstrap-macos.sh if the repository CLI is missing. Identify the exact phone and App; complete the initial USB check, then configure only the analysis/rebuild prerequisites this device needs. Use --mode enhanced for UI-first collection with enhancement, and the explicit investigation/report commands for deeper function reasoning.
 Work in the current agent session through a reviewed report, independent implementation, installation and same-device comparison. Ask me for the specific device-side trust, permission or signing action when needed.
 Use a unique output/ job with project/ and evidence/. Follow docs/fidelity.md: default grade 80/100, at most three implementation/check cycles including the first. Stop at the target or cycle limit and deliver source, runnable artifacts, verified scope and remaining differences.
 ```
@@ -110,7 +130,7 @@ The native investigation/report integration primarily serves the existing **iOS 
 
 A small app may justify a broad first milestone. A complex app needs a named slice of behavior; a percentage is meaningful only with an explicit known-capability denominator. A passing selected-flow check does not establish whole-app equivalence. See [coverage targets](docs/coverage-targets.md).
 
-The Mac runs orchestration and builds. OpenSSH acquires files, iOS MCP provides jailbroken UI observation and control, iCTRL is an optional XCTest-based UI backend, and Frida provides bounded runtime evidence. Ghidra and Hopper are optional native-analysis tools. **REA is not required.** The [architecture guide](docs/architecture.md) explains the trust and evidence boundaries.
+The Mac runs orchestration and builds. OpenSSH acquires files, iOS MCP provides jailbroken UI observation and control, iCTRL / XCTest provides standard-mode UI control and is also available to enhanced workflows, and Frida provides bounded runtime evidence. Ghidra and Hopper are optional native-analysis tools. **REA is not required.** The [architecture guide](docs/architecture.md) explains the trust and evidence boundaries.
 
 The [example projects](examples/README.md) live under `examples/rebuild/` (iOS) and `examples/macos/` (Mac). New jobs default to `output/`; the legacy `rebuild/<NEW_PROJECT>` workspace remains supported.
 
@@ -132,7 +152,7 @@ These are workflow illustrations and selected public observations. The Calculato
 
 ## Tested iOS support
 
-These are named-device, selected-flow results, not a compatibility promise for every iOS device or app. [Current evidence and limitations](docs/current-status.md) records the v0.1.2 scope and remaining gaps.
+These are named-device, selected-flow results, not a compatibility promise for every iOS device or app. The [new standard/enhanced acceptance ledger](docs/ios-device-support-acceptance.md) adds inactive-jailbreak iOS 26 standard UI delivery, an iOS 17 standard regression, enhanced RootHide recovery and offline FairPlay checks. [Current evidence and limitations](docs/current-status.md) records the v0.1.2 scope and remaining gaps.
 
 | Phone | Jailbreak and verified scope | Open limits |
 | --- | --- | --- |
@@ -162,14 +182,14 @@ Open the target app on the phone, confirm its exact Bundle ID, then collect and 
 .venv/bin/copyapp verify cases/first-survey
 ```
 
-Read `cases/first-survey/report.md` and use a new output directory for each retry. Deep analysis also needs OpenSSH, an exact-device SSH route, the Copy APP iOS MCP tweak and a compatible Frida service; add iCTRL as needed. Rebuilding requires full Xcode and signing access or TrollStore. Use `onboard --stage analyze` and `doctor --udid <UDID>` to check readiness, then follow the [full setup guide](docs/setup.md) and [Analyze → Rebuild workflow](docs/copy-workflow.md).
+Read `cases/first-survey/report.md` and use a new output directory for each retry. Deep analysis also needs OpenSSH, an exact-device SSH route, the Copy APP iOS MCP tweak and a compatible Frida service; add iCTRL as needed. Standard UI collection and rebuilding require Xcode, a signed XCTest runner and development signing; start with `onboard --mode standard` and the [standard guide](docs/ios-standard-mode.md). Enhanced rebuilding uses the verified signing or TrollStore route. Use `onboard --stage analyze` and `doctor --udid <UDID>` to check readiness, then follow the [full setup guide](docs/setup.md) and [Analyze → Rebuild workflow](docs/copy-workflow.md).
 
 ## Run the full Analyze → Rebuild workflow
 
-From an active Codex or Claude Code session:
+From an active Codex or Claude Code session, use `standard` for a non-jailbroken phone, `enhanced` for supported jailbreak collection, or `auto` to select from probed capabilities:
 
 ```sh
-.venv/bin/copyapp copy \
+.venv/bin/copyapp copy --mode standard \
   --udid <UDID> --bundle <ORIGINAL_BUNDLE_ID> \
   --auto-discover --agent-provider current \
   --rebuilt-bundle <NEW_BUNDLE_ID>
@@ -184,7 +204,7 @@ Existing examples and cases stay in place. On resume, pin the printed
 `--output-dir` (or legacy `--out` and `--project`) and retain all other settings;
 `--resume` never guesses the latest job.
 
-The command pauses for reviewed discovery scripts, a formal analysis report, and an independent implementation. Resume with the printed output path and the same settings plus `--resume` after each verified handoff. `current` uses the agent already in this session; it does not launch a nested agent. Use `--agent-provider codex` or `claude` for a separate CLI process. Existing flows can be supplied with `--discovery <CASE>` or repeated `--script <FILE>` instead of `--auto-discover`. The [workflow guide](docs/copy-workflow.md) documents the gates and commands.
+The command pauses for reviewed discovery scripts, a reviewed UI behavior report, and an independent implementation. Enhanced function investigation remains explicit; this UI report does not certify native functions. Resume with the printed output path and the same settings plus `--resume` after each verified handoff. `current` uses the agent already in this session; it does not launch a nested agent. The explicit-mode workflow uses `--agent-provider current`. Historical unflagged strict workflows retain their separate `codex` / `claude` CLI providers. Existing flows can be supplied with `--discovery <CASE>` or repeated `--script <FILE>` instead of `--auto-discover`. The [workflow guide](docs/copy-workflow.md) documents the gates and commands.
 
 ## Philosophy and contribution
 

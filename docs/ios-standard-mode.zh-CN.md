@@ -1,8 +1,8 @@
-# 普通 iPhone 模式（开发分支）
+# 普通 iPhone 模式
 
 [English](ios-standard-mode.md) · [方案与验收条件](ios-device-support-plan.zh-CN.md)
 
-本检出新增显式 `--mode standard|auto|enhanced`。未加模式的历史 iOS 命令保留原有契约。这仍是开发功能，不属于已发布 v0.2.0 的支持承诺。macOS 继续使用独立 `copyapp mac` 命令和 ChatComputer 身份。
+最新 `main` 检出支持显式 `--mode standard|auto|enhanced`。未加模式的历史 iOS 命令保留原有契约。此路线已合入 `main`，晚于标签版本 v0.2.0；使用时请检出当前源码。macOS 继续使用独立 `copyapp mac` 命令和 ChatComputer 身份。
 
 `copy --mode auto --agent-provider current` 的默认设备解密设置只在选中增强路线时适用；回退到普通模式无需另传 `--no-decrypt`。显式的 `analyze` 或 `prepare-app --mode auto --decrypt` 仍选择增强模式并要求设备恢复。
 

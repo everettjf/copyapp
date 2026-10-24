@@ -4,16 +4,21 @@
 
 [项目网站](https://xnu.app/copyapp/) · [图文介绍](docs/articles/copyapp-overview.zh-CN.md) · [文档目录](docs/README.zh-CN.md) · [逆向工具](docs/reverse-engineering-tools.zh-CN.md) · [最新版本](docs/releases/v0.2.0.zh-CN.md) · [参与贡献](CONTRIBUTING.zh-CN.md) · [Apache-2.0 许可证](LICENSE)
 
-Copy APP 帮助 Codex 或 Claude Code **分析已安装 App，并独立实现选定行为**，支持 **越狱 iOS 和 macOS**。结论、源码与对照结果保留可复查的证据来源。当前正式版本为 **v0.2.0**。[v0.1.2](docs/releases/v0.1.2.zh-CN.md) 为上一版仅支持 iOS 的版本。
+Copy APP 帮助 Codex 或 Claude Code **分析已安装 App，并独立实现选定行为**，支持 **非越狱 iOS、越狱 iOS 和 Mac App 三种方案**。结论、源码与对照结果保留可复查的证据来源。三种入口已合入最新 `main`；最新标签版本 **v0.2.0** 早于普通 iPhone 模式，使用新模式请检出主分支。[v0.1.2](docs/releases/v0.1.2.zh-CN.md) 为上一版仅支持 iOS 的版本。
 
-**第一次使用？** [选 iOS 或 macOS，复制任务给 Agent](#从这里开始)。依赖检查和本地工具安装交给 Agent，设备信任与系统授权按提示完成。
+**第一次使用？** [选择一种方案，复制任务给 Agent](#从这里开始)。依赖检查和本地工具安装交给 Agent，设备信任与系统授权按提示完成。
 
-开发分支新增[普通 iPhone UI 优先模式与可选主机包工具](docs/ios-standard-mode.zh-CN.md)，以及受支持越狱手机的独立 [FairPlay 凭据提取入口](docs/ios-fairplay-credentials.md)。已测 iOS 26 样本使用重启后越狱未激活的手机；真实 Remoboard 离线恢复和设备代码比较已通过，当前验收进度见 [TODO](TODO.md)。命名设备的支持边界仍明确保留。
+**按需要选择：**非越狱方案从界面行为入手；越狱方案可进一步获取安装包、沙盒和运行时证据；Mac App 使用独立的 ChatComputer 流程。
 
-| 目标 | 使用方式 | 状态 |
+| 方案 | 可以做什么 | 准备条件／指南 |
 | --- | --- | --- |
-| 越狱 iOS | USB 真机、OpenSSH、iOS MCP／iCTRL，按需使用 Frida | 保留已测 iOS 16／17／26 工作流 |
-| macOS | Apple Silicon Mac 上的 ChatComputer、独立虚拟 Mac 和有界 App／AX 采集器 | 已记录指定流程、恢复与实体 Mac 复验 |
+| **非越狱 iOS · standard** | 界面流程、辅助功能观察、USB 截图、行为报告，以及独立签名 App 的重建与对照 | Mac、USB iPhone、Xcode、开发者模式和开发签名；[普通模式](docs/ios-standard-mode.zh-CN.md) |
+| **越狱 iOS · enhanced** | 界面流程，以及安装包／沙盒采集、可选 Frida 跟踪和受支持的设备解密 | 准确设备的 SSH 与兼容服务；[越狱环境配置](docs/setup.zh-CN.md) |
+| **Mac App** | App 包／AX 证据、界面重放、独立 `.app` 构建与选定流程对照 | Apple Silicon Mac、ChatComputer 独立虚拟 Mac；[Mac 配置](docs/macos-support.zh-CN.md) |
+
+普通模式无需原版 IPA、FairPlay 凭据、SSH 或 Frida。已测 iOS 26 样本是越狱未激活的手机，iOS 17 也通过了显式普通模式回归；用户免除了单独的从未越狱设备测试，该项不记为实测结果。详见[iOS 验收账本](docs/ios-device-support-acceptance.md)。
+
+可选的 [IPA 下载和离线解密](docs/ios-standard-mode.zh-CN.md)与手机 UI 采集分别使用。首次[准备凭据](docs/ios-fairplay-credentials.md)需要受支持的越狱手机，且授权账号要与 IPA 一致；保存匹配凭据后，后续解密无需连接手机。真实 Remoboard 主程序、扩展的离线恢复及设备代码比较已通过。
 
 Mac 行为报告不代表深层函数分析或任意 Mac 兼容。详见 [Mac 安装与 AI 任务](docs/macos-support.zh-CN.md)和[验收账本](docs/macos-implementation-plan.md)。
 
@@ -21,24 +26,39 @@ Mac 行为报告不代表深层函数分析或任意 Mac 兼容。详见 [Mac �
 
 ## 架构一览
 
-![Copy APP 架构：Agent、本地工具链、越狱 iPhone 与 macOS 双平台，以及经过审阅的交付](docs/assets/readme-architecture.svg)
+![Copy APP 架构：Agent、本地工具链、普通 iPhone、越狱 iPhone 与 Mac 三条路线，以及经过审阅的交付](docs/assets/readme-architecture.svg)
 
-Mac 协调 Coding Agent、证据与构建；目标可以是通过 USB 连接的越狱 iPhone，也可以是 ChatComputer 中的独立虚拟 Mac。两个平台使用各自的命令与准确环境身份。组件边界和证据关系见[详细架构说明](docs/architecture.zh-CN.md)。
+Mac 协调 Coding Agent、证据与构建；目标可以是通过 USB 连接的普通 iPhone、受支持的越狱 iPhone，或 ChatComputer 中的独立虚拟 Mac。三条路线保留各自的依赖、证据范围和准确环境身份。组件边界和证据关系见[详细架构说明](docs/architecture.zh-CN.md)。
 
 <a id="从这里开始"></a>
 
-## 快速上手：选平台，复制一个任务
+## 快速上手：选方案，复制一个任务
 
 1. 在 Mac 上打开**能执行本地命令的 Codex 或 Claude Code**。
-2. 选择下面的目标平台，把任务中的 **App 名称**换成自己的目标。
+2. 选择下面的使用方案，把任务中的 **App 名称**换成自己的目标。
 3. 复制任务给 Agent。它检查依赖、安装仓库 CLI，并读取对应 Skill；你按提示完成设备信任和系统授权。
 
 保留源码检出：CLI、Skill、设备组件和示例都在仓库里。**无需安装某个专属 Agent 扩展。**
 
 | 目标 | 你需要准备 | Agent 安装与检查 |
 | --- | --- | --- |
+| 非越狱 iOS | 装有 Xcode 的 Mac、USB 连接并解锁的 iPhone、已安装的目标 App、开发者模式和开发签名 | Python 3.9+、CLI、准确手机／App 身份、开发签名的 iCTRL／XCTest 和 USB 安装 |
 | 越狱 iOS | Mac、USB 连接并解锁的越狱 iPhone，目标 App 已装在手机上 | Python 3.9+、仓库 CLI、准确手机／App，再按设备配置 SSH、界面／运行时工具和签名路线 |
 | macOS | 满足 ChatComputer 要求的宿主 Mac；完成虚拟 Mac 初始化和必要授权；目标 App 在客体中可用 | Python 3.9+、仓库 CLI、Swift／macOS SDK、ChatComputer、客体采集器和准确环境／App 身份 |
+
+### 非越狱 iOS
+
+用普通模式观察界面行为，再实现独立签名的 App。复制：
+
+```text
+请使用 https://github.com/everettjf/copyapp，观察并独立复刻 USB 连接的非越狱 iPhone 上「App 名称」的选定行为。
+使用最新 main 检出。先阅读 AGENTS.md、skills/copyapp-start/SKILL.md 和 docs/ios-standard-mode.zh-CN.md；需要时执行 sh scripts/bootstrap-macos.sh 安装 CLI。
+识别准确的 USB 手机和 App，使用 --mode standard，检查 Xcode、开发者模式、设备信任和开发签名，准备签名的 iCTRL XCTest runner 并通过 USB 安装。
+发现代表性界面流程，审阅截图和辅助功能证据，交付审阅后的 UI 行为报告；普通采集无需 IPA 或 FairPlay 凭据。以独立 Bundle ID 实现 App，开发签名后通过 USB 安装，在当前 Agent 会话对照同机流程并逐张审阅截图。
+在 output/ 下建立唯一任务目录，分开 project/ 和 evidence/。按 docs/fidelity.md 执行：默认 80 分，最多三轮实现／检查，首轮计入；交付源码、可运行产物、已验证范围与剩余差异。UI 报告不作原生函数或私有沙盒结论。
+```
+
+只检查安装，加**“完成经校验的普通模式能力检查，列出还缺的签名或 runner 配置后停止。”** 只想分析，加**“交付审阅后的 UI 行为报告，先不复刻。”** 具体命令见[普通模式指南](docs/ios-standard-mode.zh-CN.md)。
 
 ### 越狱 iOS
 
@@ -47,7 +67,7 @@ Mac 协调 Coding Agent、证据与构建；目标可以是通过 USB 连接的�
 ```text
 请使用 https://github.com/everettjf/copyapp，分析并独立复刻 USB 连接的越狱 iPhone 上「App 名称」的选定行为。
 需要时克隆到新目录，或复用已有检出。先阅读 AGENTS.md 和 skills/copyapp-start/SKILL.md。
-检查 Python 3.9+；仓库 CLI 未安装时执行 sh scripts/bootstrap-macos.sh。识别准确的手机和 App，先完成 USB 首次检查，再按这台设备配置分析／复刻需要的依赖。
+检查 Python 3.9+；仓库 CLI 未安装时执行 sh scripts/bootstrap-macos.sh。识别准确的手机和 App，先完成 USB 首次检查，再按这台设备配置分析／复刻需要的依赖。增强 UI 采集使用 --mode enhanced，深入函数推理继续使用显式调查与报告命令。
 在当前 Agent 会话完成报告审阅、独立实现、安装与同机对照。需要手机信任、系统授权或签名条件时，告诉我具体操作。
 在 output/ 下建立唯一任务目录，分开 project/ 和 evidence/。按 docs/fidelity.md 执行：默认 80 分，最多三轮实现／检查，首轮计入；达标或轮数耗尽就停止，交付源码、可运行产物、已验证范围与剩余差异。
 ```
@@ -77,7 +97,7 @@ ChatComputer 可通过 `brew install --cask chatcomputer/tap/chatcomputer` 安�
 
 [完整 Mac 安装指南](docs/macos-support.zh-CN.md) · [iOS 首次运行任务](docs/first-run-agent.zh-CN.md) · [源码示例](examples/README.md)
 
-### 两个平台的默认设置
+### 三种方案的默认设置
 
 Agent 默认 **80 分、最多三轮**；快速原型可选 70，精细复刻可选 90。核心选定行为须通过，
 其余视觉差异明确保留，不再无限打磨。该分数与客观图像相似度、已知能力覆盖率分开。
@@ -103,12 +123,12 @@ Agent 默认 **80 分、最多三轮**；快速原型可选 70，精细复刻可
 
 ## 两项交付
 
-1. **分析：**固定手机和 App 版本；检查安装包、Mach-O、依赖库、类、资源和有界沙盒元数据；采集选定界面、操作与运行轨迹；审阅带证据 ID、实现推断和未知项的报告。
+1. **分析：**固定环境和 App 版本，观察选定界面与操作，审阅带证据来源和未知项的报告。普通 iOS 交付 UI 行为报告；越狱 iOS 可增加安装包、沙盒和运行时调查；Mac 使用 App 包、AX 与界面证据。
 2. **复刻：**依据已知能力清单选定阶段目标；实现独立 iOS 或 macOS App，构建并安装 IPA 或 `.app`；在指定手机或虚拟 Mac 对照相同流程，逐图审阅并报告实际覆盖与差异。
 
 简单 App 可以设较完整的阶段目标。复杂 App 应先选定有用的功能范围；只有明确已知能力的分母，百分比才有意义。选定流程通过不代表整 App 等价。详见[覆盖目标方法](docs/coverage-targets.zh-CN.md)。
 
-Mac 负责编排和构建。OpenSSH 采集文件，iOS MCP 提供越狱环境下的界面观察与控制，iCTRL 是可选的 XCTest 界面后端，Frida 用于有界运行时取证。Ghidra 和 Hopper 是可选的本机代码分析工具，**不依赖 REA 运行**。详见[架构说明](docs/architecture.zh-CN.md)。
+Mac 负责编排和构建。OpenSSH 采集文件，iOS MCP 提供越狱环境下的界面观察与控制，iCTRL／XCTest 提供普通模式界面控制，也可用于增强流程，Frida 用于有界运行时取证。Ghidra 和 Hopper 是可选的本机代码分析工具，**不依赖 REA 运行**。详见[架构说明](docs/architecture.zh-CN.md)。
 
 [示例工程](examples/README.md)分别位于 `examples/rebuild/`（iOS）和 `examples/macos/`（Mac）。新任务默认写入 `output/`，原有 `rebuild/<NEW_PROJECT>` 工作目录仍受支持。
 
@@ -130,7 +150,7 @@ Mac 负责编排和构建。OpenSSH 采集文件，iOS MCP 提供越狱环境下
 
 ## iOS 实测范围
 
-以下结论只适用于指定手机和选定流程，不保证任意设备或 App 兼容。[当前状态](docs/current-status.zh-CN.md)记录 v0.1.2 的范围及剩余问题。
+以下结论只适用于指定手机和选定流程，不保证任意设备或 App 兼容。新增的[普通／增强模式验收账本](docs/ios-device-support-acceptance.md)记录越狱未激活 iOS 26 的普通模式交付、iOS 17 普通模式回归、RootHide 增强恢复和离线 FairPlay 实测。[当前状态](docs/current-status.zh-CN.md)记录 v0.1.2 的范围及剩余问题。
 
 | 手机 | 越狱方式与已测范围 | 当前限制 |
 | --- | --- | --- |
@@ -160,14 +180,14 @@ sh scripts/bootstrap-macos.sh
 .venv/bin/copyapp verify cases/first-survey
 ```
 
-阅读 `cases/first-survey/report.md`，每次重试使用新的输出目录。完整分析还需 OpenSSH、精确设备 SSH 路由、Copy APP iOS MCP tweak 和兼容的 Frida 服务；iCTRL 按需加入。复刻另需完整 Xcode、签名团队或 TrollStore。用 `onboard --stage analyze` 和 `doctor --udid <UDID>` 检查就绪情况，按[完整安装指南](docs/setup.zh-CN.md)及[分析到复刻工作流](docs/copy-workflow.zh-CN.md)继续。
+阅读 `cases/first-survey/report.md`，每次重试使用新的输出目录。完整分析还需 OpenSSH、精确设备 SSH 路由、Copy APP iOS MCP tweak 和兼容的 Frida 服务；iCTRL 按需加入。普通模式 UI 采集及重建需要 Xcode、签名的 XCTest runner 和开发签名；从 `onboard --mode standard` 与[普通模式指南](docs/ios-standard-mode.zh-CN.md)开始。增强重建使用已验证的签名或 TrollStore 路线。用 `onboard --stage analyze` 和 `doctor --udid <UDID>` 检查就绪情况，按[完整安装指南](docs/setup.zh-CN.md)及[分析到复刻工作流](docs/copy-workflow.zh-CN.md)继续。
 
 ## 运行完整分析到复刻流程
 
-在当前 Codex 或 Claude Code 会话中执行：
+在当前 Codex 或 Claude Code 会话中执行：普通手机用 `standard`，受支持的越狱增强采集用 `enhanced`，也可用 `auto` 根据探测结果选择：
 
 ```sh
-.venv/bin/copyapp copy \
+.venv/bin/copyapp copy --mode standard \
   --udid <UDID> --bundle <ORIGINAL_BUNDLE_ID> \
   --auto-discover --agent-provider current \
   --rebuilt-bundle <NEW_BUNDLE_ID>
@@ -181,7 +201,7 @@ sh scripts/bootstrap-macos.sh
 续跑时固定命令打印的 `--output-dir`（或原有 `--out`、`--project`），
 其余设置保持相同，再加 `--resume`；不会自动猜测最近一次任务。
 
-命令会在流程发现、正式分析报告和独立实现三个环节暂停，等待当前 Agent 完成并校验交付；每次用原参数加 `--resume` 续跑。`current` 不会启动嵌套 Agent。独立 CLI 进程可选 `--agent-provider codex` 或 `claude`。若已有流程，可用 `--discovery <CASE>` 或重复的 `--script <FILE>` 替代 `--auto-discover`。命令与门槛见[工作流指南](docs/copy-workflow.zh-CN.md)。
+命令会在流程发现、审阅后的 UI 行为报告和独立实现三个环节暂停，等待当前 Agent 完成并校验交付；每次用原参数加 `--resume` 续跑。`current` 不会启动嵌套 Agent。显式模式流程使用 `--agent-provider current`；未加模式的历史严格流程保留 `codex`／`claude` 独立 CLI 入口。若已有流程，可用 `--discovery <CASE>` 或重复的 `--script <FILE>` 替代 `--auto-discover`。命令与门槛见[工作流指南](docs/copy-workflow.zh-CN.md)。
 
 ## 项目理念与贡献
 

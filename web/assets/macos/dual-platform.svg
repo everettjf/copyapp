@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="880" height="680" viewBox="0 0 880 680" fill="none" role="img" aria-labelledby="title desc">
-<title id="title">Copy APP: jailbroken iOS and macOS</title>
-<desc id="desc">An iPhone and a Mac app window share an evidence workflow. The desktop chart is an illustration, not a captured app or a live market feed.</desc>
+<title id="title">Copy APP: standard iOS, enhanced iOS and Mac apps</title>
+<desc id="desc">Standard and enhanced iPhone routes join a Mac app workflow. The desktop chart is an illustration, not a captured app or a live market feed.</desc>
 <defs>
   <radialGradient id="halo"><stop stop-color="#138352" stop-opacity=".09"/><stop offset="1" stop-color="#138352" stop-opacity="0"/></radialGradient>
   <linearGradient id="screen" x1="210" y1="100" x2="720" y2="480" gradientUnits="userSpaceOnUse"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#f0f8f3"/></linearGradient>
@@ -14,7 +14,7 @@
 <circle cx="463" cy="341" r="235" stroke="#91b9a0" stroke-opacity=".13" stroke-dasharray="4 9"/>
 <rect x="50" y="50" width="790" height="565" fill="url(#grid)"/>
 <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace">
-  <text x="265" y="77" fill="#496b57" font-size="12" letter-spacing="2">TWO PLATFORMS. ONE EVIDENCE TRAIL.</text>
+  <text x="265" y="77" fill="#496b57" font-size="12" letter-spacing="2">THREE ROUTES. ONE EVIDENCE TRAIL.</text>
   <path d="M276 528H725V472" stroke="#138352" stroke-opacity=".4" stroke-dasharray="5 6"/>
   <circle cx="725" cy="472" r="4" fill="#138352"/>
 </g>
@@ -50,7 +50,7 @@
     <text x="390" y="447" fill="#456b55">APP VIEW / ILLUSTRATION</text><text x="631" y="447" fill="#456b55">OFFLINE DATA</text>
   </g>
 </g>
-<!-- Jailbroken iPhone illustration -->
+<!-- iPhone illustration, with standard and enhanced access routes. -->
 <g transform="rotate(-7 179 406)" filter="url(#shadow)">
   <rect x="74" y="208" width="202" height="386" rx="33" fill="url(#phone)" stroke="#9dbca9" stroke-width="1.5"/>
   <rect x="82" y="216" width="186" height="370" rx="26" fill="#f8fcf9" stroke="#bad5c3"/>
@@ -61,14 +61,17 @@
   <circle cx="175" cy="366" r="29" stroke="#138352" stroke-width="3"/><circle cx="175" cy="366" r="20" stroke="#138352" stroke-width="2"/>
   <text x="130" y="425" fill="#138352" font-family="ui-monospace, monospace" font-size="9" letter-spacing="2">APP / TARGET</text>
   <path d="M105 315H245" stroke="#138352" stroke-width="2"/>
-  <g font-family="ui-monospace, monospace" font-size="7" fill="#456b55"><text x="103" y="546">UI TREE</text><text x="155" y="546">TRACE</text><text x="204" y="546">BINARY</text></g>
+  <g font-family="ui-monospace, monospace" font-size="7" fill="#456b55"><text x="103" y="546">UI FLOWS</text><text x="174" y="546">COMPARE</text></g>
 </g>
 <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace">
   <rect x="352" y="511" width="400" height="60" rx="4" fill="#fff" stroke="#b5d2be"/>
   <circle cx="377" cy="540" r="5" fill="#138352"/>
   <text x="395" y="536" fill="#203c35" font-size="15" font-weight="600">macOS / ChatComputer</text>
   <text x="395" y="554" fill="#527461" font-size="10" letter-spacing=".5">OBSERVE · BUILD · COMPARE</text>
-  <text x="77" y="635" fill="#456b55" font-size="12" letter-spacing="1">JAILBROKEN iOS / USB</text>
+  <rect x="54" y="605" width="200" height="26" rx="13" fill="#d9edff" stroke="#a2ccec"/>
+  <text x="154" y="622" text-anchor="middle" fill="#246995" font-size="10">STANDARD / NO JAILBREAK</text>
+  <rect x="54" y="639" width="200" height="26" rx="13" fill="#dff5e7" stroke="#9bc9ac"/>
+  <text x="154" y="656" text-anchor="middle" fill="#16875c" font-size="10">ENHANCED / JAILBROKEN</text>
   <text x="462" y="615" fill="#527461" font-size="11" letter-spacing="1">SOURCE + RUNNABLE APP + EVIDENCE</text>
 </g>
 </svg>
