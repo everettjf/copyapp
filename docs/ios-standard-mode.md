@@ -6,6 +6,8 @@ This checkout adds explicit `--mode standard|auto|enhanced` routes. Unflagged hi
 
 The named standard-mode sample is an iPhone 11 (`iPhone12,1`) on iOS 26.0.1, after an authorized reboot left its jailbreak inactive. SSH, Frida and iOS MCP were unavailable. It has previous jailbreak files and is not a pristine never-jailbroken device. A development-signed iCTRL runner was installed over USB; a selected Calculator addition flow was observed, independently implemented, signed, installed and compared on that same phone. Both screenshot pairs were reviewed; minor differences remain. The bounded fidelity milestone reached 87.4/100 in its first cycle. This is a selected-scope reviewer grade, separate from capability coverage and whole-App parity. The iPhone 14 / iOS 17.3.1 also passed an explicit standard-mode fixture flow while its RootHide services remained active; this adds a named system regression, not pristine ordinary-device acceptance.
 
+The user waived a separate never-jailbroken phone test for this goal. The recorded device histories remain evidence boundaries and no longer block this goal’s completion.
+
 Use the repository virtual environment. Confirm the exact UDID and Bundle ID, Developer Mode, pairing/trust, Xcode and a valid development signing profile. A green heartbeat permits an attempt; it does not establish working XCTest actions or profile coverage.
 
 ```sh
