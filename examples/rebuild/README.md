@@ -6,6 +6,7 @@ Each directory contains original project source or an experimental probe. The na
 | --- | --- |
 | [NotesClone](NotesClone/README.md) | iOS 16 Notes selected flows; scoped folder, note and search behavior. |
 | [CalculatorIOS17Fresh](CalculatorIOS17Fresh/README.md) | iOS 17 Calculator selected arithmetic flows and paired playbooks. |
+| [StandardCalculator](StandardCalculator/README.md) | Standard-mode iOS 26 clear/addition acceptance source and paired playbooks; development signing is configured separately. |
 | [ClockIOS26](ClockIOS26/README.md) | iOS 26 Clock selected Stopwatch flow. |
 | [CompassClone](CompassClone/) | Compass pilot source and playbooks. |
 | [CalculatorClone](CalculatorClone/), [CalculatorFreshProbe](CalculatorFreshProbe/), [CalculatorExternalAgent](CalculatorExternalAgent/) | Earlier Calculator implementations and agent probes. |
