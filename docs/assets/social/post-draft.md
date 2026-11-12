@@ -2,7 +2,7 @@
 
 Published as [one X post with four images](https://x.com/everettjf/status/2111909890046501003) on 2026-10-18.
 
-These four 1600 × 900 cards use a light background and fine grid, with green from the [project website](https://xnu.app/copyapp/) as the main accent. Orange, purple and pink distinguish secondary content. The captured Calculator screenshots are only resized and placed inside the comparison card; their visible content is not retouched. The Hopper card is an illustration of a recorded excerpt, not a screenshot or the original source code.
+These four 1600 × 900 cards use a light background and fine grid, with green from the [project website](https://atomsprout.com/copyapp/) as the main accent. Orange, purple and pink distinguish secondary content. The captured Calculator screenshots are only resized and placed inside the comparison card; their visible content is not retouched. The Hopper card is an illustration of a recorded excerpt, not a screenshot or the original source code.
 
 ## X post
 
